@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dnk52mc7u6y7i"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_o5qli"]
+
+[node name="RealAIFishing" type="Node3D" unique_id=656679125]
+script = ExtResource("1_o5qli")
