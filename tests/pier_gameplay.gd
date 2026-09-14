@@ -19,7 +19,9 @@ func run():
 		check(s.failed_counters==0 and s.danger_time==0,"Next fish starts with clean failure state")
 	for high in [false,true]:
 		var s=fight();s.next_cue=100;s.tension=.95 if high else .05
-		for i in range(110):s.tick(.02,2.0 if high else 0.0,0)
+		for i in range(200):
+			s.tick(.02,2.0 if high else 0.0,0)
+			if s.state!=S.State.FIGHT:break
 		check(s.state==S.State.LOST,"Sustained dangerous tension loses fish: "+str(high))
 		s=fight();s.next_cue=100;s.tension=.95 if high else .05
 		for i in range(20):s.tick(.02,2.0 if high else 0.0,0)

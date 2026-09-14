@@ -48,6 +48,8 @@ const COUNTER_WINDOW := 6.0
 const MAX_FAILED_COUNTERS := 3
 const SLACK_LIMIT := 0.10
 const STRAIN_LIMIT := 0.90
+const STRAIN_GRACE := 2.5
+const MAX_TENSION_RISE := 0.14
 var failed_counters := 0
 var danger_side := 0
 var cue_time := 0.0
@@ -127,7 +129,7 @@ func _counter_tick(delta: float) -> void:
 	var progress := minf(resistance, delta / counter_seconds())
 	resistance = maxf(0.0, resistance-progress)
 	stamina = maxf(0.0, stamina-progress*19.0*float(tackle.rod().fatigue)/float(SPECIES[fish_index].endurance))
-	tension = clampf(tension-progress*.16,.08,.85)
+	tension = clampf(tension-progress*.16,0.0,1.0)
 	if resistance <= .00001:
 		cue=-1
 		counter_rest=3.5+(1.0-stamina)*2.0
@@ -140,6 +142,12 @@ func is_running() -> bool:
 
 func tick(delta: float, reel: float, rod_lift: float) -> void:
 	match state:
+		State.LOST:
+			timer -= delta
+			if timer <= 0:
+				var reason := message
+				reset()
+				message = reason + " Cast again when ready."
 		State.CASTING:
 			timer -= delta
 			if timer <= 0.0:
@@ -178,7 +186,9 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 			# Fatigued fish pull less; upgraded lines carry more load before the red band.
 			var load := rate * (0.17 if running else 0.0) + maxf(rod_lift, 0.0) * 0.035 + escape_load
 			# Keep enough reel response to recover slack even with the strongest rod.
-			tension += delta * (rate * 0.12 + load / sqrt(durability) - (0.065 if running else 0.075))
+			var change := delta * (rate * 0.12 + load / sqrt(durability) - (0.065 if running else 0.075))
+			# Bound the load buildup so warning haptics give time to ease off.
+			tension += clampf(change, -delta * .18, delta * MAX_TENSION_RISE)
 			if running:
 				distance += delta * 0.35 * stamina * power
 			elif tension > 0.12:
@@ -192,7 +202,7 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 				danger_time += delta
 			else:
 				danger_time = 0.0
-			if danger_time > (1.4 * durability if tension > 0.5 else 1.4):
+			if danger_time > (STRAIN_GRACE * sqrt(durability) if tension > 0.5 else 1.8):
 				lose("Line snapped. Ease off the reel." if tension > 0.5 else "The hook slipped. Keep some tension.")
 				return
 			next_cue -= delta
@@ -207,7 +217,7 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 					if failed_counters >= MAX_FAILED_COUNTERS:
 						lose("The fish broke free after three missed counters.")
 						return
-					tension = minf(1.0, tension + (0.08 + 0.10 * stamina) / durability)
+					stamina = minf(1.0, stamina + .18)
 					cue = -1
 					next_cue = 3.0
 					message = "Missed counter (%d/%d). Keep control of the fish." % [failed_counters, MAX_FAILED_COUNTERS]
@@ -230,6 +240,7 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 
 func lose(reason: String) -> void:
 	state = State.LOST
+	timer = 1.2
 	cue = -1
 	counter_direction = -1
 	counter_active = false

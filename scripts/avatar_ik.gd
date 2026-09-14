@@ -37,10 +37,10 @@ func _process_modification_with_delta(_delta: float) -> void:
 	var hips:=bone(sk,"Hips")
 	var offset:=Vector3.ZERO
 	if not rig.xr_pose.is_empty():
-		offset=rig.xr_pose.head.origin-Vector3(0,1.65,0)
+		offset=rig.xr_pose.head.origin-Vector3(0,rig.standing_height,0)
 		offset=Vector3(offset.x*.45,clampf(offset.y,-.90,.1),offset.z*.45)
 	else:
-		offset.y=rig.collider_height-1.65
+		offset.y=rig.collider_height-rig.standing_height
 	if rig.gait.prone_blend>0:
 		offset=offset.lerp(Vector3(0,.30-rig.neutral_hip_height,.35),rig.gait.prone_blend)
 	if not body.has("hips"):

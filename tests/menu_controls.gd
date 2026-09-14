@@ -42,7 +42,7 @@ func run():
 	check(browser.directory.ends_with("avatars") and browser.files.item_count==1,"Browser Open navigates selected folder")
 	at=browser.files.global_position+browser.files.get_item_rect(0).get_center();motion(at);button(at,true);button(at,false);await settle();await click(browser.open_button)
 	await create_timer(.5).timeout
-	check(not browser.visible and not g.avatar_loading and g.avatars.selected_path.begins_with("user://avatars/"),"Selected VRM imports and equips through actual menu signal")
+	check(not browser.visible and not g.avatar_loading and g.avatars.selected_path.begins_with(g.AvatarLibrary.CACHE),"Selected VRM imports and equips through actual menu signal")
 	menu.show_page("together");await settle()
 	var field:LineEdit=menu.multiplayer_page.find_children("*","LineEdit",true,false)[0]
 	field.text="";field.grab_focus();menu.keyboard.open_for(field);await settle()

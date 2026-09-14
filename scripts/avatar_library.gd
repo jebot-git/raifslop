@@ -1,23 +1,27 @@
 extends RefCounted
 const MAX_BYTES := 25_000_000
-const CACHE := "user://avatars/"
+const Paths=preload("res://scripts/data_paths.gd")
+static var CACHE: String:
+	get: return Paths.folder("vrm")
 const DEFAULTS = ["res://assets/avatars/sharkperson.vrm", "res://assets/avatars/vita.vrm", "res://assets/avatars/victoria.vrm"]
 var entries: Array[Dictionary] = []
 var selected_path := ""
 var error := ""
 
 func initialize() -> void:
-	DirAccess.make_dir_recursive_absolute(CACHE)
+	entries.clear()
+	var migrated:=Paths.migrate_vrms(CACHE)
 	for path in DEFAULTS:
 		var info := inspect(path)
 		if not info.has("error"): entries.append(info)
 	for file in DirAccess.get_files_at(CACHE):
-		if file.ends_with(".vrm"):
+		if file.get_extension().to_lower()=="vrm":
 			var info := inspect(CACHE + file)
 			if not info.has("error"): entries.append(info)
 	var config := ConfigFile.new()
 	config.load("user://avatar.cfg")
 	selected_path = str(config.get_value("avatar", "path", DEFAULTS[0]))
+	if migrated.has(selected_path): save_selection(migrated[selected_path])
 
 static func inspect(path: String) -> Dictionary:
 	if path.get_extension().to_lower() != "vrm": return {"error": "Choose a .vrm file."}
@@ -79,21 +83,28 @@ static func inspect(path: String) -> Dictionary:
 	return {"path": path, "size": size, "title": title.left(60), "author": str(meta.get("authors", meta.get("author", "Unknown"))).left(100)}
 
 func import_file(path: String) -> Dictionary:
+	return accept_import(copy_import(path,CACHE))
+
+func accept_import(info: Dictionary) -> Dictionary:
+	if info.has("error"):return info
+	for entry in entries:
+		if entry.path==info.path:return entry
+	entries.append(info)
+	return info
+
+static func copy_import(path: String,directory: String) -> Dictionary:
 	var info := inspect(path)
 	if info.has("error"): return info
 	var digest := FileAccess.get_sha256(path)
 	if digest.is_empty(): return {"error": "Could not read the avatar."}
-	var destination := CACHE + digest + ".vrm"
-	# The cached copy is checked again before any decoder sees it.
+	if DirAccess.make_dir_recursive_absolute(directory)!=OK:return {"error":"Cannot create avatar folder: "+directory}
+	var destination := directory.path_join(digest + ".vrm")
 	if path != destination and DirAccess.copy_absolute(path, destination) != OK:
 		return {"error": "Could not copy the avatar into your library."}
 	var copied := inspect(destination)
 	if copied.has("error"):
 		DirAccess.remove_absolute(destination)
 		return copied
-	for entry in entries:
-		if entry.path == destination: return entry
-	entries.append(copied)
 	return copied
 
 func load_model(path: String) -> Node3D:

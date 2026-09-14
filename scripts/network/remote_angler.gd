@@ -43,6 +43,14 @@ func set_avatar(model: Node3D, hash: String) -> void:
 	if is_instance_valid(avatar): avatar.queue_free()
 	next.first_person=false
 	avatar=next; avatar_hash=hash; fallback.hide()
+	next.right_grip_updated.connect(_attach_rod_to_hand.bind(next))
+
+func _attach_rod_to_hand(grip: Transform3D, source: Node3D) -> void:
+	if source != avatar or target.is_empty() or not target.xr or rod_visual.folded: return
+	rod.global_transform=grip*preload("res://scripts/rod_holster.gd").HELD_POSE
+	rendered.tip=rod.to_global(Vector3(0,0,-1.68))
+	_draw_line()
+
 func _full_body(node: Node) -> void:
 	if node is MeshInstance3D: node.layers=1 if node.layers&4 else 0
 	for child in node.get_children(): _full_body(child)
@@ -105,6 +113,9 @@ func _process(delta: float) -> void:
 	label.global_position=rendered.head.origin+Vector3.UP*.32
 	label.text=player_name
 	if target.caught: label.text+="\n%s · %.1f cm" % [Fish.SPECIES[target.species].name,target.length]
+	_draw_line()
+
+func _draw_line() -> void:
 	line.clear_surfaces()
 	if target.caught or float_mesh.visible:
 		line.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)

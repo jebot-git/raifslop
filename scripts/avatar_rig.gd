@@ -1,4 +1,6 @@
 extends Node3D
+signal right_grip_updated(pose: Transform3D)
+const Scale = preload("res://scripts/avatar_scale.gd")
 const IK = preload("res://scripts/avatar_ik.gd")
 const RestBounds = preload("res://scripts/avatar_rest_bounds.gd")
 var gait = preload("res://scripts/avatar_gait.gd").new()
@@ -14,13 +16,16 @@ var right_index_tip: Variant = null
 var right_index_tip_frame := -10
 var index_tip_bone := -1
 var index_tip_offset := Vector3.ZERO
+var right_hand_bone := -1
+var right_grip: Variant = null
+var right_grip_frame := -10
 var skeleton: Skeleton3D
 var model: Node3D
 var solver: SkeletonModifier3D
 var head: Camera3D
 var left_target: Node3D
 var right_target: Node3D
-var standing_height := 1.65
+var standing_height := Scale.HEAD_HEIGHT
 var walk_phase := 0.0
 var walk_speed := 0.0
 var left_curl := 0.0
@@ -60,7 +65,7 @@ func configure(root: Node3D) -> bool:
 	var local_bounds: AABB = root.get_meta(RestBounds.CACHE_KEY) if root.has_meta(RestBounds.CACHE_KEY) else RestBounds.measure(root)
 	var bounds: AABB = root.transform * local_bounds
 	if not bounds.size.is_finite() or bounds.size.y < 0.05 or bounds.size.y > 1000: return false
-	var factor := (standing_height + 0.05) / bounds.size.y
+	var factor := Scale.BODY_HEIGHT / bounds.size.y
 	root.scale *= factor
 	root.position *= factor
 	root.position.y -= bounds.position.y * factor
@@ -85,7 +90,8 @@ func configure(root: Node3D) -> bool:
 	skeleton.add_child(solver)
 	solver.setup(self)
 	_setup_index_tip()
-	solver.modification_processed.connect(_capture_index_tip)
+	right_hand_bone = skeleton.find_bone("RightHand")
+	solver.modification_processed.connect(_capture_hand_attachments)
 	skeleton.add_child(eyes)
 	add_to_group("fishing_avatar_rigs")
 	return true
@@ -136,11 +142,11 @@ func tracking_transform() -> Transform3D:
 	return render_frame
 
 func fit_tracked_hips(pose: Transform3D) -> Transform3D:
-	pose.origin.y += neutral_hip_height - 0.92
+	pose.origin.y += neutral_hip_height - Scale.HIP_HEIGHT
 	return pose
 
 func fit_tracked_foot(side: String, pose: Transform3D) -> Transform3D:
-	pose.origin.y += float(neutral_foot_heights.get(side, 0.08)) - 0.08
+	pose.origin.y += float(neutral_foot_heights.get(side, Scale.ANKLE_HEIGHT)) - Scale.ANKLE_HEIGHT
 	return pose
 
 func mesh_bounds(node: Node3D, parent_transform: Transform3D) -> AABB:
@@ -160,11 +166,22 @@ func _setup_index_tip() -> void:
 	var length := rest.origin.distance_to(skeleton.get_bone_global_rest(parent).origin) * .75
 	index_tip_offset = Vector3.UP * length
 
-func _capture_index_tip() -> void:
-	if index_tip_bone < 0: return
+func _capture_hand_attachments() -> void:
 	# Read while modifiers are applied. Godot restores raw poses after this signal.
-	right_index_tip = skeleton.to_global(skeleton.get_bone_global_pose(index_tip_bone) * index_tip_offset)
-	right_index_tip_frame = Engine.get_process_frames()
+	if right_hand_bone >= 0 and not xr_pose.is_empty():
+		var wrist := skeleton.global_transform * skeleton.get_bone_global_pose(right_hand_bone)
+		# Undo the controller-to-humanoid axes and wrist offset used by IK.
+		# Strip model scale so the rod keeps its physical size on every VRM.
+		var grip_basis := wrist.basis.orthonormalized() * IK.controller_hand_basis(false).inverse()
+		right_grip = Transform3D(grip_basis, wrist.origin - grip_basis.y * .06)
+		right_grip_frame = Engine.get_process_frames()
+		right_grip_updated.emit(right_grip)
+	if index_tip_bone >= 0:
+		right_index_tip = skeleton.to_global(skeleton.get_bone_global_pose(index_tip_bone) * index_tip_offset)
+		right_index_tip_frame = Engine.get_process_frames()
+
+func hand_grip_pose() -> Variant:
+	return right_grip if Engine.get_process_frames() - right_grip_frame <= 2 else null
 
 func index_touch_position() -> Variant:
 	return right_index_tip if Engine.get_process_frames() - right_index_tip_frame <= 2 else null

@@ -12,7 +12,7 @@ func _ready() -> void:
 	var column := VBoxContainer.new(); add_child(column)
 	var title := Label.new(); title.text = "Import VRM avatar · maximum 25 MB"; column.add_child(title)
 	var row := HBoxContainer.new(); column.add_child(row)
-	for entry in [["Up",func(): browse(directory.get_base_dir())],["Home",func(): browse(OS.get_environment("HOME"))],["Downloads",func(): browse(OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS))]]:
+	for entry in [["VRM folder",func(): browse(preload("res://scripts/data_paths.gd").folder("vrm"))],["Up",func(): browse(directory.get_base_dir())],["Home",func(): browse(OS.get_environment("HOME"))],["Downloads",func(): browse(OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS))]]:
 		var button := Button.new(); button.text = entry[0]; row.add_child(button); button.pressed.connect(entry[1])
 	path_field = LineEdit.new(); path_field.placeholder_text = "Folder or .vrm path"; path_field.size_flags_horizontal = SIZE_EXPAND_FILL; row.add_child(path_field)
 	path_field.text_submitted.connect(_open_path)

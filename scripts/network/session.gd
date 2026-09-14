@@ -2,7 +2,7 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 2
+const VERSION := 3 # Voice packets carry an explicit cross-water radio channel.
 const State = preload("res://scripts/network/state.gd")
 const Remote = preload("res://scripts/network/remote_angler.gd")
 var root_game: Node
@@ -29,10 +29,13 @@ var serial := 0
 var last_event: Array = []
 var selected_path := ""
 var connect_deadline := 0.0
+var metrics_enabled := false
+var metrics_next := 0.0
 signal changed
 
 func setup(root: Node, server_only: bool = false) -> void:
 	root_game = root
+	metrics_enabled="--network-metrics" in OS.get_cmdline_user_args()
 	dedicated = server_only
 	headless = DisplayServer.get_name()=="headless"
 	if not dedicated: load_preferences()
@@ -67,7 +70,7 @@ func save_preferences() -> void:
 func host(port: int = 24567, bind_address: String = "*") -> Error:
 	leave()
 	if port<1024 or port>65535: status="Use a port from 1024 to 65535"; return ERR_INVALID_PARAMETER
-	var peer := ENetMultiplayerPeer.new()
+	var peer := preload("res://scripts/network/threaded_peer.gd").new()
 	peer.set_bind_ip(bind_address)
 	var error := peer.create_server(port,SERVER_MAX_PLAYERS if dedicated else SERVER_MAX_PLAYERS-1,7)
 	if error!=OK: status="Cannot host: "+error_string(error); changed.emit(); return error
@@ -83,7 +86,7 @@ func host(port: int = 24567, bind_address: String = "*") -> Error:
 func join(address: String, port: int = 24567) -> Error:
 	leave()
 	if address.strip_edges().is_empty() or port<1024 or port>65535: status="Enter a host address and port (1024–65535)"; return ERR_INVALID_PARAMETER
-	var peer := ENetMultiplayerPeer.new()
+	var peer := preload("res://scripts/network/threaded_peer.gd").new()
 	var error := peer.create_client(address.strip_edges(),port,7)
 	if error!=OK: status="Cannot join: "+error_string(error); changed.emit(); return error
 	multiplayer.multiplayer_peer = peer
@@ -166,6 +169,9 @@ func _process(delta: float) -> void:
 	clock+=delta
 	if connect_deadline>0 and clock>connect_deadline: leave("Connection timed out")
 	if not active: return
+	if metrics_enabled and clock>=metrics_next:
+		metrics_next=clock+2.0
+		print("NETWORK_METRICS ",JSON.stringify({"seconds":clock,"players":players.size(),"states":states.size(),"voice_received":voice.received_packets,"voice_relayed":voice.relayed_packets,"voice_rejected":voice.rejected_packets,"transport":multiplayer.multiplayer_peer.diagnostics()}))
 	if multiplayer.is_server():
 		for id in waiting.keys():
 			if clock>waiting[id]: waiting.erase(id); multiplayer.multiplayer_peer.disconnect_peer(id)
@@ -230,3 +236,8 @@ func command_line() -> void:
 	if "--host" in args or "--server" in args: error=host(port,bind_address)
 	elif "--join" in args: error=join(address,port)
 	if error!=OK and dedicated: push_error(status); get_tree().quit(1)
+
+func _exit_tree() -> void:
+	# Scene teardown must stop the socket worker even without an explicit Leave.
+	if multiplayer.multiplayer_peer is MultiplayerPeerExtension:
+		multiplayer.multiplayer_peer.close()

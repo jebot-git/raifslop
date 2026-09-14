@@ -292,6 +292,8 @@ Three missed counters, sustained slack or strain lose the fish.",
 right index finger. Right grip at your right hip folds/stashes the rod.",
 		"Catch: left grip to hold; sticks to rotate; right A to release.
 Move with the left stick, turn with the right stick. Right B: menu.",
+		"Radio: grab at left shoulder, hold left trigger to talk to all waters.
+Release grip to dock. Desktop radio: hold B. Nearby voice: T / left stick click.",
 		"Desktop: SPACE cast/strike/release; hold R to reel; arrows to
 counter; G guide; J stash rod; V menu; WASD move; Q/E turn."
 	]:

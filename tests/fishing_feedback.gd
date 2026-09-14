@@ -46,7 +46,9 @@ func run():
  # Exercise the actual tension failure paths, not just formulas.
  for high in [true,false]:
   var sim=S.new();sim.state=S.State.FIGHT;sim.distance=100;sim.tension=1.0 if high else 0.0;sim.next_cue=100
-  for i in range(160):sim.tick(.02,2 if high else 0,0)
+  for i in range(200):
+   sim.tick(.02,2 if high else 0,0)
+   if sim.state!=S.State.FIGHT:break
   check(sim.state==S.State.LOST and ("snapped" in sim.message if high else "slipped" in sim.message),"High tension snaps / slack slips: "+str(high))
  var calm=S.new();calm.state=S.State.FIGHT;calm.next_cue=100;var run=S.new();run.state=S.State.FIGHT;run.phase=6;run.next_cue=100
  calm.tick(.1,1,0);run.tick(.1,1,0);check(run.tension>calm.tension,"Reeling during runs adds more tension")

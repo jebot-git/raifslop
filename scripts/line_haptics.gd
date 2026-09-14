@@ -19,9 +19,9 @@ func sample(game, delta: float) -> Dictionary:
 		if game.cue>=0 and game.cue!=cue and event.is_empty(): event={"kind":"fight","strength":.5,"duration":.16}
 		if game.is_running() and not running and event.is_empty(): event={"kind":"run","strength":.65,"duration":.2}
 		if game.tension<tension_peak-.06: tension_peak=game.tension
-		if cooldown<=0 and event.is_empty() and (game.tension>=tension_peak+.08 or game.tension>=.82):
-			event={"kind":"tension","strength":lerpf(.18,.75,game.tension),"duration":.08 if game.tension<.82 else .14}
+		if cooldown<=0 and event.is_empty() and (game.tension>=tension_peak+.08 or game.tension>=.60):
+			event={"kind":"tension","strength":lerpf(.20,.85,clampf((game.tension-.50)/.50,0,1)),"duration":.09 if game.tension<.82 else .16}
 			tension_peak=game.tension
-	if not event.is_empty(): cooldown=.65
+	if not event.is_empty(): cooldown=lerpf(.65,.22,clampf((game.tension-.60)/.40,0,1)) if event.kind=="tension" else .45
 	cue=game.cue;running=game.is_running()
 	return event

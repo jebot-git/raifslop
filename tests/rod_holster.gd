@@ -40,7 +40,9 @@ func run():
 	check(h.stowed,"Tracking recovery with grip held cannot grab accidentally")
 	tracker.set_input("grip",0.0);await process_frame;h.update_holster()
 	tracker.set_input("grip",1.0);await process_frame;h.update_holster()
-	check(not h.stowed and g.rod.get_parent()==right and g.rod.transform.is_equal_approx(h.HELD_POSE) and not g.rod_visual.folded,"New grip at hip retrieves and unfolds rod at original hand mount")
+	var solved_grip: Variant=g.avatar.hand_grip_pose()
+	var expected: Transform3D=(solved_grip if solved_grip is Transform3D else right.global_transform)*h.HELD_POSE
+	check(not h.stowed and g.rod.get_parent()==right and g.rod.top_level and g.rod.global_transform.is_equal_approx(expected) and not g.rod_visual.folded,"New grip at hip retrieves and unfolds rod at solved hand mount")
 	state=preload("res://scripts/network/state.gd").capture(g,2)
 	check(not h.remote_stowed(state),"Remote held rod is not folded")
 	check(not g.reel_tracker.engaged and not g.tracking_was_valid and g.peak_speed==0,"Retrieval resets reel and casting motion samples")

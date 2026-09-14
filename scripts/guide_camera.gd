@@ -3,7 +3,8 @@ extends Node
 const UI_LAYER := 128
 const PHOTO_SIZE := Vector2i(1920, 1080)
 const PREVIEW_SIZE := Vector2i(640, 360)
-const PHOTO_DIR := "user://photos"
+static var PHOTO_DIR: String:
+	get: return preload("res://scripts/data_paths.gd").photos()
 const REAR_LENS := Vector3(0.055, 0.13, -0.024)
 const FRONT_LENS := Vector3(0.055, 0.139, 0.024)
 signal saved(path: String)
@@ -16,9 +17,11 @@ var busy := false
 var status := ""
 var last_path := ""
 var refresh_time := 0.0
+var disk = preload("res://scripts/network/disk_worker.gd").new()
 
 func setup(owner_guide) -> void:
 	guide = owner_guide
+	add_child(disk)
 	view = SubViewport.new()
 	view.size = PREVIEW_SIZE
 	view.world_3d = guide.game_root.get_world_3d()
@@ -115,16 +118,26 @@ func capture() -> void:
 		await RenderingServer.frame_post_draw
 		if not is_instance_valid(guide): return
 	var photo := view.get_texture().get_image()
-	var error := ERR_CANT_CREATE
-	var path := ""
-	if photo != null and not photo.is_empty():
-		error = DirAccess.make_dir_recursive_absolute(PHOTO_DIR)
-		if error == OK:
-			var stamp := Time.get_datetime_string_from_system().replace(":", "-")
-			path = PHOTO_DIR.path_join("fishing_%s_%d.png" % [stamp, Time.get_ticks_usec()])
-			error = photo.save_png(path)
 	view.size = PREVIEW_SIZE
 	view.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	if photo == null or photo.is_empty():
+		_finish_save(ERR_CANT_CREATE, "")
+		return
+	var stamp := Time.get_datetime_string_from_system().replace(":", "-")
+	var path := PHOTO_DIR.path_join("fishing_%s_%d.png" % [stamp, Time.get_ticks_usec()])
+	status = "Saving photo…"
+	# PNG compression and disk writes cannot stall the render/network dispatch.
+	if not disk.submit(save_photo.bind(photo,path),func(error): _finish_save(error,path)):
+		_finish_save(ERR_BUSY,path)
+	while busy: await get_tree().process_frame
+
+static func save_photo(photo: Image,path: String) -> Error:
+	if OS.has_feature("android") and not "--photos-root" in OS.get_cmdline_user_args():
+		return preload("res://scripts/android_photos.gd").save(photo,path.get_file())
+	var error := DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	return photo.save_png(path) if error==OK else error
+
+func _finish_save(error: Error,path: String) -> void:
 	busy = false
 	if error == OK:
 		last_path = ProjectSettings.globalize_path(path)
@@ -132,4 +145,4 @@ func capture() -> void:
 		saved.emit(last_path)
 	else:
 		status = "Could not save photo (%s)." % error_string(error)
-	guide.screen.queue_redraw()
+	if is_instance_valid(guide):guide.screen.queue_redraw()

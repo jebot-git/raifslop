@@ -229,7 +229,7 @@ func update_device() -> void:
 		var tracked: bool = g.left.get_has_tracking_data()
 		var down: bool = tracked and g.left.get_float("grip") > 0.55
 		if held and not down: dock()
-		if not held and down and not grip_was_down and not g.menu_open and g.left.global_position.distance_to(dock_grip_position()) < 0.22:
+		if not held and down and not grip_was_down and not g.menu_open and not (is_instance_valid(g.shoulder_radio) and g.shoulder_radio.held) and g.left.global_position.distance_to(dock_grip_position()) < 0.22:
 			held = true
 			screen.queue_redraw()
 		grip_was_down = down

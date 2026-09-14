@@ -87,7 +87,7 @@ func run() -> void:
 	hand.has_tracking_data=false
 	trackers[1].set_pose("grip",Transform3D(Basis.IDENTITY,Vector3(.3,1.1,-.3)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
 	await settle();g._update_avatar(.016)
-	g.avatar.solver._process_modification_with_delta(.016);g.avatar._capture_index_tip()
+	g.avatar.solver._process_modification_with_delta(.016);g.avatar._capture_hand_attachments()
 	var expected_tip: Vector3 = g.avatar.skeleton.to_global(g.avatar.skeleton.get_bone_global_pose(g.avatar.index_tip_bone)*g.avatar.index_tip_offset)
 	g.avatar.skeleton.reset_bone_poses()
 	check(guide.touch_position() is Vector3 and guide.touch_position().distance_to(expected_tip)<.0001,"Controller fallback follows rendered index tip, retaining the final IK pose")

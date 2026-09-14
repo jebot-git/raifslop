@@ -58,8 +58,21 @@ The guide now includes a live camera preview and saves **1920 × 1080 PNG photos
 
 Forward mode follows the desktop viewpoint or the tracked guide hand in VR. Selfie mode extends the lens 1.5 m forward, points it back at the angler and includes the full avatar. A scenery ray check shortens the extension near solid surfaces. This is a virtual camera extension; it does not add a physical stick mesh. Camera controls do not cast, release catches or change bait. Collection navigation remains available after leaving camera mode.
 
-Files are saved locally in `user://photos`, normally `~/.local/share/godot/app_userdata/Real AI Fishing/photos` on Linux. Each filename includes a timestamp and unique suffix. The guide confirms successful saves and reports failures. Photos are never uploaded or sent to other players. Forward/selfie choice lasts for the current session.
+Files are saved locally in your operating system’s Pictures folder, inside `Real AI Fishing` (for example `~/Pictures/Real AI Fishing` on Linux). Android saves new photos to the Pictures collection through MediaStore. `--photos-root PATH` overrides the destination for desktop tests. Each filename includes a timestamp and unique suffix. The guide confirms successful saves and reports failures. Photos are never uploaded or sent to other players. Forward/selfie choice lasts for the current session.
 
 Preview rendering is limited to 640 × 360 at approximately 10 Hz while the camera is held. It stops when docked or in collection mode. Full resolution renders only for the shutter; repeated shutter input is ignored while saving. UI exclusion uses a dedicated render layer, so photography does not toggle shared world visibility or put the guide's preview inside itself.
 
 Camera validation: 14 headless control/layer checks, 18 real Vulkan capture checks, 27 existing desktop guide checks, and 36 native Monado guide/camera checks passed. Native tests use two synthetic tracked controllers and actual stereo rendering, not a physical headset. The existing OpenXR shutdown/spatial-disconnect/profile-RID warnings remain. Captures: [forward photo](guide_camera_forward.png), [selfie](guide_camera_selfie.png), [native VR selfie](guide_camera_selfie_xr.png), [guide camera display](guide_camera_screen.png).
+
+
+## Rod feedback and recovery
+
+Each bait has its own 3D shape: curved earthworm, corn kernels, spinner blade and hook, pale maggots, bread with crust, or feathered wet fly. An uncast rod carries the float and selected bait. Changing bait briefly shows its name above the rod.
+
+Tension warnings start at 60% and become more frequent toward red. Tension rises by at most 14 percentage points per second; overload must persist for 2.5 seconds with the starter line before it snaps. A failed counter restores 18 percentage points of fish stamina, without an immediate tension change. Three failed counters still release the fish. Holding an already raised rod can counter a fish swimming away.
+
+After a lost fish the tackle resets after 1.2 seconds, or immediately when starting a new trigger-and-swing cast.
+
+On initial VR tracking, the player is calibrated to the same 1.65 m head-height reference used by FPSloppa. All VRMs use the shared 1.70 m body normalization; crouching or changing avatar does not resize the rig. Seated mode uses a vertical offset instead. Recenter while standing if startup calibration was taken in another posture.
+
+When a counter ends, the fish keeps the position it reached. Reeling follows that new position toward the angler, and later escape movements build on it.

@@ -9,3 +9,5 @@ __pycache__/
 builds/
 android/
 .release-signing/
+
+data/

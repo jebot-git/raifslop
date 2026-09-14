@@ -19,7 +19,7 @@ def run(command, label, child_env=env):
     log = build/(label+'.log')
     with log.open('w') as stream:
         result = subprocess.run(command, env=child_env, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT)
-    if result.returncode or any(x in log.read_text(errors='replace') for x in ['SCRIPT ERROR:', 'Cannot export project', 'Export failed']):
+    if result.returncode or any(x in log.read_text(errors='replace') for x in ['SCRIPT ERROR:', 'Cannot export project', 'Export failed', 'HDR compression failed']):
         raise SystemExit(f'{label} failed; inspect {log}')
     print(label+' completed', flush=True)
 def digest(path):
@@ -57,6 +57,19 @@ for target in (['Linux','Windows','Quest','Pico'] if a.target=='all' else [a.tar
     run([godot,'--headless','--path',str(ROOT),'--xr-mode','off','--export-release',target,str(artifact)],'export-'+target,child_env)
     if not artifact.exists(): raise SystemExit('Missing '+str(artifact))
     if ext=='apk':
+        unsigned = out/'compressed-unsigned.apk'
+        aligned = out/'compressed-aligned.apk'
+        with zipfile.ZipFile(artifact) as source, zipfile.ZipFile(unsigned, 'w', compresslevel=9) as dest:
+            for info in source.infolist():
+                # v1 signatures are replaced by apksigner; v2+ signing blocks are
+                # outside ZIP entries and are removed automatically by rewriting.
+                if info.filename.upper().startswith('META-INF/') and info.filename.upper().endswith(('.RSA','.DSA','.EC','.SF','.MF')):
+                    continue
+                dest.writestr(info, source.read(info), compress_type=info.compress_type, compresslevel=9)
+        run([str(sdk/'build-tools/36.1.0/zipalign'),'-f','-P','16','4',str(unsigned),str(aligned)],'recompress-align-'+target,child_env)
+        run([str(sdk/'build-tools/36.1.0/apksigner'),'sign','--ks',str(key),'--ks-key-alias','fishing','--ks-pass','env:FISHING_SIGNING_PASSWORD','--key-pass','env:FISHING_SIGNING_PASSWORD','--out',str(artifact),str(aligned)],'recompress-sign-'+target,child_env)
+        unsigned.unlink(); aligned.unlink()
+        artifact.with_suffix('.apk.idsig').unlink(missing_ok=True)
         run([str(sdk/'build-tools/36.1.0/apksigner'),'verify','--verbose','--print-certs',str(artifact)],'verify-'+target,child_env)
         run([str(sdk/'build-tools/36.1.0/zipalign'),'-c','-P','16','4',str(artifact)],'align-'+target,child_env)
     print(f'BUILT {target}: {artifact.stat().st_size} bytes',flush=True)

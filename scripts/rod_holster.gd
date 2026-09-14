@@ -39,7 +39,11 @@ func set_stowed(value: bool) -> bool:
 		g.rod.global_transform=belt_pose
 	else:
 		g.rod.reparent(g.right if g.xr else g.origin)
-		g.rod.transform=HELD_POSE if g.xr else desktop_pose
+		g.rod.top_level=g.xr
+		if g.xr:
+			var grip: Variant=g.avatar.hand_grip_pose() if is_instance_valid(g.avatar) else null
+			g.rod.global_transform=(grip if grip is Transform3D else g.right.global_transform)*HELD_POSE
+		else: g.rod.transform=desktop_pose
 	g.rod_visual.set_folded(stowed)
 	g.rod.show()
 	g.casting=false;g.peak_speed=0;g.velocity=Vector3.ZERO;g.tracking_was_valid=false
@@ -52,8 +56,8 @@ func set_stowed(value: bool) -> bool:
 	return true
 
 static func remote_stowed(data: Dictionary) -> bool:
-	# Protocol 2 already sends independent rod and grip poses. An idle XR rod
-	# outside its fixed hand mount is holstered, so no packet schema change is needed.
+	# A solved hand can stop short of its controller. Only the belt's exact
+	# downward orientation and hip region identify a folded rod in protocol 2.
 	if not data.xr or not data.state in [S.State.READY,S.State.LOST]: return false
-	var held: Transform3D=data.right*HELD_POSE
-	return data.rod.origin.distance_to(held.origin)>.015 or data.rod.basis.get_rotation_quaternion().angle_to(held.basis.get_rotation_quaternion())>.02
+	var from_head: Vector3=data.rod.origin-data.head.origin
+	return data.rod.basis.z.distance_to(Vector3.UP)<.001 and Vector2(from_head.x,from_head.z).length()<.65 and from_head.y<-.30 and data.rod.origin.y>=data.feet.y+.50

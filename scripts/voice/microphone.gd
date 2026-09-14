@@ -10,7 +10,7 @@ func configure(owner_voice: Node) -> bool:
 	return AudioServer.set_input_device_active(true)==OK
 func _process(_delta: float) -> void:
 	var allowed: bool=voice.can_transmit()
-	var talking: bool=allowed and (voice.push_to_talk() if voice.mode==1 else voice.hangover>0)
+	var talking: bool=voice.wants_transmit()
 	processtalkstreamends(talking)
 	voice.transmitting=talking
 	# Bound work after a stalled frame, retaining any unconsumed resampler input.

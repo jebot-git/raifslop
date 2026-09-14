@@ -2,7 +2,8 @@
 extends Node
 ## Content-addressed, self-contained VRM library. Gameplay never derives collision from it.
 const MAX_BYTES := 25_000_000
-const CACHE := "user://network_avatars/"
+static var CACHE: String:
+	get: return preload("res://scripts/data_paths.gd").folder("vrm")
 var entries: Dictionary = {}
 var scenes: Dictionary = {}
 var selected := ""
@@ -127,7 +128,15 @@ func register_file(path: String, copy_to_cache: bool = true) -> String:
 
 func create_avatar(hash: String) -> Node3D:
 	if not entries.has(hash): return null
-	return preload("res://scripts/avatar_library.gd").new().load_model(entries[hash].path)
+	if not scenes.has(hash):
+		var model: Node3D=preload("res://scripts/avatar_library.gd").new().load_model(entries[hash].path)
+		if not model:return null
+		var packed:=PackedScene.new()
+		var error:=packed.pack(model);model.free()
+		if error!=OK:return null
+		if scenes.size()>=4:scenes.erase(scenes.keys()[0])
+		scenes[hash]=packed
+	return scenes[hash].instantiate()
 
 static func validate_structure(doc: Dictionary) -> String:
 	for key in ["nodes","buffers","bufferViews","accessors","images","meshes","skins","textures","materials","animations","scenes"]:

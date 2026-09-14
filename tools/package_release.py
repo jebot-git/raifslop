@@ -2,6 +2,7 @@
 from pathlib import Path
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -10,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'builds'
 OUT = BUILD / 'release'
-VERSION = '0.1.2'
+VERSION = re.search(r'^config/version="([^"]+)"', (ROOT / 'project.godot').read_text(), re.M)[1]
 TARGETS = ['Linux', 'Windows', 'Quest', 'Pico']
 
 def digest(path):
@@ -34,7 +35,7 @@ def copy_notices(dest):
                 shutil.copy2(source, target)
 
 def archive(folder, dest, prefix=''):
-    with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+    with zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for file in sorted(folder.rglob('*')):
             if file.is_file():
                 z.write(file, Path(prefix) / file.relative_to(folder))

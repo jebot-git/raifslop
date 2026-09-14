@@ -28,12 +28,16 @@ var rejected_packets:=0
 var permission_wait:=false
 var panel: Control
 var test_receive:=false
+var radio_active:=false
+var radio_audio: Node
+var channel_serial: Dictionary={}
 
 func setup(arena: Node) -> void:
 	game=arena
 	load_preferences()
 	if not game.headless:
 		apply_input_device()
+		radio_audio=preload("res://scripts/voice/radio_audio.gd").new();add_child(radio_audio);radio_audio.setup()
 	multiplayer.peer_disconnected.connect(remove_peer)
 	game.permissions.completed.connect(_permission_result)
 	if not game.headless: set_mode.call_deferred(mode)
@@ -87,21 +91,44 @@ func start_capture() -> void:
 	message="TwoVoIP · hold T / left stick click" if mode==1 else "TwoVoIP · voice activation enabled"
 
 func stop_capture() -> void:
-	permission_wait=false;transmitting=false;meter=0;hangover=0
+	permission_wait=false;transmitting=false;meter=0;hangover=0;set_radio(false)
 	if is_instance_valid(mic):
 		mic.set_process(false);remove_child(mic);mic.queue_free();mic=null
 
 func can_transmit() -> bool:
-	return game.active and not game.dedicated and game.voice_enabled and game.players.has(multiplayer.get_unique_id()) and (not game.root_game.xr or (game.root_game.tracking_was_valid and game.root_game.tracking_manager.focused))
+	# Fishing's tracking flag can stay false while the menu, Guide or holster
+	# bypasses rod updates. Like FPSloppa, voice follows XR focus independently
+	# of controller tracking and resumes as soon as focus returns.
+	return game.active and not game.dedicated and game.voice_enabled and game.players.has(multiplayer.get_unique_id()) and (not game.root_game.xr or game.root_game.tracking_manager.focused)
 
 func push_to_talk() -> bool:
+	if radio_channel():return true
+	if radio_held():return false
 	if game.root_game.xr: return game.root_game.left.is_button_pressed("primary_click")
 	return Input.is_physical_key_pressed(KEY_T) and not game.root_game.menu_open
 
+func radio_held() -> bool:
+	return is_instance_valid(game.root_game.get("shoulder_radio")) and game.root_game.shoulder_radio.held
+
+func set_radio(value: bool) -> void:
+	value=value and mode>0 and can_transmit()
+	if value==radio_active:return
+	radio_active=value
+	if is_instance_valid(radio_audio):radio_audio.cue(value,volume if not muted_all else 0.0)
+
+func radio_channel() -> bool:
+	return radio_active and mode>0 and can_transmit()
+
+func wants_transmit() -> bool:
+	return mode>0 and can_transmit() and (radio_channel() or not radio_held() and (push_to_talk() if mode==1 else hangover>0))
+
 func _process(delta: float) -> void:
+	if not game.dedicated and not game.root_game.xr:
+		set_radio(Input.is_physical_key_pressed(KEY_B) and not game.root_game.menu_open)
+	elif radio_active and not can_transmit():set_radio(false)
 	for id in streams.keys():
 		var state: Dictionary=streams[id]
-		if not game.players.has(id) or not game.same_location(multiplayer.get_unique_id(),id) or game.clock-state.last_time>2:remove_stream(id);continue
+		if not game.players.has(id) or not state.radio and not game.same_location(multiplayer.get_unique_id(),id) or game.clock-state.last_time>2:remove_stream(id);continue
 		var speaker=state.speaker
 		if game.clock-state.last_time>.16 and speaker.inopusstream:speaker.external_end_stream()
 		if game.fighters.has(id) and state.player is AudioStreamPlayer3D:state.player.global_position=game.fighters[id].head.global_position
@@ -123,12 +150,12 @@ static func valid_packet(data: PackedByteArray) -> bool:
 
 func send_packet(data: PackedByteArray) -> void:
 	sequence+=1
-	if multiplayer.is_server():relay(multiplayer.get_unique_id(),sequence,data)
-	else:submit.rpc_id(1,sequence,data)
+	if multiplayer.is_server():relay(multiplayer.get_unique_id(),sequence,data,radio_channel())
+	else:submit.rpc_id(1,sequence,data,radio_channel())
 
 @rpc("any_peer","call_remote","unreliable",6)
-func submit(serial: int,data: PackedByteArray) -> void:
-	if multiplayer.is_server():relay(multiplayer.get_remote_sender_id(),serial,data)
+func submit(serial: int,data: PackedByteArray,radio: bool=false) -> void:
+	if multiplayer.is_server():relay(multiplayer.get_remote_sender_id(),serial,data,radio)
 
 func accept_sender(id: int,serial: int,data: PackedByteArray) -> bool:
 	if not game.active or not game.voice_enabled or not game.players.has(id) or id<1 or not valid_packet(data) or serial<0 or serial>2147483647:
@@ -142,33 +169,51 @@ func accept_sender(id: int,serial: int,data: PackedByteArray) -> bool:
 		if old<state.last-32:state.seen.erase(old)
 	return true
 
-func relay(id: int,serial: int,data: PackedByteArray) -> void:
-	if not accept_sender(id,serial,data):return
+func recipients(id: int,radio: bool) -> Array:
+	var result: Array=[]
+	if not game.active or not game.voice_enabled or not game.players.has(id):return result
 	for peer in game.players:
-		if peer>1 and peer!=id and game.same_location(peer,id):receive.rpc_id(peer,id,serial,data)
-	if id!=1 and not game.dedicated and game.same_location(1,id):receive(id,serial,data)
+		if peer!=id and (radio or game.same_location(peer,id)):result.append(peer)
+	return result
+
+func relay(id: int,serial: int,data: PackedByteArray,radio: bool=false) -> void:
+	if not accept_sender(id,serial,data):return
+	for peer in recipients(id,radio):
+		if peer>1:receive.rpc_id(peer,id,serial,data,radio)
+		elif not game.dedicated:receive(id,serial,data,radio)
 	relayed_packets+=1
 
-func create_stream(id: int,serial: int) -> void:
-	var player=AudioStreamPlayer.new() if game.headless else AudioStreamPlayer3D.new()
+func create_stream(id: int,serial: int,radio: bool=false) -> void:
+	var player=AudioStreamPlayer.new() if game.headless or radio else AudioStreamPlayer3D.new()
 	if player is AudioStreamPlayer3D:
 		player.unit_size=8;player.max_distance=60;player.attenuation_filter_cutoff_hz=18000
+	if radio and is_instance_valid(radio_audio):player.bus=radio_audio.bus
 	add_child(player)
 	var speaker=Speaker.new();speaker.audio_buffer_lag_time_target=.08;speaker.audio_buffer_lag_time_target_tolerance=.06;player.add_child(speaker)
 	speaker.packet_decoded.connect(func():decoded_packets+=1)
 	var header:={"opussamplerate":48000,"opuschannels":1,"lenchunkprefix":2,"opusstreamcount":0,"opusframesize":960,"opusframecount":0,"talkingtimestart":0}
 	speaker.receive_audio_packet(JSON.stringify(header).to_ascii_buffer())
-	streams[id]={"player":player,"speaker":speaker,"base":serial,"last":serial-1,"seen":{},"last_time":game.clock}
+	streams[id]={"radio":radio,"player":player,"speaker":speaker,"base":serial,"last":serial-1,"seen":{},"last_time":game.clock}
 
 @rpc("authority","call_remote","unreliable",6)
-func receive(id: int,serial: int,data: PackedByteArray) -> void:
+func receive(id: int,serial: int,data: PackedByteArray,radio: bool=false) -> void:
 	if not game.voice_enabled or not game.players.has(id) or id==multiplayer.get_unique_id() or muted_all or muted.has(id) or not valid_packet(data):return
+	if serial<0 or serial>2147483647:return
+	# FPSloppa's monotonic channel history prevents delayed radio frames from
+	# switching playback back after a newer local-voice packet (and vice versa).
+	var channel: Dictionary=channel_serial.get(id,{"serial":-1,"radio":radio})
+	if serial<=channel.serial and radio!=channel.radio:return
+	if serial>channel.serial:channel_serial[id]={"serial":serial,"radio":radio}
+	if streams.has(id) and streams[id].radio!=radio:remove_stream(id)
+	if not radio and not game.same_location(multiplayer.get_unique_id(),id):return
 	if game.headless and not test_receive:return
 	if streams.has(id):
 		var old: Dictionary=streams[id]
 		if serial<old.base or serial<old.last-32 or old.seen.has(serial):return
 		if serial>old.last+50 or serial-old.base>=32000 or game.clock-old.last_time>.16:remove_stream(id)
-	if not streams.has(id):create_stream(id,serial)
+	if not streams.has(id):
+		create_stream(id,serial,radio)
+		if radio and is_instance_valid(radio_audio):radio_audio.cue(true,volume)
 	var state: Dictionary=streams[id]
 	state.last=maxi(state.last,serial);state.last_time=game.clock;state.seen[serial]=true
 	for old in state.seen.keys():
@@ -195,11 +240,11 @@ func remove_stream(id: int) -> void:
 		streams.erase(id);mouth_poses.erase(id)
 
 func remove_peer(id: int) -> void:
-	remove_stream(id); guard.erase(id); muted.erase(id)
+	remove_stream(id); guard.erase(id); muted.erase(id);channel_serial.erase(id)
 
 func reset() -> void:
 	for id in streams.keys(): remove_stream(id)
-	guard.clear(); muted.clear();mouth_poses.clear(); sequence=0
+	guard.clear(); muted.clear();mouth_poses.clear();channel_serial.clear(); sequence=0;set_radio(false)
 	game.voice_enabled=true
 	set_mode(mode)
 

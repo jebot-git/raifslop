@@ -37,7 +37,8 @@ func setup(owner_session: Node, back: Callable) -> void:
 	devices.configure(options,"Microphone device");devices.value=session.voice.input_device;devices.update_label()
 	devices.selected.connect(session.voice.select_input_device)
 	voice_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; add_child(voice_status)
-	var note:=Label.new(); note.text="Voice reaches anglers at your location. Select a player to mute them.\nInternet hosting needs UDP port forwarding. Fish Guide stays on this device."
+	var note:=Label.new(); note.text="Nearby voice: T / left stick click. Radio to all waters: hold B.\nVR radio: grab at left shoulder, hold trigger to talk, release grip to dock.\nSelect a player to mute them. Internet hosting needs UDP port forwarding."
+	note.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_font_size_override("font_size",16); add_child(note)
 	var bottom:=HBoxContainer.new(); add_child(bottom)
 	button(bottom,"Retry microphone access",session.voice.retry_access)
@@ -50,7 +51,7 @@ func _process(delta: float) -> void:
 func refresh() -> void:
 	if not session: return
 	status.text=session.status
-	voice_status.text=session.voice.message+(" · speaking" if session.voice.transmitting else "")
+	voice_status.text=session.voice.message+(" · ALL WATERS RADIO" if session.voice.radio_active else " · speaking" if session.voice.transmitting else "")
 	if not session.avatars.message.is_empty(): voice_status.text+="\n"+session.avatars.message
 	roster.clear()
 	for id in session.players:

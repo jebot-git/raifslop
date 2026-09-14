@@ -1,5 +1,6 @@
 extends Node
 ## Fishing adapter for FPSloppa tracking, calibration and recentering.
+const Scale = preload("res://scripts/avatar_scale.gd")
 var root_game: Node
 var game: Node # Permission interface consumed by upstream tracking.
 var origin: XROrigin3D
@@ -7,6 +8,8 @@ var head: Camera3D
 var left: XRController3D
 var right: XRController3D
 var focused := true
+# FPSloppa calibrates the physical player once, independently of avatar size.
+var calibration_pending := true
 var seated := false
 var expressions_enabled := true
 var tracked_leg_animation := false
@@ -50,6 +53,8 @@ func sample(delta: float) -> void:
 	var xr := XRServer.find_interface("OpenXR") as OpenXRInterface
 	if root_game.xr and xr and xr.is_initialized():
 		focused = xr.get_session_state() == OpenXRInterface.SESSION_STATE_FOCUSED
+	if calibration_pending and root_game.xr and focused and head_tracked() and head.position.y > .5:
+		recenter()
 	calibration_notice_time=maxf(0,calibration_notice_time-delta)
 	if calibration_notice_time<=0: calibration_notice=""
 	root_game.motor.tracking_focused=focused
@@ -63,7 +68,8 @@ func sample(delta: float) -> void:
 		if not tracking.full_body_available():
 			calibration_notice="T-pose detected · enable body trackers or SlimeVR OSC"
 			t_pose_detector.reset(); t_pose_detector.latched=false
-		elif detected: tracking.calibrate(true)
+		elif detected:
+			if recenter(): tracking.calibrate(true)
 		else: calibration_notice="Hold T-pose · %.1f s" % maxf(0,t_pose_detector.HOLD_SECONDS-t_pose_detector.held)
 		calibration_notice_time=2.0 if detected else .25
 	root_game.hud.calibration_message=calibration_notice
@@ -76,13 +82,14 @@ func recenter() -> bool:
 		message="Finish the cast and put away the Guide before recentering"
 		return false
 	if not head_tracked() or head.position.y<.3: message="Head tracking is unavailable"; return false
+	calibration_pending=false
 	# FPSloppa height calibration: standing scale or seated height translation.
 	if seated:
 		var physical_height:=head.position.y/XRServer.world_scale
 		XRServer.world_scale=1.0
-		origin.position.y=clampf(1.65-physical_height,-.5,1.4)
+		origin.position.y=clampf(Scale.HEAD_HEIGHT-physical_height,-.5,1.4)
 	else:
-		XRServer.world_scale=clampf(XRServer.world_scale*1.65/head.position.y,.65,1.5)
+		XRServer.world_scale=Scale.world_scale(XRServer.world_scale,head.position.y)
 		origin.position.y=0
 	var yaw:=atan2(head.global_basis.z.x,head.global_basis.z.z)
 	root_game.motor.turn(-yaw)

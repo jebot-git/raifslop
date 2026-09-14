@@ -50,14 +50,18 @@ func _initialize() -> void:
 	s.state = Session.State.FIGHT
 	s.tension = 1.0
 	s.distance = 20
-	for i in range(200): s.tick(0.02, 2, 1)
+	for i in range(200):
+		s.tick(0.02, 2, 1)
+		if s.state != Session.State.FIGHT: break
 	check(s.state == Session.State.LOST, "Over-reeling must snap line")
 	s.state = Session.State.FIGHT
 	s.tension = 0
 	s.danger_time = 0
 	s.cue = -1
 	s.next_cue = 100
-	for i in range(200): s.tick(0.02, 0, 0)
+	for i in range(200):
+		s.tick(0.02, 0, 0)
+		if s.state != Session.State.FIGHT: break
 	check(s.state == Session.State.LOST, "Sustained slack must lose fish")
 	var r = Reel.new()
 	check(r.sample(Vector3(0, 0.08, 0), true, 0.01) == 0, "First grab must not reel")

@@ -18,7 +18,7 @@ def main():
             def launch(role,extra=()):
                 env=dict(os.environ,XDG_DATA_HOME=str(base/(str(port)+role)),XDG_CONFIG_HOME=str(base/'config'))
                 path=base/(str(port)+'-'+role+'.log'); stream=path.open('w')
-                args=[GODOT,'--headless','--xr-mode','off','--path',str(ROOT),'--script','res://tests/multiplayer.gd','--',role,str(port),str(avatar),*extra]
+                args=[GODOT,'--headless','--xr-mode','off','--path',str(ROOT),'--script','res://tests/multiplayer.gd','--',role,str(port),str(avatar),*extra,'--asset-root',str(base/(str(port)+role)/'data')]
                 if os.environ.get('TEST_VERBOSE'): args.insert(1,'--verbose')
                 process=subprocess.Popen(args,env=env,stdout=stream,stderr=subprocess.STDOUT)
                 jobs.append((role,process,stream,path))

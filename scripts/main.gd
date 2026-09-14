@@ -11,7 +11,9 @@ const AvatarMenu = preload("res://scripts/avatar_menu.gd")
 const Locations = preload("res://scripts/locations.gd")
 var tracking_manager: Node
 var ambience: Node
+var shoulder_radio: Node3D
 var network: Node
+var rod_status: Node3D
 var server_only := false
 var fish_guide: Node3D
 var foreground: Node3D
@@ -20,6 +22,8 @@ var world_environment: Environment
 var panorama_material: ShaderMaterial
 var location_sun: DirectionalLight3D
 var water_material: ShaderMaterial
+var water_surface: MeshInstance3D
+var water_level := -.35
 var motor: CharacterBody3D
 var avatars = AvatarLibrary.new()
 var avatar: Node3D
@@ -104,6 +108,8 @@ func _ready() -> void:
 	last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
 	ambience=preload("res://scripts/ambience.gd").new()
 	add_child(ambience);ambience.setup(self)
+	shoulder_radio=preload("res://scripts/voice/shoulder_radio.gd").new()
+	add_child(shoulder_radio);shoulder_radio.setup(self)
 	fishing_feedback=preload("res://scripts/fishing_feedback.gd").new()
 	add_child(fishing_feedback);fishing_feedback.setup(self)
 	shadow_policy=preload("res://scripts/shadow_policy.gd").new()
@@ -174,7 +180,8 @@ func _build_environment() -> void:
 	var wm := ShaderMaterial.new()
 	water_material = wm
 	wm.shader = load("res://assets/environment/water.gdshader")
-	mesh_node(water, self, Vector3(0, -0.35, -40), wm)
+	water_surface=mesh_node(water, self, Vector3(0, water_level, -40), wm)
+	water_surface.name="WaterSurface"
 	var sphere := SphereMesh.new()
 	sphere.radius = 0.045
 	sphere.height = 0.14
@@ -238,6 +245,7 @@ func _build_rod() -> void:
 		origin.add_child(rod)
 		rod.position = Vector3(0.30, 1.43, 0.30)
 	rod.rotation.x = 0.35
+	if xr: rod.top_level = true
 	rod_visual = preload("res://scripts/rod_visual.gd").new()
 	rod.add_child(rod_visual)
 	rod_visual.equip(game.tackle.equipped)
@@ -248,6 +256,9 @@ func _build_rod() -> void:
 	rod_holster = preload("res://scripts/rod_holster.gd").new()
 	rod_holster.game_root=self
 	add_child(rod_holster)
+	rod_status = preload("res://scripts/rod_status.gd").new()
+	rod_status.game_root = self
+	add_child(rod_status)
 
 func _build_ui() -> void:
 	hud = HUD.new()
@@ -319,11 +330,14 @@ func _quit_game() -> void:
 	get_tree().quit()
 
 func _select_bait(index: int) -> void:
+	var previous: int = game.bait
 	game.select_bait(index)
+	if game.bait != previous and is_instance_valid(rod_status): rod_status.show_bait()
 	_save_player_preferences()
 	hud.queue_redraw()
 
 func _left_button(button: String) -> void:
+	if is_instance_valid(shoulder_radio) and shoulder_radio.held:return
 	if fish_guide.held:
 		if button == "trigger_click": fish_guide.photo_camera.toggle(); return
 		if button == "ax_button": fish_guide.page(1)
@@ -346,7 +360,8 @@ func _right_pressed(button: String) -> void:
 	if menu_open:
 		if button == "trigger_click": _menu_click(true)
 		return
-	if button == "trigger_click" and game.state == Session.State.READY and not rod_holster.stowed:
+	if button == "trigger_click" and game.state in [Session.State.READY, Session.State.LOST] and not rod_holster.stowed:
+		if game.state == Session.State.LOST: game.reset()
 		casting = true
 		peak_speed = 0.0
 	elif button == "ax_button" and game.state in [Session.State.LANDED, Session.State.LOST]:
@@ -401,7 +416,7 @@ func _landing_distance(anchor: Vector3, direction: Vector3) -> float:
 func _cast(power: float) -> void:
 	if game.state != Session.State.READY or rod_holster.stowed: return
 	var direction := _cast_direction()
-	cast_anchor = Vector3(rod.global_position.x, -0.3, rod.global_position.z)
+	cast_anchor = Vector3(rod.global_position.x, water_level+.05, rod.global_position.z)
 	var endpoint := cast_anchor + direction * power
 	if endpoint.z > 1.5:
 		game.message = "Aim out over the lake, away from the shore."
@@ -476,6 +491,7 @@ func _process(delta: float) -> void:
 	rod_holster.update_holster()
 	fish_guide.update_device()
 	if is_instance_valid(tracking_manager): tracking_manager.sample(delta)
+	shoulder_radio.update()
 	_update_tracking_warning(delta)
 	rod_visual.visible = true
 	rod.visible = rod_holster.stowed or not xr or right.get_has_tracking_data()
@@ -500,6 +516,7 @@ func _process(delta: float) -> void:
 			var scroll_axis := right.get_vector2("primary").y
 			if absf(scroll_axis) > 0.2: avatar_menu.scroll_page(-scroll_axis * 650.0 * delta)
 		last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
+		_update_line()
 		return
 	if rod_holster.stowed:
 		_update_line()
@@ -527,12 +544,12 @@ func _process(delta: float) -> void:
 		if casting:
 			peak_speed = maxf(peak_speed, maxf(0.0, velocity.dot(_cast_direction())))
 		var reel_pos := rod.to_local(left.global_position) - crank.position
-		reel = reel_tracker.sample(reel_pos, left.get_float("grip") > 0.55, delta)
+		reel = reel_tracker.sample(reel_pos, left.get_float("grip") > 0.55 and not shoulder_radio.held, delta)
 		if game.state == Session.State.BITE and velocity.y > 0.9:
 			game.strike()
 		if game.state == Session.State.FIGHT:
 			var facing := Basis(Vector3.UP,atan2(head.global_basis.z.x,head.global_basis.z.z))
-			var direction := fight_input.sample(game.cue,origin.global_basis.inverse()*(tip.global_position-head.global_position),origin.global_basis.inverse()*facing)
+			var direction := fight_input.sample(game.cue,origin.global_basis.inverse()*(tip.global_position-head.global_position),origin.global_basis.inverse()*facing, -rod.global_basis.z.y)
 			game.gesture(direction)
 		else: fight_input.reset()
 	else:
@@ -541,9 +558,11 @@ func _process(delta: float) -> void:
 	# Retrieval accepts either winding direction; the handle follows the actual hand.
 	crank.rotation.x += reel_tracker.angular_delta if xr else reel * TAU * delta
 	fishing_feedback.reel_rate = reel
-	escape_offset=escape_offset.move_toward(fish_escape_direction() * (1.1 if game.cue >= 0 and game.state == Session.State.FIGHT else 0.0), delta * 1.8)
+	if game.state == Session.State.FIGHT and game.cue >= 0:
+		escape_offset=escape_offset.move_toward(fish_escape_direction() * 1.1, delta * 1.8)
 	last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
 	game.tick(minf(delta, 0.05), reel, maxf(0.0, -rod.global_basis.z.y))
+	_settle_fish_escape()
 	if game.state != last_state:
 		if game.state == Session.State.BITE:
 			_tone(880, 0.18)
@@ -553,6 +572,8 @@ func _process(delta: float) -> void:
 			if game.tackle.save_profile() != OK:
 				game.message += "\nCould not save shekels."
 		elif game.state == Session.State.LOST:
+			casting=false;peak_speed=0;fight_input.reset();reel_tracker.engaged=false
+			escape_offset=Vector3.ZERO;catch_in_hand=false;fish_display.hide()
 			_tone(180, 0.18)
 		last_state = game.state
 	if fish_display.visible:
@@ -596,6 +617,17 @@ func _update_catch(delta: float) -> void:
 		var hook := tip.global_position - Vector3.UP * 0.28
 		fish_display.global_transform = Transform3D(orientation, hook - orientation * _catch_mouth())
 
+func _settle_fish_escape() -> void:
+	if game.state != Session.State.FIGHT or game.cue >= 0 or escape_offset.is_zero_approx(): return
+	# The counter ends where the fish actually swam. Rebase the retrieval ray
+	# around the original angler anchor, retaining both lateral and outward runs.
+	# Subsequent reeling and counters then start from this new position.
+	var direction := (cast_target - cast_anchor).normalized()
+	var position_from_anchor: Vector3 = direction * game.distance + escape_offset
+	game.distance = position_from_anchor.length()
+	cast_target = cast_anchor + position_from_anchor
+	escape_offset = Vector3.ZERO
+
 func fish_escape_direction() -> Vector3:
 	# Cues name the COUNTER: a left pull opposes a rightward escape.
 	var sideways := origin.global_basis.x.normalized()
@@ -614,13 +646,24 @@ func _update_line() -> void:
 		elif game.tension > .75: tension_color = tension_color.lerp(Color("ff5344"), (game.tension - .75) / .25)
 	line_material.albedo_color = tension_color
 	var active: bool = game.state in [Session.State.CASTING, Session.State.WAITING, Session.State.BITE, Session.State.FIGHT]
-	bobber.visible = active
+	var ready: bool = game.state == Session.State.READY and not rod_holster.stowed
+	bobber.visible = active or ready
+	if is_instance_valid(rod_status): rod_status.bait_visual.visible = ready
 	line_mesh.clear_surfaces()
 	if xr and game.state == Session.State.LANDED and fish_display.visible:
 		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
 		line_mesh.surface_add_vertex(tip.global_position)
 		if catch_in_hand: line_mesh.surface_add_vertex(left.global_position)
 		line_mesh.surface_add_vertex(fish_display.to_global(_catch_mouth()))
+		line_mesh.surface_end()
+		return
+	if ready:
+		bobber.global_position = tip.global_position + Vector3.DOWN * .30
+		rod_status.bait_visual.global_position = bobber.global_position + Vector3.DOWN * .18
+		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+		line_mesh.surface_add_vertex(tip.global_position)
+		line_mesh.surface_add_vertex(bobber.global_position)
+		line_mesh.surface_add_vertex(rod_status.bait_visual.global_position)
 		line_mesh.surface_end()
 		return
 	if not active:
@@ -788,6 +831,10 @@ func _select_location(id: String, persist := true) -> bool:
 	water_material.set_shader_parameter("deep_color", entry.water)
 	water_material.set_shader_parameter("water_roughness", entry.roughness)
 	water_material.set_shader_parameter("ripple_strength", entry.ripples)
+	water_level=entry.get("water_level",-.35)
+	water_surface.position.y=water_level
+	water_material.set_shader_parameter("protect_panorama_foreground",entry.get("protect_panorama_foreground",false))
+	water_material.set_shader_parameter("panorama_water_region",entry.get("panorama_water_region",Vector4(0,1,0,1)))
 	current_location = id
 	if is_instance_valid(shadow_policy): shadow_policy.apply_materials(foreground)
 	if is_instance_valid(ambience): ambience.select_location(id)
@@ -853,12 +900,13 @@ func _select_avatar(path: String) -> void:
 		candidate.name = "PlayerAvatar"
 		# FPSloppa normalizes the model independently of the current headset pose.
 		# Loading while seated, crouching, or reconnecting must not shrink the body.
-		candidate.standing_height = 1.65
+		candidate.standing_height = AvatarRig.Scale.HEAD_HEIGHT
 		candidate.add_child(model)
 		add_child(candidate)
 		if candidate.configure(model):
 			if is_instance_valid(avatar): avatar.queue_free()
 			avatar = candidate
+			candidate.right_grip_updated.connect(_attach_rod_to_hand.bind(candidate))
 			avatars.save_selection(path)
 			avatar_menu.status.text = "Avatar equipped · Hands and head follow your controls."
 		else:
@@ -871,14 +919,30 @@ func _select_avatar(path: String) -> void:
 	motor.blocked = menu_open
 
 func _import_avatar(path: String) -> void:
-	var result := avatars.import_file(path)
-	if result.has("error"):
-		avatar_menu.status.text = result.error
-		return
-	avatar_menu.refresh()
-	_select_avatar(result.path)
+	if avatar_loading:return
+	avatar_loading=true;avatar_menu.status.text="Importing avatar…"
+	if not network.avatars.disk.submit(AvatarLibrary.copy_import.bind(path,AvatarLibrary.CACHE),func(result):
+		avatar_loading=false
+		if result.has("error"):
+			avatar_menu.status.text=result.error
+			return
+		avatars.accept_import(result)
+		avatar_menu.refresh()
+		_select_avatar(result.path)):
+		avatar_loading=false;avatar_menu.status.text="Avatar import is busy. Try again."
+
+func _attach_rod_to_hand(grip: Transform3D, source: Node3D) -> void:
+	if not xr or source != avatar or rod_holster.stowed: return
+	rod.top_level = true
+	rod.global_transform = grip * rod_holster.HELD_POSE
+	# Skeleton modifiers run after ordinary processing; keep tackle and line at
+	# the rendered tip rather than leaving them one frame behind the hand.
+	_update_line()
+	rod_status.label.global_position = rod.to_global(Vector3(0,.16,-.78))
 
 func _update_avatar(delta: float) -> void:
+	if xr and not is_instance_valid(avatar) and not rod_holster.stowed:
+		rod.global_transform = right.global_transform * rod_holster.HELD_POSE
 	if not xr:
 		var reel_angle := crank.rotation.x
 		desktop_left.global_transform = rod.global_transform
