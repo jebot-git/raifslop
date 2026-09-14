@@ -74,6 +74,7 @@ func run() -> void:
 	print("Location species and bait tests: %d checks, %d failures" % [checks, failures])
 	g.queue_free()
 	await process_frame
+	await create_timer(.3).timeout
 	quit(1 if failures else 0)
 func gallery() -> void:
 	var view := SubViewport.new()

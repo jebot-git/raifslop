@@ -1,5 +1,19 @@
 extends Node3D
 const IK = preload("res://scripts/avatar_ik.gd")
+const RestBounds = preload("res://scripts/avatar_rest_bounds.gd")
+var gait = preload("res://scripts/avatar_gait.gd").new()
+var neutral_hip_height := 0.92
+var neutral_foot_heights: Dictionary = {"left": 0.08, "right": 0.08}
+var grounded := true
+var collider_height := 1.65
+var aim_pitch := 0.0
+var tracked_leg_animation := false
+var secondary_nodes: Array[Node] = []
+var render_frame := Transform3D.IDENTITY
+var right_index_tip: Variant = null
+var right_index_tip_frame := -10
+var index_tip_bone := -1
+var index_tip_offset := Vector3.ZERO
 var skeleton: Skeleton3D
 var model: Node3D
 var solver: SkeletonModifier3D
@@ -16,7 +30,10 @@ var body: Dictionary={}
 var face: Dictionary={}
 var mouth: Node
 var eyes: SkeletonModifier3D
-var first_person := true
+var first_person := true:
+	set(value):
+		first_person = value
+		for secondary in secondary_nodes: secondary.set_local_body(value)
 var dead := false
 var preview_mode := -1
 var speed := 0.0
@@ -37,24 +54,46 @@ func configure(root: Node3D) -> bool:
 	if not skeleton: return false
 	for bone in ["Hips", "Head", "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand", "LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "RightUpperLeg", "RightLowerLeg", "RightFoot"]:
 		if skeleton.find_bone(bone) < 0: return false
-	var rest_head := skeleton.get_bone_global_rest(skeleton.find_bone("Head")).origin
-	var eye_height := (root.transform * skeleton.transform * rest_head).y + 0.10
-	if not is_finite(eye_height) or eye_height < 0.2 or eye_height > 5.0: return false
-	root.scale *= standing_height / eye_height
 	root.rotation.y += PI
+	# FPSloppa: measure skinned vertices in rest pose, including nested transforms.
+	# Raw mesh bounds and head-bone height do not describe a VRM's actual size.
+	var local_bounds: AABB = root.get_meta(RestBounds.CACHE_KEY) if root.has_meta(RestBounds.CACHE_KEY) else RestBounds.measure(root)
+	var bounds: AABB = root.transform * local_bounds
+	if not bounds.size.is_finite() or bounds.size.y < 0.05 or bounds.size.y > 1000: return false
+	var factor := (standing_height + 0.05) / bounds.size.y
+	root.scale *= factor
+	root.position *= factor
+	root.position.y -= bounds.position.y * factor
+	var transforms: Dictionary = {}
+	RestBounds.collect(root, root.transform, transforms)
+	var skeleton_transform: Transform3D = transforms[skeleton]
+	neutral_hip_height = (skeleton_transform * skeleton.get_bone_global_rest(skeleton.find_bone("Hips")).origin).y
+	for side in ["Left", "Right"]:
+		neutral_foot_heights[side.to_lower()] = (skeleton_transform * skeleton.get_bone_global_rest(skeleton.find_bone(side+"Foot")).origin).y
 	mouth=preload("res://scripts/avatar_mouth.gd").new(); add_child(mouth); mouth.setup(root)
 	eyes=preload("res://scripts/avatar_eyes.gd").new(); eyes.rig=self
 	# Capture the VRM expression bindings before stripping imported animation players.
 	eyes.setup(root)
+	mouth.external_mixer = true
+	mouth.mixer = eyes.apply_morphs
 	strip_extras(root)
+	# generate_scene can restore pre-retarget glTF local poses after the VRM
+	# extension has changed the rest frames. IK only overwrites humanoid limbs;
+	# stale toes and skin helper offsets otherwise tear vertices out of the mesh.
+	skeleton.reset_bone_poses()
 	solver = IK.new()
 	skeleton.add_child(solver)
 	solver.setup(self)
+	_setup_index_tip()
+	solver.modification_processed.connect(_capture_index_tip)
 	skeleton.add_child(eyes)
 	add_to_group("fishing_avatar_rigs")
 	return true
 
 func strip_extras(node: Node) -> void:
+	if node is VRMSecondary:
+		secondary_nodes.append(node)
+		node.set_local_body(first_person)
 	for child in node.get_children():
 		if child is Camera3D or child is Light3D or child is CollisionObject3D or child is AudioStreamPlayer3D or child is AnimationPlayer:
 			child.free()
@@ -72,17 +111,60 @@ func update_targets(camera: Camera3D, left_hand: Node3D, right_hand: Node3D, fee
 	head = camera
 	left_target = left_hand
 	right_target = right_hand
-	global_position = Vector3(head.global_position.x, feet_y, head.global_position.z)
+	# One frame owns skeleton placement and all tracked targets. Rebase body samples
+	# from the capsule frame before applying the player's heading (also remotely).
 	var yaw := atan2(head.global_basis.z.x, head.global_basis.z.z)
-	rotation.y = lerp_angle(rotation.y, yaw, minf(1.0, delta * 6.0))
+	render_frame = Transform3D(Basis(Vector3.UP, yaw), Vector3(pose_frame.origin.x, feet_y, pose_frame.origin.z))
+	global_transform = render_frame
 	walk_speed = Vector2(motion.x, motion.z).length()
 	walk_phase += delta * walk_speed * 4.0
 	speed=walk_speed; movement=global_basis.inverse()*motion; phase=walk_phase/TAU
-	var inverse:=pose_frame.affine_inverse()
-	xr_pose={"head":inverse*head.global_transform,"left":inverse*left_hand.global_transform,"right":inverse*right_hand.global_transform,"body":body,"face":face}
+	var inverse := render_frame.affine_inverse()
+	var local_body: Dictionary = {}
+	for key in body:
+		local_body[key] = inverse * pose_frame * body[key] if body[key] is Transform3D else body[key]
+	xr_pose={"head":inverse*head.global_transform,"left":inverse*left_hand.global_transform,"right":inverse*right_hand.global_transform,"body":local_body,"face":face}
+	collider_height = head.global_position.y - feet_y
+	gait.update(delta, movement, "crouch" if collider_height < standing_height * 0.75 else "stand", grounded, local_body, tracked_leg_animation)
 	if face.has("mouth"): mouth.speak(face.mouth)
-	mouth.express(face.get("expressions",PackedFloat32Array([0,0,0,0,0])))
 
 
 func apply_tracking(frame: Transform3D, body_data: Dictionary, face_data: Dictionary) -> void:
 	pose_frame=frame; body=body_data; face=face_data
+
+func tracking_transform() -> Transform3D:
+	return render_frame
+
+func fit_tracked_hips(pose: Transform3D) -> Transform3D:
+	pose.origin.y += neutral_hip_height - 0.92
+	return pose
+
+func fit_tracked_foot(side: String, pose: Transform3D) -> Transform3D:
+	pose.origin.y += float(neutral_foot_heights.get(side, 0.08)) - 0.08
+	return pose
+
+func mesh_bounds(node: Node3D, parent_transform: Transform3D) -> AABB:
+	return parent_transform * node.transform * RestBounds.measure(node)
+
+func _setup_index_tip() -> void:
+	index_tip_bone = skeleton.find_bone("RightIndexDistal")
+	if index_tip_bone < 0: return
+	var rest := skeleton.get_bone_global_rest(index_tip_bone)
+	for child in skeleton.get_bone_children(index_tip_bone):
+		var offset := rest.affine_inverse() * skeleton.get_bone_global_rest(child).origin
+		if offset.length() > .001:
+			index_tip_offset = offset
+			return
+	# VRMs may omit the terminal marker; estimate the final phalanx from its neighbour.
+	var parent := skeleton.get_bone_parent(index_tip_bone)
+	var length := rest.origin.distance_to(skeleton.get_bone_global_rest(parent).origin) * .75
+	index_tip_offset = Vector3.UP * length
+
+func _capture_index_tip() -> void:
+	if index_tip_bone < 0: return
+	# Read while modifiers are applied. Godot restores raw poses after this signal.
+	right_index_tip = skeleton.to_global(skeleton.get_bone_global_pose(index_tip_bone) * index_tip_offset)
+	right_index_tip_frame = Engine.get_process_frames()
+
+func index_touch_position() -> Variant:
+	return right_index_tip if Engine.get_process_frames() - right_index_tip_frame <= 2 else null

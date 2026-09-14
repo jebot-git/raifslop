@@ -39,11 +39,11 @@ func _process(delta: float) -> void:
 		entry.player.volume_db=linear_to_db(maxf(.0001,entry.gain*volume)) if not muted else -80
 		if entry.gain==0 and id!=location:
 			entry.player.stop();entry.player.stream=null
-	detail.volume_db=linear_to_db(maxf(.0001,volume)) - 9 if not muted else -80
+	detail.volume_db=linear_to_db(maxf(.0001,volume)) - 15 if not muted else -80
 	detail_wait-=delta
 	if detail_wait<=0:
 		detail_wait=rng.randf_range(16,33)
-		if location in ["lake_pier","gray_pier","bell_park_pier"] and not muted and volume>0:
+		if location in ["lake_pier","bell_park_pier"] and not muted and volume>0:
 			detail.pitch_scale=rng.randf_range(.78,1.12) if location=="bell_park_pier" else rng.randf_range(.85,1.2)
 			detail.play()
 func set_volume(value: float) -> void:
@@ -51,9 +51,15 @@ func set_volume(value: float) -> void:
 func set_muted(value: bool) -> void:
 	muted=value;save()
 func save() -> void:
-	var cfg:=ConfigFile.new();cfg.set_value("ambience","volume",volume);cfg.set_value("ambience","muted",muted);cfg.save("user://sound.cfg")
+	var cfg:=ConfigFile.new();cfg.set_value("ambience","volume",volume);cfg.set_value("ambience","muted",muted)
+	var error:=cfg.save("user://sound.cfg")
+	if error!=OK:push_warning("Cannot save sound settings: "+error_string(error))
 
-func _exit_tree() -> void:
+func stop() -> void:
+	set_process(false)
 	for entry in voices.values():
 		entry.player.stop();entry.player.stream=null
 	voices.clear();detail.stop();detail.stream=null
+
+func _exit_tree() -> void:
+	stop()

@@ -9,7 +9,7 @@ if subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True
     raise SystemExit('Commit the source changes before building a release.')
 revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
 build = ROOT/'builds'; build.mkdir(exist_ok=True)
-godot = os.environ.get('GODOT_BIN', str(Path.home()/'.local/bin/Godot_v4.7.2-stable_linux.x86_64'))
+godot = os.environ.get('GODOT_BIN', shutil.which('godot') or 'godot')
 sdk = Path(os.environ.get('ANDROID_SDK_ROOT', str(Path.home()/'Android/Sdk')))
 jdk = Path(os.environ.get('JAVA_HOME', str(Path.home()/'.local/share/entryway-toolchains/jdk-17.0.20.1+1')))
 env = dict(os.environ, XDG_CONFIG_HOME=str(build/'config'))

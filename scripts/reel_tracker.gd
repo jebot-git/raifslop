@@ -4,7 +4,9 @@ extends RefCounted
 var engaged := false
 var previous_angle := 0.0
 var angle := 0.0
+var angular_delta := 0.0
 func sample(local_hand: Vector3, grip: bool, delta: float) -> float:
+	angular_delta = 0.0
 	var radial := Vector2(local_hand.y, local_hand.z)
 	var valid := grip and absf(local_hand.x) < 0.18 and radial.length() > 0.035 and radial.length() < 0.22
 	if not valid:
@@ -20,4 +22,5 @@ func sample(local_hand: Vector3, grip: bool, delta: float) -> float:
 	if delta <= 0.0 or absf(movement) > minf(1.2, 18.0 * delta):
 		return 0.0
 	angle += movement
+	angular_delta = movement
 	return clampf(absf(movement) / TAU / delta, 0.0, 2.0)

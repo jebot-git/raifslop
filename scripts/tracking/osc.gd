@@ -1,4 +1,4 @@
-## Adapted from FPSloppa 5105fb8cfa38c76aa1d5d172af3047fe2d12ae0d.
+## Adapted from FPSloppa 28a719a84454ef94ac6683f11b709735948e12b9.
 extends RefCounted
 ## SlimeVR VRChat OSC output; bounded OSC 1.0 messages and nested bundles.
 const ROLES={"1":"hips","2":"left_foot","3":"right_foot","4":"left_knee","5":"right_knee","6":"chest","7":"left_elbow","8":"right_elbow","head":"head"}

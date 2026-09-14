@@ -12,13 +12,18 @@ static func valid_transform(value: Variant) -> bool:
 		if absf(axis.length()-1.0)>.02: return false
 	return absf(value.basis.x.dot(value.basis.y))<.02 and absf(value.basis.x.dot(value.basis.z))<.02 and absf(value.basis.y.dot(value.basis.z))<.02
 static func validate_body(value: Variant) -> Dictionary:
-	if not value is Dictionary or value.size()>12: return {}
+	if not value is Dictionary or value.size()>14: return {}
 	var result: Dictionary={}
 	for key in value:
 		if key in ["left_curls","right_curls"]:
 			if not value[key] is PackedFloat32Array or value[key].size()!=5: return {}
 			for curl in value[key]:
 				if not is_finite(curl) or curl<0 or curl>1: return {}
+		elif key in ["left_finger_rotations","right_finger_rotations"]:
+			if not value[key] is Dictionary or value[key].size()>15: return {}
+			for joint in value[key]:
+				if joint not in ["ThumbMetacarpal","ThumbProximal","ThumbDistal","IndexProximal","IndexIntermediate","IndexDistal","MiddleProximal","MiddleIntermediate","MiddleDistal","RingProximal","RingIntermediate","RingDistal","LittleProximal","LittleIntermediate","LittleDistal"]: return {}
+				if not value[key][joint] is Basis or not valid_transform(Transform3D(value[key][joint],Vector3.ZERO)): return {}
 		elif key in ["hips","chest","left_foot","right_foot","left_knee","right_knee","left_elbow","right_elbow","left_hand","right_hand"]:
 			if not valid_transform(value[key]) or value[key].origin.distance_to(Vector3(0,1,0))>2.2: return {}
 		else: return {}

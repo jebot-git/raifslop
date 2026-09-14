@@ -2,6 +2,10 @@ extends PanelContainer
 signal selected(path: String)
 signal import_requested(path: String)
 signal closed
+signal quit_requested
+var quit_button: Button
+var tutorial_button: Button
+var turn_mode: CheckButton
 signal turn_mode_changed(smooth: bool)
 signal location_selected(id: String)
 const Locations = preload("res://scripts/locations.gd")
@@ -18,6 +22,7 @@ var location_preview: TextureRect
 var location_description: Label
 var location_status: Label
 var visit_button: Button
+var location_actions: HBoxContainer
 var active_location := Locations.DEFAULT_ID
 var can_travel := true
 var library
@@ -89,7 +94,7 @@ func _ready() -> void:
 	import_button.custom_minimum_size = Vector2(230, 52)
 	buttons.add_child(import_button)
 	import_button.pressed.connect(func(): picker.popup_centered_ratio(0.75))
-	var turn_mode := CheckButton.new()
+	turn_mode = CheckButton.new()
 	turn_mode.text = "Smooth turn"
 	buttons.add_child(turn_mode)
 	turn_mode.toggled.connect(func(on: bool): turn_mode_changed.emit(on))
@@ -141,10 +146,14 @@ func _build_locations() -> void:
 	location_status.custom_minimum_size.y = 52
 	location_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	location_status.add_theme_font_size_override("font_size", 20)
-	locations_page.add_child(location_status)
+	location_actions = HBoxContainer.new()
+	shell.add_child(location_actions)
+	shell.move_child(location_actions, 3) # Between scrolling content and the common footer.
+	location_status.size_flags_horizontal = SIZE_EXPAND_FILL
+	location_actions.add_child(location_status)
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 20)
-	locations_page.add_child(buttons)
+	location_actions.add_child(buttons)
 	visit_button = Button.new()
 	visit_button.text = "Fish here"
 	visit_button.custom_minimum_size = Vector2(260, 52)
@@ -153,6 +162,7 @@ func _build_locations() -> void:
 		var indices := location_list.get_selected_items()
 		if not indices.is_empty(): location_selected.emit(Locations.CATALOG[indices[0]].id))
 	locations_page.hide()
+	location_actions.hide()
 	refresh_locations(active_location, true)
 
 func show_locations() -> void:
@@ -206,11 +216,12 @@ var tracking_page: VBoxContainer
 func attach_tracking(manager: Node) -> void:
 	tracking_page=VBoxContainer.new(); tracking_page.add_theme_constant_override("separation",14); _register_page("tracking","Tracking",tracking_page)
 	var heading:=Label.new(); heading.text="AVATAR TRACKING & CALIBRATION"; heading.add_theme_font_size_override("font_size",26); tracking_page.add_child(heading)
-	for row in [["Tracked body",manager.tracking.enabled],["Eye and face expressions",manager.expressions_enabled],["Seated height calibration",manager.seated]]:
+	for row in [["Tracked body",manager.tracking.enabled],["Animate planted tracked legs when walking",manager.tracked_leg_animation],["Eye and face expressions",manager.expressions_enabled],["Seated height calibration",manager.seated]]:
 		var toggle:=CheckButton.new(); toggle.text=row[0]; toggle.button_pressed=row[1]; tracking_page.add_child(toggle)
 		toggle.toggled.connect(func(value: bool):
 			match row[0]:
 				"Tracked body": manager.tracking.enabled=value
+				"Animate planted tracked legs when walking": manager.tracked_leg_animation=value
 				"Eye and face expressions": manager.expressions_enabled=value
 				"Seated height calibration": manager.seated=value
 			manager.save())
@@ -218,7 +229,7 @@ func attach_tracking(manager: Node) -> void:
 		var action:=Button.new(); action.text=row[0]; action.custom_minimum_size.y=44; tracking_page.add_child(action); action.pressed.connect(row[1])
 	var info:=Label.new(); info.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; info.custom_minimum_size=Vector2(700,110); tracking_page.add_child(info)
 	var timer:=Timer.new(); timer.wait_time=.5; timer.autostart=true; tracking_page.add_child(timer)
-	timer.timeout.connect(func(): info.text=manager.message+"\n"+manager.tracking.status+"\nHold a steady T-pose for 1.4 s to calibrate body trackers.\nEye tracking animates your avatar; cast aim stays centered in your view.")
+	timer.timeout.connect(func(): info.text=manager.message+"\n"+manager.tracking.status+"\nHold a T-pose for 1.1 s to calibrate body trackers.\nEye tracking animates your avatar; cast aim stays centered in your view.")
 	tracking_page.hide()
 
 func _build_shell() -> void:
@@ -227,10 +238,52 @@ func _build_shell() -> void:
 	var title:=Label.new();title.text="Field station";var serif:=SystemFont.new();serif.font_names=PackedStringArray(["DejaVu Serif"]);title.add_theme_font_override("font",serif);title.add_theme_font_size_override("font_size",28);title.add_theme_color_override("font_color",Color("d5b777"));top.add_child(title)
 	var subtitle:=Label.new();subtitle.text="Make yourself at home by the water";subtitle.size_flags_horizontal=SIZE_EXPAND_FILL;subtitle.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT;subtitle.add_theme_font_size_override("font_size",16);top.add_child(subtitle)
 	tabs=HBoxContainer.new();tabs.add_theme_constant_override("separation",8);shell.add_child(tabs)
-	content=Control.new();content.custom_minimum_size.y=460;content.size_flags_vertical=SIZE_EXPAND_FILL;shell.add_child(content)
+	content=Control.new();content.clip_contents=true;content.size_flags_vertical=SIZE_EXPAND_FILL;shell.add_child(content)
 	var bottom:=HBoxContainer.new();shell.add_child(bottom)
-	var hint:=Label.new();hint.text="Your catch records stay with you.";hint.add_theme_font_size_override("font_size",16);hint.size_flags_horizontal=SIZE_EXPAND_FILL;bottom.add_child(hint)
+	var hint:=Label.new();hint.text="Progress saved.";hint.add_theme_font_size_override("font_size",16);hint.size_flags_horizontal=SIZE_EXPAND_FILL;bottom.add_child(hint)
+	for step in [-1, 1]:
+		var scroll_button := Button.new()
+		scroll_button.text = "↑" if step < 0 else "↓"
+		scroll_button.tooltip_text = "Scroll page (or use the right stick)"
+		scroll_button.custom_minimum_size = Vector2(52, 44)
+		bottom.add_child(scroll_button)
+		scroll_button.pressed.connect(func(): scroll_page(step * 180.0))
+	quit_button=Button.new();quit_button.text="Quit game";quit_button.custom_minimum_size=Vector2(150,44);bottom.add_child(quit_button);quit_button.pressed.connect(func(): quit_requested.emit())
 	var resume:=Button.new();resume.text="Return to the water";resume.custom_minimum_size=Vector2(250,44);bottom.add_child(resume);resume.pressed.connect(func(): closed.emit())
+
+func scroll_page(pixels: float) -> void:
+	if pages.has(active_page): pages[active_page].view.scroll_vertical += roundi(pixels)
+
+func attach_help() -> void:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 6)
+	_register_page("help", "Tutorial", page)
+	tutorial_button = pages.help.button
+	# Keep help in the fixed header without crowding the six section tabs.
+	tutorial_button.reparent(shell.get_child(0))
+	tutorial_button.size_flags_horizontal = SIZE_SHRINK_END
+	tutorial_button.custom_minimum_size = Vector2(130, 44)
+	for instruction in [
+		"FISHING · VR controls",
+		"Cast: face open water. Hold right trigger, swing, then release.
+When the float dips, lift the rod quickly to set the hook.",
+		"Reel: hold left grip beside the crank and circle your hand.
+Ease off during runs; keep line tension in the green band.",
+		"Fight: pull in the indicated direction and HOLD.
+Three missed counters, sustained slack or strain lose the fish.",
+		"Guide: left grip at your left hip. Press its buttons with your
+right index finger. Right grip at your right hip folds/stashes the rod.",
+		"Catch: left grip to hold; sticks to rotate; right A to release.
+Move with the left stick, turn with the right stick. Right B: menu.",
+		"Desktop: SPACE cast/strike/release; hold R to reel; arrows to
+counter; G guide; J stash rod; V menu; WASD move; Q/E turn."
+	]:
+		var label := Label.new()
+		label.text = instruction
+		label.add_theme_font_size_override("font_size", 20)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		page.add_child(label)
+	show_page(active_page)
 
 func _register_page(id: String, title: String, page: VBoxContainer) -> void:
 	var scroll=preload("res://scripts/ui/drag_scroll.gd").new();content.add_child(scroll);scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -245,6 +298,7 @@ func show_page(id: String) -> void:
 	if not pages.has(id):return
 	if is_instance_valid(keyboard): keyboard.hide()
 	active_page=id
+	if is_instance_valid(location_actions): location_actions.visible = id == "waters"
 	for key in pages:
 		pages[key].view.visible=key==id
 		pages[key].page.visible=key==id

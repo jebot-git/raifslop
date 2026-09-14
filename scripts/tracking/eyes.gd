@@ -19,11 +19,8 @@ func sample() -> Dictionary:
 		result.lids=true
 		var jaw:=clampf(face.get_blend_shape(XRFaceTracker.FT_JAW_OPEN)-face.get_blend_shape(XRFaceTracker.FT_MOUTH_CLOSED),0,1)
 		result.mouth=PackedFloat32Array([jaw,0,0,0,0])
-		result.expressions=PackedFloat32Array([
-			maxf(face.get_blend_shape(XRFaceTracker.FT_MOUTH_SMILE), (face.get_blend_shape(XRFaceTracker.FT_MOUTH_CORNER_PULL_LEFT)+face.get_blend_shape(XRFaceTracker.FT_MOUTH_CORNER_PULL_RIGHT))*.5),
-			maxf(face.get_blend_shape(XRFaceTracker.FT_BROW_DOWN),(face.get_blend_shape(XRFaceTracker.FT_BROW_LOWERER_LEFT)+face.get_blend_shape(XRFaceTracker.FT_BROW_LOWERER_RIGHT))*.5),
-			maxf(face.get_blend_shape(XRFaceTracker.FT_MOUTH_SAD),(face.get_blend_shape(XRFaceTracker.FT_MOUTH_FROWN_LEFT)+face.get_blend_shape(XRFaceTracker.FT_MOUTH_FROWN_RIGHT))*.5),
-			maxf(face.get_blend_shape(XRFaceTracker.FT_BROW_UP),(face.get_blend_shape(XRFaceTracker.FT_BROW_INNER_UP_LEFT)+face.get_blend_shape(XRFaceTracker.FT_BROW_INNER_UP_RIGHT))*.5),0])
+		var expressions := preload("res://scripts/tracking/face_expressions.gd").sample(face)
+		result.expressions=PackedFloat32Array([expressions[0],expressions[1],expressions[2],expressions[4],expressions[3]])
 		if not result.gaze:
 			var horizontal: float=(face.get_blend_shape(XRFaceTracker.FT_EYE_LOOK_OUT_LEFT)-face.get_blend_shape(XRFaceTracker.FT_EYE_LOOK_IN_LEFT)+face.get_blend_shape(XRFaceTracker.FT_EYE_LOOK_IN_RIGHT)-face.get_blend_shape(XRFaceTracker.FT_EYE_LOOK_OUT_RIGHT))*.5
 			var vertical: float=(face.get_blend_shape(XRFaceTracker.FT_EYE_LOOK_UP_LEFT)+face.get_blend_shape(XRFaceTracker.FT_EYE_LOOK_UP_RIGHT)-face.get_blend_shape(XRFaceTracker.FT_EYE_LOOK_DOWN_LEFT)-face.get_blend_shape(XRFaceTracker.FT_EYE_LOOK_DOWN_RIGHT))*.5

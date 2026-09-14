@@ -61,7 +61,7 @@ func _build_fish(index: int, length_cm: float) -> void:
 	var path: String=species.get("model","res://assets/models/european_perch.glb" if index==0 else "")
 	if not path.is_empty():
 		var model: Node3D=load(path).instantiate()
-		if species.has("model"): model.scale=Vector3.ONE*length_cm/100.0
+		model.rotate_y(float(species.get("model_yaw",0.0)))
 		caught.add_child(model)
 	else:
 		var game=session.root_game
@@ -70,6 +70,8 @@ func _build_fish(index: int, length_cm: float) -> void:
 		mesh.scale=Vector3(2.5,.9,.65)
 		var tail:=PrismMesh.new(); tail.size=Vector3(.17,.22,.025)
 		game.mesh_node(tail,caught,Vector3(-.33,0,0),game.material(Color("787648")))
+
+	preload("res://scripts/fish_size.gd").fit(caught,length_cm)
 
 func _process(delta: float) -> void:
 	if target.is_empty(): return
@@ -83,6 +85,7 @@ func _process(delta: float) -> void:
 	head.global_transform=rendered.head
 	left.global_transform=rendered.left; right.global_transform=rendered.right
 	rod_visual.equip(target.rod_tier)
+	rod_visual.set_folded(preload("res://scripts/rod_holster.gd").remote_stowed(target))
 	rod_visual.crank.rotation.x=lerp_angle(rod_visual.crank.rotation.x,target.reel_angle,blend)
 	rod.global_transform=rendered.rod; caught.global_transform=rendered.fish
 	caught.visible=target.caught

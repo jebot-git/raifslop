@@ -15,7 +15,7 @@ These real photographs were downloaded through Blender MCP's Poly Haven asset li
 
 ## Preparation and runtime budget
 
-The four playable sky originals live once under `assets/environment/locations/*_4k.hdr`, at native **4096 × 2048** resolution. `tools/prepare_locations.py` generates **768 × 384 JPEG** menu previews with AgX tone mapping from those originals; it does not resample the runtime sky. Source URLs and hashes are recorded in [native_4k.json](locations/native_4k.json), with original acquisition provenance in [sources.json](locations/sources.json).
+The four playable sky originals live once under `assets/environment/locations/*_8k.hdr`, at native **8192 × 4096** resolution. `tools/prepare_locations.py` generates **768 × 384 JPEG** menu previews with AgX tone mapping from those originals; it does not resample the runtime sky. Source URLs and hashes are recorded in [native_8k.json](locations/native_8k.json), with original acquisition provenance in [sources.json](locations/sources.json).
 
 The previous 2K runtime derivatives and unused River Alcove download were removed during release cleanup. Earlier optimization records describe the retired 2K stage. Browsing loads only small previews; location changes retain one active sky, with a 128-pixel reflection radiance map. Measured device performance remains an acceptance task.
 

@@ -24,10 +24,16 @@ func set_controller_pose(tracker: XRControllerTracker, pose: Transform3D) -> voi
 
 func click_control(g, point: Vector2) -> void:
 	var target: Vector3 = g.avatar_panel.to_global(Vector3((point.x / 1000.0 - 0.5) * 1.8, (0.5 - point.y / 720.0) * 1.296, 0))
-	var pose: Transform3D = g.right.global_transform.looking_at(target, Vector3.UP)
-	set_controller_pose(controllers[1], g.origin.global_transform.affine_inverse() * pose)
+	# Keep grip/finger placement stable while directing the OpenXR aim pose.
 	await settle()
-	check(g._pointer_position().distance_to(point) < 2.0, "Tracked controller ray hits intended UI point")
+	var ray: Dictionary = preload("res://scripts/menu_ray.gd").sample(g)
+	check(not ray.is_empty(), "Tracked fingertip ray available")
+	if ray.is_empty(): return
+	var orientation := Transform3D(Basis.IDENTITY, ray.origin).looking_at(target, Vector3.UP).basis
+	var pose := Transform3D(orientation, g.right.global_position)
+	controllers[1].set_pose("aim", g.origin.global_transform.affine_inverse()*pose,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	await settle()
+	check(g._pointer_position().distance_to(point) < 2.0, "Fingertip ray hits intended UI point")
 	controllers[1].set_input("trigger_click", true)
 	await process_frame
 	controllers[1].set_input("trigger_click", false)
@@ -123,23 +129,23 @@ func run() -> void:
 	hand.origin = g.head.position + Vector3(-0.08, -0.20, -0.46)
 	set_controller_pose(controllers[0], hand)
 	await settle()
-	check(guide.global_position.distance_to(g.left.to_global(Vector3(0, 0.265, -0.035))) < 0.001, "Device follows tracked grip at inspection distance")
-	check(guide.to_local(g.left.global_position).y < -0.24, "Grip anchor stays below screen and navigation controls")
+	check(guide.global_position.distance_to(g.left.to_global(guide.GRIP_OFFSET)) < 0.001, "Device follows tracked grip at inspection distance")
+	check(guide.to_local(g.left.global_position).is_equal_approx(guide.GRIP_ANCHOR), "Grip anchor stays below screen and navigation controls")
 	g.game.state = 2
 	g.game.timer = 4.0
 	var timer_before: float = g.game.timer
 	await settle()
-	check(g.game.timer == timer_before and not g.vr_status.visible, "Device inspection pauses fishing and clears status panel")
+	check(g.game.timer == timer_before and not g.hud.visible, "Device inspection pauses fishing and clears status panel")
 	var page_before: int = guide.selected
 	controllers[0].set_input("ax_button", true)
 	controllers[0].set_input("ax_button", false)
 	await settle()
-	check(guide.selected == (page_before + 1) % guide.entries.size(), "Left X pages device without changing bait")
+	check(guide.selected == posmod(page_before + 2, guide.entries.size() + 1) - 1, "Left X pages device without changing bait")
 	page_before = guide.selected
 	controllers[1].set_input("primary", Vector2(1, 0))
 	var heading_before: Basis = g.origin.global_basis
 	await settle()
-	check(guide.selected == (page_before + 1) % guide.entries.size(), "Joystick pages once per deflection")
+	check(guide.selected == posmod(page_before + 2, guide.entries.size() + 1) - 1, "Joystick pages once per deflection")
 	check(g.origin.global_basis.is_equal_approx(heading_before), "Browsing does not snap-turn player")
 	controllers[1].set_input("primary", Vector2.ZERO)
 	await settle()

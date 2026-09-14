@@ -24,10 +24,16 @@ func set_controller_pose(tracker: XRControllerTracker, pose: Transform3D) -> voi
 
 func click_control(g, point: Vector2) -> void:
 	var target: Vector3 = g.avatar_panel.to_global(Vector3((point.x / 1000.0 - 0.5) * 1.8, (0.5 - point.y / 720.0) * 1.296, 0))
-	var pose: Transform3D = g.right.global_transform.looking_at(target, Vector3.UP)
-	set_controller_pose(controllers[1], g.origin.global_transform.affine_inverse() * pose)
+	# Keep grip/finger placement stable while directing the OpenXR aim pose.
 	await settle()
-	check(g._pointer_position().distance_to(point) < 2.0, "Tracked controller ray hits intended UI point")
+	var ray: Dictionary = preload("res://scripts/menu_ray.gd").sample(g)
+	check(not ray.is_empty(), "Tracked fingertip ray available")
+	if ray.is_empty(): return
+	var orientation := Transform3D(Basis.IDENTITY, ray.origin).looking_at(target, Vector3.UP).basis
+	var pose := Transform3D(orientation, g.right.global_position)
+	controllers[1].set_pose("aim", g.origin.global_transform.affine_inverse()*pose,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	await settle()
+	check(g._pointer_position().distance_to(point) < 2.0, "Fingertip ray hits intended UI point")
 	controllers[1].set_input("trigger_click", true)
 	await process_frame
 	controllers[1].set_input("trigger_click", false)
@@ -103,11 +109,14 @@ func run() -> void:
 		controllers[0].set_input("ax_button", false)
 		await settle()
 		check(g.game.bait == (bait_step + 1) % g.game.BAITS.size(), "Tracked X button cycles all six baits")
+	# Face open water for deterministic casting regardless of headset yaw.
+	g.motor.turn(-atan2(g.head.global_basis.z.x,g.head.global_basis.z.z))
+	g.fishing_feedback.set_process(false) # Synthetic trackers have no runtime haptic handle.
 	# Drive real tracked controller poses and trigger signals through production casting.
 	g.set_process(false)
 	g.motor.set_physics_process(false)
 	var right_pose: Transform3D = controllers[1].get_pose("grip").transform
-	right_pose.basis = Basis(Vector3.UP, 0.5)
+	right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + 0.5)
 	set_controller_pose(controllers[1], right_pose)
 	g._process(0.05)
 	controllers[1].set_input("trigger_click", true)
@@ -116,7 +125,7 @@ func run() -> void:
 	check(g.game.state == 0, "Stationary trigger release does not cast")
 	controllers[1].set_input("trigger_click", true)
 	for i in range(8):
-		right_pose.origin += -g.head.basis.z * 0.10
+		right_pose.origin += -g.head.basis.z * 0.16
 		set_controller_pose(controllers[1], right_pose)
 		g._process(0.05)
 	check(g.peak_speed > 0.55, "Tracked forward swing builds casting power")
@@ -136,14 +145,14 @@ func run() -> void:
 	check(g.game.state == 0, "Locomotion alone cannot produce a physical cast")
 	g.origin.global_transform = origin_before
 	# Rotating the wrist/rod also generates forward tip speed without translating the hand.
-	right_pose.basis = Basis(Vector3.UP, 0.5) * Basis(Vector3.RIGHT, -1.2)
+	right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + 0.5) * Basis(Vector3.RIGHT, -1.2)
 	set_controller_pose(controllers[1], right_pose)
 	g._process(0.05)
 	controllers[1].set_input("trigger_click", true)
 	for i in range(10):
-		right_pose.basis = Basis(Vector3.UP, 0.5) * Basis(Vector3.RIGHT, -1.2 + (i + 1) * 0.09)
+		right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + 0.5) * Basis(Vector3.RIGHT, -1.2 + (i + 1) * 0.09)
 		set_controller_pose(controllers[1], right_pose)
-		g._process(0.05)
+		g._process(0.025)
 	controllers[1].set_input("trigger_click", false)
 	check(g.game.state == 1, "Angular rod swing alone produces a physical cast")
 	g.game.reset()
@@ -156,6 +165,8 @@ func run() -> void:
 	g._show_fish()
 	g._process(0.05)
 	check(not g.catch_in_hand, "New catch hangs from rod by default")
+	g.catch_label._process(0)
+	check(not g.catch_label.visible and not g.hud.visible and g.hud.get_parent()==g, "VR has no floating status panel or rod-hanging label")
 	check(g.fish_display.to_global(g._catch_mouth()).distance_to(g.tip.global_position - Vector3.UP * 0.28) < 0.001, "Mouth is attached below rod tip")
 	check(g.fish_display.global_basis.x.dot(Vector3.UP) > 0.99, "Default hanging fish is head-up")
 	check(g.line_mesh.get_surface_count() == 1 and not g.bobber.visible, "Caught fish retains line to rod without bobber")
@@ -163,6 +174,8 @@ func run() -> void:
 	controllers[0].set_input("grip", 1.0)
 	g._process(0.05)
 	check(g.catch_in_hand, "Left grip brings catch to left hand")
+	g.catch_label._process(0)
+	check(g.catch_label.visible and g.catch_label.text=="Zander\n60 cm · 2.00 kg", "Held catch shows its name and measured size as text")
 	check(g.fish_display.to_global(g._catch_mouth()).distance_to(g.left.global_position - Vector3.UP * 0.08) < 0.001, "Left hand grips string 8 cm above fish mouth")
 	var string_vertices = g.line_mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	check(string_vertices.size() == 3 and string_vertices[1].distance_to(g.left.global_position) < 0.001, "String routes from rod through left grip to fish mouth")

@@ -17,7 +17,7 @@ var fish_guide: Node3D
 var foreground: Node3D
 var current_location := Locations.DEFAULT_ID
 var world_environment: Environment
-var panorama_material: PanoramaSkyMaterial
+var panorama_material: ShaderMaterial
 var location_sun: DirectionalLight3D
 var water_material: ShaderMaterial
 var motor: CharacterBody3D
@@ -27,10 +27,14 @@ var avatar_menu: PanelContainer
 var avatar_menu_view: SubViewport
 var avatar_panel: MeshInstance3D
 var menu_pointer: MeshInstance3D
+var menu_laser: MeshInstance3D
+var menu_ray_start := Vector3.ZERO
 var menu_open := false
+var menu_last_position := Vector2.ZERO
+var menu_mouse_down := false
 var avatar_loading := false
 var desktop_left: Node3D
-var vr_status: MeshInstance3D
+var catch_label: Label3D
 var cast_anchor := Vector3.ZERO
 var game = Session.new()
 var reel_tracker = ReelTracker.new()
@@ -39,6 +43,7 @@ var origin: XROrigin3D
 var head: Camera3D
 var left: XRController3D
 var right: XRController3D
+var rod_holster: Node3D
 var rod_visual: Node3D
 var rod: Node3D
 var tip: Node3D
@@ -61,11 +66,14 @@ var cast_target := Vector3(0, -0.35, -12)
 var cast_start := Vector3.ZERO
 var last_state := 0
 var gesture_cooldown := 0.0
+var fight_input = preload("res://scripts/fight_input.gd").new()
 var tracking_was_valid := false
+var tracking_warning_time := 0.0
 var audio: AudioStreamPlayer
 var fishing_feedback: Node3D
 var shadow_policy: Node
 var escape_offset := Vector3.ZERO
+var quitting := false
 
 func _ready() -> void:
 	server_only = "--server" in OS.get_cmdline_user_args()
@@ -73,7 +81,9 @@ func _ready() -> void:
 		_start_network()
 		return
 	_build_environment()
+	get_tree().auto_accept_quit = false
 	_build_rig()
+	_load_player_preferences()
 	_build_rod()
 	_build_ui()
 	_build_avatar_menu()
@@ -134,9 +144,8 @@ func _build_environment() -> void:
 	var env := Environment.new()
 	world_environment = env
 	var sky := Sky.new()
-	var pano := PanoramaSkyMaterial.new()
+	var pano := preload("res://scripts/panorama_material.gd").new()
 	panorama_material = pano
-	pano.panorama = load("res://assets/environment/locations/lakeside_4k.hdr")
 	sky.sky_material = pano
 	sky.radiance_size = Sky.RADIANCE_SIZE_128
 	env.background_mode = Environment.BG_SKY
@@ -235,25 +244,18 @@ func _build_rod() -> void:
 	tip = Node3D.new()
 	rod.add_child(tip)
 	tip.position = Vector3(0, 0, -1.68)
+	rod_holster = preload("res://scripts/rod_holster.gd").new()
+	rod_holster.game_root=self
+	add_child(rod_holster)
 
 func _build_ui() -> void:
 	hud = HUD.new()
 	hud.game = game
 	hud.vr_mode = xr
 	if xr:
-		var viewport := SubViewport.new()
-		viewport.size = Vector2i(1000, 640)
-		viewport.transparent_bg = true
-		viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-		add_child(viewport)
-		viewport.add_child(hud)
-		var quad := QuadMesh.new()
-		quad.size = Vector2(1.2, 0.768)
-		var panel_mat := StandardMaterial3D.new()
-		panel_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		panel_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		panel_mat.albedo_texture = viewport.get_texture()
-		vr_status = mesh_node(quad, self, Vector3(-0.8, 1.55, -2.1), panel_mat)
+		# Retain the shared HUD state for gameplay; VR has no floating HUD surface.
+		add_child(hud)
+		hud.hide()
 	else:
 		var layer := CanvasLayer.new()
 		add_child(layer)
@@ -262,9 +264,62 @@ func _build_ui() -> void:
 	hud.bait_selected.connect(func(index: int): _select_bait(index))
 	hud.action_pressed.connect(_primary_action)
 	hud.avatar_requested.connect(_toggle_avatar_menu)
+	catch_label = preload("res://scripts/catch_label.gd").new()
+	catch_label.game_root = self
+	add_child(catch_label)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		if server_only: get_tree().quit()
+		else: _quit_game()
+
+func _load_player_preferences() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load("user://player.cfg")
+	var smooth = cfg.get_value("controls", "smooth_turn", false)
+	motor.smooth_turn = smooth if smooth is bool else false
+	var bait = cfg.get_value("tackle", "bait", 0)
+	game.bait = clampi(int(bait), 0, Session.BAITS.size()-1) if (bait is int or bait is float) and is_finite(bait) else 0
+
+func _save_player_preferences() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("controls", "smooth_turn", motor.smooth_turn)
+	cfg.set_value("tackle", "bait", game.bait)
+	var error := cfg.save("user://player.cfg")
+	if error != OK: push_warning("Cannot save player settings: " + error_string(error))
+
+func _save_user_settings() -> void:
+	_save_player_preferences()
+	ambience.save()
+	tracking_manager.save()
+	network.save_preferences()
+	network.voice.save_preferences()
+	shadow_policy.save()
+	avatars.save_selection(avatars.selected_path)
+	var error := Locations.save_location(current_location)
+	if error != OK: push_warning("Cannot save location: " + error_string(error))
+
+func _quit_game() -> void:
+	if quitting: return
+	quitting = true
+	avatar_menu.quit_button.disabled = true
+	set_process(false)
+	motor.set_physics_process(false)
+	_save_user_settings()
+	_save_journal()
+	game.tackle.save_profile()
+	if is_instance_valid(network) and network.active: network.leave()
+	ambience.stop()
+	fishing_feedback.set_process(false)
+	for type in ["AudioStreamPlayer", "AudioStreamPlayer3D"]:
+		for player in find_children("*", type, true, false): player.stop()
+	# Let the audio mixer release queued streaming buffers before engine shutdown.
+	await get_tree().create_timer(.3).timeout
+	get_tree().quit()
 
 func _select_bait(index: int) -> void:
 	game.select_bait(index)
+	_save_player_preferences()
 	hud.queue_redraw()
 
 func _left_button(button: String) -> void:
@@ -290,7 +345,7 @@ func _right_pressed(button: String) -> void:
 	if menu_open:
 		if button == "trigger_click": _menu_click(true)
 		return
-	if button == "trigger_click" and game.state == Session.State.READY:
+	if button == "trigger_click" and game.state == Session.State.READY and not rod_holster.stowed:
 		casting = true
 		peak_speed = 0.0
 	elif button == "ax_button" and game.state in [Session.State.LANDED, Session.State.LOST]:
@@ -328,14 +383,33 @@ func _cast_direction() -> Vector3:
 		direction.y = 0
 	return direction.normalized() if direction.length() > 0.01 else Vector3.FORWARD
 
+func _landing_distance(anchor: Vector3, direction: Vector3) -> float:
+	# Find the first foreground obstruction while retrieving from open water.
+	# The view ray catches decks above water as well as railings. Reserve room
+	# for lateral fight movement and stop .65 m before the float is hidden.
+	var space := get_world_3d().direct_space_state
+	var sideways := direction.cross(Vector3.UP).normalized()
+	for step in range(225):
+		var distance := 24.0 - step * .1
+		for lateral in [-1.1, 0.0, 1.1]:
+			var at: Vector3 = anchor + direction * distance + sideways * lateral + Vector3.UP * .02
+			var ray := PhysicsRayQueryParameters3D.create(head.global_position, at, 1)
+			if not space.intersect_ray(ray).is_empty(): return maxf(1.6, distance + .65)
+	return 1.6
+
 func _cast(power: float) -> void:
-	if game.state != Session.State.READY: return
+	if game.state != Session.State.READY or rod_holster.stowed: return
 	var direction := _cast_direction()
 	cast_anchor = Vector3(rod.global_position.x, -0.3, rod.global_position.z)
 	var endpoint := cast_anchor + direction * power
 	if endpoint.z > 1.5:
 		game.message = "Aim out over the lake, away from the shore."
 		return
+	var landing := _landing_distance(cast_anchor, direction)
+	if clampf(power, 5.0, 24.0) < landing + .5:
+		game.message = "Cast farther into open water, or move closer to the edge."
+		return
+	game.landing_distance = landing
 	game.cast(power)
 	cast_start = tip.global_position
 	cast_target = cast_anchor + direction * game.cast_distance
@@ -344,6 +418,9 @@ func _cast(power: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not xr and event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_J and not menu_open:
+			rod_holster.set_stowed(not rod_holster.stowed)
+			return
 		if event.keycode == KEY_G and not menu_open:
 			fish_guide.held = not fish_guide.held
 			fish_guide.screen.queue_redraw()
@@ -371,29 +448,43 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_4: _select_bait(3)
 			KEY_5: _select_bait(4)
 			KEY_6: _select_bait(5)
-			KEY_LEFT: game.gesture(0)
-			KEY_RIGHT: game.gesture(1)
-			KEY_UP: game.gesture(2)
-			KEY_ESCAPE: get_tree().quit()
-	if not xr and event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+			KEY_ESCAPE: _quit_game()
+	if not xr and not rod_holster.stowed and event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		rod.rotation.y = clampf(rod.rotation.y - event.relative.x * 0.004, -0.8, 0.8)
 		rod.rotation.x = clampf(rod.rotation.x - event.relative.y * 0.004, -0.3, 1.2)
 	if not xr and event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_MIDDLE):
 		motor.turn(-event.relative.x * 0.003)
 		head.rotation.x = clampf(head.rotation.x - event.relative.y * 0.003, -1.0, 0.75)
 
+func _update_tracking_warning(delta: float) -> void:
+	# Focus loss is a compositor pause, not evidence of lost controllers.
+	# Refresh before menu/guide/holster early returns so a stale warning clears.
+	var missing: bool = xr and tracking_manager.focused and (not left.get_has_tracking_data() or not right.get_has_tracking_data())
+	if missing and not menu_open and not fish_guide.held and not rod_holster.stowed:
+		tracking_warning_time += maxf(delta, 0.0)
+	else:
+		tracking_warning_time = 0.0
+	var show_warning := tracking_warning_time >= .5
+	if hud.tracking_lost != show_warning:
+		hud.tracking_lost = show_warning
+		hud.queue_redraw()
+
 func _process(delta: float) -> void:
 	if is_instance_valid(rod_visual): rod_visual.equip(game.tackle.equipped)
 	if server_only: return
+	rod_holster.update_holster()
 	fish_guide.update_device()
-	motor.catch_controls = fish_guide.held or (xr and game.state == Session.State.LANDED)
-	if xr: vr_status.visible = not menu_open and not fish_guide.held
-	else: hud.visible = not menu_open and not fish_guide.held
-	time += delta
 	if is_instance_valid(tracking_manager): tracking_manager.sample(delta)
+	_update_tracking_warning(delta)
+	rod_visual.visible = true
+	rod.visible = rod_holster.stowed or not xr or right.get_has_tracking_data()
+	motor.catch_controls = fish_guide.held or (xr and game.state == Session.State.LANDED)
+	if not xr: hud.visible = not menu_open and not fish_guide.held
+	time += delta
 	_update_avatar(delta)
 	if avatar_loading: return
 	if fish_guide.held:
+		fight_input.reset()
 		casting = false
 		reel_tracker.engaged = false
 		last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
@@ -401,9 +492,16 @@ func _process(delta: float) -> void:
 		_update_line()
 		return
 	if menu_open:
+		fight_input.reset()
 		_layout_avatar_menu()
 		_update_menu_pointer()
+		if xr and right.get_has_tracking_data():
+			var scroll_axis := right.get_vector2("primary").y
+			if absf(scroll_axis) > 0.2: avatar_menu.scroll_page(-scroll_axis * 650.0 * delta)
 		last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
+		return
+	if rod_holster.stowed:
+		_update_line()
 		return
 	gesture_cooldown = maxf(0.0, gesture_cooldown - delta)
 	var reel := 0.0
@@ -411,16 +509,15 @@ func _process(delta: float) -> void:
 		var tracked: bool = right.get_has_tracking_data() and left.get_has_tracking_data() and (not is_instance_valid(tracking_manager) or tracking_manager.focused)
 		rod.visible = right.get_has_tracking_data()
 		if not tracked:
+			fight_input.reset()
 			tracking_was_valid = false
 			casting = false
 			reel_tracker.engaged = false
-			hud.tracking_lost = true
 			if game.state == Session.State.LANDED and fish_display.visible:
 				_update_catch(delta)
 				_update_line()
 			hud.queue_redraw()
 			return
-		hud.tracking_lost = false
 		if not tracking_was_valid:
 			last_tip = origin.to_local(tip.global_position)
 			tracking_was_valid = true
@@ -432,18 +529,16 @@ func _process(delta: float) -> void:
 		reel = reel_tracker.sample(reel_pos, left.get_float("grip") > 0.55, delta)
 		if game.state == Session.State.BITE and velocity.y > 0.9:
 			game.strike()
-		if game.state == Session.State.FIGHT and gesture_cooldown <= 0.0:
-			var local_velocity := origin.global_basis.inverse() * velocity
-			var direction := -1
-			if local_velocity.x < -0.8: direction = 0
-			elif local_velocity.x > 0.8: direction = 1
-			elif local_velocity.y > 0.9: direction = 2
-			if direction >= 0 and game.gesture(direction):
-				gesture_cooldown = 0.5
-				right.trigger_haptic_pulse("haptic", 0.0, 0.4, 0.10, 0.0)
+		if game.state == Session.State.FIGHT:
+			var facing := Basis(Vector3.UP,atan2(head.global_basis.z.x,head.global_basis.z.z))
+			var direction := fight_input.sample(game.cue,origin.global_basis.inverse()*(tip.global_position-head.global_position),origin.global_basis.inverse()*facing)
+			game.gesture(direction)
+		else: fight_input.reset()
 	else:
 		reel = 1.0 if Input.is_key_pressed(KEY_R) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) else 0.0
-	crank.rotation.x += reel * TAU * delta
+		game.gesture(0 if Input.is_key_pressed(KEY_LEFT) else 1 if Input.is_key_pressed(KEY_RIGHT) else 2 if Input.is_key_pressed(KEY_UP) else -1)
+	# Retrieval accepts either winding direction; the handle follows the actual hand.
+	crank.rotation.x += reel_tracker.angular_delta if xr else reel * TAU * delta
 	fishing_feedback.reel_rate = reel
 	escape_offset=escape_offset.move_toward(fish_escape_direction() * (1.1 if game.cue >= 0 and game.state == Session.State.FIGHT else 0.0), delta * 1.8)
 	last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
@@ -451,7 +546,6 @@ func _process(delta: float) -> void:
 	if game.state != last_state:
 		if game.state == Session.State.BITE:
 			_tone(880, 0.18)
-			if xr: right.trigger_haptic_pulse("haptic", 0.0, 0.65, 0.22, 0.0)
 		elif game.state == Session.State.LANDED:
 			_show_fish()
 			_save_journal()
@@ -503,8 +597,11 @@ func _update_catch(delta: float) -> void:
 
 func fish_escape_direction() -> Vector3:
 	# Cues name the COUNTER: a left pull opposes a rightward escape.
-	if game.cue == 0: return origin.global_basis.x.normalized()
-	if game.cue == 1: return -origin.global_basis.x.normalized()
+	var sideways := origin.global_basis.x.normalized()
+	if xr:
+		sideways = (origin.global_basis * fight_input.cue_basis).x.normalized() if fight_input.previous_cue == game.cue else head.global_basis.x.normalized()
+	if game.cue == 0: return sideways
+	if game.cue == 1: return -sideways
 	var away := cast_target - cast_anchor
 	away.y = 0
 	return away.normalized() if away.length_squared() > .001 else Vector3.FORWARD
@@ -555,10 +652,7 @@ func _show_fish() -> void:
 	if not model_path.is_empty():
 		var scene: PackedScene = load(model_path)
 		var model := scene.instantiate() as Node3D
-		# New assets have a one-metre reference length; show the actual catch size.
-		if species.has("model"):
-			var length_cm: float = game.journal.back().length if not game.journal.is_empty() else species.length
-			model.scale = Vector3.ONE * length_cm / 100.0
+		model.rotate_y(float(species.get("model_yaw", 0.0)))
 		fish_display.add_child(model)
 	else:
 		var body := SphereMesh.new()
@@ -569,10 +663,8 @@ func _show_fish() -> void:
 		var tail := PrismMesh.new()
 		tail.size = Vector3(0.17, 0.22, 0.025)
 		mesh_node(tail, fish_display, Vector3(-0.33, 0, 0), material(Color("787648")))
-	catch_bounds = AABB()
-	for child in fish_display.get_children():
-		var box := _catch_mesh_bounds(child)
-		if box.has_volume(): catch_bounds = catch_bounds.merge(box) if catch_bounds.has_volume() else box
+	var length_cm: float=game.journal.back().length if not game.journal.is_empty() else species.length
+	catch_bounds=preload("res://scripts/fish_size.gd").fit(fish_display,length_cm)
 	catch_rotation = Quaternion.IDENTITY
 	catch_in_hand = false
 	motor.catch_controls = xr
@@ -630,6 +722,13 @@ func _build_avatar_menu() -> void:
 		sphere.height = 0.018
 		menu_pointer = mesh_node(sphere, self, Vector3.ZERO, material(Color("9fdfbd")))
 		menu_pointer.visible = false
+		var beam := CylinderMesh.new()
+		beam.top_radius = .0012; beam.bottom_radius = .0012; beam.height = 1.0; beam.radial_segments = 6
+		var beam_material := material(Color("9fdfbd"))
+		beam_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		menu_laser = mesh_node(beam, self, Vector3.ZERO, beam_material)
+		menu_laser.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if is_instance_valid(menu_laser): menu_laser.hide()
 	else:
 		var layer := CanvasLayer.new()
 		layer.layer = 3
@@ -640,8 +739,14 @@ func _build_avatar_menu() -> void:
 	avatar_menu.selected.connect(_select_avatar)
 	avatar_menu.import_requested.connect(_import_avatar)
 	avatar_menu.closed.connect(_toggle_avatar_menu)
-	avatar_menu.turn_mode_changed.connect(func(enabled: bool): motor.smooth_turn = enabled)
-	avatar_menu.location_selected.connect(func(id: String): _select_location(id))
+	avatar_menu.quit_requested.connect(_quit_game)
+	avatar_menu.turn_mode.button_pressed = motor.smooth_turn
+	avatar_menu.turn_mode_changed.connect(func(enabled: bool): motor.smooth_turn = enabled; _save_player_preferences())
+	avatar_menu.location_selected.connect(func(id: String):
+		if _select_location(id) and menu_open: _toggle_avatar_menu())
+
+func _panorama_texture(entry: Dictionary) -> Texture2D:
+	return ResourceLoader.load(entry.panorama, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
 
 func _select_location(id: String, persist := true) -> bool:
 	# Switching never silently discards a cast, fight, or unreleased catch.
@@ -651,7 +756,7 @@ func _select_location(id: String, persist := true) -> bool:
 	var entry := Locations.find_location(id)
 	if entry.is_empty(): return false
 	# Avoid caching every full-size sky after browsing locations.
-	var texture := ResourceLoader.load(entry.panorama, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
+	var texture := _panorama_texture(entry)
 	if texture == null:
 		avatar_menu.location_status.text = "This location could not be loaded. Your current spot is unchanged."
 		return false
@@ -674,6 +779,11 @@ func _select_location(id: String, persist := true) -> bool:
 	location_sun.rotation_degrees = entry.sun_rotation
 	location_sun.light_color = entry.sun_color
 	location_sun.light_energy = entry.sun_energy
+	water_material.set_shader_parameter("panorama",texture)
+	for setting in ["detail_strength","vibrance","shadow_lift"]:
+		water_material.set_shader_parameter(setting,panorama_material.get_shader_parameter(setting))
+	water_material.set_shader_parameter("sky_inverse",Basis(Vector3.UP,-deg_to_rad(entry.yaw)))
+	water_material.set_shader_parameter("sky_energy",entry.get("sky_energy",1.0))
 	water_material.set_shader_parameter("deep_color", entry.water)
 	water_material.set_shader_parameter("water_roughness", entry.roughness)
 	water_material.set_shader_parameter("ripple_strength", entry.ripples)
@@ -693,6 +803,12 @@ func _select_location(id: String, persist := true) -> bool:
 func _toggle_avatar_menu() -> void:
 	if avatar_loading: return
 	menu_open = not menu_open
+	if not menu_open and menu_mouse_down:
+		menu_mouse_down = false
+		var release := InputEventMouseButton.new()
+		release.button_index = MOUSE_BUTTON_LEFT
+		release.position = Vector2(-1,-1)
+		avatar_menu_view.push_input(release, true)
 	motor.blocked = menu_open
 	avatar_menu.visible = menu_open
 	if menu_open:
@@ -704,10 +820,10 @@ func _toggle_avatar_menu() -> void:
 	if xr:
 		avatar_panel.visible = menu_open
 		menu_pointer.visible = menu_open
+		if is_instance_valid(menu_laser): menu_laser.hide()
 		if menu_open:
 			var facing := Basis(Vector3.UP, atan2(head.global_basis.z.x, head.global_basis.z.z))
 			avatar_panel.global_transform = Transform3D(facing, head.global_position - facing.z * 1.8)
-		vr_status.visible = not menu_open
 	else:
 		hud.visible = not menu_open
 
@@ -732,7 +848,9 @@ func _select_avatar(path: String) -> void:
 	if model:
 		var candidate := AvatarRig.new()
 		candidate.name = "PlayerAvatar"
-		candidate.standing_height = clampf(head.global_position.y - motor.global_position.y, 1.2, 2.1)
+		# FPSloppa normalizes the model independently of the current headset pose.
+		# Loading while seated, crouching, or reconnecting must not shrink the body.
+		candidate.standing_height = 1.65
 		candidate.add_child(model)
 		add_child(candidate)
 		if candidate.configure(model):
@@ -763,17 +881,19 @@ func _update_avatar(delta: float) -> void:
 		desktop_left.global_transform = rod.global_transform
 		desktop_left.global_position = rod.to_global(crank.position + Vector3(-0.02, cos(reel_angle) * 0.08, sin(reel_angle) * 0.08))
 	if is_instance_valid(avatar):
+		avatar.grounded = motor.is_on_floor()
+		avatar.tracked_leg_animation = tracking_manager.tracked_leg_animation if is_instance_valid(tracking_manager) else false
 		avatar.apply_tracking(motor.global_transform, tracking_manager.body if is_instance_valid(tracking_manager) else {}, tracking_manager.face if is_instance_valid(tracking_manager) else {})
 		avatar.update_targets(head, left if xr else desktop_left, right if xr else rod, motor.global_position.y, motor.last_motion, delta)
 		avatar.left_curl = left.get_float("grip") * 0.8 if xr else 0.7
 		avatar_menu.update_preview(avatar)
-	if xr and is_instance_valid(vr_status) and not menu_open:
-		var facing := Basis(Vector3.UP, atan2(head.global_basis.z.x, head.global_basis.z.z))
-		vr_status.global_transform = Transform3D(facing, head.global_position + facing * Vector3(-0.8, -0.05, -2.1))
 
 func _pointer_position() -> Vector2:
-	var ray_origin := right.global_position
-	var ray_direction := -right.global_basis.z
+	var ray := preload("res://scripts/menu_ray.gd").sample(self)
+	if ray.is_empty(): return Vector2(-1, -1)
+	var ray_origin: Vector3 = ray.origin
+	var ray_direction: Vector3 = ray.direction
+	menu_ray_start = ray_origin
 	var plane := Plane(avatar_panel.global_basis.z, avatar_panel.global_position)
 	var hit = plane.intersects_ray(ray_origin, ray_direction)
 	if hit == null: return Vector2(-1, -1)
@@ -787,20 +907,34 @@ func _update_menu_pointer() -> void:
 	if not xr: return
 	var pos := _pointer_position()
 	menu_pointer.visible = pos.x >= 0
-	if pos.x < 0: return
+	if is_instance_valid(menu_laser): menu_laser.visible = pos.x >= 0
+	if pos.x < 0:
+		if menu_mouse_down: _menu_click(false)
+		return
+	if is_instance_valid(menu_laser):
+		var segment := menu_pointer.global_position - menu_ray_start
+		var up := segment.normalized()
+		var axis := Vector3.RIGHT if absf(up.dot(Vector3.UP)) > .99 else up.cross(Vector3.UP).normalized()
+		menu_laser.global_transform = Transform3D(Basis(axis,segment,axis.cross(up)),menu_ray_start+segment*.5)
+	menu_last_position = pos
 	var event := InputEventMouseMotion.new()
 	event.position = pos
 	event.global_position = pos
+	event.button_mask = MOUSE_BUTTON_MASK_LEFT if menu_mouse_down else 0
 	avatar_menu_view.push_input(event, true)
 
 func _menu_click(pressed: bool) -> void:
 	var pos := _pointer_position()
-	if pos.x < 0: return
+	if pos.x < 0:
+		if pressed or not menu_mouse_down: return
+		pos = menu_last_position
+	menu_mouse_down = pressed
 	var event := InputEventMouseButton.new()
 	event.position = pos
 	event.global_position = pos
 	event.button_index = MOUSE_BUTTON_LEFT
 	event.pressed = pressed
+	event.button_mask = MOUSE_BUTTON_MASK_LEFT if pressed else 0
 	avatar_menu_view.push_input(event, true)
 
 func _start_network() -> void:
@@ -814,4 +948,5 @@ func _start_network() -> void:
 		add_child(tracking_manager); tracking_manager.setup(self)
 		avatar_menu.attach_tracking(tracking_manager)
 		avatar_menu.attach_sound(ambience)
+		avatar_menu.attach_help()
 	network.command_line()

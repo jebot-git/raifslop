@@ -13,7 +13,7 @@ func run():
 	check(game.avatar.mouth.binds.slice(0,5).all(func(b):return not b.is_empty()),"Shark has all five vowel expressions")
 	check(not game.avatar.eyes.binds[4].is_empty() and not game.avatar.eyes.binds[5].is_empty(),"Shark has left and right blink bindings")
 	var menu=game.avatar_menu;menu.show();game._layout_avatar_menu()
-	check(menu.pages.size()==6,"Six consistent menu tabs")
+	check(menu.tabs.get_child_count()==6 and menu.pages.has("help"),"Six section tabs plus header tutorial")
 	for id in menu.pages:
 		menu.show_page(id);await process_frame
 		check(menu.pages.values().filter(func(row):return row.view.visible).size()==1,"Only selected page visible: "+id)
@@ -43,5 +43,5 @@ func run():
 	check(audio.voices.values().all(func(v):return v.player.volume_db<=-79),"Environment mute reaches all beds")
 	audio.set_volume(.4);var cfg:=ConfigFile.new();cfg.load("user://sound.cfg")
 	check(is_equal_approx(cfg.get_value("ambience","volume",0),.4),"Ambience preference persists")
-	game.network.leave();game.queue_free();await process_frame;await process_frame
+	game.network.leave();game.queue_free();await process_frame;await create_timer(.3).timeout
 	print("SHARK_AMBIENCE_MENU_RESULT ",failures);quit(0 if failures.is_empty() else 1)

@@ -12,10 +12,12 @@ def main():
     OUT.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='fishing-ambience-') as d:
         d=Path(d);loop(ROOT/'source/audio/water_birds.flac',d/'water.wav');loop(ROOT/'source/audio/park_birds.flac',d/'birds.wav')
-        profiles={'lakeside':(0.85,0.36,0.06,6500,0),'lake_pier':(0.95,0.10,0.035,5200,7),'gray_pier':(0.48,0.55,0.045,3900,13),'bell_park_pier':(0.8,0.25,0.10,6000,21)}
-        for name,(water,birds,wind,cutoff,offset) in profiles.items():
-            graph=f'[0:a]volume={water},lowpass=f={cutoff}[water];[1:a]volume={birds},highpass=f=180[birds];anoisesrc=color=pink:sample_rate=44100:duration=128:seed=120,highpass=f=100,lowpass=f=850,volume={wind}[wind];[water][birds][wind]amix=inputs=3:normalize=0,alimiter=limit=0.75:level=false,afade=t=in:d=0.1,afade=t=out:st=127.9:d=0.1[out]'
-            run(['-stream_loop','-1','-i',d/'water.wav','-stream_loop','-1','-ss',offset,'-i',d/'birds.wav','-filter_complex',graph,'-map','[out]','-t','128','-ar','44100','-ac','2','-c:a','libvorbis','-q:a','4',OUT/(name+'.ogg')])
+        # Recorded ambience only: no noise-shaped wave bursts or periodic synthetic wash.
+        # Different dominance, filtering and offsets preserve each location's character.
+        profiles={'lakeside':(.10,.50,6800,300,0),'lake_pier':(.30,.025,1600,500,7),'gray_pier':(0,.20,6500,1600,13),'bell_park_pier':(.18,.06,3200,650,21)}
+        for name,(water,birds,cutoff,bird_low,offset) in profiles.items():
+            graph=f'[0:a]asetpts=N/SR/TB,volume={water},lowpass=f={cutoff}[water];[1:a]asetpts=N/SR/TB,volume={birds},highpass=f={bird_low},lowpass=f=7000[birds];[water][birds]amix=inputs=2:normalize=0,volume=0.6,alimiter=limit=0.75:level=false[out]'
+            run(['-stream_loop','-1','-ss',offset,'-i',d/'water.wav','-stream_loop','-1','-ss',offset,'-i',d/'birds.wav','-filter_complex',graph,'-map','[out]','-t','128','-ar','44100','-ac','2','-c:a','libvorbis','-q:a','4',OUT/(name+'.ogg')])
         rng=random.Random(128);sr=22050;duration=5;raw=bytearray();noise=0.
         for i in range(sr*duration):
             t=i/sr;noise=.94*noise+.06*rng.uniform(-1,1)

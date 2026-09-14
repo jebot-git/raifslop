@@ -37,7 +37,14 @@ func run() -> void:
 	game.xr = true
 	game.left.global_transform = Transform3D(Basis.from_euler(Vector3(.1, .4, 0)), game.head.global_position + Vector3(-.3, -.2, -.3))
 	photo.selfie = false; photo.update_pose()
-	check(photo.camera.global_transform.is_equal_approx(game.left.global_transform), "VR forward camera follows tracked guide hand")
+	guide.global_transform = game.left.global_transform * Transform3D(guide.GRIP_BASIS, guide.GRIP_OFFSET)
+	photo.update_pose()
+	check(photo.camera.global_transform.is_equal_approx(guide.global_transform * Photo.lens_pose(false)), "VR rear lens stays on guide rear face")
+	check((-photo.camera.global_basis.z).dot(-guide.global_basis.z) > .999, "Rear lens looks perpendicular to screen, not along handle")
+	photo.selfie = true; photo.update_pose()
+	check(photo.camera.global_transform.is_equal_approx(guide.global_transform * Photo.lens_pose(true)), "VR selfie lens stays on guide front face")
+	check((-photo.camera.global_basis.z).dot(guide.global_basis.z) > .999, "Selfie lens looks outward from front screen")
+	photo.selfie = false
 	game._right_pressed("ax_button")
 	check(photo.selfie, "Right A toggles selfie while guide is held")
 	game._left_button("trigger_click")
@@ -69,5 +76,5 @@ func run() -> void:
 		quad.queue_free()
 	guide.dock()
 	check(not guide.held and photo.view.render_target_update_mode == SubViewport.UPDATE_DISABLED, "Docking stops preview rendering")
-	game.queue_free(); await process_frame; await process_frame
+	game.queue_free(); await process_frame; await create_timer(.3).timeout
 	print("GUIDE_CAMERA_RESULT %d checks: %s" % [checks, failures]); quit(0 if failures.is_empty() else 1)

@@ -5,4 +5,4 @@
 
 License: https://creativecommons.org/publicdomain/zero/1.0/
 
-These are curated background recordings, not recordings of the photographed game locations. `tools/build_ambience.py` joins overlapping sections, filters and mixes them with authored wind noise into distinct 128-second Ogg Vorbis beds. The timber detail is synthesized by that script. Generated wind/timber audio is dedicated to CC0 1.0. There is no music or intelligible voice intentionally included.
+These are curated background recordings, not recordings of the photographed game locations. `tools/build_ambience.py` joins overlapping sections, filters and mixes the two recordings into quiet 128-second Ogg Vorbis beds. Lakeside emphasizes park birds; Lake Pier emphasizes low, muffled recorded water; Gray Pier uses only the airy high-frequency park recording; Bell Park mixes recorded water with sparse distant birds. There are no synthesized wave/wind layers in the final mix. The occasional timber detail is synthesized by the script and dedicated to CC0 1.0. There is no music or intelligible voice intentionally included.

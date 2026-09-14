@@ -3,6 +3,7 @@ extends Node3D
 const S=preload("res://scripts/fishing_session.gd")
 var game_root: Node
 var reel_rate:=0.0
+var haptics=preload("res://scripts/line_haptics.gd").new()
 var previous:=S.State.READY
 var cue_previous:=-1
 var clock:=0.0
@@ -48,9 +49,12 @@ func splash(at: Vector3, landing:=false, impact:=false) -> void:
 func _process(delta: float) -> void:
  if not is_instance_valid(game_root):return
  var g=game_root.game
- var paused: bool=game_root.menu_open or game_root.fish_guide.held or game_root.avatar_loading or (game_root.xr and (not game_root.right.get_has_tracking_data() or not game_root.left.get_has_tracking_data() or not game_root.tracking_manager.focused))
+ var paused: bool=game_root.rod_holster.stowed or game_root.menu_open or game_root.fish_guide.held or game_root.avatar_loading or (game_root.xr and (not game_root.right.get_has_tracking_data() or not game_root.left.get_has_tracking_data() or not game_root.tracking_manager.focused))
  if paused:
   reel_player.stop();return
+ var pulse:Dictionary=haptics.sample(g,delta)
+ if not pulse.is_empty() and game_root.xr:
+  game_root.right.trigger_haptic_pulse("haptic",0.0,pulse.strength,pulse.duration,0.0)
  clock+=delta
  reel_player.global_position=game_root.crank.global_position
  if g.state==S.State.FIGHT and reel_rate>.03:

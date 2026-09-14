@@ -43,10 +43,10 @@ func run() -> void:
 	fresh.tick(.2, 0, 0); tired.tick(.2, 0, 0)
 	check(fresh.tension > tired.tension, "Fresh escape attempts exert more line tension")
 	var weak = fight(3); var strong = fight(2)
-	weak.cue = 0; strong.cue = 0; weak.gesture(0); strong.gesture(0)
+	weak.cue = 0; strong.cue = 0; weak.gesture(0); strong.gesture(0); weak.tick(.05,0,0); strong.tick(.05,0,0)
 	check(strong.stamina > weak.stamina, "Species endurance controls fatigue per counter")
 	var base = fight(); var upgraded = fight(0, 3)
-	base.cue = 0; upgraded.cue = 0; base.gesture(0); upgraded.gesture(0)
+	base.cue = 0; upgraded.cue = 0; base.gesture(0); upgraded.gesture(0); base.tick(.05,0,0); upgraded.tick(.05,0,0)
 	check(upgraded.stamina < base.stamina, "Better rod drains more stamina on counter")
 	base = fight(); upgraded = fight(0, 3)
 	base.tick(.5, 1, 0); upgraded.tick(.5, 1, 0)
@@ -57,7 +57,11 @@ func run() -> void:
 	check(base.state == S.State.LOST and upgraded.state == S.State.FIGHT, "Upgraded line survives longer under overload")
 	var counter = fight(); counter.phase = 6; counter.cue = 1
 	check(not counter.gesture(0) and counter.is_running(), "Wrong counter does not stop escape")
-	check(counter.gesture(1) and not counter.is_running() and counter.next_cue >= 3.5, "Successful counter stops run and postpones escape cue")
+	counter.cue_time=S.COUNTER_WINDOW
+	for step in range(260):
+		if counter.cue<0:break
+		counter.gesture(1);counter.tick(.02,.7 if counter.tension<.25 else 0,0)
+	check(not counter.is_running() and counter.cue<0 and counter.next_cue >= 3.5, "Sustained counter stops run and postpones escape cue")
 	for i in range(60): counter.tick(.05, .7, 0)
 	check(not counter.is_running() and counter.cue == -1, "Counter provides a sustained recovery window")
 	for i in range(180): counter.tick(.05, .7 if counter.tension < .5 else 0, 0)
@@ -94,5 +98,5 @@ func run() -> void:
 	check(game.game.tackle.equipped == 1 and game.game.tackle.shekels == 450 and menu.tackle_buttons[1].text == "Equipped", "Shop button buys, equips and refreshes displayed balance")
 	game.game.state = S.State.FIGHT; menu.refresh_tackle()
 	check(menu.tackle_buttons.all(func(b): return b.disabled), "Shop disables equipment changes during fights")
-	game.queue_free(); await process_frame; await process_frame
+	game.queue_free(); await process_frame; await create_timer(.3).timeout
 	print("TACKLE_RESULT %d checks: %s" % [checks, failures]); quit(0 if failures.is_empty() else 1)

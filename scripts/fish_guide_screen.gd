@@ -9,6 +9,9 @@ func _draw() -> void:
 	if is_instance_valid(guide.photo_camera) and guide.photo_camera.active:
 		_draw_camera()
 		return
+	if guide.selected < 0:
+		_draw_status()
+		return
 	label("FIELD GUIDE", Vector2(34, 65), 42, Color("a9dfb2"))
 	label("FRESHWATER COLLECTION", Vector2(36, 102), 23)
 	draw_line(Vector2(34, 127), Vector2(606, 127), Color("49715d"), 2)
@@ -45,7 +48,7 @@ func _draw() -> void:
 		label("PERSONAL BEST · LENGTH", Vector2(46, 632), 26)
 		label("%.1f cm" % entry.length, Vector2(46, 689), 52, Color("b9f0c0"))
 		label("ENTRY %02d / %02d" % [guide.selected + 1, rows.size()], Vector2(36, 737), 25)
-	label("LEFT TRIGGER: CAMERA · X/Y: PAGE" if guide.game_root.xr else "C: CAMERA · ← →: BROWSE", Vector2(36, 782), 24)
+	label("FINGER: ‹ › PAGES · LEFT TRIGGER: CAMERA" if guide.game_root.xr else "C: CAMERA · ← →: BROWSE", Vector2(36, 782), 22)
 	label("RELEASE GRIP: RETURN TO BELT" if guide.game_root.xr else "G: CLOSE GUIDE", Vector2(36, 819), 21)
 
 func _draw_camera() -> void:
@@ -62,6 +65,35 @@ func _draw_camera() -> void:
 			label(line, Vector2(36, y), 20); y += 26; line = ""
 		line += word + " "
 	label(line, Vector2(36, y), 20)
-	label("RIGHT TRIGGER: TAKE PHOTO" if guide.game_root.xr else "SPACE: TAKE PHOTO", Vector2(36, 735), 26)
-	label("RIGHT A: SELFIE ON/OFF" if guide.game_root.xr else "F: SELFIE ON/OFF · MIDDLE-DRAG: AIM", Vector2(36, 777), 23)
+	label("PRESS › / RIGHT TRIGGER: PHOTO" if guide.game_root.xr else "SPACE: TAKE PHOTO", Vector2(36, 735), 25)
+	label("PRESS ‹ / RIGHT A: SELFIE ON/OFF" if guide.game_root.xr else "F: SELFIE ON/OFF · MIDDLE-DRAG: AIM", Vector2(36, 777), 23)
 	label("LEFT TRIGGER: GUIDE" if guide.game_root.xr else "C: GUIDE · G: CLOSE", Vector2(36, 819), 23)
+
+func status_rows() -> Array:
+	var session = guide.game_root.game
+	var earned: int = session.last_reward
+	if earned == 0 and not session.journal.is_empty(): earned = int(session.journal.back().get("shekels", 0))
+	return [
+		["LOCATION", session.location_name],
+		["SHEKELS AVAILABLE", str(session.tackle.shekels)],
+		["LAST CATCH EARNED", "+%d shekels" % earned],
+		["BAIT EQUIPPED", session.BAITS[session.bait]],
+		["ROD EQUIPPED", session.tackle.rod().name + (" · stashed" if guide.game_root.rod_holster.stowed else "")],
+	]
+
+func _draw_status() -> void:
+	label("FIELD GUIDE", Vector2(34, 65), 42, Color("a9dfb2"))
+	label("YOUR FISHING SESSION", Vector2(36, 112), 26)
+	draw_line(Vector2(34, 135), Vector2(606, 135), Color("49715d"), 2)
+	var rows := status_rows()
+	for i in rows.size():
+		var y := 178 + i * 103
+		label(rows[i][0], Vector2(36, y), 23)
+		var value := str(rows[i][1])
+		var text_size := 38
+		while text_size > 24 and font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, text_size).x > 568:
+			text_size -= 1
+		label(value, Vector2(36, y + 44), text_size, Color("a9dfb2"))
+	label("%02d / %02d SPECIES FOUND" % [guide.entries.size(), guide.Session.SPECIES.size()], Vector2(36, 730), 27)
+	label("FINGER: ‹ › COLLECTION" if guide.game_root.xr else "← →: COLLECTION", Vector2(36, 782), 25)
+	label("LEFT TRIGGER: CAMERA" if guide.game_root.xr else "C: CAMERA · G: CLOSE", Vector2(36, 819), 23)

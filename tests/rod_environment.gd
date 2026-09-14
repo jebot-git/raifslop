@@ -33,7 +33,7 @@ func run() -> void:
 		if DisplayServer.get_name() != "headless":
 			check(after.is_finite() and before.origin.distance_to(after.origin)>1,"Birds move through finite 3D positions")
 		check(life.birds.cast_shadow==GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,"Wildlife adds no dynamic shadows")
-		check(g.panorama_material.panorama.get_size()==Vector2(4096,2048),"Native 4K panorama loaded")
+		check(g.panorama_material.panorama.get_size()==Vector2(8192,4096),"Native 8K panorama loaded")
 	if "--capture" in OS.get_cmdline_user_args(): await capture()
 	print("Rod and environment: %d checks, %d failures" % [checks,failures])
 	quit(1 if failures else 0)

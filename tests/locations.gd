@@ -40,7 +40,7 @@ func run() -> void:
 		check(g._select_location(entry.id), "Can visit " + entry.name)
 		check(g.current_location == entry.id and g.game.location_name == entry.name, "Active location and HUD identity agree")
 		var texture: Texture2D = g.panorama_material.panorama
-		check(texture.get_width() == 4096 and texture.get_height() == 2048, "Sky uses bounded 2:1 native 4K panorama")
+		check(texture.get_width() == 8192 and texture.get_height() == 4096, "Sky uses bounded 2:1 native 8K panorama")
 		check(Locations.saved_location() == entry.id, "Location selection survives preference reload")
 		check(is_equal_approx(g.location_sun.light_energy, entry.sun_energy), "Location sunlight is applied")
 		check(g.water_material.get_shader_parameter("deep_color") == entry.water, "Location water colour is applied")
@@ -67,7 +67,8 @@ func run() -> void:
 	g.avatar_menu.location_list.select(1)
 	g.avatar_menu._preview_location(1)
 	g.avatar_menu.visit_button.pressed.emit()
-	check(g.current_location == "lake_pier", "Fish here button selects the previewed location")
+	check(g.current_location == "lake_pier" and not g.menu_open and not g.motor.blocked, "Fish here travels and automatically closes menu")
+	g._toggle_avatar_menu()
 	for i in range(8):
 		g._layout_avatar_menu()
 		await process_frame
@@ -88,4 +89,5 @@ func run() -> void:
 	g._load_journal()
 	check(g.game.journal.back().location_name == "Lake Pier", "Location survives journal save/load")
 	print("Location tests: %d checks, %d failures" % [checks, failures])
+	g.queue_free();await process_frame;await create_timer(.3).timeout
 	quit(1 if failures else 0)

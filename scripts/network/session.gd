@@ -21,6 +21,8 @@ var permissions = preload("res://scripts/voice/permissions.gd").new()
 var avatars = preload("res://scripts/network/avatars.gd").new()
 var voice = preload("res://scripts/voice/chat.gd").new()
 var display_name := "Angler"
+var host_address := "127.0.0.1"
+var preferred_port := 24567
 var status := "Offline"
 var elapsed := 0.0
 var serial := 0
@@ -33,6 +35,7 @@ func setup(root: Node, server_only: bool = false) -> void:
 	root_game = root
 	dedicated = server_only
 	headless = DisplayServer.get_name()=="headless"
+	if not dedicated: load_preferences()
 	name = "Network"
 	add_child(permissions)
 	add_child(avatars); avatars.setup(self)
@@ -42,6 +45,24 @@ func setup(root: Node, server_only: bool = false) -> void:
 	multiplayer.connected_to_server.connect(_connected)
 	multiplayer.connection_failed.connect(func(): leave("Connection failed"))
 	multiplayer.server_disconnected.connect(func(): leave("Host disconnected — offline fishing continues"))
+
+func load_preferences() -> void:
+	var cfg := ConfigFile.new();cfg.load("user://multiplayer.cfg")
+	var chosen_name = cfg.get_value("connection", "name", "Angler")
+	display_name = clean_name(chosen_name) if chosen_name is String else "Angler"
+	var address = cfg.get_value("connection", "address", "127.0.0.1")
+	host_address = address.strip_edges().left(253) if address is String else "127.0.0.1"
+	var port = cfg.get_value("connection", "port", 24567)
+	preferred_port = clampi(int(port),1024,65535) if (port is int or port is float) and is_finite(port) else 24567
+
+func save_preferences() -> void:
+	if dedicated: return
+	var cfg := ConfigFile.new()
+	cfg.set_value("connection", "name", display_name)
+	cfg.set_value("connection", "address", host_address)
+	cfg.set_value("connection", "port", preferred_port)
+	var error := cfg.save("user://multiplayer.cfg")
+	if error != OK: push_warning("Cannot save multiplayer settings: " + error_string(error))
 
 func host(port: int = 24567, bind_address: String = "*") -> Error:
 	leave()

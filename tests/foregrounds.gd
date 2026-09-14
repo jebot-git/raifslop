@@ -79,4 +79,5 @@ func run() -> void:
 	print("Foreground tests: %d checks, %d failures" % [checks, failures])
 	g.queue_free()
 	await process_frame
+	await create_timer(.3).timeout
 	quit(1 if failures else 0)

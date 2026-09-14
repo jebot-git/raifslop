@@ -9,6 +9,9 @@ var right: XRController3D
 var focused := true
 var seated := false
 var expressions_enabled := true
+var tracked_leg_animation := false
+var calibration_notice_time := 0.0
+var calibration_notice := ""
 var body: Dictionary={}
 var face: Dictionary={}
 var tracking=preload("res://scripts/tracking/tracking.gd").new()
@@ -24,8 +27,14 @@ func setup(root: Node) -> void:
 	if config.load("user://tracking.cfg")==OK:
 		seated=bool(config.get_value("pose","seated",false))
 		expressions_enabled=bool(config.get_value("pose","expressions",true))
+		tracked_leg_animation=bool(config.get_value("pose","tracked_leg_animation",false))
 		tracking.enabled=bool(config.get_value("pose","body",true))
-	tracking.calibration_completed.connect(func(): message="Body calibrated"; root_game._tone(880,.15))
+	tracking.calibration_completed.connect(func():
+		message="Body calibrated"
+		calibration_notice="Body calibrated · lower your arms"
+		calibration_notice_time=2.0
+		root_game._tone(880,.15)
+		for controller_node in [left, right]: controller_node.trigger_haptic_pulse("haptic",0,0.4,0.12,0))
 	var xr:=XRServer.find_interface("OpenXR") as OpenXRInterface
 	if xr:
 		xr.session_focussed.connect(func(): focused=true)
@@ -36,14 +45,28 @@ func controller(node_name: String, tracker_name: String, pose_name: String) -> X
 	return node
 func clear_samples() -> void:
 	body.clear(); face.clear(); t_pose_detector.reset()
+	if is_instance_valid(root_game): root_game.hud.calibration_message=""
 func sample(delta: float) -> void:
+	var xr := XRServer.find_interface("OpenXR") as OpenXRInterface
+	if root_game.xr and xr and xr.is_initialized():
+		focused = xr.get_session_state() == OpenXRInterface.SESSION_STATE_FOCUSED
+	calibration_notice_time=maxf(0,calibration_notice_time-delta)
+	if calibration_notice_time<=0: calibration_notice=""
 	root_game.motor.tracking_focused=focused
 	if not root_game.xr or not focused or not head_tracked():
 		clear_samples(); return
 	body=preload("res://scripts/tracking/poses.gd").validate_body(tracking.sample())
 	face=eyes.sample() if expressions_enabled else {}
-	var allowed: bool=head_tracked() and not seated and not root_game.menu_open and root_game.game.state==0 and not root_game.casting and not root_game.fish_guide.held and left.get_has_tracking_data() and right.get_has_tracking_data() and tracking.full_body_available()
-	if t_pose_detector.sample(head.transform,left.position,right.position,delta,allowed): tracking.calibrate(true)
+	var allowed: bool=not seated and root_game.game.state==0 and not root_game.casting and not root_game.fish_guide.held and left.get_has_tracking_data() and right.get_has_tracking_data() and tracking.enabled
+	var detected := t_pose_detector.sample(head.transform,left.position,right.position,delta,allowed)
+	if t_pose_detector.held>0 or detected:
+		if not tracking.full_body_available():
+			calibration_notice="T-pose detected · enable body trackers or SlimeVR OSC"
+			t_pose_detector.reset(); t_pose_detector.latched=false
+		elif detected: tracking.calibrate(true)
+		else: calibration_notice="Hold T-pose · %.1f s" % maxf(0,t_pose_detector.HOLD_SECONDS-t_pose_detector.held)
+		calibration_notice_time=2.0 if detected else .25
+	root_game.hud.calibration_message=calibration_notice
 func calibrate() -> void:
 	if not root_game.xr: message="Calibration requires an XR session"; return
 	tracking.calibrate()
@@ -77,7 +100,9 @@ func recenter() -> bool:
 func save() -> void:
 	var config:=ConfigFile.new(); config.load("user://tracking.cfg")
 	config.set_value("pose","seated",seated); config.set_value("pose","expressions",expressions_enabled); config.set_value("pose","body",tracking.enabled)
-	config.save("user://tracking.cfg")
+	config.set_value("pose","tracked_leg_animation",tracked_leg_animation)
+	var error:=config.save("user://tracking.cfg")
+	if error!=OK:push_warning("Cannot save tracking settings: "+error_string(error))
 
 func head_tracked() -> bool:
 	var tracker=XRServer.get_tracker("head") as XRPositionalTracker

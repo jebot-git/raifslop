@@ -79,4 +79,7 @@ func run() -> void:
 		await RenderingServer.frame_post_draw
 		check(root.get_texture().get_image().save_png("res://docs/zander_catch.png") == OK, "Runtime catch screenshot saved")
 	print("Fish species integration: %d checks, %d failures" % [checks, failures])
+	g.queue_free()
+	await process_frame
+	await create_timer(.3).timeout
 	quit(1 if failures else 0)

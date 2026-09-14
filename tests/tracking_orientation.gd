@@ -33,6 +33,7 @@ func run():
  tracking.calibrate()
  check(tracking.sample().hips.basis.z.dot(Vector3.FORWARD)>.99,"Vive calibration follows the direction the player faces")
  XRServer.remove_tracker(vive)
+ await process_frame # Let XRController3D invalidate the removed role before native-only checks.
  rig.head.rotation=Vector3.ZERO
  var now:float=Time.get_ticks_msec()*.001
  tracking.osc.samples={"hips":{"position":Vector3(0,.9,0),"basis":Basis(Vector3.UP,PI),"time":now,"rotation_time":now},"left_foot":{"position":Vector3(.15,.1,0),"basis":Basis(Vector3.UP,PI),"time":now,"rotation_time":now}}
@@ -44,9 +45,13 @@ func run():
  check(tracking.sample().hips.basis.is_equal_approx(Basis.IDENTITY),"Slime neutral torso faces the headset direction")
  tracking.osc.samples.clear()
  var native_tracker:=XRBodyTracker.new();native_tracker.name="/user/body_tracker";native_tracker.has_tracking_data=true
+ for joint in range(XRBodyTracker.JOINT_MAX):native_tracker.set_joint_flags(joint,0)
  native_tracker.set_joint_flags(XRBodyTracker.JOINT_HIPS,XRBodyTracker.JOINT_FLAG_POSITION_VALID|XRBodyTracker.JOINT_FLAG_ORIENTATION_VALID)
  native_tracker.set_joint_transform(XRBodyTracker.JOINT_HIPS,Transform3D(Basis.from_euler(Vector3(PI/2,.4,0)),Vector3(0,.9,0)))
- XRServer.add_tracker(native_tracker);tracking.calibrate()
+ XRServer.add_tracker(native_tracker)
+ var initial:Transform3D=tracking.sample().hips
+ check(initial.basis.y.dot(Vector3.UP)>.99,"Uncalibrated sideways bridge torso uses measured upright body direction")
+ tracking.calibrate()
  check(tracking.sample().hips.basis.is_equal_approx(Basis.IDENTITY) and tracking.sample().hips.origin.is_equal_approx(Vector3(0,.9,0)),"Native bridge calibration corrects orientation without shifting measured joints")
  native_tracker.set_joint_flags(XRBodyTracker.JOINT_LEFT_LOWER_LEG,XRBodyTracker.JOINT_FLAG_POSITION_VALID|XRBodyTracker.JOINT_FLAG_ORIENTATION_VALID)
  var lower_basis:Basis=Basis(Vector3.UP,PI)*Body.native_rest.LeftLowerLeg
@@ -56,10 +61,23 @@ func run():
  check(absf(planted.origin.y-.08)<.001,"Calf tracker without foot joint calibrates ankle height")
  native_tracker.set_joint_transform(XRBodyTracker.JOINT_LEFT_LOWER_LEG,Transform3D(Basis(Vector3.RIGHT,-PI/2)*lower_basis,Vector3(-.13,.62,0)))
  var lifted:Transform3D=tracking.sample().left_foot
+ check(lifted.basis.is_equal_approx(Basis(Vector3.RIGHT,-PI/2)),"Raised estimated foot follows calibrated calf rotation instead of locking sole to floor")
  check(lifted.origin.y>planted.origin.y+.4 and lifted.origin.z>.2,"Lifting and bending native lower leg lifts the estimated foot instead of pinning it to floor")
  native_tracker.set_joint_flags(XRBodyTracker.JOINT_LEFT_FOOT,XRBodyTracker.JOINT_FLAG_POSITION_VALID|XRBodyTracker.JOINT_FLAG_ORIENTATION_VALID)
  native_tracker.set_joint_transform(XRBodyTracker.JOINT_LEFT_FOOT,Transform3D(Basis.IDENTITY,Vector3(-.2,.4,-.3)))
  check(tracking.sample().left_foot.origin.is_equal_approx(Vector3(-.2,.4,-.3)),"An actual native foot joint takes priority over the inferred ankle")
+ check(tracking.sample().left_foot.basis.is_equal_approx(Body.native_to_facing("left_foot",Basis.IDENTITY)),"Actual foot orientation takes priority over calf-derived rotation")
+ # A bridge's neutral calf axes can be rolled 90 degrees even when standing.
+ native_tracker.set_joint_flags(XRBodyTracker.JOINT_LEFT_FOOT,0)
+ for roll in [-PI/2,PI/2]:
+  tracking.native_corrections.clear();tracking.native_foot_offsets.clear()
+  var bridge_basis:Basis=Basis(Vector3.BACK,roll)*lower_basis
+  native_tracker.set_joint_transform(XRBodyTracker.JOINT_LEFT_LOWER_LEG,Transform3D(bridge_basis,Vector3(-.13,.50,0)))
+  var ankle:Transform3D=tracking.sample().left_foot
+  check(ankle.origin.distance_to(Vector3(-.13,.08,0))<.001 and ankle.basis.is_equal_approx(Basis.IDENTITY),"Uncalibrated bridge calf axes produce a planted, forward-facing foot: "+str(roll))
+  native_tracker.set_joint_transform(XRBodyTracker.JOINT_LEFT_LOWER_LEG,Transform3D(Basis(Vector3.RIGHT,-PI/2)*bridge_basis,Vector3(-.13,.70,0)))
+  var raised:Transform3D=tracking.sample().left_foot
+  check(raised.origin.y>.69 and raised.origin.z>.4,"Bridge inferred foot follows physical leg lift after neutral measurement: "+str(roll))
  XRServer.remove_tracker(native_tracker)
  rig.free()
  print("TRACKING_ORIENTATION_RESULT ",JSON.stringify(failures));quit(0 if failures.is_empty() else 1)

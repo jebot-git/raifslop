@@ -23,7 +23,7 @@ The project already had a simplified tension mechanic in `scripts/fishing_sessio
 | Easing off | Relieves tension; prolonged slack can lose the hook |
 | Excess tension | At or above 0.98 for more than 1.4 seconds, the line snaps |
 | Slack | At or below 0.02 for more than 1.4 seconds, the hook slips |
-| Correct directional counter | Reduces tension by 0.16 and stamina by 0.19 |
+| Correct directional counter | Sustained input drains resistance over `2 + power × 0.6` seconds; proportionally relieves 0.16 tension and 0.19 stamina, adjusted for rod/species |
 | Missed counter | Adds 0.18 tension |
 | Fish runs | Periodic 3.5-second runs within a 9-second cycle, modulated by remaining stamina and species power |
 
@@ -35,3 +35,5 @@ Real VR Fishing's [official difficulty documentation](https://devsunitedgameshel
 - Existing fishing simulation: 118 checks passed.
 - Native Monado simulated OpenXR casting/catch regression: 49 checks passed. The existing runtime shutdown/spatial-signal/profile-RID diagnostics remain; this is not physical-headset validation.
 - Desktop Vulkan render captured in [fishing_wake.png](fishing_wake.png); no shader errors. `tests/fishing_feedback_render.gd` reproduces it.
+
+See the [tester feedback update](TESTER_FEEDBACK.md) for the sustained resistance mechanic, line haptics, guide status and current live validation.

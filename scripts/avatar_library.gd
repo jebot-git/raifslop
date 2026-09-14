@@ -115,10 +115,14 @@ func load_model(path: String) -> Node3D:
 	var model: Node3D = gltf.generate_scene(state) if result == OK else null
 	for extension in extensions: GLTFDocument.unregister_gltf_document_extension(extension)
 	if model == null: error = "The Godot VRM plugin could not load this avatar."
+	else:
+		var bounds = preload("res://scripts/avatar_rest_bounds.gd")
+		model.set_meta(bounds.CACHE_KEY, bounds.measure(model))
 	return model
 
 func save_selection(path: String) -> void:
 	selected_path = path
 	var config := ConfigFile.new()
 	config.set_value("avatar", "path", path)
-	config.save("user://avatar.cfg")
+	var error:=config.save("user://avatar.cfg")
+	if error!=OK:push_warning("Cannot save avatar selection: "+error_string(error))

@@ -50,6 +50,9 @@ func run():
   check(sim.state==S.State.LOST and ("snapped" in sim.message if high else "slipped" in sim.message),"High tension snaps / slack slips: "+str(high))
  var calm=S.new();calm.state=S.State.FIGHT;calm.next_cue=100;var run=S.new();run.state=S.State.FIGHT;run.phase=6;run.next_cue=100
  calm.tick(.1,1,0);run.tick(.1,1,0);check(run.tension>calm.tension,"Reeling during runs adds more tension")
- run.cue=0;var before=run.tension;run.gesture(0);check(run.tension<before,"Successful counter relieves tension")
- root_game.queue_free();await process_frame;await process_frame
+ run.cue=0;var before=run.tension
+ var without=S.new();without.state=S.State.FIGHT;without.phase=run.phase;without.cue=0;without.tension=before;without.stamina=run.stamina
+ run.gesture(0);run.tick(.05,0,0);without.tick(.05,0,0)
+ check(run.tension<without.tension,"Sustained counter reduces load compared with no counter")
+ root_game.queue_free();await process_frame;await create_timer(.3).timeout
  print("FISHING_FEEDBACK_RESULT ",failures);quit(0 if failures.is_empty() else 1)

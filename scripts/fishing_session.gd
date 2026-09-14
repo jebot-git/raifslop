@@ -3,7 +3,7 @@ extends RefCounted
 enum State { READY, CASTING, WAITING, BITE, FIGHT, LANDED, LOST }
 const BAITS = ["Earthworm", "Sweetcorn", "Spinner", "Maggots", "Bread", "Wet fly"]
 const SPECIES = [
-	{"rarity": 1, "endurance": 85.0, "name": "European perch", "latin": "Perca fluviatilis", "bait": 0, "length": 32.0, "weight": 0.65},
+	{"model_yaw": PI / 2, "rarity": 1, "endurance": 85.0, "name": "European perch", "latin": "Perca fluviatilis", "bait": 0, "length": 32.0, "weight": 0.65},
 	{"rarity": 2, "endurance": 140.0, "name": "Common carp", "latin": "Cyprinus carpio", "bait": 1, "length": 58.0, "weight": 3.8, "model": "res://assets/models/fish/carp.glb"},
 	{"rarity": 3, "endurance": 150.0, "name": "Northern pike", "latin": "Esox lucius", "bait": 2, "length": 72.0, "weight": 2.9, "model": "res://assets/models/fish/pike.glb"},
 	{"rarity": 1, "endurance": 60.0, "name": "Common roach", "latin": "Rutilus rutilus", "bait": 0, "length": 25.0, "weight": 0.25, "power": 0.75, "model": "res://assets/models/fish/roach.glb"},
@@ -39,11 +39,21 @@ var bait := 0
 var fish_index := 0
 var tension := 0.35
 var distance := 12.0
+var landing_distance := 1.6
 var stamina := 1.0
 var timer := 0.0
 var phase := 0.0
 var cue := -1
+const COUNTER_WINDOW := 6.0
+const MAX_FAILED_COUNTERS := 3
+const SLACK_LIMIT := 0.10
+const STRAIN_LIMIT := 0.90
+var failed_counters := 0
+var danger_side := 0
 var cue_time := 0.0
+var resistance := 1.0
+var counter_direction := -1
+var counter_active := false
 var next_cue := 3.0
 var danger_time := 0.0
 var cast_distance := 12.0
@@ -89,26 +99,41 @@ func strike() -> void:
 		state = State.FIGHT
 		tension = 0.4
 		stamina = 1.0
+		resistance=1.0;counter_direction=-1;counter_active=false
 		phase = 0.0
 		counter_rest = 0.0
 		cue = -1
 		next_cue = 2.5
 		danger_time = 0.0
+		danger_side = 0
+		failed_counters = 0
 		message = "Hook set! Reel steadily; ease off during a run."
 	elif state == State.WAITING:
 		lose("Too early. Wait for the float to dip.")
 
 func gesture(direction: int) -> bool:
-	if state != State.FIGHT or cue != direction:
-		return false
-	stamina = maxf(0.0, stamina - 19.0 * float(tackle.rod().fatigue) / float(SPECIES[fish_index].endurance))
-	tension = clampf(tension - 0.16, 0.08, 0.85)
-	cue = -1
-	counter_rest = 3.5 + (1.0 - stamina) * 2.0
-	phase = 0.0
-	next_cue = counter_rest
-	message = "Good counter! Bring it closer."
-	return true
+	# Sampled once per simulation step. An event or a brief flick cannot finish
+	# the counter, and an old input is never held implicitly across future ticks.
+	counter_direction = direction
+	return state == State.FIGHT and cue >= 0 and cue == direction
+
+func counter_seconds() -> float:
+	return 2.0 + float(SPECIES[fish_index].get("power",1.0)) * .6
+
+func _counter_tick(delta: float) -> void:
+	counter_active = cue >= 0 and counter_direction == cue
+	counter_direction = -1
+	if not counter_active: return
+	var progress := minf(resistance, delta / counter_seconds())
+	resistance = maxf(0.0, resistance-progress)
+	stamina = maxf(0.0, stamina-progress*19.0*float(tackle.rod().fatigue)/float(SPECIES[fish_index].endurance))
+	tension = clampf(tension-progress*.16,.08,.85)
+	if resistance <= .00001:
+		cue=-1
+		counter_rest=3.5+(1.0-stamina)*2.0
+		phase=0.0;next_cue=counter_rest
+		message="Fish tired! Reel it closer."
+
 
 func is_running() -> bool:
 	return state == State.FIGHT and counter_rest <= 0.0 and fmod(phase, 9.0) > 5.5
@@ -142,6 +167,7 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 			if timer <= 0.0:
 				lose("Missed the bite. Cast again.")
 		State.FIGHT:
+			_counter_tick(delta)
 			if counter_rest > 0.0: counter_rest = maxf(0.0, counter_rest - delta)
 			else: phase += delta
 			var power: float = SPECIES[fish_index].get("power", 1.0)
@@ -159,7 +185,10 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 				distance -= delta * rate * (1.05 + (1.0 - stamina) * 0.9) / power
 			stamina = maxf(0.0, stamina - delta * rate * 0.8 * float(tackle.rod().fatigue) / float(SPECIES[fish_index].endurance))
 			tension = clampf(tension, 0.0, 1.0)
-			if tension >= 0.98 or tension <= 0.02:
+			var unsafe_side := 1 if tension >= STRAIN_LIMIT else -1 if tension <= SLACK_LIMIT else 0
+			if unsafe_side != danger_side: danger_time = 0.0
+			danger_side = unsafe_side
+			if unsafe_side != 0:
 				danger_time += delta
 			else:
 				danger_time = 0.0
@@ -169,15 +198,20 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 			next_cue -= delta
 			if cue < 0 and next_cue <= 0.0:
 				cue = rng.randi_range(0, 2)
-				cue_time = 2.2
+				cue_time = COUNTER_WINDOW
+				resistance = 1.0
 			if cue >= 0:
 				cue_time -= delta
 				if cue_time <= 0.0:
+					failed_counters += 1
+					if failed_counters >= MAX_FAILED_COUNTERS:
+						lose("The fish broke free after three missed counters.")
+						return
 					tension = minf(1.0, tension + (0.08 + 0.10 * stamina) / durability)
 					cue = -1
 					next_cue = 3.0
-					message = "Missed counter. Ease the tension."
-			if distance <= 1.6 and stamina <= 0.35:
+					message = "Missed counter (%d/%d). Keep control of the fish." % [failed_counters, MAX_FAILED_COUNTERS]
+			if distance <= landing_distance and stamina <= 0.35:
 				state = State.LANDED
 				catches += 1
 				var fish: Dictionary = SPECIES[fish_index].duplicate()
@@ -192,14 +226,21 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 				journal.append(fish)
 				message = "%s · %.0f cm · %.2f kg\n%s · +%d shekels" % [fish.name, fish.length, fish.weight, fish.latin, last_reward]
 			else:
-				distance = maxf(distance, 1.0)
+				distance = maxf(distance, landing_distance)
 
 func lose(reason: String) -> void:
 	state = State.LOST
+	cue = -1
+	counter_direction = -1
+	counter_active = false
 	message = reason
 
 func reset() -> void:
 	state = State.READY
+	failed_counters = 0
+	danger_time = 0.0
+	danger_side = 0
 	cue = -1
+	counter_direction=-1;counter_active=false;resistance=1.0
 	tension = 0.35
 	message = "Choose your bait, then cast into open water."

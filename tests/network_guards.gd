@@ -7,6 +7,7 @@ func check(ok: bool,title: String) -> void:
 	if not ok: failures.append(title)
 func run() -> void:
 	var game=load("res://scenes/main.tscn").instantiate(); root.add_child(game)
+	await create_timer(.1).timeout
 	var net=game.network
 	net.active=true; net.players[2]={"name":"Speaker"}
 	var data:=Fixture.packet(Fixture.encoder())
@@ -54,5 +55,5 @@ func run() -> void:
 	check(net.host(80)==ERR_INVALID_PARAMETER,"Invalid server port rejected")
 	check(net.join("",24567)==ERR_INVALID_PARAMETER,"Empty join address rejected")
 	print("NETWORK_GUARDS_RESULT ",failures)
-	net.leave(); game.queue_free(); await process_frame; await process_frame
+	net.leave(); game.queue_free(); await process_frame; await create_timer(.15).timeout
 	quit(0 if failures.is_empty() else 1)

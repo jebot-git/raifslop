@@ -1,4 +1,4 @@
-## Adapted from FPSloppa 5105fb8cfa38c76aa1d5d172af3047fe2d12ae0d.
+## Adapted from FPSloppa 28a719a84454ef94ac6683f11b709735948e12b9.
 extends Node
 signal calibration_completed
 const OSC=preload("res://scripts/tracking/osc.gd")
@@ -120,11 +120,6 @@ func calibrate(t_pose: bool=false) -> void:
 			var basis_here:Basis=preload("res://scripts/tracking/body_basis.gd").native_to_facing(key,tracker.get_joint_transform(JOINTS[key]).basis)
 			adjustments[key]=basis_here.inverse()*rig.origin.basis.inverse()*facing.basis
 			native_count+=1
-			if key in ["left_knee","right_knee"] and flags&XRBodyTracker.JOINT_FLAG_POSITION_VALID:
-				# Some bridges expose calf-mounted trackers as lower-leg joints,
-				# without an ankle/foot joint. Calibrate the tracker-to-ankle length.
-				var height:float=tracker.get_joint_transform(JOINTS[key]).origin.y*XRServer.world_scale
-				native_foot_offsets[str(tracker.name)+key]=clampf(height-.08*XRServer.world_scale,.05*XRServer.world_scale,.65*XRServer.world_scale)
 		native_corrections[tracker.name]=adjustments
 	calibrated=not corrections.is_empty() or native_count>0
 	status="Calibrated %d external / %d native targets"%[corrections.size(),native_count] if calibrated else "No body tracking data available to calibrate"
@@ -154,6 +149,8 @@ func sample() -> Dictionary:
 					var pose: Transform3D=tracker.get_joint_transform(JOINTS[key])
 					pose.origin*=XRServer.world_scale
 					pose.basis=preload("res://scripts/tracking/body_basis.gd").native_to_facing(key,pose.basis)*native_corrections.get(tracker.name,{}).get(key,Basis.IDENTITY)
+					if key in ["hips","chest"] and not native_corrections.get(tracker.name,{}).has(key):
+						pose.basis = safe_native_torso(tracker, pose.basis, Transform3D(rig.head.basis,rig.head.position/XRServer.world_scale))
 					result[key]=rig.origin.transform*pose
 			# A tracked lower leg must drive the endpoint too, not just the knee
 			# bend hint of a foot that remains planted by procedural walking.
@@ -163,8 +160,11 @@ func sample() -> Dictionary:
 				if result.has(knee) and not result.has(foot) and leg_flags&XRBodyTracker.JOINT_FLAG_POSITION_VALID and leg_flags&XRBodyTracker.JOINT_FLAG_ORIENTATION_VALID:
 					var offset_key:String=str(tracker.name)+knee
 					if not native_foot_offsets.has(offset_key):
-						var height:float=tracker.get_joint_transform(JOINTS[knee]).origin.y*XRServer.world_scale
-						native_foot_offsets[offset_key]=clampf(height-.08*XRServer.world_scale,.05*XRServer.world_scale,.65*XRServer.world_scale)
+						# Bridges can supply tracker axes rather than Humanoid bone axes.
+						# Measure the entire ankle offset in this calf's local frame, so a
+						# sideways neutral axis cannot put a planted foot at knee height.
+						var facing:Basis=rig.origin.basis*Basis(Vector3.UP,rig.head.rotation.y)
+						native_foot_offsets[offset_key]=calibrate_foot(result[knee],rig.origin.position.y,XRServer.world_scale,facing)
 					var inferred:Transform3D=estimated_foot(result[knee],native_foot_offsets[offset_key])
 					inferred.origin.y=maxf(inferred.origin.y,rig.origin.position.y+.03*XRServer.world_scale)
 					result[foot]=inferred
@@ -177,6 +177,7 @@ func sample() -> Dictionary:
 		var curls:=preload("res://scripts/tracking/hand_input.gd").sample(controller,hand)
 		hand_curls[side]=curls
 		result[side+"_curls"]=curls
+		result[side+"_finger_rotations"]=preload("res://scripts/tracking/hand_input.gd").finger_rotations(hand)
 		hand_sources[side]="native joints" if hand and hand.has_tracking_data else "controller gestures"
 		# Inferred controller wrists must not replace our calibrated grip mapping.
 		if not hand or not hand.has_tracking_data or hand.hand_tracking_source!=XRHandTracker.HAND_TRACKING_SOURCE_UNOBSTRUCTED: continue
@@ -194,7 +195,34 @@ func sample() -> Dictionary:
 		var access_status: String=rig.game.permissions.tracking_status()
 		if not access_status.is_empty(): status=access_status
 	return result
-static func estimated_foot(lower_leg: Transform3D,ankle_offset: float) -> Transform3D:
-	return lower_leg*Transform3D(Basis.IDENTITY,Vector3.DOWN*ankle_offset)
+static func safe_native_torso(tracker: XRBodyTracker, orientation: Basis, head_pose: Transform3D) -> Basis:
+	# Some bridges expose sensor axes instead of Humanoid axes. Before a T-pose
+	# establishes their offsets, reject a torso-up axis inconsistent with the
+	# measured hip/chest positions. A correctly mapped (even leaning) torso passes.
+	var hips := tracker.get_joint_transform(XRBodyTracker.JOINT_HIPS).origin
+	var chest := head_pose.origin
+	if tracker.get_joint_flags(XRBodyTracker.JOINT_CHEST)&XRBodyTracker.JOINT_FLAG_POSITION_VALID:
+		chest = tracker.get_joint_transform(XRBodyTracker.JOINT_CHEST).origin
+	var up := chest-hips
+	if up.length() < .1: return orientation
+	up = up.normalized()
+	if orientation.y.dot(up) > .45: return orientation
+	var forward := -head_pose.basis.z
+	var left_flags := tracker.get_joint_flags(XRBodyTracker.JOINT_LEFT_SHOULDER)
+	var right_flags := tracker.get_joint_flags(XRBodyTracker.JOINT_RIGHT_SHOULDER)
+	if left_flags&XRBodyTracker.JOINT_FLAG_POSITION_VALID and right_flags&XRBodyTracker.JOINT_FLAG_POSITION_VALID:
+		var across := tracker.get_joint_transform(XRBodyTracker.JOINT_RIGHT_SHOULDER).origin-tracker.get_joint_transform(XRBodyTracker.JOINT_LEFT_SHOULDER).origin
+		if across.length() > .1: forward = up.cross(across)
+	forward -= up*forward.dot(up)
+	if forward.length_squared() < .001: return orientation
+	return Basis.looking_at(forward.normalized(),up)
+
+static func calibrate_foot(lower_leg: Transform3D,floor_height: float,scale: float,facing: Basis) -> Transform3D:
+	var length:=clampf(lower_leg.origin.y-floor_height-.08*scale,.05*scale,.65*scale)
+	return lower_leg.affine_inverse()*Transform3D(facing,lower_leg.origin+Vector3.DOWN*length)
+static func estimated_foot(lower_leg: Transform3D,ankle_offset: Transform3D) -> Transform3D:
+	# FPSloppa: preserve the calibrated calf-to-ankle transform in the air too.
+	# Forcing the sole level while the shin rotates creates artificial ankle flexion.
+	return lower_leg*ankle_offset
 func _exit_tree() -> void:
 	if udp: udp.close()

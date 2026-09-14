@@ -1,18 +1,20 @@
-## Adapted from FPSloppa 5105fb8cfa38c76aa1d5d172af3047fe2d12ae0d.
+## Adapted from FPSloppa 28a719a84454ef94ac6683f11b709735948e12b9.
 extends Node
 ## Resolve VRM expression animations to their declared mesh binds (VRM 0 and 1).
-const NAMES=[["aa","a"],["ih","i"],["ou","u"],["ee","e"],["oh","o"],["happy","joy"],["angry"],["sad","sorrow"],["surprised"],["relaxed","fun"]]
-var binds: Array=[[],[],[],[],[],[],[],[],[],[]]
-var weights:=PackedFloat32Array([0,0,0,0,0,0,0,0,0,0])
-var target:=PackedFloat32Array([0,0,0,0,0,0,0,0,0,0])
+const NAMES=[["aa","a"],["ih","i"],["ou","u"],["ee","e"],["oh","o"]]
+var binds: Array=[[],[],[],[],[]]
+var weights:=PackedFloat32Array([0,0,0,0,0])
+var target:=PackedFloat32Array([0,0,0,0,0])
 var remaining:=0.0
+var external_mixer:=false
+var mixer: Callable
 func setup(model: Node) -> void:
 	for node in model.find_children("*","AnimationPlayer",true,false):
 		var base: Node=node.get_node(node.root_node)
 		for anim_name in node.get_animation_list():
 			var name_here: String=String(anim_name).get_slice("/",String(anim_name).count("/")).to_lower()
 			var index:=-1
-			for i in range(10):
+			for i in range(5):
 				if name_here in NAMES[i]: index=i
 			if index<0: continue
 			var anim: Animation=node.get_animation(anim_name)
@@ -28,14 +30,13 @@ func setup(model: Node) -> void:
 				binds[index].append([mesh,shape,clampf(amount,0,1)])
 func speak(value: PackedFloat32Array) -> void:
 	if value.size()!=5: return
-	for i in range(5): target[i]=clampf(value[i],0,1)
-	remaining=.12
+	target=value.duplicate(); remaining=.12
 func _process(delta: float) -> void:
-	if remaining<=0 and weights==PackedFloat32Array([0,0,0,0,0,0,0,0,0,0]): return
+	if remaining<=0 and weights==PackedFloat32Array([0,0,0,0,0]): return
 	remaining-=delta
-	if remaining<=0: target=PackedFloat32Array([0,0,0,0,0,0,0,0,0,0])
+	if remaining<=0: target=PackedFloat32Array([0,0,0,0,0])
 	var totals: Dictionary={}
-	for i in range(10):
+	for i in range(5):
 		weights[i]=lerpf(weights[i],target[i],1-exp(-delta*(28 if target[i]>weights[i] else 16)))
 		if target[i]==0 and weights[i]<.001: weights[i]=0
 		for bind in binds[i]:
@@ -43,9 +44,8 @@ func _process(delta: float) -> void:
 			var mesh: MeshInstance3D=bind[0]
 			if not totals.has(mesh): totals[mesh]={}
 			totals[mesh][bind[1]]=float(totals[mesh].get(bind[1],0))+weights[i]*bind[2]
+	if external_mixer:
+		if mixer.is_valid():mixer.call()
+		return
 	for mesh in totals:
 		for shape in totals[mesh]: mesh.set_blend_shape_value(shape,clampf(totals[mesh][shape],0,.999))
-
-func express(value: PackedFloat32Array) -> void:
-	if value.size()!=5: return
-	for i in range(5): target[i+5]=clampf(value[i],0,1)

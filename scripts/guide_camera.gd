@@ -4,6 +4,8 @@ const UI_LAYER := 128
 const PHOTO_SIZE := Vector2i(1920, 1080)
 const PREVIEW_SIZE := Vector2i(640, 360)
 const PHOTO_DIR := "user://photos"
+const REAR_LENS := Vector3(0.055, 0.13, -0.024)
+const FRONT_LENS := Vector3(0.055, 0.139, 0.024)
 signal saved(path: String)
 var guide
 var view: SubViewport
@@ -32,7 +34,7 @@ func setup(owner_guide) -> void:
 	camera.cull_mask = 3
 	mark_ui(guide.device)
 	var game = guide.game_root
-	for node in [game.vr_status, game.avatar_panel, game.menu_pointer]:
+	for node in [game.avatar_panel, game.menu_pointer, game.menu_laser]:
 		if is_instance_valid(node): mark_ui(node)
 	game.head.cull_mask |= UI_LAYER
 
@@ -55,7 +57,16 @@ func toggle_selfie() -> void:
 
 func update_pose() -> void:
 	var game = guide.game_root
-	var source: Transform3D = game.left.global_transform if game.xr else game.head.global_transform
+	# The guide has its own grip rotation. Controller -Z now points along the
+	# handle, so using the controller pose puts the lens on the device's edge.
+	if game.xr:
+		camera.global_transform = guide.global_transform * lens_pose(selfie)
+		camera.cull_mask = 5 if selfie else 3
+		camera.fov = 90 if selfie else 65
+		camera.environment = game.head.environment
+		camera.attributes = game.head.attributes
+		return
+	var source: Transform3D = game.head.global_transform
 	if selfie:
 		var target: Vector3 = game.head.global_position - Vector3.UP * 0.3
 		var desired := source.origin - source.basis.z * 1.5 + Vector3.UP * 0.15
@@ -74,6 +85,9 @@ func update_pose() -> void:
 		camera.cull_mask = 3
 	camera.environment = game.head.environment
 	camera.attributes = game.head.attributes
+
+static func lens_pose(front: bool) -> Transform3D:
+	return Transform3D(Basis(Vector3.UP, PI) if front else Basis.IDENTITY, FRONT_LENS if front else REAR_LENS)
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(guide) or not active or not guide.held or busy: return

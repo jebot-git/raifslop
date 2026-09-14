@@ -15,8 +15,11 @@ func set_mode(value: String,persist:=true) -> void:
  root_game.location_sun.shadow_enabled=mode=="dynamic"
  apply_materials(root_game.foreground)
  for blob in blobs.values():blob.visible=false
- if persist:
-  var cfg:=ConfigFile.new();cfg.set_value("shadows","mode",mode);cfg.save("user://graphics.cfg")
+ if persist: save()
+func save() -> void:
+ var cfg:=ConfigFile.new();cfg.set_value("shadows","mode",mode)
+ var error:=cfg.save("user://graphics.cfg")
+ if error!=OK:push_warning("Cannot save graphics settings: "+error_string(error))
 func apply_materials(node: Node) -> void:
  if not is_instance_valid(node):return
  if node is MeshInstance3D:

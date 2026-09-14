@@ -104,7 +104,7 @@ def build(id):
   for yy in [.77,.98]:box('timber',(x,yy,z+.28),(1.8,.16,.055))
   for dx in [-.68,.68]:
    beam('steel',(x+dx,0,z-.2),(x+dx,.45,z-.2),.035);beam('steel',(x+dx,0,z+.23),(x+dx,1.07,z+.23),.035)
-  col((x,.48,z),(1.85,1.0,.7),'prop')
+  col((x,.48,z),(1.85,1.0,.7),'seat')
  def cleat(x,z):
   box('steel',(x,.12,z),(.18,.12,.10));beam('steel',(x-.2,.20,z),(x+.2,.20,z),.035)
  def coil(x,z):
@@ -193,12 +193,12 @@ def build(id):
   face('timber',[(x,0,z) for x,z in plan])
   collision.append({'points':[[x,y,z] for y in [-.20,0] for x,z in plan], 'role':'floor'})
   for z in [i*.2-1.6 for i in range(21)]:box('wood_end',(0,.003,z),(2.9,.008,.006))
-  box('seat',(0,.34,1.65),(2.8,.15,.42));col((0,.3,1.65),(2.85,.7,.45),'prop')
+  box('seat',(0,.34,1.65),(2.8,.15,.42));col((0,.3,1.65),(2.85,.7,.45),'seat')
   for x in [-1.15,1.15]:box('steel',(x,.14,1.65),(.10,.3,.38))
   # Outboard housing and shaft, transom details and a stowed tackle box.
   box('rubber',(0,.47,2.72),(.55,.5,.45));box('steel',(0,-.18,2.86),(.12,.8,.14))
   beam('steel',(-.2,-.51,2.87),(.2,-.51,2.87),.035)
-  box('paint',(1.04,.18,.2),(.48,.36,.6));box('seat',(1.04,.38,.2),(.50,.06,.62));col((1.04,.22,.2),(.5,.44,.62),'prop')
+  box('paint',(1.04,.18,.2),(.48,.36,.6));box('seat',(1.04,.38,.2),(.50,.06,.62));col((1.04,.22,.2),(.5,.44,.62),'seat')
   for x in [-1.3,1.3]:cleat(x,2.25)
   coil(-1.0,1.15)
   # Visible mooring lines, no boat bobbing or unstable player motion.

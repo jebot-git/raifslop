@@ -1,0 +1,54 @@
+[
+  {
+    "id": "lakeside",
+    "source_url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/8k/lakeside_8k.hdr",
+    "runtime": "assets/environment/locations/lakeside_8k.hdr",
+    "size": [
+      8192,
+      4096
+    ],
+    "bytes": 97267376,
+    "md5": "18de1e6e5dc17f26d2123c54ab9aea3b",
+    "sha256": "d32dca73c0b70b73e02a3e6ccc44daf1539477cc2c6e96d0bfe45acd0586b1c6",
+    "license": "CC0-1.0"
+  },
+  {
+    "id": "lake_pier",
+    "source_url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/8k/lake_pier_8k.hdr",
+    "runtime": "assets/environment/locations/lake_pier_8k.hdr",
+    "size": [
+      8192,
+      4096
+    ],
+    "bytes": 99046418,
+    "md5": "de2a8eec2327c16ea49d8c900c313efd",
+    "sha256": "5e8ece1a881f9203bb1678f053bfb76b82e46f773aa537cfbbde500e3a8d7bbc",
+    "license": "CC0-1.0"
+  },
+  {
+    "id": "gray_pier",
+    "source_url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/8k/gray_pier_8k.hdr",
+    "runtime": "assets/environment/locations/gray_pier_8k.hdr",
+    "size": [
+      8192,
+      4096
+    ],
+    "bytes": 94892124,
+    "md5": "1f5ee8cdcad34f6256149eeaff8073ba",
+    "sha256": "5dc34d8cf99c69bb944af9cd2c4c96ddbadf56f07911efbe8cceaba671a037fd",
+    "license": "CC0-1.0"
+  },
+  {
+    "id": "bell_park_pier",
+    "source_url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/8k/bell_park_pier_8k.hdr",
+    "runtime": "assets/environment/locations/bell_park_pier_8k.hdr",
+    "size": [
+      8192,
+      4096
+    ],
+    "bytes": 93361252,
+    "md5": "b4bbea341ea2bd7ae592e30c61774381",
+    "sha256": "514ea58df5a53615e42a85e013d8c0751ac7b1636a7de1dbf5c373ff355b9f8f",
+    "license": "CC0-1.0"
+  }
+]

@@ -9,11 +9,11 @@ var vr_mode_override:=false
 func _ready() -> void:
 	scroll_deadzone=100000
 	horizontal_scroll_mode=SCROLL_MODE_DISABLED
+	vertical_scroll_mode=SCROLL_MODE_AUTO
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree():pressed=false;return
 	var vr:=vr_mode_override or XRServer.primary_interface!=null and XRServer.primary_interface.is_initialized()
 	if not vr:return
-	vertical_scroll_mode=SCROLL_MODE_SHOW_NEVER
 	if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			for selector in get_tree().get_nodes_in_group("fishing_selectors"):

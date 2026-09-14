@@ -22,6 +22,7 @@ static func create(id: String) -> Node3D:
 	root.add_child(visual)
 	prepare_lighting(visual, id)
 	for proxy in record.colliders:
+		if proxy.get("role", "") == "seat" or not proxy.get("enabled", true): continue
 		var body := StaticBody3D.new()
 		body.collision_layer = 1
 		body.collision_mask = 2

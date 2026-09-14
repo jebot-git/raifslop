@@ -6,7 +6,11 @@ const TRANSFORMS = ["head", "left", "right", "rod", "fish"]
 const VECTORS = ["feet", "motion", "tip", "bobber", "mouth", "target"]
 static func capture(root: Node, serial: int) -> Dictionary:
 	var size: float = root.game.journal.back().length if not root.game.journal.is_empty() else Fish.SPECIES[root.game.fish_index].length
-	return {"body":root.tracking_manager.body if is_instance_valid(root.tracking_manager) else {},"face":root.tracking_manager.face if is_instance_valid(root.tracking_manager) else {},"visemes":root.network.voice.mouth_pose(root.multiplayer.get_unique_id()),"serial":serial,"location":root.current_location,"head":root.head.global_transform,
+	# Keep protocol 2 compatible: native per-knuckle detail stays local; peers
+	# receive the established five curls and use the same controller fallback.
+	var body: Dictionary = root.tracking_manager.body.duplicate() if is_instance_valid(root.tracking_manager) else {}
+	body.erase("left_finger_rotations"); body.erase("right_finger_rotations")
+	return {"body":body,"face":root.tracking_manager.face if is_instance_valid(root.tracking_manager) else {},"visemes":root.network.voice.mouth_pose(root.multiplayer.get_unique_id()),"serial":serial,"location":root.current_location,"head":root.head.global_transform,
 		"left":root.left.global_transform if root.xr else root.desktop_left.global_transform,
 		"right":root.right.global_transform if root.xr else root.rod.global_transform,
 		"rod_tier":root.game.tackle.equipped,"reel_angle":fposmod(root.crank.rotation.x,TAU),"rod":root.rod.global_transform,"fish":root.fish_display.global_transform,

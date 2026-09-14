@@ -1,27 +1,27 @@
 [
   {
     "file": "assets/audio/ambience/bell_park_pier.ogg",
-    "sha256": "c08e30e89182e7ec37d585ddad172c98c71dd74507828006d958bb48704c0530",
-    "bytes": 1878563
+    "sha256": "0644a7e7a70a4b335b3224938c22214ca5ab46529a4f37e383da40b79f7b31f6",
+    "bytes": 1652716
   },
   {
     "file": "assets/audio/ambience/gray_pier.ogg",
-    "sha256": "2980722c983492e3e78085f6902365fd7b9aac2481950cd2819b69c6e4b0d7bd",
-    "bytes": 1841727
+    "sha256": "168011cf7b829a403bf4bf0d8ff4bb5bbd6b1e3bc3f20d71f01b775585854a3f",
+    "bytes": 1659872
   },
   {
     "file": "assets/audio/ambience/lake_pier.ogg",
-    "sha256": "c41d347ba32764d873938766a1c656dca89187b183fadc44903d70fb9790d898",
-    "bytes": 1902131
+    "sha256": "e0d3408da8e513b71db7edf295c125bac232624e52f577ae7338e167aa05774c",
+    "bytes": 1579853
   },
   {
     "file": "assets/audio/ambience/lakeside.ogg",
-    "sha256": "8a8168f3399a00891cf7477523b17c1aa10428f7a8e2152bce4e6f6a0abee04c",
-    "bytes": 1886873
+    "sha256": "651b19166e9f6013e7d3cf892d2181513fef37c3987a5506b0c38f3e43a46927",
+    "bytes": 1732904
   },
   {
     "file": "assets/audio/ambience/timber.ogg",
-    "sha256": "8584db27d1ac80469e53f20cf4fd4c138f871600725e113fc06064390d31315c",
-    "bytes": 18479
+    "sha256": "059e25310a779ded1dfd32cc824d5a36acd9b699233036fa259c7ce59ce35a3c",
+    "bytes": 18480
   }
 ]

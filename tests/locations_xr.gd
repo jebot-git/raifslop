@@ -24,10 +24,16 @@ func set_controller_pose(tracker: XRControllerTracker, pose: Transform3D) -> voi
 
 func click_control(g, point: Vector2) -> void:
 	var target: Vector3 = g.avatar_panel.to_global(Vector3((point.x / 1000.0 - 0.5) * 1.8, (0.5 - point.y / 720.0) * 1.296, 0))
-	var pose: Transform3D = g.right.global_transform.looking_at(target, Vector3.UP)
-	set_controller_pose(controllers[1], g.origin.global_transform.affine_inverse() * pose)
+	# Keep grip/finger placement stable while directing the OpenXR aim pose.
 	await settle()
-	check(g._pointer_position().distance_to(point) < 2.0, "Tracked controller ray hits intended UI point")
+	var ray: Dictionary = preload("res://scripts/menu_ray.gd").sample(g)
+	check(not ray.is_empty(), "Tracked fingertip ray available")
+	if ray.is_empty(): return
+	var orientation := Transform3D(Basis.IDENTITY, ray.origin).looking_at(target, Vector3.UP).basis
+	var pose := Transform3D(orientation, g.right.global_position)
+	controllers[1].set_pose("aim", g.origin.global_transform.affine_inverse()*pose,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	await settle()
+	check(g._pointer_position().distance_to(point) < 2.0, "Fingertip ray hits intended UI point")
 	controllers[1].set_input("trigger_click", true)
 	await process_frame
 	controllers[1].set_input("trigger_click", false)
@@ -112,7 +118,8 @@ func run() -> void:
 	await click_control(g, list.global_position + list.get_item_rect(1).get_center())
 	check(list.get_selected_items()[0] == 1, "Controller trigger selects Lake Pier row")
 	await click_control(g, g.avatar_menu.visit_button.get_global_rect().get_center())
-	check(g.current_location == "lake_pier", "Tracked ray and trigger travel to selected location")
+	check(g.current_location == "lake_pier" and not g.menu_open and not g.avatar_panel.visible and not g.motor.blocked, "Tracked travel closes menu and resumes movement")
+	g._toggle_avatar_menu()
 	await capture_stereo("xr_menu")
 	controllers[1].set_input("by_button", true)
 	controllers[1].set_input("by_button", false)
@@ -120,7 +127,8 @@ func run() -> void:
 	check(not g.menu_open and not g.motor.blocked, "Controller B closes VR menu")
 	XRServer.remove_tracker(controllers[0])
 	await settle()
-	check(g.hud.tracking_lost, "Losing a controller pauses fishing")
+	await create_timer(.6).timeout
+	check(g.hud.tracking_lost, "Sustained controller loss shows tracking warning")
 	XRServer.add_tracker(controllers[0])
 	set_controller_pose(controllers[0], controllers[0].get_pose("aim").transform)
 	await settle()

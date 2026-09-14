@@ -1,4 +1,4 @@
-## Adapted from FPSloppa 5105fb8cfa38c76aa1d5d172af3047fe2d12ae0d.
+## Adapted from FPSloppa 28a719a84454ef94ac6683f11b709735948e12b9.
 extends RefCounted
 # OpenXR supplies controller-inferred Index joints and optical/streamed hand joints
 # through the same tracker. Missing joints fall back per finger, never per hand.
@@ -28,3 +28,23 @@ static func sample(controller: XRController3D,hand: XRHandTracker=null) -> Packe
 		var b:=points[3]-points[2]
 		if a.length()>.001 and b.length()>.001: curls[finger]=clampf(a.angle_to(b)/2.4,0,1)
 	return curls
+
+# Wrist-relative rotations preserve tracked splay and every knuckle independently.
+# Godot has already converted XR joints to SkeletonProfileHumanoid axes.
+static func finger_rotations(hand: XRHandTracker) -> Dictionary:
+	var result: Dictionary = {}
+	if not hand or not hand.has_tracking_data: return result
+	if not hand.get_hand_joint_flags(XRHandTracker.HAND_JOINT_WRIST)&XRHandTracker.HAND_JOINT_FLAG_ORIENTATION_VALID: return result
+	var wrist_pose := hand.get_hand_joint_transform(XRHandTracker.HAND_JOINT_WRIST).basis
+	if not wrist_pose.is_finite() or absf(wrist_pose.determinant()) < .01: return result
+	var wrist := wrist_pose.orthonormalized().inverse()
+	for f in 5:
+		var finger: String = ["Thumb","Index","Middle","Ring","Little"][f]
+		var endings: Array = ["Metacarpal","Proximal","Distal"] if f == 0 else ["Proximal","Intermediate","Distal"]
+		for j in 3:
+			var joint: int = FINGERS[f][j]
+			if not hand.get_hand_joint_flags(joint)&XRHandTracker.HAND_JOINT_FLAG_ORIENTATION_VALID: continue
+			var basis := hand.get_hand_joint_transform(joint).basis
+			if basis.is_finite() and absf(basis.determinant()) > .01:
+				result[finger+endings[j]] = wrist*basis.orthonormalized()
+	return result

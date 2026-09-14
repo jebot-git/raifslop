@@ -37,7 +37,7 @@ func _initialize() -> void:
 	s.cue = 0
 	check(not s.gesture(1), "Wrong directional gesture must not succeed")
 	check(s.gesture(0), "Matching gesture must succeed")
-	check(not s.gesture(0), "A gesture cannot score twice")
+	check(s.cue==0 and is_equal_approx(s.resistance,1.0), "An input event alone cannot clear a counter")
 	for i in range(12000):
 		if s.state != Session.State.FIGHT: break
 		if s.cue >= 0: s.gesture(s.cue)

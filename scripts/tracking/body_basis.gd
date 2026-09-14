@@ -1,4 +1,4 @@
-## Adapted from FPSloppa 5105fb8cfa38c76aa1d5d172af3047fe2d12ae0d.
+## Adapted from FPSloppa 28a719a84454ef94ac6683f11b709735948e12b9.
 extends RefCounted
 ## Body poses use a -Z-facing frame. Native XR joints use Humanoid bone axes.
 const BONES={"hips":"Hips","chest":"Chest","left_foot":"LeftFoot","right_foot":"RightFoot","left_knee":"LeftLowerLeg","right_knee":"RightLowerLeg","left_elbow":"LeftLowerArm","right_elbow":"RightLowerArm"}

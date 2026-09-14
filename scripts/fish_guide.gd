@@ -1,6 +1,16 @@
 extends Node3D
 ## Journal-backed species collection and a grabbable field-guide device.
-const GRIP_OFFSET := Vector3(0, 0.265, -0.035)
+const GRIP_ANCHOR := Vector3(0, -0.225, -0.006)
+# OpenXR grip -Z points toward the thumb. The guide extends above the fist,
+# with its screen toward the palm side, rather than along the wrist axis.
+const GRIP_BASIS := Basis(Vector3.RIGHT, -PI / 2.0)
+const GRIP_OFFSET := -(GRIP_BASIS * GRIP_ANCHOR)
+const BUTTON_CENTERS := [Vector3(-0.052, -0.128, 0.031), Vector3(0.052, -0.128, 0.031)]
+var button_nodes: Array[MeshInstance3D] = []
+var button_armed := [false, false]
+var button_down := [false, false]
+var touch_source := ""
+var previous_touch := Vector3(INF, INF, INF)
 const Session = preload("res://scripts/fishing_session.gd")
 const DESCRIPTIONS = {
  "Thymallus thymallus": "A slender silver fish with a tall, colourful dorsal fin and a small adipose fin. It feeds mainly on aquatic invertebrates.",
@@ -24,7 +34,7 @@ const DESCRIPTIONS = {
  "Salmo trutta": "A trout with golden-brown flanks, dark and red spots, and a small adipose fin."
 }
 var entries: Dictionary = {}
-var selected := 0
+var selected := -1
 var held := false
 var grip_was_down := false
 var stick_latched := false
@@ -69,7 +79,7 @@ func ordered_entries() -> Array:
 func page(direction: int) -> void:
 	if is_instance_valid(photo_camera) and photo_camera.active: return
 	if entries.is_empty(): return
-	selected = posmod(selected + direction, entries.size())
+	selected = posmod(selected + 1 + direction, entries.size() + 1) - 1
 	screen.queue_redraw()
 
 func _ready() -> void:
@@ -85,12 +95,29 @@ func _ready() -> void:
 	button.albedo_color = Color("a7d9b5")
 	_box(Vector3(0, 0, 0), Vector3(0.205, 0.305, 0.035), shell)
 	_box(Vector3(0, 0.015, 0.022), Vector3(0.183, 0.247, 0.014), dark)
-	_box(Vector3(-0.052, -0.128, 0.025), Vector3(0.040, 0.020, 0.012), button)
-	_box(Vector3(0.052, -0.128, 0.025), Vector3(0.040, 0.020, 0.012), button)
+	for center in BUTTON_CENTERS:
+		button_nodes.append(_box(center - Vector3(0, 0, 0.006), Vector3(0.045, 0.028, 0.012), button))
+		var label := Label3D.new()
+		label.text = "‹" if button_nodes.size() == 1 else "›"
+		label.font_size = 48
+		label.pixel_size = 0.00045
+		label.position = center + Vector3(0, 0, 0.001)
+		label.modulate = Color("172e29")
+		device.add_child(label)
 	# Dedicated lower grip keeps fingers below both navigation buttons and screen.
 	_box(Vector3(0, -0.225, -0.006), Vector3(0.065, 0.16, 0.045), dark)
 	_box(Vector3(0, -0.29, -0.006), Vector3(0.075, 0.025, 0.052), shell)
 	_box(Vector3(0.078, 0.16, 0), Vector3(0.017, 0.055, 0.02), dark)
+	# Visible front/rear lenses share the exact mounts used by the photo camera.
+	for front in [false, true]:
+		var lens := MeshInstance3D.new()
+		var cylinder := CylinderMesh.new()
+		cylinder.top_radius = 0.006; cylinder.bottom_radius = 0.006; cylinder.height = 0.004
+		lens.mesh = cylinder
+		lens.material_override = dark
+		lens.transform = preload("res://scripts/guide_camera.gd").lens_pose(front)
+		lens.rotate_object_local(Vector3.RIGHT, PI / 2.0)
+		device.add_child(lens)
 	viewport = SubViewport.new()
 	viewport.size = Vector2i(640, 840)
 	viewport.transparent_bg = false
@@ -114,7 +141,7 @@ func _ready() -> void:
 	add_child(photo_camera)
 	photo_camera.setup(self)
 
-func _box(position_: Vector3, size_: Vector3, material_: Material) -> void:
+func _box(position_: Vector3, size_: Vector3, material_: Material) -> MeshInstance3D:
 	var node := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = size_
@@ -122,23 +149,82 @@ func _box(position_: Vector3, size_: Vector3, material_: Material) -> void:
 	node.material_override = material_
 	node.position = position_
 	device.add_child(node)
+	return node
 
 func dock() -> void:
 	held = false
 	if is_instance_valid(photo_camera):
 		photo_camera.view.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	stick_latched = false
+	reset_touch()
 	screen.queue_redraw()
 
 func dock_grip_position() -> Vector3:
-	return belt_transform * -GRIP_OFFSET
+	return belt_transform * GRIP_ANCHOR
+
+func reset_touch() -> void:
+	previous_touch = Vector3(INF, INF, INF)
+	button_armed = [false, false]
+	button_down = [false, false]
+
+func press_buttons(point: Vector3) -> void:
+	if not point.is_finite(): reset_touch(); return
+	var local := to_local(point)
+	var continuous := previous_touch.is_finite() and local.distance_to(previous_touch) < 0.15
+	for i in BUTTON_CENTERS.size():
+		var p: Vector3 = local - BUTTON_CENTERS[i]
+		var before: Vector3 = previous_touch - BUTTON_CENTERS[i]
+		var inside := absf(p.x) < 0.032 and absf(p.y) < 0.025
+		# A short withdrawal rearms the physical button, even if the finger stays over it.
+		if not inside or p.z > 0.018:
+			button_down[i] = false
+		button_armed[i] = inside and p.z > 0.010
+		# Sweep through the front contact plane: fast/diagonal pokes cannot skip it.
+		if continuous and before.z > 0.010 and p.z <= 0.010 and not button_down[i]:
+			var contact := before.lerp(p, (before.z - 0.010) / (before.z - p.z))
+			if absf(contact.x) < 0.032 and absf(contact.y) < 0.025:
+				button_down[i] = true
+				button_armed[i] = false
+				if photo_camera.active:
+					if i == 0: photo_camera.toggle_selfie()
+					else: photo_camera.capture()
+				else: page(-1 if i == 0 else 1)
+				if game_root.xr and game_root.right.get_has_tracking_data(): game_root.right.trigger_haptic_pulse("haptic", 0, 0.25, 0.04, 0)
+		if i < button_nodes.size(): button_nodes[i].position.z = BUTTON_CENTERS[i].z - (0.010 if button_down[i] else 0.006)
+	previous_touch = local
+
+func _touch_from(source: String, point: Variant) -> Variant:
+	if source != touch_source:
+		reset_touch()
+		touch_source = source
+	return point
+
+func touch_position() -> Variant:
+	var g = game_root
+	var hand := XRServer.get_tracker("/user/hand_tracker/right") as XRHandTracker
+	if hand and hand.has_tracking_data:
+		var joint := XRHandTracker.HAND_JOINT_INDEX_FINGER_TIP
+		if hand.get_hand_joint_flags(joint) & XRHandTracker.HAND_JOINT_FLAG_POSITION_VALID:
+			var point := hand.get_hand_joint_transform(joint).origin
+			if point.is_finite(): return _touch_from("native", g.origin.to_global(point * XRServer.world_scale))
+	if g.right.get_has_tracking_data() and is_instance_valid(g.avatar):
+		var point = g.avatar.index_touch_position()
+		if point is Vector3 and point.is_finite(): return _touch_from("avatar", point)
+	return _touch_from("none", null)
 
 func update_device() -> void:
+	if held: screen.queue_redraw()
 	var g = game_root
-	var facing: Basis = g.origin.global_basis.orthonormalized()
+	var facing := Basis(Vector3.UP, atan2(g.head.global_basis.z.x, g.head.global_basis.z.z))
 	var belt := Vector3(g.head.global_position.x, maxf(g.motor.global_position.y + 0.55, g.head.global_position.y - 0.70), g.head.global_position.z)
-	belt += facing * Vector3(-0.26, 0, 0.04)
-	belt_transform = Transform3D(facing, belt)
+	if is_instance_valid(g.tracking_manager) and g.tracking_manager.body.has("hips"):
+		var hips: Transform3D = g.motor.global_transform * g.tracking_manager.body.hips
+		belt = hips.origin
+		facing = Basis(Vector3.UP, atan2(hips.basis.z.x, hips.basis.z.z))
+	belt += facing * Vector3(-0.24, 0, -0.02)
+	# The handle is at hip height, screen faces outward, and the body hangs below it.
+	var holster_basis := facing * Basis(Vector3.FORWARD, Vector3.DOWN, Vector3.LEFT)
+	belt_transform = Transform3D(holster_basis, belt - holster_basis * GRIP_ANCHOR)
 	if g.xr:
 		var tracked: bool = g.left.get_has_tracking_data()
 		var down: bool = tracked and g.left.get_float("grip") > 0.55
@@ -149,7 +235,10 @@ func update_device() -> void:
 		grip_was_down = down
 		if held:
 			# Fixed grip-relative pose: the player can naturally turn the screen over.
-			global_transform = g.left.global_transform * Transform3D(Basis.IDENTITY, GRIP_OFFSET)
+			global_transform = g.left.global_transform * Transform3D(GRIP_BASIS, GRIP_OFFSET)
+			var touch = touch_position()
+			if touch is Vector3: press_buttons(touch)
+			else: reset_touch()
 			var axes: Vector2 = g.left.get_vector2("primary") + g.right.get_vector2("primary")
 			var axis: float = axes.x if absf(axes.x) >= absf(axes.y) else axes.y
 			if absf(axis) > 0.65 and not stick_latched:

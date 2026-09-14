@@ -62,7 +62,7 @@ func run() -> void:
 	g.fish_guide.page(-1)
 	check(g.fish_guide.selected == Session.SPECIES.size() - 1, "Previous page wraps to final species")
 	g.fish_guide.page(1)
-	check(g.fish_guide.selected == 0, "Next page wraps to first species")
+	check(g.fish_guide.selected == -1, "Next page wraps to session status")
 	if "--capture" in OS.get_cmdline_user_args():
 		g.fish_guide.held = true
 		for i in range(12): await process_frame
@@ -74,4 +74,7 @@ func run() -> void:
 	g.audio.stream = null
 	await process_frame
 	print("Field guide tests: %d checks, %d failures" % [checks, failures])
+	g.queue_free()
+	await process_frame
+	await create_timer(.3).timeout
 	quit(1 if failures else 0)

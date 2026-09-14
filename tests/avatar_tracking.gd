@@ -70,7 +70,7 @@ func run():
 	await process_frame
 	var measured: Dictionary=game.tracking_manager.eyes.sample()
 	check(measured.get("gaze",false) and measured.blink.x>.4,"XR eye and face tracker samples are available")
-	check(measured.mouth[0]>.6 and measured.expressions[0]>.5,"Tracked jaw and smile map to VRM expressions")
+	check(measured.mouth[0]>.6 and measured.expressions[0]>.35,"Tracked jaw and smile map to VRM expressions")
 	game.tracking_manager.focused=false
 	check(game.tracking_manager.eyes.sample().is_empty(),"Focus loss clears face sample")
 	game.tracking_manager.focused=true
@@ -92,5 +92,5 @@ func run():
 	check(not game.tracking_manager.recenter(),"Recenter rejects lost head tracking")
 	XRServer.remove_tracker(head_tracker)
 	XRServer.world_scale=1.0
-	game.network.leave();game.queue_free();await process_frame;await process_frame
+	game.network.leave();game.queue_free();await process_frame;await create_timer(.15).timeout
 	print("AVATAR_TRACKING_RESULT ",failures);quit(0 if failures.is_empty() else 1)
