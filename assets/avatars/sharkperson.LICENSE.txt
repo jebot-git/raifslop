@@ -1,0 +1,11 @@
+SharkPerson / 120_Shark Person
+Creator: Polygonal Mind
+Collection: 100Avatars R2, Open Source Avatars / ToxSam
+License: CC0 1.0 Universal
+https://creativecommons.org/publicdomain/zero/1.0/
+https://www.opensourceavatars.com/en/gallery?avatar=sharkperson
+
+Both the embedded VRM metadata and the collection catalog specify CC0.
+The original file is preserved under source/avatars/sharkperson_original.vrm.gz.
+The bundled copy removes one empty duplicate left-blink declaration so its valid
+left eyelid expression is not overwritten. Geometry and textures are unchanged.

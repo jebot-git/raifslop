@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bfhqqhuvkrfu7"
 path.s3tc="res://.godot/imported/european_perch_tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_normal.jpg-083314f96753600cae8c493c8c5c3c45.s3tc.ctex"
+path.etc2="res://.godot/imported/european_perch_tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_normal.jpg-083314f96753600cae8c493c8c5c3c45.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/european_perch_tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_normal.jpg"
-dest_files=["res://.godot/imported/european_perch_tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_normal.jpg-083314f96753600cae8c493c8c5c3c45.s3tc.ctex"]
+dest_files=["res://.godot/imported/european_perch_tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_normal.jpg-083314f96753600cae8c493c8c5c3c45.s3tc.ctex", "res://.godot/imported/european_perch_tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_normal.jpg-083314f96753600cae8c493c8c5c3c45.etc2.ctex"]
 
 [params]
 

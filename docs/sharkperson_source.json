@@ -1,0 +1,52 @@
+{
+  "id": "2fa2ba36-300c-4004-867c-dc6b9be83651",
+  "name": "SharkPerson",
+  "project": "100Avatars R2",
+  "projectId": "100avatars-r2",
+  "description": "Avatar 120: SharkPerson",
+  "createdAt": "2025-03-11T16:41:51.492Z",
+  "thumbnailUrl": "https://arweave.net/hrCpCVV3N6G0IlEBZC5blFW2kf3y1UFrSZBK9GpgAME",
+  "modelFileUrl": "https://arweave.net/mW-D--cWzk7G8efvS8CXMIu_-501NHTHwY8Hi3bjRJ8",
+  "polygonCount": 0,
+  "format": "VRM",
+  "materialCount": 0,
+  "isPublic": true,
+  "isDraft": false,
+  "metadata": {
+    "number": "120",
+    "series": "R2",
+    "alternateModels": {
+      "voxel_fbx": "https://arweave.net/tVgrC4VG5HTHsfASLjdqUHeWtwhn_wJ5p82N-gPP35w",
+      "fbx": "https://arweave.net/D4Ilp2IW3oer1pYHnxOkzoZb-TwyehWR-eQH6I_-pCE",
+      "voxel_vrm": "https://arweave.net/Qlq-hD3Vbk8as8Dc17FHUl2cOKfwM9LmbbdXs-kY2cs"
+    },
+    "ardriveFiles": {
+      "models": [
+        "120_SharkPerson_Voxel.fbx",
+        "120_SharkPerson.fbx",
+        "120_SharkPerson.vrm",
+        "120_SharkPerson_Voxel.vrm"
+      ],
+      "thumbnails": [
+        "120_SharkPerson_thumbnail.gif"
+      ],
+      "textures": [
+        "120_SharkPerson_Voxel_Texture.png"
+      ]
+    }
+  },
+  "project_license": {
+    "id": "100avatars-r2",
+    "name": "100Avatars R2",
+    "description": "The second 100 avatars series (101-200)",
+    "isPublic": true,
+    "license": "CC0",
+    "createdAt": "2025-03-11T16:41:51.487Z",
+    "updatedAt": "2025-03-11T16:41:51.487Z",
+    "avatarCount": 100
+  },
+  "download_sha256": "0b6931d30e5cb6615225f65531256039f43259d37a7067efb110d36a3e20760e",
+  "gallery": "https://www.opensourceavatars.com/en/gallery?avatar=sharkperson",
+  "bundled_sha256": "d7a619586f37eae0a5693f84c715dd0f70e6653ad24e209b5868000a66d25424",
+  "change": "Removed the final empty duplicate blink_l declaration, which masked the valid left blink. Geometry, textures, authored weights and license unchanged."
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "draw_calls": 31.0,
+    "frame_ms": 31.561,
+    "gpu_ms": 14.1009998321533,
+    "location": "lakeside",
+    "mode": "dynamic",
+    "render_cpu_ms": 0.43299999833107,
+    "visible_blobs": 0,
+    "xr": true
+  },
+  {
+    "draw_calls": 24.0,
+    "frame_ms": 16.631,
+    "gpu_ms": 8.74899959564209,
+    "location": "lakeside",
+    "mode": "blob",
+    "render_cpu_ms": 0.25900000333786,
+    "visible_blobs": 4,
+    "xr": true
+  },
+  {
+    "draw_calls": 24.0,
+    "frame_ms": 16.686,
+    "gpu_ms": 8.59099960327148,
+    "location": "lakeside",
+    "mode": "blob",
+    "render_cpu_ms": 0.298000007867813,
+    "visible_blobs": 4,
+    "xr": true
+  },
+  {
+    "draw_calls": 31.0,
+    "frame_ms": 18.326,
+    "gpu_ms": 14.1529998779297,
+    "location": "lakeside",
+    "mode": "dynamic",
+    "render_cpu_ms": 0.472000002861023,
+    "visible_blobs": 0,
+    "xr": true
+  },
+  {
+    "draw_calls": 26.0,
+    "frame_ms": 32.969,
+    "gpu_ms": 14.4770002365112,
+    "location": "gray_pier",
+    "mode": "dynamic",
+    "render_cpu_ms": 0.444999992847443,
+    "visible_blobs": 0,
+    "xr": true
+  },
+  {
+    "draw_calls": 23.0,
+    "frame_ms": 16.596,
+    "gpu_ms": 8.23700046539307,
+    "location": "gray_pier",
+    "mode": "blob",
+    "render_cpu_ms": 0.28600001335144,
+    "visible_blobs": 4,
+    "xr": true
+  },
+  {
+    "draw_calls": 23.0,
+    "frame_ms": 16.748,
+    "gpu_ms": 8.26399993896484,
+    "location": "gray_pier",
+    "mode": "blob",
+    "render_cpu_ms": 0.234999999403954,
+    "visible_blobs": 4,
+    "xr": true
+  },
+  {
+    "draw_calls": 26.0,
+    "frame_ms": 32.855,
+    "gpu_ms": 14.5430002212524,
+    "location": "gray_pier",
+    "mode": "dynamic",
+    "render_cpu_ms": 0.416999995708466,
+    "visible_blobs": 0,
+    "xr": true
+  }
+]

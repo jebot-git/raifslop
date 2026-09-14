@@ -1,7 +1,7 @@
 extends RefCounted
 const MAX_BYTES := 25_000_000
 const CACHE := "user://avatars/"
-const DEFAULTS = ["res://assets/avatars/vita.vrm", "res://assets/avatars/victoria.vrm"]
+const DEFAULTS = ["res://assets/avatars/sharkperson.vrm", "res://assets/avatars/vita.vrm", "res://assets/avatars/victoria.vrm"]
 var entries: Array[Dictionary] = []
 var selected_path := ""
 var error := ""
@@ -73,8 +73,9 @@ static func inspect(path: String) -> Dictionary:
 	var meta = vrm.get("meta", {})
 	if not meta is Dictionary: return {"error": "Invalid avatar metadata."}
 	var title := str(meta.get("name", meta.get("title", path.get_file().get_basename())))
-	if path == DEFAULTS[0]: title = "Vita"
-	if path == DEFAULTS[1]: title = "Victoria Rubin"
+	if path == DEFAULTS[0]: title = "SharkPerson"
+	if path == "res://assets/avatars/vita.vrm": title = "Vita"
+	if path == "res://assets/avatars/victoria.vrm": title = "Victoria Rubin"
 	return {"path": path, "size": size, "title": title.left(60), "author": str(meta.get("authors", meta.get("author", "Unknown"))).left(100)}
 
 func import_file(path: String) -> Dictionary:

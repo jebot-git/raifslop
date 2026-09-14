@@ -1,0 +1,70 @@
+{
+  "source/textures/foreground/aerial_grass_rock_Diffuse.jpg": {
+    "bytes": 666655,
+    "sha256": "57b8041bfe0d0f01430e4dbaad45e7ddddf0a9fc97317f90dbc51f7b0d9e1b5d"
+  },
+  "source/textures/foreground/aerial_grass_rock_Rough.jpg": {
+    "bytes": 362214,
+    "sha256": "b9f3f76aba74007f708333c0dbe73c52eb83ea0c4187a13e2e994f888a25114a"
+  },
+  "source/textures/foreground/aerial_grass_rock_nor_gl.jpg": {
+    "bytes": 904956,
+    "sha256": "1aa3e23bff453f152e089b9f83aa36b4901651e019f7e2ca01d5331a9bbbda78"
+  },
+  "source/textures/foreground/brown_planks_03_Diffuse.jpg": {
+    "bytes": 570668,
+    "sha256": "8dfae22286fa9bb0ed62ce7326e8bc14c284e567d38fd64b5a453838080ecf19"
+  },
+  "source/textures/foreground/brown_planks_03_Rough.jpg": {
+    "bytes": 222197,
+    "sha256": "0395027c927a48b62c5d0615a055a369e5718c01b11189f53aaac5ff5879c05a"
+  },
+  "source/textures/foreground/brown_planks_03_nor_gl.jpg": {
+    "bytes": 516860,
+    "sha256": "868c153165ecaa7dd7259cb58214f06f6f86c80ac71fc92a827dff07708be077"
+  },
+  "source/textures/foreground/concrete_floor_02_Diffuse.jpg": {
+    "bytes": 776097,
+    "sha256": "6db84a6d87dc50508b9d134d6fbd2b7e876b8081a5f43a118a249ca18de73af5"
+  },
+  "source/textures/foreground/concrete_floor_02_Rough.jpg": {
+    "bytes": 318550,
+    "sha256": "c7f026a611b7859903c61ec7fd4574944157223e9e7796413dd6e2a66eaeac7a"
+  },
+  "source/textures/foreground/concrete_floor_02_nor_gl.jpg": {
+    "bytes": 192757,
+    "sha256": "fcda391b57a816d646ae15544688be53790478da5cd48dbe514b3c6901415e61"
+  },
+  "source/textures/foreground/gravelly_sand_Diffuse.jpg": {
+    "bytes": 1062525,
+    "sha256": "bc1624594ce807f04eaa023f6f9df93ffefd20904570cd46ca302b954ef80eec"
+  },
+  "source/textures/foreground/gravelly_sand_Rough.jpg": {
+    "bytes": 419895,
+    "sha256": "57188f62c17950f96a5f2b8ce11bc9776e2b5bff8eff5c903402d89553ba3654"
+  },
+  "source/textures/foreground/gravelly_sand_nor_gl.jpg": {
+    "bytes": 1387739,
+    "sha256": "7ccb08525d46520a6d00262f4f73483b3569cc6cbc2908da069f033290d1c2f8"
+  },
+  "source/textures/foreground/weathered_timber_Diffuse.jpg": {
+    "bytes": 315966,
+    "sha256": "c893dd9b32726395424fef408004d7a52cf053c717511ae81efe9149c4eb31c3"
+  },
+  "assets/models/locations/bell_park_pier.glb": {
+    "bytes": 4980040,
+    "sha256": "417309add9466a7735b16eaac68097b7eea96898f473f31037db9d4aaf43e7c9"
+  },
+  "assets/models/locations/gray_pier.glb": {
+    "bytes": 8892200,
+    "sha256": "433590e4afac4d9b5a9af0eacfde8bdf38507da7353388064e98eea7a4de5faf"
+  },
+  "assets/models/locations/lake_pier.glb": {
+    "bytes": 4010812,
+    "sha256": "65b3d6cb77747e76e7e7b842be8c3c1e3d1d22de9ae23b97a84bd25091d2e422"
+  },
+  "assets/models/locations/lakeside.glb": {
+    "bytes": 10195200,
+    "sha256": "7c293fc14b69a22dfc05d2fab65c2003d1867e9d45b20193dc4fa20c84faa034"
+  }
+}

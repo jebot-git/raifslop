@@ -11,8 +11,14 @@ config_version=5
 [application]
 
 config/name="Real AI Fishing"
+config/version="0.1.0"
+config/icon="res://assets/icon.svg"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
+
+[audio]
+
+driver/enable_input=true
 
 [autoload]
 
@@ -26,7 +32,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/vrm/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/vrm/plugin.cfg", "res://addons/fishing_export/plugin.cfg")
 
 [physics]
 
@@ -34,9 +40,18 @@ common/physics_ticks_per_second=90
 
 [rendering]
 
+textures/vram_compression/import_etc2_astc=true
+
 renderer/rendering_method="mobile"
 
 [xr]
 
 openxr/enabled=true
+openxr/extensions/hand_tracking=true
+openxr/extensions/hand_tracking_unobstructed_data_source=true
+openxr/extensions/hand_tracking_controller_data_source=true
+openxr/extensions/eye_gaze_interaction=true
+openxr/extensions/meta/body_tracking=true
+openxr/extensions/meta/face_tracking=true
+openxr/extensions/automatically_request_runtime_permissions=false
 shaders/enabled=true

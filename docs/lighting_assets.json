@@ -1,0 +1,98 @@
+[
+  {
+    "location": "bell_park_pier",
+    "model": "assets/models/locations/lit/bell_park_pier.glb",
+    "bytes": 5026704,
+    "sha256": "fee2000f3de25e06e20e7461e4be1b213929927d76c742fd046537a5a76bd553",
+    "mesh_nodes": 2,
+    "atlases": [
+      {
+        "file": "assets/textures/lighting/bell_park_pier_ao.png",
+        "bytes": 520898,
+        "sha256": "65cd1bd6c705dcb228a3e5c6001b3c2b28f14c7bb8c88e924f2e4f083a5ca99b"
+      },
+      {
+        "file": "assets/textures/lighting/bell_park_pier_irradiance.exr",
+        "bytes": 2902238,
+        "sha256": "b649d0b169fe3c7fcc5a0e3bb84ae0fd8e759f70b58705b374fb489012a17af8"
+      },
+      {
+        "file": "assets/textures/lighting/bell_park_pier_sky.exr",
+        "bytes": 2393427,
+        "sha256": "577e00a2b5c563e1cbb12d6064dc5f3029c87de685bb6704773ed86419678a80"
+      }
+    ]
+  },
+  {
+    "location": "gray_pier",
+    "model": "assets/models/locations/lit/gray_pier.glb",
+    "bytes": 9018692,
+    "sha256": "332f5cc91477157ca7472b74f71a2b24b6fc7cc5415086a710854faeabcfed60",
+    "mesh_nodes": 3,
+    "atlases": [
+      {
+        "file": "assets/textures/lighting/gray_pier_ao.png",
+        "bytes": 597513,
+        "sha256": "92e7a1847313e76a6d70a12f749ad03f13def99426faac07a3d18ac09ada63dc"
+      },
+      {
+        "file": "assets/textures/lighting/gray_pier_irradiance.exr",
+        "bytes": 2614244,
+        "sha256": "d89ec0b07a51e20f18f6c8af38e769f33b039676289566ff8ea9786647b32997"
+      },
+      {
+        "file": "assets/textures/lighting/gray_pier_sky.exr",
+        "bytes": 2517893,
+        "sha256": "cab2c72f4b23a8a0f6379c07ad53680333bcf33ce51041cd9fa5878df5afd17d"
+      }
+    ]
+  },
+  {
+    "location": "lake_pier",
+    "model": "assets/models/locations/lit/lake_pier.glb",
+    "bytes": 4058152,
+    "sha256": "c3c0bdc30edf6d69a9a132d6826e346eee144315a695d56225a2222da469d9ab",
+    "mesh_nodes": 2,
+    "atlases": [
+      {
+        "file": "assets/textures/lighting/lake_pier_ao.png",
+        "bytes": 500456,
+        "sha256": "804f2d1ffab05ba9e1f6a9b9b81f5788e1ceada14801bc411546b7020511a5d0"
+      },
+      {
+        "file": "assets/textures/lighting/lake_pier_irradiance.exr",
+        "bytes": 2127206,
+        "sha256": "00a5446da9c12aff8dae728b80487bd4fffec1516279e2443d2f2195d5a4165e"
+      },
+      {
+        "file": "assets/textures/lighting/lake_pier_sky.exr",
+        "bytes": 1743616,
+        "sha256": "c28f23da383013a8eb9cb831f1afd75894b0184b53df50b04d89c1039aa5cfa2"
+      }
+    ]
+  },
+  {
+    "location": "lakeside",
+    "model": "assets/models/locations/lit/lakeside.glb",
+    "bytes": 10260692,
+    "sha256": "62e49f67d197e715beaf278ac671a11499706e8bcecd934a1ee5e7a64f52c67f",
+    "mesh_nodes": 4,
+    "atlases": [
+      {
+        "file": "assets/textures/lighting/lakeside_ao.png",
+        "bytes": 619957,
+        "sha256": "79cb7df2921434d2574c7e21ce1a213463003f7dadfa536730fcd26f518df7f2"
+      },
+      {
+        "file": "assets/textures/lighting/lakeside_irradiance.exr",
+        "bytes": 2691873,
+        "sha256": "7d4e0df4ee8f13d6f56a4caf24a6d592a629bdb6c4f7180cc55778e7759bfea2"
+      },
+      {
+        "file": "assets/textures/lighting/lakeside_sky.exr",
+        "bytes": 2419635,
+        "sha256": "2a7be8e8be83a2b51e7fd09d96fb837ba2aec90823dd35ed1489424d06aa8b74"
+      }
+    ]
+  }
+]

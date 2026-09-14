@@ -1,0 +1,84 @@
+[
+  {
+    "id": "lake_pier",
+    "name": "Lake Pier",
+    "authors": {
+      "Alexander Scholten": "All"
+    },
+    "coordinates": [
+      47.650393,
+      9.472654
+    ],
+    "date_taken_unix": 1668843960,
+    "source_url": "https://polyhaven.com/a/lake_pier",
+    "license": "CC0",
+    "license_url": "https://polyhaven.com/license",
+    "acquired": "2026-09-14",
+    "source_file": {
+      "size": 25272796,
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/lake_pier_4k.hdr",
+      "md5": "a594fb60a0428cd333251d92c10f5dc9"
+    }
+  },
+  {
+    "id": "gray_pier",
+    "name": "Gray Pier",
+    "authors": {
+      "Sergey Rudavin": "All"
+    },
+    "coordinates": null,
+    "date_taken_unix": 1455621720,
+    "source_url": "https://polyhaven.com/a/gray_pier",
+    "license": "CC0",
+    "license_url": "https://polyhaven.com/license",
+    "acquired": "2026-09-14",
+    "source_file": {
+      "size": 24232379,
+      "md5": "6c9dd8b7606c45bcb388e9525e01ee43",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/gray_pier_4k.hdr"
+    }
+  },
+  {
+    "id": "river_alcove",
+    "name": "River Alcove",
+    "authors": {
+      "Dimitrios Savva": "Photography",
+      "Jarod Guest": "Processing"
+    },
+    "coordinates": [
+      -25.843463,
+      27.65949
+    ],
+    "date_taken_unix": 1752319140,
+    "source_url": "https://polyhaven.com/a/river_alcove",
+    "license": "CC0",
+    "license_url": "https://polyhaven.com/license",
+    "acquired": "2026-09-14",
+    "source_file": {
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/river_alcove_4k.hdr",
+      "md5": "bb4fa756399c99e984972fa3ce211768",
+      "size": 29127528
+    }
+  },
+  {
+    "id": "bell_park_pier",
+    "name": "Bell Park Pier",
+    "authors": {
+      "Greg Zaal": "All"
+    },
+    "coordinates": [
+      -28.955231,
+      29.437319
+    ],
+    "date_taken_unix": 1460474400,
+    "source_url": "https://polyhaven.com/a/bell_park_pier",
+    "license": "CC0",
+    "license_url": "https://polyhaven.com/license",
+    "acquired": "2026-09-14",
+    "source_file": {
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/bell_park_pier_4k.hdr",
+      "size": 23682283,
+      "md5": "44f76e096205b7b592b41829749aba3a"
+    }
+  }
+]

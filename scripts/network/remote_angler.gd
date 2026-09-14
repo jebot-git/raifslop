@@ -1,0 +1,116 @@
+extends Node3D
+const Rig = preload("res://scripts/avatar_rig.gd")
+const Fish = preload("res://scripts/fishing_session.gd")
+var session: Node
+var player_name := "Angler"
+var avatar_hash := ""
+var avatar: Node3D
+var head := Camera3D.new()
+var left := Node3D.new()
+var right := Node3D.new()
+var rod := Node3D.new()
+var rod_visual: Node3D
+var caught := Node3D.new()
+var float_mesh: MeshInstance3D
+var label := Label3D.new()
+var line := ImmediateMesh.new()
+var target: Dictionary = {}
+var rendered: Dictionary = {}
+var fish_key: Array = []
+var fallback := Node3D.new()
+func _ready() -> void:
+	add_child(head); head.current=false
+	add_child(left); add_child(right); add_child(rod); add_child(caught); add_child(label); add_child(fallback)
+	label.layers=preload("res://scripts/guide_camera.gd").UI_LAYER
+	label.font_size=32; label.pixel_size=.004; label.billboard=BaseMaterial3D.BILLBOARD_ENABLED
+	label.modulate=Color("d9f6e7"); label.no_depth_test=false
+	var game=session.root_game
+	rod_visual=preload("res://scripts/rod_visual.gd").new()
+	rod.add_child(rod_visual)
+	rod_visual.equip(0)
+	var sphere := SphereMesh.new(); sphere.radius=.045; sphere.height=.14
+	float_mesh=game.mesh_node(sphere,self,Vector3.ZERO,game.material(Color("ff784e")))
+	game.mesh_node(line,self,Vector3.ZERO,game.material(Color("d8f5e5")))
+	# Visible while a custom VRM is transferring; never creates a local camera.
+	game.box(fallback,Vector3(0,1.05,0),Vector3(.35,.6,.20),game.material(Color("4d7667")))
+	game.box(fallback,Vector3(0,1.55,0),Vector3(.20,.23,.20),game.material(Color("bf9f84")))
+	visible=false
+
+func set_avatar(model: Node3D, hash: String) -> void:
+	var next := Rig.new(); add_child(next); next.add_child(model)
+	if not next.configure(model): next.queue_free(); return
+	_full_body(model)
+	if is_instance_valid(avatar): avatar.queue_free()
+	next.first_person=false
+	avatar=next; avatar_hash=hash; fallback.hide()
+func _full_body(node: Node) -> void:
+	if node is MeshInstance3D: node.layers=1 if node.layers&4 else 0
+	for child in node.get_children(): _full_body(child)
+
+func receive_state(data: Dictionary) -> void:
+	var snap: bool=target.is_empty() or target.location!=data.location or target.feet.distance_to(data.feet)>3
+	target=data.duplicate(true)
+	if snap: rendered=target.duplicate(true)
+	if fish_key!=[data.species,data.length]:
+		fish_key=[data.species,data.length]
+		_build_fish(data.species,data.length)
+
+func _build_fish(index: int, length_cm: float) -> void:
+	for child in caught.get_children(): caught.remove_child(child); child.queue_free()
+	var species: Dictionary=Fish.SPECIES[index]
+	var path: String=species.get("model","res://assets/models/european_perch.glb" if index==0 else "")
+	if not path.is_empty():
+		var model: Node3D=load(path).instantiate()
+		if species.has("model"): model.scale=Vector3.ONE*length_cm/100.0
+		caught.add_child(model)
+	else:
+		var game=session.root_game
+		var body:=SphereMesh.new(); body.radius=.12; body.height=.24
+		var mesh=game.mesh_node(body,caught,Vector3.ZERO,game.material(Color("9d9860") if index==1 else Color("537c5b"),.3))
+		mesh.scale=Vector3(2.5,.9,.65)
+		var tail:=PrismMesh.new(); tail.size=Vector3(.17,.22,.025)
+		game.mesh_node(tail,caught,Vector3(-.33,0,0),game.material(Color("787648")))
+
+func _process(delta: float) -> void:
+	if target.is_empty(): return
+	visible=target.location==session.root_game.current_location
+	if not visible: return
+	var blend:=1.0-exp(-delta*18.0)
+	for key in preload("res://scripts/network/state.gd").TRANSFORMS:
+		rendered[key]=rendered[key].interpolate_with(target[key],blend)
+	for key in preload("res://scripts/network/state.gd").VECTORS:
+		rendered[key]=rendered[key].lerp(target[key],blend)
+	head.global_transform=rendered.head
+	left.global_transform=rendered.left; right.global_transform=rendered.right
+	rod_visual.equip(target.rod_tier)
+	rod_visual.crank.rotation.x=lerp_angle(rod_visual.crank.rotation.x,target.reel_angle,blend)
+	rod.global_transform=rendered.rod; caught.global_transform=rendered.fish
+	caught.visible=target.caught
+	float_mesh.global_position=rendered.bobber
+	float_mesh.visible=target.state in [1,2,3,4]
+	fallback.global_position=rendered.feet
+	if is_instance_valid(avatar):
+		var body: Dictionary={}
+		for key in target.body:
+			var value=target.body[key]
+			body[key]=rendered.get("body",{}).get(key,value).interpolate_with(value,blend) if value is Transform3D else value
+		rendered.body=body
+		avatar.apply_tracking(Transform3D(Basis.IDENTITY,rendered.feet),body,target.face)
+		if not target.face.has("mouth"): avatar.mouth.speak(target.visemes)
+		avatar.left_curl=target.curl
+		avatar.update_targets(head,left,right,rendered.feet.y,rendered.motion,delta)
+	label.global_position=rendered.head.origin+Vector3.UP*.32
+	label.text=player_name
+	if target.caught: label.text+="\n%s · %.1f cm" % [Fish.SPECIES[target.species].name,target.length]
+	line.clear_surfaces()
+	if target.caught or float_mesh.visible:
+		line.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+		line.surface_add_vertex(rendered.tip)
+		if target.caught:
+			if target.in_hand: line.surface_add_vertex(rendered.left.origin)
+			line.surface_add_vertex(rendered.mouth)
+		else:
+			for i in range(1,25):
+				var t:=i/24.0
+				line.surface_add_vertex(rendered.tip.lerp(rendered.bobber,t)-Vector3.UP*sin(t*PI)*.15)
+		line.surface_end()

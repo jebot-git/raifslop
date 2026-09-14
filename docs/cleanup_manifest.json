@@ -1,0 +1,2006 @@
+[
+  {
+    "path": "assets/environment/lakeside_2k.hdr",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 6026852
+  },
+  {
+    "path": "assets/environment/lakeside_2k.hdr.import",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 956
+  },
+  {
+    "path": "assets/environment/locations/lake_pier_2k.hdr",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 6414150
+  },
+  {
+    "path": "assets/environment/locations/lake_pier_2k.hdr.import",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 969
+  },
+  {
+    "path": "assets/environment/locations/gray_pier_2k.hdr",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 6052335
+  },
+  {
+    "path": "assets/environment/locations/gray_pier_2k.hdr.import",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 969
+  },
+  {
+    "path": "assets/environment/locations/river_alcove_2k.hdr",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 7367877
+  },
+  {
+    "path": "assets/environment/locations/river_alcove_2k.hdr.import",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 978
+  },
+  {
+    "path": "assets/environment/locations/bell_park_pier_2k.hdr",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 5819692
+  },
+  {
+    "path": "assets/environment/locations/bell_park_pier_2k.hdr.import",
+    "action": "removed",
+    "reason": "Superseded by native 4K runtime panorama",
+    "bytes": 984
+  },
+  {
+    "path": "assets/environment/locations/river_alcove_preview.jpg",
+    "action": "removed",
+    "reason": "Unused reference location",
+    "bytes": 89216
+  },
+  {
+    "path": "assets/environment/locations/river_alcove_preview.jpg.import",
+    "action": "removed",
+    "reason": "Unused reference location",
+    "bytes": 992
+  },
+  {
+    "path": "source/locations/river_alcove_4k.hdr",
+    "action": "removed",
+    "reason": "Unused reference location; provenance retained",
+    "bytes": 29127528
+  },
+  {
+    "path": "source/locations/lake_pier_4k.hdr",
+    "action": "removed",
+    "reason": "Byte-identical native 4K original retained in assets/environment/locations",
+    "bytes": 25272796
+  },
+  {
+    "path": "source/locations/gray_pier_4k.hdr",
+    "action": "removed",
+    "reason": "Byte-identical native 4K original retained in assets/environment/locations",
+    "bytes": 24232379
+  },
+  {
+    "path": "source/locations/bell_park_pier_4k.hdr",
+    "action": "removed",
+    "reason": "Byte-identical native 4K original retained in assets/environment/locations",
+    "bytes": 23682283
+  },
+  {
+    "path": "source/locations/lakeside_4k.hdr",
+    "action": "removed",
+    "reason": "Byte-identical native 4K original retained in assets/environment/locations",
+    "bytes": 24647749
+  },
+  {
+    "path": "assets/models/fish/rudd_rudd_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 734045
+  },
+  {
+    "path": "assets/models/fish/rudd_rudd_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1030
+  },
+  {
+    "path": "assets/models/fish/rainbow_trout_rainbow_trout_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 706626
+  },
+  {
+    "path": "assets/models/fish/rainbow_trout_rainbow_trout_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1085
+  },
+  {
+    "path": "assets/models/fish/crucian_carp_crucian_carp_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 732018
+  },
+  {
+    "path": "assets/models/fish/crucian_carp_crucian_carp_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1079
+  },
+  {
+    "path": "assets/models/fish/chub_chub_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 723585
+  },
+  {
+    "path": "assets/models/fish/chub_chub_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1031
+  },
+  {
+    "path": "assets/models/fish/brown_trout_brown_trout_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 730492
+  },
+  {
+    "path": "assets/models/fish/brown_trout_brown_trout_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1073
+  },
+  {
+    "path": "assets/models/fish/gudgeon_gudgeon_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 713993
+  },
+  {
+    "path": "assets/models/fish/gudgeon_gudgeon_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1048
+  },
+  {
+    "path": "assets/models/fish/grayling_grayling_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 692207
+  },
+  {
+    "path": "assets/models/fish/grayling_grayling_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1055
+  },
+  {
+    "path": "assets/models/fish/dace_dace_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 701176
+  },
+  {
+    "path": "assets/models/fish/dace_dace_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1031
+  },
+  {
+    "path": "assets/models/fish/bleak_bleak_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 704023
+  },
+  {
+    "path": "assets/models/fish/bleak_bleak_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1036
+  },
+  {
+    "path": "assets/models/fish/barbel_barbel_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 713034
+  },
+  {
+    "path": "assets/models/fish/barbel_barbel_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1042
+  },
+  {
+    "path": "assets/models/fish/brook_trout_brook_trout_skin.png",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 721067
+  },
+  {
+    "path": "assets/models/fish/brook_trout_brook_trout_skin.png.import",
+    "action": "removed",
+    "reason": "Extracted texture from superseded procedural fish GLB",
+    "bytes": 1073
+  },
+  {
+    "path": "assets/textures/fish/tench_albedo.png",
+    "action": "moved",
+    "destination": "source/textures/fish/tench_albedo.png",
+    "bytes": 1841050
+  },
+  {
+    "path": "assets/textures/fish/tench_albedo.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 960
+  },
+  {
+    "path": "assets/textures/fish/roach_albedo.png",
+    "action": "moved",
+    "destination": "source/textures/fish/roach_albedo.png",
+    "bytes": 1846490
+  },
+  {
+    "path": "assets/textures/fish/roach_albedo.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 961
+  },
+  {
+    "path": "assets/textures/fish/rudd_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 734045
+  },
+  {
+    "path": "assets/textures/fish/rudd_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 952
+  },
+  {
+    "path": "assets/textures/fish/crucian_carp_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 732018
+  },
+  {
+    "path": "assets/textures/fish/crucian_carp_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 975
+  },
+  {
+    "path": "assets/textures/fish/chub_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 723585
+  },
+  {
+    "path": "assets/textures/fish/chub_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 952
+  },
+  {
+    "path": "assets/textures/fish/rainbow_trout_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 706626
+  },
+  {
+    "path": "assets/textures/fish/rainbow_trout_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 979
+  },
+  {
+    "path": "assets/textures/fish/brown_trout_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 730492
+  },
+  {
+    "path": "assets/textures/fish/brown_trout_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 973
+  },
+  {
+    "path": "assets/textures/fish/grayling_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 692207
+  },
+  {
+    "path": "assets/textures/fish/grayling_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 964
+  },
+  {
+    "path": "assets/textures/fish/barbel_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 713034
+  },
+  {
+    "path": "assets/textures/fish/barbel_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 957
+  },
+  {
+    "path": "assets/textures/fish/dace_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 701176
+  },
+  {
+    "path": "assets/textures/fish/dace_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 952
+  },
+  {
+    "path": "assets/textures/fish/bleak_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 704023
+  },
+  {
+    "path": "assets/textures/fish/bleak_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 954
+  },
+  {
+    "path": "assets/textures/fish/gudgeon_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 713993
+  },
+  {
+    "path": "assets/textures/fish/gudgeon_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 960
+  },
+  {
+    "path": "assets/textures/fish/brook_trout_skin.png",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 721067
+  },
+  {
+    "path": "assets/textures/fish/brook_trout_skin.png.import",
+    "action": "removed",
+    "reason": "Superseded procedural fish texture",
+    "bytes": 973
+  },
+  {
+    "path": "assets/textures/fish/rudd_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/rudd_photographic.png",
+    "bytes": 1868962
+  },
+  {
+    "path": "assets/textures/fish/rudd_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 976
+  },
+  {
+    "path": "assets/textures/fish/rudd_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/rudd_baked_normal.png",
+    "bytes": 72711
+  },
+  {
+    "path": "assets/textures/fish/rudd_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 975
+  },
+  {
+    "path": "assets/textures/fish/crucian_carp_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/crucian_carp_photographic.png",
+    "bytes": 1805594
+  },
+  {
+    "path": "assets/textures/fish/crucian_carp_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 999
+  },
+  {
+    "path": "assets/textures/fish/crucian_carp_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/crucian_carp_baked_normal.png",
+    "bytes": 53344
+  },
+  {
+    "path": "assets/textures/fish/crucian_carp_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1000
+  },
+  {
+    "path": "assets/textures/fish/chub_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/chub_photographic.png",
+    "bytes": 1779351
+  },
+  {
+    "path": "assets/textures/fish/chub_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 976
+  },
+  {
+    "path": "assets/textures/fish/chub_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/chub_baked_normal.png",
+    "bytes": 78374
+  },
+  {
+    "path": "assets/textures/fish/chub_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 975
+  },
+  {
+    "path": "assets/textures/fish/rainbow_trout_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/rainbow_trout_photographic.png",
+    "bytes": 1751887
+  },
+  {
+    "path": "assets/textures/fish/rainbow_trout_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1003
+  },
+  {
+    "path": "assets/textures/fish/rainbow_trout_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/rainbow_trout_baked_normal.png",
+    "bytes": 98082
+  },
+  {
+    "path": "assets/textures/fish/rainbow_trout_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1003
+  },
+  {
+    "path": "assets/textures/fish/brown_trout_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/brown_trout_photographic.png",
+    "bytes": 1742321
+  },
+  {
+    "path": "assets/textures/fish/brown_trout_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 996
+  },
+  {
+    "path": "assets/textures/fish/brown_trout_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/brown_trout_baked_normal.png",
+    "bytes": 58795
+  },
+  {
+    "path": "assets/textures/fish/brown_trout_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 996
+  },
+  {
+    "path": "assets/textures/fish/grayling_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/grayling_photographic.png",
+    "bytes": 1588194
+  },
+  {
+    "path": "assets/textures/fish/grayling_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 988
+  },
+  {
+    "path": "assets/textures/fish/grayling_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/grayling_baked_normal.png",
+    "bytes": 64233
+  },
+  {
+    "path": "assets/textures/fish/grayling_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 988
+  },
+  {
+    "path": "assets/textures/fish/dace_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/dace_photographic.png",
+    "bytes": 1671881
+  },
+  {
+    "path": "assets/textures/fish/dace_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 976
+  },
+  {
+    "path": "assets/textures/fish/dace_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/dace_baked_normal.png",
+    "bytes": 81404
+  },
+  {
+    "path": "assets/textures/fish/dace_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 976
+  },
+  {
+    "path": "assets/textures/fish/barbel_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/barbel_photographic.png",
+    "bytes": 1664911
+  },
+  {
+    "path": "assets/textures/fish/barbel_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 982
+  },
+  {
+    "path": "assets/textures/fish/barbel_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/barbel_baked_normal.png",
+    "bytes": 56625
+  },
+  {
+    "path": "assets/textures/fish/barbel_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 982
+  },
+  {
+    "path": "assets/textures/fish/bleak_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/bleak_photographic.png",
+    "bytes": 1504948
+  },
+  {
+    "path": "assets/textures/fish/bleak_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 978
+  },
+  {
+    "path": "assets/textures/fish/bleak_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/bleak_baked_normal.png",
+    "bytes": 72808
+  },
+  {
+    "path": "assets/textures/fish/bleak_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 979
+  },
+  {
+    "path": "assets/textures/fish/gudgeon_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/gudgeon_photographic.png",
+    "bytes": 1553238
+  },
+  {
+    "path": "assets/textures/fish/gudgeon_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 984
+  },
+  {
+    "path": "assets/textures/fish/gudgeon_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/gudgeon_baked_normal.png",
+    "bytes": 54338
+  },
+  {
+    "path": "assets/textures/fish/gudgeon_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 985
+  },
+  {
+    "path": "assets/textures/fish/brook_trout_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/brook_trout_photographic.png",
+    "bytes": 1736939
+  },
+  {
+    "path": "assets/textures/fish/brook_trout_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 997
+  },
+  {
+    "path": "assets/textures/fish/brook_trout_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/brook_trout_baked_normal.png",
+    "bytes": 53475
+  },
+  {
+    "path": "assets/textures/fish/brook_trout_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 997
+  },
+  {
+    "path": "assets/textures/fish/carp_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/carp_photographic.png",
+    "bytes": 1844150
+  },
+  {
+    "path": "assets/textures/fish/carp_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 976
+  },
+  {
+    "path": "assets/textures/fish/carp_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/carp_baked_normal.png",
+    "bytes": 49078
+  },
+  {
+    "path": "assets/textures/fish/carp_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 976
+  },
+  {
+    "path": "assets/textures/fish/pike_photographic.png",
+    "action": "moved",
+    "destination": "source/textures/fish/pike_photographic.png",
+    "bytes": 1514023
+  },
+  {
+    "path": "assets/textures/fish/pike_photographic.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 976
+  },
+  {
+    "path": "assets/textures/fish/pike_baked_normal.png",
+    "action": "moved",
+    "destination": "source/textures/fish/pike_baked_normal.png",
+    "bytes": 61706
+  },
+  {
+    "path": "assets/textures/fish/pike_baked_normal.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 975
+  },
+  {
+    "path": "assets/textures/foreground/brown_planks_03_Diffuse.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/brown_planks_03_Diffuse.jpg",
+    "bytes": 570668
+  },
+  {
+    "path": "assets/textures/foreground/brown_planks_03_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 999
+  },
+  {
+    "path": "assets/textures/foreground/brown_planks_03_nor_gl.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/brown_planks_03_nor_gl.jpg",
+    "bytes": 516860
+  },
+  {
+    "path": "assets/textures/foreground/brown_planks_03_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 996
+  },
+  {
+    "path": "assets/textures/foreground/brown_planks_03_Rough.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/brown_planks_03_Rough.jpg",
+    "bytes": 222197
+  },
+  {
+    "path": "assets/textures/foreground/brown_planks_03_Rough.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 993
+  },
+  {
+    "path": "assets/textures/foreground/gravelly_sand_Diffuse.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/gravelly_sand_Diffuse.jpg",
+    "bytes": 1062525
+  },
+  {
+    "path": "assets/textures/foreground/gravelly_sand_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 994
+  },
+  {
+    "path": "assets/textures/foreground/gravelly_sand_nor_gl.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/gravelly_sand_nor_gl.jpg",
+    "bytes": 1387739
+  },
+  {
+    "path": "assets/textures/foreground/gravelly_sand_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 991
+  },
+  {
+    "path": "assets/textures/foreground/gravelly_sand_Rough.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/gravelly_sand_Rough.jpg",
+    "bytes": 419895
+  },
+  {
+    "path": "assets/textures/foreground/gravelly_sand_Rough.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 988
+  },
+  {
+    "path": "assets/textures/foreground/concrete_floor_02_Diffuse.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/concrete_floor_02_Diffuse.jpg",
+    "bytes": 776097
+  },
+  {
+    "path": "assets/textures/foreground/concrete_floor_02_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1005
+  },
+  {
+    "path": "assets/textures/foreground/concrete_floor_02_Rough.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/concrete_floor_02_Rough.jpg",
+    "bytes": 318550
+  },
+  {
+    "path": "assets/textures/foreground/concrete_floor_02_Rough.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1000
+  },
+  {
+    "path": "assets/textures/foreground/concrete_floor_02_nor_gl.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/concrete_floor_02_nor_gl.jpg",
+    "bytes": 192757
+  },
+  {
+    "path": "assets/textures/foreground/concrete_floor_02_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1003
+  },
+  {
+    "path": "assets/textures/foreground/weathered_timber_Diffuse.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/weathered_timber_Diffuse.jpg",
+    "bytes": 315966
+  },
+  {
+    "path": "assets/textures/foreground/weathered_timber_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1003
+  },
+  {
+    "path": "assets/textures/foreground/aerial_grass_rock_Diffuse.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/aerial_grass_rock_Diffuse.jpg",
+    "bytes": 666655
+  },
+  {
+    "path": "assets/textures/foreground/aerial_grass_rock_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1006
+  },
+  {
+    "path": "assets/textures/foreground/aerial_grass_rock_nor_gl.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/aerial_grass_rock_nor_gl.jpg",
+    "bytes": 904956
+  },
+  {
+    "path": "assets/textures/foreground/aerial_grass_rock_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1003
+  },
+  {
+    "path": "assets/textures/foreground/aerial_grass_rock_Rough.jpg",
+    "action": "moved",
+    "destination": "source/textures/foreground/aerial_grass_rock_Rough.jpg",
+    "bytes": 362214
+  },
+  {
+    "path": "assets/textures/foreground/aerial_grass_rock_Rough.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1000
+  },
+  {
+    "path": "assets/textures/boulder_01_diff_1k.jpg",
+    "action": "moved",
+    "destination": "source/textures/original/boulder_01_diff_1k.jpg",
+    "bytes": 987467
+  },
+  {
+    "path": "assets/textures/boulder_01_diff_1k.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 974
+  },
+  {
+    "path": "assets/textures/boulder_01_nor_gl_1k.jpg",
+    "action": "moved",
+    "destination": "source/textures/original/boulder_01_nor_gl_1k.jpg",
+    "bytes": 1183552
+  },
+  {
+    "path": "assets/textures/boulder_01_nor_gl_1k.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 980
+  },
+  {
+    "path": "assets/textures/boulder_01_arm_1k.jpg",
+    "action": "moved",
+    "destination": "source/textures/original/boulder_01_arm_1k.jpg",
+    "bytes": 659386
+  },
+  {
+    "path": "assets/textures/boulder_01_arm_1k.jpg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 971
+  },
+  {
+    "path": "assets/textures/tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_baseColor.jpeg",
+    "action": "moved",
+    "destination": "source/textures/original/tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_baseColor.jpeg",
+    "bytes": 4308869
+  },
+  {
+    "path": "assets/textures/tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_baseColor.jpeg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1105
+  },
+  {
+    "path": "assets/textures/tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_metallicRoughness.png",
+    "action": "moved",
+    "destination": "source/textures/original/tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_metallicRoughness.png",
+    "bytes": 5051739
+  },
+  {
+    "path": "assets/textures/tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_metallicRoughness.png.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1127
+  },
+  {
+    "path": "assets/textures/tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_normal.jpeg",
+    "action": "moved",
+    "destination": "source/textures/original/tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_normal.jpeg",
+    "bytes": 2442282
+  },
+  {
+    "path": "assets/textures/tripo_material_c342f046-2d56-40c0-99cd-ca85c393ac30_normal.jpeg.import",
+    "action": "removed",
+    "reason": "Source-only asset no longer imported",
+    "bytes": 1096
+  },
+  {
+    "path": "assets/environment/ground.gdshader",
+    "action": "removed",
+    "reason": "Unused legacy generated shore shader",
+    "bytes": 383
+  },
+  {
+    "path": "assets/environment/ground.gdshader.uid",
+    "action": "removed",
+    "reason": "Unused legacy generated shore shader",
+    "bytes": 20
+  },
+  {
+    "path": "assets/models/boulder.glb",
+    "action": "removed",
+    "reason": "Legacy shore boulder; no gameplay references",
+    "bytes": 4813872
+  },
+  {
+    "path": "assets/models/boulder.glb.import",
+    "action": "removed",
+    "reason": "Legacy shore boulder; no gameplay references",
+    "bytes": 1150
+  },
+  {
+    "path": "assets/models/boulder_boulder_01_nor_gl_1k.jpg",
+    "action": "removed",
+    "reason": "Legacy shore boulder; no gameplay references",
+    "bytes": 1183552
+  },
+  {
+    "path": "assets/models/boulder_boulder_01_nor_gl_1k.jpg.import",
+    "action": "removed",
+    "reason": "Legacy shore boulder; no gameplay references",
+    "bytes": 1393
+  },
+  {
+    "path": "assets/models/boulder_boulder_01_diff_1k.jpg",
+    "action": "removed",
+    "reason": "Legacy shore boulder; no gameplay references",
+    "bytes": 987467
+  },
+  {
+    "path": "assets/models/boulder_boulder_01_diff_1k.jpg.import",
+    "action": "removed",
+    "reason": "Legacy shore boulder; no gameplay references",
+    "bytes": 1331
+  },
+  {
+    "path": "assets/models/boulder_boulder_01_arm_1k.jpg",
+    "action": "removed",
+    "reason": "Legacy shore boulder; no gameplay references",
+    "bytes": 659386
+  },
+  {
+    "path": "assets/models/boulder_boulder_01_arm_1k.jpg.import",
+    "action": "removed",
+    "reason": "Legacy shore boulder; no gameplay references",
+    "bytes": 1325
+  },
+  {
+    "path": "assets/models/locations/lakeside.glb",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 10195200
+  },
+  {
+    "path": "assets/models/locations/lakeside.glb.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1163
+  },
+  {
+    "path": "assets/models/locations/lake_pier.glb",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 4010812
+  },
+  {
+    "path": "assets/models/locations/lake_pier.glb.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1166
+  },
+  {
+    "path": "assets/models/locations/gray_pier.glb",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 8892200
+  },
+  {
+    "path": "assets/models/locations/gray_pier.glb.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1166
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier.glb",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 4980040
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier.glb.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1180
+  },
+  {
+    "path": "assets/models/locations/lake_pier_concrete_floor_02_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 192757
+  },
+  {
+    "path": "assets/models/locations/lake_pier_concrete_floor_02_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1096
+  },
+  {
+    "path": "assets/models/locations/lake_pier_concrete_floor_02_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 776097
+  },
+  {
+    "path": "assets/models/locations/lake_pier_concrete_floor_02_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1099
+  },
+  {
+    "path": "assets/models/locations/lake_pier_concrete_floor_02_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 966524
+  },
+  {
+    "path": "assets/models/locations/lake_pier_concrete_floor_02_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1093
+  },
+  {
+    "path": "assets/models/locations/lake_pier_brown_planks_03_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 516860
+  },
+  {
+    "path": "assets/models/locations/lake_pier_brown_planks_03_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1090
+  },
+  {
+    "path": "assets/models/locations/lake_pier_brown_planks_03_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 570668
+  },
+  {
+    "path": "assets/models/locations/lake_pier_brown_planks_03_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1093
+  },
+  {
+    "path": "assets/models/locations/lake_pier_brown_planks_03_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 725151
+  },
+  {
+    "path": "assets/models/locations/lake_pier_brown_planks_03_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1087
+  },
+  {
+    "path": "assets/models/locations/lakeside_gravelly_sand_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1387739
+  },
+  {
+    "path": "assets/models/locations/lakeside_gravelly_sand_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1081
+  },
+  {
+    "path": "assets/models/locations/lakeside_gravelly_sand_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1062525
+  },
+  {
+    "path": "assets/models/locations/lakeside_gravelly_sand_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1084
+  },
+  {
+    "path": "assets/models/locations/lakeside_gravelly_sand_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 837321
+  },
+  {
+    "path": "assets/models/locations/lakeside_gravelly_sand_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1078
+  },
+  {
+    "path": "assets/models/locations/lakeside_concrete_floor_02_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 192757
+  },
+  {
+    "path": "assets/models/locations/lakeside_concrete_floor_02_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1093
+  },
+  {
+    "path": "assets/models/locations/lakeside_concrete_floor_02_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 776097
+  },
+  {
+    "path": "assets/models/locations/lakeside_concrete_floor_02_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1096
+  },
+  {
+    "path": "assets/models/locations/lakeside_concrete_floor_02_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 966524
+  },
+  {
+    "path": "assets/models/locations/lakeside_concrete_floor_02_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1090
+  },
+  {
+    "path": "assets/models/locations/lakeside_brown_planks_03_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 516860
+  },
+  {
+    "path": "assets/models/locations/lakeside_brown_planks_03_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1087
+  },
+  {
+    "path": "assets/models/locations/lakeside_brown_planks_03_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 570668
+  },
+  {
+    "path": "assets/models/locations/lakeside_brown_planks_03_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1090
+  },
+  {
+    "path": "assets/models/locations/lakeside_brown_planks_03_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 725151
+  },
+  {
+    "path": "assets/models/locations/lakeside_brown_planks_03_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1084
+  },
+  {
+    "path": "assets/models/locations/gray_pier_gravelly_sand_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1387739
+  },
+  {
+    "path": "assets/models/locations/gray_pier_gravelly_sand_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1084
+  },
+  {
+    "path": "assets/models/locations/gray_pier_gravelly_sand_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1062525
+  },
+  {
+    "path": "assets/models/locations/gray_pier_gravelly_sand_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1087
+  },
+  {
+    "path": "assets/models/locations/gray_pier_gravelly_sand_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 837321
+  },
+  {
+    "path": "assets/models/locations/gray_pier_gravelly_sand_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1080
+  },
+  {
+    "path": "assets/models/locations/gray_pier_brown_planks_03_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 516860
+  },
+  {
+    "path": "assets/models/locations/gray_pier_brown_planks_03_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1089
+  },
+  {
+    "path": "assets/models/locations/gray_pier_brown_planks_03_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 570668
+  },
+  {
+    "path": "assets/models/locations/gray_pier_brown_planks_03_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1092
+  },
+  {
+    "path": "assets/models/locations/gray_pier_brown_planks_03_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 725151
+  },
+  {
+    "path": "assets/models/locations/gray_pier_brown_planks_03_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1086
+  },
+  {
+    "path": "assets/models/locations/gray_pier_weathered_timber_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 315966
+  },
+  {
+    "path": "assets/models/locations/gray_pier_weathered_timber_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1096
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_brown_planks_03_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 516860
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_brown_planks_03_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1105
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_brown_planks_03_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 570668
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_brown_planks_03_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1108
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_brown_planks_03_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 725151
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_brown_planks_03_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1101
+  },
+  {
+    "path": "assets/models/locations/lakeside_aerial_grass_rock_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 904956
+  },
+  {
+    "path": "assets/models/locations/lakeside_aerial_grass_rock_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1092
+  },
+  {
+    "path": "assets/models/locations/lakeside_aerial_grass_rock_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 666655
+  },
+  {
+    "path": "assets/models/locations/lakeside_aerial_grass_rock_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1096
+  },
+  {
+    "path": "assets/models/locations/lakeside_aerial_grass_rock_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1019139
+  },
+  {
+    "path": "assets/models/locations/lakeside_aerial_grass_rock_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1090
+  },
+  {
+    "path": "assets/models/locations/gray_pier_aerial_grass_rock_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 904956
+  },
+  {
+    "path": "assets/models/locations/gray_pier_aerial_grass_rock_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1096
+  },
+  {
+    "path": "assets/models/locations/gray_pier_aerial_grass_rock_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 666655
+  },
+  {
+    "path": "assets/models/locations/gray_pier_aerial_grass_rock_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1099
+  },
+  {
+    "path": "assets/models/locations/gray_pier_aerial_grass_rock_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1019139
+  },
+  {
+    "path": "assets/models/locations/gray_pier_aerial_grass_rock_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1093
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_aerial_grass_rock_nor_gl.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 904956
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_aerial_grass_rock_nor_gl.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1111
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_aerial_grass_rock_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 666655
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_aerial_grass_rock_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1113
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_aerial_grass_rock_Rough.png",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1019139
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_aerial_grass_rock_Rough.png.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1108
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_weathered_timber_Diffuse.jpg",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 315966
+  },
+  {
+    "path": "assets/models/locations/bell_park_pier_weathered_timber_Diffuse.jpg.import",
+    "action": "removed",
+    "reason": "Superseded by baked lit foregrounds; editable source and collision retained",
+    "bytes": 1110
+  },
+  {
+    "path": "source/additional_fish.blend",
+    "action": "removed",
+    "reason": "Superseded by photographic_fish.blend",
+    "bytes": 3880526
+  },
+  {
+    "path": "tools/build_additional_fish.py",
+    "action": "removed",
+    "reason": "Superseded by build_photographic_fish.py",
+    "bytes": 6788
+  },
+  {
+    "path": "source/expanded_fish.blend",
+    "action": "removed",
+    "reason": "Superseded by photographic_fish.blend",
+    "bytes": 4582392
+  },
+  {
+    "path": "tools/build_expanded_fish.py",
+    "action": "removed",
+    "reason": "Superseded by build_photographic_fish.py",
+    "bytes": 9222
+  },
+  {
+    "path": "tools/start_blender.py",
+    "action": "removed",
+    "reason": "Machine-local MCP startup helper",
+    "bytes": 274
+  },
+  {
+    "path": "source/validation/xr/xr_lakeside_eye0.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2741819
+  },
+  {
+    "path": "source/validation/xr/xr_lakeside_eye1.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2742692
+  },
+  {
+    "path": "source/validation/xr/xr_lake_pier_eye0.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 4035763
+  },
+  {
+    "path": "source/validation/xr/xr_lake_pier_eye1.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 4031690
+  },
+  {
+    "path": "source/validation/xr/xr_gray_pier_eye0.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 3396271
+  },
+  {
+    "path": "source/validation/xr/xr_gray_pier_eye1.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 3395367
+  },
+  {
+    "path": "source/validation/xr/xr_bell_park_pier_eye0.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2884837
+  },
+  {
+    "path": "source/validation/xr/xr_bell_park_pier_eye1.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2878194
+  },
+  {
+    "path": "source/validation/xr/xr_menu_eye0.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 3752807
+  },
+  {
+    "path": "source/validation/xr/xr_menu_eye1.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 3749126
+  },
+  {
+    "path": "source/validation/xr/catch_hanging_eye0.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2627849
+  },
+  {
+    "path": "source/validation/xr/catch_hanging_eye1.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2537718
+  },
+  {
+    "path": "source/validation/xr/catch_in_hand_eye0.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2395615
+  },
+  {
+    "path": "source/validation/xr/catch_in_hand_eye1.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2395014
+  },
+  {
+    "path": "source/validation/xr/field_guide_eye0.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2601649
+  },
+  {
+    "path": "source/validation/xr/field_guide_eye1.exr",
+    "action": "removed",
+    "reason": "Generated raw test capture; PNG evidence retained and future output ignored",
+    "bytes": 2665180
+  },
+  {
+    "path": "source/fishing_assets.blend1",
+    "action": "removed",
+    "reason": "Blender backup",
+    "bytes": 17140024
+  },
+  {
+    "path": "source/fish_species.blend1",
+    "action": "removed",
+    "reason": "Blender backup",
+    "bytes": 68705913
+  },
+  {
+    "path": "docs/preview.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 930
+  },
+  {
+    "path": "docs/vr_avatar_panel.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 954
+  },
+  {
+    "path": "docs/avatar_picker.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 947
+  },
+  {
+    "path": "docs/walkable_shore.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 951
+  },
+  {
+    "path": "docs/fish_species.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 945
+  },
+  {
+    "path": "docs/zander_catch.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 945
+  },
+  {
+    "path": "docs/field_guide_desktop.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 966
+  },
+  {
+    "path": "docs/additional_fish.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 954
+  },
+  {
+    "path": "docs/menu_waters_xr.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 951
+  },
+  {
+    "path": "docs/menu_tracking_xr.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 957
+  },
+  {
+    "path": "docs/menu_together_xr.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 956
+  },
+  {
+    "path": "docs/menu_waters.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 942
+  },
+  {
+    "path": "docs/menu_sound_xr.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 948
+  },
+  {
+    "path": "docs/menu_tracking.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 948
+  },
+  {
+    "path": "docs/menu_avatar_xr.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 951
+  },
+  {
+    "path": "docs/menu_together.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 948
+  },
+  {
+    "path": "docs/menu_sound.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 939
+  },
+  {
+    "path": "docs/menu_avatar.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 942
+  },
+  {
+    "path": "docs/fishing_wake.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 945
+  },
+  {
+    "path": "docs/blob_contact.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 944
+  },
+  {
+    "path": "docs/multiplayer_eye0.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 957
+  },
+  {
+    "path": "docs/multiplayer_desktop.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 965
+  },
+  {
+    "path": "docs/multiplayer_eye1.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 957
+  },
+  {
+    "path": "docs/shadow_blob.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 942
+  },
+  {
+    "path": "docs/shadow_dynamic.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 951
+  },
+  {
+    "path": "docs/guide_camera_selfie.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 966
+  },
+  {
+    "path": "docs/guide_camera_forward.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 969
+  },
+  {
+    "path": "docs/expanded_fish.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 948
+  },
+  {
+    "path": "docs/baits_six.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 936
+  },
+  {
+    "path": "docs/field_guide_screen.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 962
+  },
+  {
+    "path": "docs/fish_head_barbel.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 957
+  },
+  {
+    "path": "docs/fish_head_chub.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 951
+  },
+  {
+    "path": "docs/fish_head_pike.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 951
+  },
+  {
+    "path": "docs/guide_camera_screen.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 966
+  },
+  {
+    "path": "docs/fish_head_rudd.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 951
+  },
+  {
+    "path": "docs/rods.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 921
+  },
+  {
+    "path": "docs/photographic_fish.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 959
+  },
+  {
+    "path": "docs/guide_camera_selfie_xr.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 975
+  },
+  {
+    "path": "docs/locations/gray_pier.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 945
+  },
+  {
+    "path": "docs/locations/lakeside.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 943
+  },
+  {
+    "path": "docs/locations/menu.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 931
+  },
+  {
+    "path": "docs/locations/lake_pier.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 946
+  },
+  {
+    "path": "docs/locations/bell_park_pier.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 961
+  },
+  {
+    "path": "docs/locations/xr_menu_texture.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 964
+  },
+  {
+    "path": "docs/locations/xr_menu_eye0.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 955
+  },
+  {
+    "path": "docs/locations/xr_menu_eye1.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 955
+  },
+  {
+    "path": "docs/locations/xr_lake_pier_eye1.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 970
+  },
+  {
+    "path": "docs/locations/xr_lake_pier_eye0.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 970
+  },
+  {
+    "path": "docs/locations/xr_lakeside_eye1.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 966
+  },
+  {
+    "path": "docs/locations/xr_lakeside_eye0.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 967
+  },
+  {
+    "path": "docs/locations/xr_gray_pier_eye1.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 969
+  },
+  {
+    "path": "docs/locations/xr_gray_pier_eye0.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 970
+  },
+  {
+    "path": "docs/locations/xr_bell_park_pier_eye1.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 985
+  },
+  {
+    "path": "docs/locations/xr_bell_park_pier_eye0.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 985
+  },
+  {
+    "path": "docs/locations/lake_pier_foreground.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 978
+  },
+  {
+    "path": "docs/locations/gray_pier_foreground.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 978
+  },
+  {
+    "path": "docs/locations/lakeside_foreground.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 976
+  },
+  {
+    "path": "docs/locations/bell_park_pier_foreground.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 994
+  },
+  {
+    "path": "docs/locations/catch_in_hand_eye0.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 972
+  },
+  {
+    "path": "docs/locations/catch_hanging_eye0.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 973
+  },
+  {
+    "path": "docs/locations/catch_hanging_eye1.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 973
+  },
+  {
+    "path": "docs/locations/catch_in_hand_eye1.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 972
+  },
+  {
+    "path": "docs/locations/bell_park_pier_soft_lighting.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 1002
+  },
+  {
+    "path": "docs/locations/gray_pier_soft_lighting.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 987
+  },
+  {
+    "path": "docs/locations/lakeside_soft_lighting.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 984
+  },
+  {
+    "path": "docs/locations/lake_pier_soft_lighting.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 987
+  },
+  {
+    "path": "docs/locations/field_guide_eye0.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 966
+  },
+  {
+    "path": "docs/locations/field_guide_eye1.png.import",
+    "action": "removed",
+    "reason": "Documentation images excluded from Godot imports",
+    "bytes": 967
+  }
+]

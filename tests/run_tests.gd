@@ -18,7 +18,7 @@ func _initialize() -> void:
 	s.select_bait(0)
 	check(s.bait == 2, "Bait cannot change after cast")
 	s.tick(1, 0, 0)
-	check(s.state == Session.State.WAITING and s.fish_index == 2, "Spinner must attract pike")
+	check(s.state == Session.State.WAITING and Session.SPECIES[s.fish_index].bait == 2, "Spinner must attract a compatible predator")
 	s.tick(10, 0, 0)
 	check(s.state == Session.State.BITE, "Waiting must produce bite")
 	s.tick(2, 0, 0)
@@ -70,5 +70,47 @@ func _initialize() -> void:
 	check(r.sample(Vector3(0, 0.08, 0), true, 0.01) == 0, "Regrab must reset baseline")
 	check(r.sample(Vector3(0, -0.08, 0), true, 0.01) == 0, "Tracking jump must not reel")
 	check(r.sample(Vector3(0, 0.08, 0), false, 0.01) == 0, "Released grip must not reel")
+	# Sample real cast transitions: every species is reachable and bait stays valid.
+	var seen := {}
+	var pools_valid := true
+	for bait_index in range(Session.BAITS.size()):
+		for attempt in range(128):
+			s.reset()
+			s.select_bait(bait_index)
+			s.cast(12)
+			s.tick(1, 0, 0)
+			seen[s.fish_index] = true
+			pools_valid = pools_valid and s.fish_index in Session.species_for_bait(bait_index, s.location_id)
+	check(pools_valid, "Every cast must choose a species compatible with its bait")
+	check(seen.size() == Session.species_for_location(s.location_id).size(), "All local species must be reachable through normal casting")
+	# Full fights verify that every power profile can be landed at maximum cast range.
+	for index in range(Session.SPECIES.size()):
+		var species: Dictionary = Session.SPECIES[index]
+		var fight = Session.new()
+		fight.rng.seed = 1234 + index
+		fight.fish_index = index
+		fight.state = Session.State.BITE
+		fight.distance = 24.0
+		fight.strike()
+		for frame in range(18000):
+			if fight.state != Session.State.FIGHT: break
+			if fight.cue >= 0: fight.gesture(fight.cue)
+			var rate := 0.0 if fight.is_running() else 1.0
+			if fight.tension < 0.18: rate = 0.8
+			if fight.tension > 0.7: rate = 0.0
+			fight.tick(1.0 / 90.0, rate, 0.2)
+		check(fight.state == Session.State.LANDED, "Full fight must land " + species.name)
+		if fight.journal.is_empty(): continue
+		var record: Dictionary = fight.journal.back()
+		check(record.name == species.name and record.latin == species.latin, "Journal must preserve species identity")
+		check(record.length >= species.length * 0.85 and record.length <= species.length * 1.15, "Catch length is bounded")
+		check(absf(record.weight / species.weight - pow(record.length / species.length, 3)) < 0.0001, "Weight must scale with catch length")
+		check(fight.message.contains(species.latin) and fight.message.contains("kg"), "Catch display identifies species and weight")
+		fight.tick(1, 1, 1)
+		check(fight.journal.size() == 1, "Landed catch cannot be recorded twice")
+		var restored = JSON.parse_string(JSON.stringify(fight.journal))
+		check(restored[0].latin == species.latin and is_equal_approx(restored[0].weight, record.weight), "New catch survives journal JSON round trip")
+		fight.reset()
+		check(fight.state == Session.State.READY and fight.journal.size() == 1, "Release returns to ready and preserves catch")
 	print("Fishing tests: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

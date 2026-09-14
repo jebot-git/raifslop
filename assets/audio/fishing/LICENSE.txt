@@ -1,0 +1,20 @@
+Recorded fishing foley — source and modification credits
+
+cast.wav: excerpt of "Fly Rod Casting.wav" by paulprit, CC0 1.0.
+https://freesound.org/people/paulprit/sounds/529665/
+
+impact.wav: excerpt of "Rock In Water Splash-Plop 1.aif" by jc144940, CC0 1.0.
+https://freesound.org/people/jc144940/sounds/178735/
+https://creativecommons.org/publicdomain/zero/1.0/
+
+splash.wav, splash_2.wav, splash_3.wav, land.wav:
+Adapted from "Trout splashing after being caught" by TheFlyFishingFilmmaker.
+License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+https://freesound.org/people/TheFlyFishingFilmmaker/sounds/592784/
+https://creativecommons.org/licenses/by/4.0/
+Changes: excerpts of public HQ preview, mono downmix, filtering, transient
+compression, onset/tail fades and lowered/matched peaks. No endorsement implied.
+Retain this attribution with distributed builds.
+
+reel.wav: original authored synthesis, CC0 1.0.
+Full source previews and excerpt details: source/audio/fishing/CREDITS.md.

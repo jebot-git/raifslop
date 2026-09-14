@@ -1,0 +1,13 @@
+# Fish reconstruction — 14 September 2026
+
+Thirteen fish have been rebuilt to match the original roach, tench, bream and zander assets. Those four and the original perch remain unchanged. Common carp and northern pike now use dedicated textured models instead of the geometric stand-ins. Rudd, crucian carp, chub, rainbow trout, brown trout, grayling, barbel, dace, bleak, gudgeon and brook trout replace their earlier procedural models.
+
+The built-in OpenAI image-generation tool produced retained side references, using the same photographic-style approach as roach and tench. These are generated illustrations, not photographs or scans of animals. Exact prompts are in [prompts.json](../source/fish_references/prompts.json); biological references are in [LOCATION_SPECIES.md](LOCATION_SPECIES.md). No third-party reference image was copied into these textures.
+
+[Blender reconstruction](../tools/build_photographic_fish.py) uses reviewed dorsal/ventral profiles, body widths and anatomical landmarks from [anatomy.json](../source/fish_references/anatomy.json). The bodies have volume, paired lifted pectoral fins, traced fin silhouettes, convex wet corneas seated against the cheek, raised lip margins and two or four sensory barbels where appropriate. Trout bodies and the pike/barbel profiles are adjusted for their more elongated shapes. The snout contour follows the reference mouth. A restrained Cycles normal bake adds fine surface relief; corneas retain a separate smooth material. There are three materials per fish, 1536×1024 albedo and 1024×1024 normal maps. Embedded GLBs need no runtime Blender or generation service.
+
+Packed editable scenes: `source/photographic_fish.blend`. Models remain exactly one metre along X before game sizing; head/mouth are at positive X. Existing catch sizing, vertical hanging, hand inspection and multiplayer model selection use this convention. The [asset manifest](photographic_fish_assets.json) records counts, sizes and hashes. The photographic builder is the current generator for these thirteen species. Superseded procedural builders, source scenes and skin textures were removed during release cleanup.
+
+[Catalogue render](photographic_fish.png) compares the original four and replacements under the same Godot Mobile lighting. Head inspection views: [chub](fish_head_chub.png), [pike](fish_head_pike.png), [rudd reverse flank](fish_head_rudd.png), [barbel](fish_head_barbel.png).
+
+These remain game reconstructions: bilateral projected texture, thin fin membranes, and a static mouth rather than anatomical internal organs or an articulated jaw. Close-up dorsal views can reveal projection stretching. Their appearance is intended to be consistent with the original assets rather than a scientific scan.

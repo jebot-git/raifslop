@@ -1,0 +1,223 @@
+{
+  "rudd": {
+    "model": "assets/models/fish/rudd.glb",
+    "bytes": 3007612,
+    "sha256": "add7900ac11b1292111d3f7fac8bd0d42097a7dd9ee2df49fa817131e7fe6e8c",
+    "triangles": 41700,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/rudd.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "crucian_carp": {
+    "model": "assets/models/fish/crucian_carp.glb",
+    "bytes": 3236284,
+    "sha256": "76f59bc697b8a0a16334c15484930ebf592198a860e54f884eb30756be96d202",
+    "triangles": 52310,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/crucian_carp.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "chub": {
+    "model": "assets/models/fish/chub.glb",
+    "bytes": 2863624,
+    "sha256": "1143184d87aad5a54ef9cffe332bda1edcd11e14081aeae20802da42de339aa4",
+    "triangles": 37742,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/chub.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "rainbow_trout": {
+    "model": "assets/models/fish/rainbow_trout.glb",
+    "bytes": 2850184,
+    "sha256": "bd8dd74b3617fe061377d5fd3c7c199414a78578b711cf189ac55ff341f2392e",
+    "triangles": 35150,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/rainbow_trout.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "brown_trout": {
+    "model": "assets/models/fish/brown_trout.glb",
+    "bytes": 2775528,
+    "sha256": "a8ef564bfa60135edddd5f7a1fa6d6207a0c13ce6f63e2778ad6e2364b3fac7b",
+    "triangles": 37166,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/brown_trout.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "grayling": {
+    "model": "assets/models/fish/grayling.glb",
+    "bytes": 3069524,
+    "sha256": "2ae92611b5b18235c35ea741e49b44229fcffb98f205c326355c55e4781d6e72",
+    "triangles": 50806,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/grayling.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "dace": {
+    "model": "assets/models/fish/dace.glb",
+    "bytes": 2675456,
+    "sha256": "31e0243e2ec5b0894962ca88c3bc7c7c8642f5abb5817e48de6b35c73d38070f",
+    "triangles": 33010,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/dace.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "barbel": {
+    "model": "assets/models/fish/barbel.glb",
+    "bytes": 2670144,
+    "sha256": "43b67b7ee8b6d89128fe1ac542b39090d4759557fff850cbe20d5772ed2d0eca",
+    "triangles": 36826,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/barbel.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "bleak": {
+    "model": "assets/models/fish/bleak.glb",
+    "bytes": 2454172,
+    "sha256": "89085224a032937f1e4c73ef2aa3c4b993a752844bccbe8ea9e4baf185b4f91a",
+    "triangles": 31850,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/bleak.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "gudgeon": {
+    "model": "assets/models/fish/gudgeon.glb",
+    "bytes": 2542348,
+    "sha256": "6a0290f632a19642dbf69b239c7406c4353faa23b129e2deb71319164a6c5d4d",
+    "triangles": 35582,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/gudgeon.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "brook_trout": {
+    "model": "assets/models/fish/brook_trout.glb",
+    "bytes": 2811812,
+    "sha256": "4c152a7482df3077d5663d42d29f53dc27e696de3bb8b1d56efab0aab2d18304",
+    "triangles": 39602,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/brook_trout.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "carp": {
+    "model": "assets/models/fish/carp.glb",
+    "bytes": 3079792,
+    "sha256": "3a354f0295ac2f9f649fe48982289d218f86d08a7711ed5d8c68324ce77dfcfb",
+    "triangles": 46824,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/carp.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  },
+  "pike": {
+    "model": "assets/models/fish/pike.glb",
+    "bytes": 2433276,
+    "sha256": "9bb868f4b29e16f7adba484b4654dd360840fd827b283a68abae2b66a040bfd6",
+    "triangles": 30708,
+    "surfaces": 3,
+    "skin_size": [
+      1536,
+      1024
+    ],
+    "normal_size": [
+      1024,
+      1024
+    ],
+    "reference": "source/fish_references/pike.png",
+    "pipeline": "tools/build_photographic_fish.py"
+  }
+}

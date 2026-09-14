@@ -8,11 +8,14 @@ var left: XRController3D
 var right: XRController3D
 var xr := false
 var blocked := false
+var tracking_focused := true
+var catch_controls := false
 var smooth_turn := false
 var turn_latched := false
 var capsule := CapsuleShape3D.new()
 var shape := CollisionShape3D.new()
 var last_motion := Vector3.ZERO
+var safe_spawn := Vector3(0, 0.02, 0.65)
 
 func _ready() -> void:
 	name = "PlayerBody"
@@ -37,9 +40,19 @@ func turn(angle: float) -> void:
 	origin.global_position = pivot + Basis(Vector3.UP, angle) * (origin.global_position - pivot)
 	origin.global_basis = Basis(Vector3.UP, angle) * origin.global_basis
 
+func relocate(spawn: Vector3) -> void:
+	# Preserve physical head height/orientation while placing its floor projection safely.
+	var offset := head.global_position - global_position
+	offset.y = 0
+	global_position = spawn
+	origin.global_position -= offset
+	velocity = Vector3.ZERO
+	last_motion = Vector3.ZERO
+	safe_spawn = spawn
+
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(head): return
-	if blocked or (xr and not right.get_has_tracking_data()):
+	if blocked or (xr and (not tracking_focused or not right.get_has_tracking_data())):
 		velocity = Vector3.ZERO
 		last_motion = Vector3.ZERO
 		return
@@ -59,6 +72,10 @@ func _physics_process(delta: float) -> void:
 	else:
 		stick = Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_W)) - float(Input.is_physical_key_pressed(KEY_S))).limit_length()
 		turn_axis = float(Input.is_physical_key_pressed(KEY_E)) - float(Input.is_physical_key_pressed(KEY_Q))
+	if catch_controls:
+		stick = Vector2.ZERO
+		turn_axis = 0.0
+		velocity = Vector3.ZERO
 	if smooth_turn:
 		if absf(turn_axis) > 0.18: turn(-turn_axis * deg_to_rad(75) * delta)
 	elif absf(turn_axis) > 0.65 and not turn_latched:
@@ -78,5 +95,4 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	last_motion = (global_position - before) / maxf(delta, 0.001)
 	if global_position.y < -3.0:
-		global_position = Vector3(0, 0.1, 0.6)
-		velocity = Vector3.ZERO
+		relocate(safe_spawn)

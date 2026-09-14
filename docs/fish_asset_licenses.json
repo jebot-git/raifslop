@@ -1,0 +1,30 @@
+[
+  {
+    "uid": "4d4cded6977c470ebdfd18f226700009",
+    "name": "Bream (Abramis Brama)",
+    "author": "Nullified",
+    "url": "https://sketchfab.com/3d-models/bream-abramis-brama-4d4cded6977c470ebdfd18f226700009",
+    "license": {
+      "uri": "https://api.sketchfab.com/v3/licenses/322a749bcfa841b29dff1e8a1bb74b0b",
+      "label": "CC Attribution",
+      "fullName": "Creative Commons Attribution",
+      "requirements": "Author must be credited. Commercial use is allowed.",
+      "url": "http://creativecommons.org/licenses/by/4.0/",
+      "slug": "by"
+    }
+  },
+  {
+    "uid": "156dd9edfeda42649a394b65f710211d",
+    "name": "Zander (Sander lucioperca)",
+    "author": "Nullified",
+    "url": "https://sketchfab.com/3d-models/zander-sander-lucioperca-156dd9edfeda42649a394b65f710211d",
+    "license": {
+      "uri": "https://api.sketchfab.com/v3/licenses/322a749bcfa841b29dff1e8a1bb74b0b",
+      "label": "CC Attribution",
+      "fullName": "Creative Commons Attribution",
+      "requirements": "Author must be credited. Commercial use is allowed.",
+      "url": "http://creativecommons.org/licenses/by/4.0/",
+      "slug": "by"
+    }
+  }
+]

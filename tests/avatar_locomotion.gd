@@ -63,7 +63,7 @@ func run() -> void:
 		return
 	var original_path: String = g.avatars.selected_path
 	var original_avatar = g.avatar
-	await g._select_avatar("res://assets/models/boulder.glb")
+	await g._select_avatar("res://assets/models/rods/reed.glb")
 	check(g.avatar == original_avatar and g.avatars.selected_path == original_path, "Invalid selection preserves active avatar")
 	await g._select_avatar(Library.DEFAULTS[1])
 	check(g.avatars.selected_path == Library.DEFAULTS[1] and g.avatar != original_avatar, "Second bundled avatar can be equipped")
@@ -81,7 +81,7 @@ func run() -> void:
 	g.avatar.solver._process_modification_with_delta(0.016)
 	var hand: Vector3 = sk.to_global(sk.get_bone_global_pose(sk.find_bone("RightHand")).origin)
 	check(hand.distance_to(g.rod.global_position) < 0.16, "Right-hand IK reaches the rod grip")
-	check(g.head.cull_mask == 3, "First-person camera excludes head-only layer")
+	check(g.head.cull_mask & 3 == 3 and g.head.cull_mask & 4 == 0, "First-person camera includes world/body and excludes head-only layer")
 	for i in range(10): await physics_frame
 	var start: Vector3 = g.head.global_position
 	g.motor.turn(deg_to_rad(30))
@@ -90,11 +90,11 @@ func run() -> void:
 	key(KEY_W, true)
 	for i in range(190): await physics_frame
 	key(KEY_W, false)
-	check(g.motor.global_position.z > -2.2 and g.motor.global_position.z < -1.5, "Dock front collision stops walking into lake")
+	check(g.motor.global_position.z > -2.2 and g.motor.global_position.z < -1.5, "Cove edge collision stops walking into lake")
 	key(KEY_S, true)
 	for i in range(410): await physics_frame
 	key(KEY_S, false)
-	check(g.motor.global_position.z > 5.0 and absf(g.motor.global_position.y) < 0.2, "Player walks off dock onto solid shore")
+	check(g.motor.global_position.z > 5.0 and absf(g.motor.global_position.y) < 0.2, "Player walks across solid gravel shore")
 	g._toggle_avatar_menu()
 	var paused: Vector3 = g.motor.global_position
 	key(KEY_D, true)

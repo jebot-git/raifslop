@@ -1,0 +1,78 @@
+[
+  {
+    "id": "lake_pier",
+    "source_bytes": 25272796,
+    "source_sha256": "7619ad3a042b22eaa773addd5ee172b0d9b6747005a04e30ccafa203d24c4485",
+    "runtime_bytes": 6414150,
+    "runtime_sha256": "dc378d4f10140b61ffc0e2181e56c2be6523ed4752f684b053f142ce6477a005",
+    "source_size": [
+      4096,
+      2048
+    ],
+    "runtime_size": [
+      2048,
+      1024
+    ],
+    "preview_size": [
+      768,
+      384
+    ]
+  },
+  {
+    "id": "gray_pier",
+    "source_bytes": 24232379,
+    "source_sha256": "a196de93cfeec5712fb580625e72b08fdf757dc84acff799ea53aa1b090f9ad6",
+    "runtime_bytes": 6052335,
+    "runtime_sha256": "a3fb4c479ef0d36e57a962f576fdbe0e3b1ee5dad3f713af2a0f4d054be89eee",
+    "source_size": [
+      4096,
+      2048
+    ],
+    "runtime_size": [
+      2048,
+      1024
+    ],
+    "preview_size": [
+      768,
+      384
+    ]
+  },
+  {
+    "id": "river_alcove",
+    "source_bytes": 29127528,
+    "source_sha256": "cff491e42ea3c5f23f192dab45321000cb21b4687c1d697fcb54e3ff7e5f1f47",
+    "runtime_bytes": 7367877,
+    "runtime_sha256": "82b2160937f4d237b4b7356b1238b1439327e0d1fee2d34d22789dd704634f52",
+    "source_size": [
+      4096,
+      2048
+    ],
+    "runtime_size": [
+      2048,
+      1024
+    ],
+    "preview_size": [
+      768,
+      384
+    ]
+  },
+  {
+    "id": "bell_park_pier",
+    "source_bytes": 23682283,
+    "source_sha256": "b0c37c5c7f7bdfe5d1fa23c9647a56bf24af62c8a5b53d0b1e7ecabba9d0aea3",
+    "runtime_bytes": 5819692,
+    "runtime_sha256": "c110dab05f7bca9dbf3b16d1a95f7c83f5ad366c0cffda11711fdc7d1d7eb4e5",
+    "source_size": [
+      4096,
+      2048
+    ],
+    "runtime_size": [
+      2048,
+      1024
+    ],
+    "preview_size": [
+      768,
+      384
+    ]
+  }
+]

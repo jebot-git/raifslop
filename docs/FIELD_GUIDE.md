@@ -1,0 +1,65 @@
+# Handheld Field Guide
+
+An original orange-and-green fish catalogue device sits at the VR player's left hip. Reach to its **lower handle** and squeeze **left grip** within 22 cm to pick it up. Lift and rotate your hand to inspect the screen. The grip is 26.5 cm below the device body's centre, keeping the avatar's hand below the screen and navigation controls. Releasing grip or losing controller tracking returns it to the belt; no device can be dropped into the water.
+
+While holding it, use **left X / Y** or **either joystick** to browse unlocked species. Sticks advance one page per deflection; return them to centre before paging again. The casing's buttons are visual features; navigation uses controller inputs. Fishing timers and stick locomotion pause during inspection. The guide has priority over holding a caught fish, which stays hanging on the rod. Physical headset and hand motion still work.
+
+On desktop, **G** opens/closes a close-up of the same 3D device; **left/right arrows** browse and **Escape** closes it. The fishing HUD is hidden during inspection.
+
+## Collection and records
+
+Each first catch unlocks its common name, scientific name, basic description, a species-specific profile silhouette, and a **personal best length in centimetres**. Only a strictly longer specimen updates that species' record. Equal and smaller catches leave the entry unchanged. Fish weight remains in the catch journal; the guide's size comparison uses length, not weight.
+
+Records are reconstructed from the existing `user://journal.json`, so valid historical catches populate the device automatically. No second competing save file is introduced. Missing scientific names can be matched through a known common name. Unknown species, missing/non-numeric/non-positive lengths and invalid records are ignored. An empty journal shows a discovery prompt without revealing entries. New captures update the device when the game saves the landed catch.
+
+## Graphics and implementation
+
+`scripts/fish_guide.gd` builds the low-poly casing, lower handle, raised screen and decorative navigation buttons. A 640 × 840 SubViewport supplies the display; `fish_guide_screen.gd` lays out the collection. `fish_guide_icons.gd` contains twelve original vector silhouettes with different body proportions and fin profiles. They are simplified identifying graphics, not anatomical diagrams or scans. All display content is local; no service or asset download is needed during gameplay.
+
+The waist position follows headset position and the tracking origin's facing direction, with a lower height limit for crouching. This is an estimated belt position, not body tracking. The hold transform follows the actual left controller. Reach and screen readability were checked with synthetic controllers; physical headset/controller ergonomics still need validation.
+
+## Species references
+
+Descriptions and identifying silhouettes were authored using the species' basic traits:
+
+- [European perch](https://www.wildlifetrusts.org/wildlife-explorer/freshwater-fish/perch): stripes, spiny back fins and red lower fins.
+- [Common carp](https://www.wildlifetrusts.org/wildlife-explorer/freshwater-fish/common-carp): sturdy body, mouth barbels and omnivorous feeding.
+- [Northern pike](https://www.wildlifetrusts.org/wildlife-explorer/freshwater-fish/pike): elongated body, broad snout, teeth and ambush hunting.
+- [Common roach](https://www.wildlifetrusts.org/wildlife-explorer/freshwater-fish/roach): silver body with red eyes and fins.
+- [Tench](https://www.wildlifetrusts.org/wildlife-explorer/freshwater-fish/tench): olive colouring, red eyes and rounded fins.
+- [Common bream](https://www.fisheriesireland.ie/fish-species/bream-abramis-brama): flattened deep body, long anal fin and bottom feeding.
+- [Zander](https://canalrivertrust.org.uk/things-to-do/fishing/caring-for-our-fish/invasive-and-non-native-fish/zander): double dorsal fin, pale belly and canine teeth.
+
+No reference photographs, external icon sets or existing game branding were copied into the device.
+
+## Verification
+
+Use isolated saves for these tests:
+
+```bash
+XDG_DATA_HOME=/tmp/guide-tests ./run.sh --desktop --headless --script res://tests/fish_guide.gd
+XDG_DATA_HOME=/tmp/guide-captures ./run.sh --desktop --script res://tests/fish_guide.gd -- --capture
+XR_RUNTIME_JSON=/usr/share/openxr/1/openxr_monado.json SIMULATED_ENABLE=1 XRT_COMPOSITOR_FORCE_XCB=1 XDG_DATA_HOME=/tmp/guide-xr ./run.sh --script res://tests/fish_guide_xr.gd
+```
+
+Captures: [device screen](field_guide_screen.png), [desktop device](field_guide_desktop.png), [VR left eye](locations/field_guide_eye0.png), [VR right eye](locations/field_guide_eye1.png). Synthetic captures use test records to demonstrate the collection. See [validation](VALIDATION.md) for counts and known OpenXR teardown errors.
+
+## Field camera and selfie mode
+
+The guide now includes a live camera preview and saves **1920 × 1080 PNG photos** without the HUD, menus, guide device or multiplayer name labels. Photos use a separate mono camera in both desktop and VR; the player's normal interface stays intact. Rods, fish, avatars and scenery remain in the photograph.
+
+| Action while holding the guide | Desktop | VR |
+|---|---|---|
+| Switch collection / camera | C | Left trigger |
+| Take photo | Space | Right trigger |
+| Toggle selfie extension | F | Right A |
+| Aim forward camera | Middle-drag viewpoint | Move and rotate left hand |
+| Close / dock | G or Escape | Release left grip |
+
+Forward mode follows the desktop viewpoint or the tracked guide hand in VR. Selfie mode extends the lens 1.5 m forward, points it back at the angler and includes the full avatar. A scenery ray check shortens the extension near solid surfaces. This is a virtual camera extension; it does not add a physical stick mesh. Camera controls do not cast, release catches or change bait. Collection navigation remains available after leaving camera mode.
+
+Files are saved locally in `user://photos`, normally `~/.local/share/godot/app_userdata/Real AI Fishing/photos` on Linux. Each filename includes a timestamp and unique suffix. The guide confirms successful saves and reports failures. Photos are never uploaded or sent to other players. Forward/selfie choice lasts for the current session.
+
+Preview rendering is limited to 640 × 360 at approximately 10 Hz while the camera is held. It stops when docked or in collection mode. Full resolution renders only for the shutter; repeated shutter input is ignored while saving. UI exclusion uses a dedicated render layer, so photography does not toggle shared world visibility or put the guide's preview inside itself.
+
+Camera validation: 14 headless control/layer checks, 18 real Vulkan capture checks, 27 existing desktop guide checks, and 36 native Monado guide/camera checks passed. Native tests use two synthetic tracked controllers and actual stereo rendering, not a physical headset. The existing OpenXR shutdown/spatial-disconnect/profile-RID warnings remain. Captures: [forward photo](guide_camera_forward.png), [selfie](guide_camera_selfie.png), [native VR selfie](guide_camera_selfie_xr.png), [guide camera display](guide_camera_screen.png).

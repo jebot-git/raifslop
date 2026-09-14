@@ -41,9 +41,9 @@ uniform float _AlphaCutoutEnable : hint_range(0,1,1) = 0.0;
 uniform float _Cutoff : hint_range(0,1) = 0.5;
 uniform vec4 _Color : source_color = vec4(1.0,1.0,1.0,1.0); // "Lit Texture + Alpha"
 uniform vec4 _ShadeColor : source_color = vec4(0.97, 0.81, 0.86, 1); // "Shade Color"
-uniform sampler2D _MainTex : source_color, hint_default_white;
+uniform sampler2D _MainTex : source_color, hint_default_white, filter_linear_mipmap_anisotropic;
 uniform vec4 _MainTex_ST = vec4(1.0,1.0,0.0,0.0);
-uniform sampler2D _ShadeTexture : source_color, hint_default_white;
+uniform sampler2D _ShadeTexture : source_color, hint_default_white, filter_linear_mipmap_anisotropic;
 uniform float _BumpScale : hint_range(-16,16) = 1.0; // "Normal Scale"
 uniform sampler2D _BumpMap : hint_normal; // "Normal Texture"
 uniform sampler2D _ReceiveShadowTexture : hint_default_white;
@@ -54,16 +54,16 @@ uniform float _ShadeShift : hint_range(-1.0, 1.0) = 0.0;
 uniform float _ShadeToony : hint_range(0.0, 1.0) = 0.9;
 uniform float _LightColorAttenuation : hint_range(0.0, 1.0) = 0.0;
 uniform float _IndirectLightIntensity : hint_range(0.0, 1.0) = 0.1;
-uniform sampler2D _RimTexture : source_color, hint_default_white;
+uniform sampler2D _RimTexture : source_color, hint_default_white, filter_linear_mipmap_anisotropic;
 uniform vec4 _RimColor : source_color = vec4(0,0,0,1);
 uniform float _RimLightingMix : hint_range(0.0, 1.0) = 0.0;
 uniform float _RimFresnelPower : hint_range(0.0, 100.0) = 1.0;
 uniform float _RimLift : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 _MatcapColor : source_color = vec4(0,0,0,1);
-uniform sampler2D _SphereAdd : source_color, hint_default_black; // "Sphere Texture(Add)"
+uniform sampler2D _SphereAdd : source_color, hint_default_black, filter_linear_mipmap_anisotropic; // "Sphere Texture(Add)"
 uniform vec4 _EmissionColor : source_color = vec4(0,0,0,1); // "Color"
 uniform float _EmissionMultiplier = 1.0;
-uniform sampler2D _EmissionMap : source_color, hint_default_white;
+uniform sampler2D _EmissionMap : source_color, hint_default_white, filter_linear_mipmap_anisotropic;
 // Not implemented:
 uniform float _OutlineWidthMode : hint_range(0,2,1) = 1;
 uniform sampler2D _OutlineWidthTexture : hint_default_white;
@@ -79,6 +79,15 @@ uniform float _UvAnimScrollY = 0;
 uniform float _DebugMode : hint_range(0,3,1) = 0.0;
 
 uniform float _MToonVersion = 33;
+
+// FPSloppa: opt-in arena exposure. Defaults preserve the upstream importer/editor.
+// A small texture-coloured fill preserves readability; local lights still supply
+// direction and colour, with bounded accumulation instead of MToon's near-binary
+// additional-light attenuation. See AVATAR_LIGHTING.md.
+uniform bool _ArenaLightingEnabled = false;
+uniform float _ArenaFill : hint_range(0.0, 0.3) = 0.10;
+uniform float _ArenaDirect : hint_range(0.0, 1.0) = 0.60;
+uniform float _ArenaLightLimit : hint_range(0.0, 2.0) = 0.55;
 
 // const
 const float PI_2 = 6.283185307180;
@@ -230,7 +239,8 @@ void fragment() {
 	 // Albedo color
 	shade = texture(_ShadeTexture, mainUv);
 	lit = mainTex;
-	vec3 emission = texture(_EmissionMap, mainUv).rgb * _EmissionColor.rgb * _EmissionMultiplier;
+	vec3 authoredEmission = texture(_EmissionMap, mainUv).rgb * _EmissionColor.rgb * _EmissionMultiplier;
+	vec3 emission = authoredEmission;
 
 	vec3 tangentNormal = vec3(0.0,0.0,1.0);
 	if (_NORMALMAP) {
@@ -320,6 +330,15 @@ void fragment() {
 
 	ALBEDO = albedo;
 	EMISSION = emission;
+	if (_ArenaLightingEnabled && isOutline < 0.5) {
+		ALBEDO = clamp(lit.rgb, vec3(0.0), vec3(1.0)) * 0.65;
+		// Rim/matcap already contribute to legacy emission above. Do not leak
+		// these view-dependent highlights into the arena policy: they shimmer
+		// over fine hair and clothing even when RIM and specular are disabled.
+		EMISSION = ALBEDO * _ArenaFill + clamp(authoredEmission, vec3(0.0), vec3(0.08));
+		NORMAL = viewNormal;
+		RIM = 0.0;
+	}
 
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;
@@ -341,6 +360,15 @@ float SchlickFresnel(float u) {
 }
 
 void light() {
+	if (_ArenaLightingEnabled && isOutline < 0.5) {
+		float ndotl = dot(normalize(viewNormal), LIGHT);
+		float toon = smoothstep(-0.20, 0.60, ndotl);
+		vec3 response = clamp(mix(shade.rgb, lit.rgb, toon) / max(lit.rgb, vec3(0.02)), vec3(0.3), vec3(1.15));
+		float wrapped = clamp((ndotl + 0.30) / 1.30, 0.0, 1.0);
+		vec3 incoming = LIGHT_COLOR / 3.14159265 * ATTENUATION * (0.3 + 0.7 * wrapped) * _ArenaDirect;
+		DIFFUSE_LIGHT = min(DIFFUSE_LIGHT + incoming * response, vec3(_ArenaLightLimit));
+		SPECULAR_LIGHT = vec3(0.0);
+	} else {
 	bool isDirectional = true; // TODO: Generates clustered forward artifacts unless godotegnine/godot#48012 is applied
 	// isDirectional = (RIM == 1.0);
 	vec3 indirectLighting = vec3(0.0);
@@ -395,4 +423,5 @@ void light() {
 		SPECULAR_LIGHT = vec3(0.0);
 	}
 	DIFFUSE_LIGHT += diffuse_output / fragment_albedo_output;
+	}
 }

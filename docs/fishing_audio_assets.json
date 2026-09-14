@@ -1,0 +1,50 @@
+[
+  {
+    "file": "assets/audio/fishing/cast.wav",
+    "source": "source/audio/fishing/fly_rod_cast.mp3",
+    "start": 0.28,
+    "duration": 0.59,
+    "peak_dbfs": -23.0,
+    "sha256": "72d7db478fe576df5ecdcbfe59c76eb268eb66d1a8750f55110fc27990a1eb7e"
+  },
+  {
+    "file": "assets/audio/fishing/impact.wav",
+    "source": "source/audio/fishing/river_plop.mp3",
+    "start": 0.48,
+    "duration": 0.76,
+    "peak_dbfs": -25.0,
+    "sha256": "aa257a26b167d20b469f4c7059aa29a27ea606085071e306ee67d1255ffc0ea5"
+  },
+  {
+    "file": "assets/audio/fishing/splash.wav",
+    "source": "source/audio/fishing/trout_splashes.mp3",
+    "start": 0.12,
+    "duration": 0.95,
+    "peak_dbfs": -25.0,
+    "sha256": "132016956d7b709c7deae0f7c14c952d060b2bbad06ff92080db87ce32bcd0c0"
+  },
+  {
+    "file": "assets/audio/fishing/splash_2.wav",
+    "source": "source/audio/fishing/trout_splashes.mp3",
+    "start": 1.24,
+    "duration": 0.6,
+    "peak_dbfs": -26.0,
+    "sha256": "8d0cc193d29aee17bdb359b0ce09d4027c14af26e3a2170432c7e383f6092c6d"
+  },
+  {
+    "file": "assets/audio/fishing/splash_3.wav",
+    "source": "source/audio/fishing/trout_splashes.mp3",
+    "start": 2.53,
+    "duration": 0.54,
+    "peak_dbfs": -26.0,
+    "sha256": "a19a2bb5659ea214fdf7356d01fee286fc6e03e951cef370ddc6a10597f659c6"
+  },
+  {
+    "file": "assets/audio/fishing/land.wav",
+    "source": "source/audio/fishing/trout_splashes.mp3",
+    "start": 3.1,
+    "duration": 0.91,
+    "peak_dbfs": -24.0,
+    "sha256": "f9ea32ca7ac98552317e4f9f96e045fc11958b9bc3db8fe4acfae5325f46fa2e"
+  }
+]

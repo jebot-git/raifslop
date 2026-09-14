@@ -1,15 +1,178 @@
+## Adapted from FPSloppa 5105fb8cfa38c76aa1d5d172af3047fe2d12ae0d.
 extends SkeletonModifier3D
-## Analytic two-bone arms and legs. All calculations use skeleton space.
-var rig: Node3D
-var ids: Dictionary = {}
+## Analytical two-bone IK. Targets are in arena metres, solved in skeleton space.
+var rig
 var rest: Dictionary = {}
+var bone_ids: Dictionary={}
+var floor_tick:=0.0
+var solve_tick:=0.0
+var cached_poses: Dictionary={}
+var floor_heights: Dictionary={}
+func bone(sk: Skeleton3D, name_here: String) -> int:
+	if not bone_ids.has(name_here): bone_ids[name_here]=sk.find_bone(name_here)
+	return bone_ids[name_here]
+
+func _process_modification_with_delta(_delta: float) -> void:
+	floor_tick-=_delta
+	var sample_floor:=floor_tick<=0
+	if sample_floor: floor_tick=.08
+	var sk := get_skeleton()
+	if not sk or not rig or rig.xr_pose.is_empty(): return
+	var camera:=get_viewport().get_camera_3d()
+	var distance: float=rig.global_position.distance_to(camera.global_position) if camera else 0.0
+	solve_tick-=_delta
+	if not rig.first_person and solve_tick>0 and not cached_poses.is_empty():
+		for index in cached_poses:
+			sk.set_bone_pose_rotation(index,cached_poses[index][0])
+			sk.set_bone_pose_position(index,cached_poses[index][1])
+		return
+	solve_tick=0.0 if rig.first_person else 1.0/15.0 if distance>18 else 1.0/30.0 if distance>6 else 0.0
+	if rest.is_empty():
+		for i in range(sk.get_bone_count()): rest[i] = sk.get_bone_global_rest(i)
+	# AnimationPlayer owns hip breathing / gait bob. Reset solved bones each frame.
+	for name in ["Hips","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot","LeftUpperArm","LeftLowerArm","RightUpperArm","RightLowerArm","LeftHand","RightHand","Head","Chest"]:
+		var index := bone(sk,name)
+		if index>=0: sk.set_bone_pose_rotation(index,sk.get_bone_rest(index).basis.get_rotation_quaternion())
+	if not rig.xr_pose.is_empty():
+		var hips:=bone(sk,"Hips")
+		var offset: Vector3=rig.xr_pose.head.origin-Vector3(0,1.65,0)
+		offset=Vector3(offset.x*.45,clampf(offset.y,-.55,.1),offset.z*.45)
+		var local_offset: Vector3=sk.global_basis.inverse()*rig.pose_frame.basis*offset
+		sk.set_bone_pose_position(hips,sk.get_bone_rest(hips).origin+local_offset)
+	var body: Dictionary=rig.xr_pose.get("body",{}) if not rig.dead else {}
+	if body.has("hips"):
+		var hips:=bone(sk,"Hips")
+		var target: Transform3D=rig.pose_frame*body.hips
+		var parent:=sk.get_bone_parent(hips)
+		var local: Vector3=sk.to_local(target.origin)
+		if parent>=0: local=sk.get_bone_global_pose(parent).affine_inverse()*local
+		sk.set_bone_pose_position(hips,local)
+		orient(sk,hips,target.basis*reference_basis(sk,hips))
+	if body.has("chest"):
+		orient(sk,bone(sk,"Chest"),rig.pose_frame.basis*body.chest.basis*reference_basis(sk,bone(sk,"Chest")))
+	var direction: Vector3 = rig.movement.normalized()
+	if direction.length()<.1: direction = Vector3.FORWARD
+	var stride := clampf(rig.speed/2.0,0.0,1.0)*.30
+	for side in ["Left","Right"]:
+		var sign_x := -1.0 if side=="Left" else 1.0
+		var theta: float = (rig.phase+(0.5 if side=="Right" else 0.0))*TAU
+		var foot_idx := bone(sk,side+"Foot")
+		var neutral: Vector3 = rig.to_local(sk.to_global(rest[foot_idx].origin))
+		var foot := Vector3(sign_x*.13,neutral.y,neutral.z)+direction*cos(theta)*stride
+		foot.y += maxf(0,sin(theta))*.15*minf(rig.speed/2.0,1.0)
+		if rig.preview_mode<0 and rig.is_inside_tree() and sample_floor:
+			var world_foot: Vector3 = rig.to_global(foot)
+			var query := PhysicsRayQueryParameters3D.create(world_foot+Vector3.UP*.4,world_foot-Vector3.UP*.5,1)
+			var hit: Dictionary = rig.get_world_3d().direct_space_state.intersect_ray(query)
+			floor_heights[side]=rig.to_local(hit.position).y+neutral.y if not hit.is_empty() else neutral.y
+		if floor_heights.has(side): foot.y=maxf(foot.y,floor_heights[side])
+		var foot_world: Vector3=rig.to_global(foot)
+		var hip_world:Vector3=sk.to_global(sk.get_bone_global_pose(bone(sk,side+"UpperLeg")).origin)
+		var knee_world: Vector3=hip_world+rig.pose_frame.basis*Vector3(sign_x*.08,0,-.65)
+		if body.has(side.to_lower()+"_foot"): foot_world=(rig.pose_frame*body[side.to_lower()+"_foot"]).origin
+		if body.has("hips") and not body.has(side.to_lower()+"_knee"):
+			knee_world=leg_pole(body,side.to_lower(),hip_world,rig.pose_frame)
+		if body.has(side.to_lower()+"_knee"): knee_world=(rig.pose_frame*body[side.to_lower()+"_knee"]).origin
+		solve(sk,side+"UpperLeg",side+"LowerLeg",side+"Foot",foot_world,knee_world)
+		var foot_parent := sk.get_bone_parent(foot_idx)
+		sk.set_bone_pose_rotation(foot_idx,(sk.get_bone_global_pose(foot_parent).basis.inverse()*rest[foot_idx].basis).get_rotation_quaternion())
+		if body.has(side.to_lower()+"_foot"):
+			orient(sk,foot_idx,rig.pose_frame.basis*body[side.to_lower()+"_foot"].basis*reference_basis(sk,foot_idx))
+		var hand := bone(sk,side+"Hand")
+		if not rig.xr_pose.is_empty():
+			var target: Transform3D=rig.pose_frame*rig.xr_pose[side.to_lower()]
+			var optical:=body.has(side.to_lower()+"_hand")
+			if optical: target=rig.pose_frame*body[side.to_lower()+"_hand"]
+			else: target.origin+=target.basis.y*.06 # Grip is at the palm, IK ends at the wrist.
+			var elbow: Vector3=rig.to_global(Vector3(sign_x*.65,.85,.05))
+			if body.has(side.to_lower()+"_elbow"): elbow=(rig.pose_frame*body[side.to_lower()+"_elbow"]).origin
+			solve(sk,side+"UpperArm",side+"LowerArm",side+"Hand",target.origin,elbow)
+			var parent:=sk.get_bone_parent(hand)
+			# OpenXR grip -Z runs little-finger to thumb; it is not the aim/finger axis.
+			# Humanoid hands use +Y along fingers and +Z toward the palm.
+			var palm_basis: Basis=target.basis if optical else target.basis*controller_hand_basis(side=="Left")
+			var desired: Basis=sk.global_basis.orthonormalized().inverse()*palm_basis
+			sk.set_bone_pose_rotation(hand,(sk.get_bone_global_pose(parent).basis.orthonormalized().inverse()*desired).get_rotation_quaternion())
+		for finger in ["Thumb","Index","Middle","Ring","Little"]:
+			for joint in ["Proximal","Intermediate","Distal"]:
+				var index := bone(sk,side+finger+joint)
+				if index<0: continue
+				sk.set_bone_pose_rotation(index,sk.get_bone_rest(index).basis.get_rotation_quaternion())
+				var curl:=.8
+				if body.has(side.to_lower()+"_curls"):
+					curl=body[side.to_lower()+"_curls"][["Thumb","Index","Middle","Ring","Little"].find(finger)]*1.25
+				# Bend in each finger's own rest frame, so rotating the wrist cannot twist the fingers.
+				sk.set_bone_pose_rotation(index,sk.get_bone_rest(index).basis.get_rotation_quaternion()*Quaternion(Vector3.RIGHT,curl))
+	var head := bone(sk,"Head")
+	if head>=0:
+		var q := sk.get_bone_rest(head).basis.get_rotation_quaternion()
+		if rig.xr_pose.is_empty(): sk.set_bone_pose_rotation(head,q*Quaternion(Vector3.RIGHT,rig.aim_pitch*.55))
+		else:
+			var target: Basis=rig.pose_frame.basis*rig.xr_pose.head.basis*Basis(Vector3.UP,PI)
+			var parent:=sk.get_bone_parent(head)
+			sk.set_bone_pose_rotation(head,(sk.get_bone_global_pose(parent).basis.orthonormalized().inverse()*sk.global_basis.orthonormalized().inverse()*target).get_rotation_quaternion())
+
+	for index in bone_ids.values():
+		if index>=0: cached_poses[index]=[sk.get_bone_pose_rotation(index),sk.get_bone_pose_position(index)]
+
+func solve(sk: Skeleton3D, upper: String, lower: String, end: String, target_world: Vector3, pole_world: Vector3) -> void:
+	var a := bone(sk,upper)
+	var b := bone(sk,lower)
+	var c := bone(sk,end)
+	if a<0 or b<0 or c<0: return
+	var origin := sk.get_bone_global_pose(a).origin
+	var middle := sk.get_bone_global_pose(b).origin
+	var tip := sk.get_bone_global_pose(c).origin
+	var l1 := origin.distance_to(middle)
+	var l2 := middle.distance_to(tip)
+	if minf(l1,l2)<.0001: return
+	var target := sk.to_local(target_world)
+	var direction := (target-origin).normalized()
+	if direction.length()<.5: return
+	var distance := clampf(origin.distance_to(target),absf(l1-l2)+.001,l1+l2-.001)
+	var elbow := elbow_position(origin,target,sk.to_local(pole_world),l1,l2)
+	rotate_bone_toward(sk,a,middle-origin,elbow-origin)
+	middle = sk.get_bone_global_pose(b).origin
+	tip = sk.get_bone_global_pose(c).origin
+	rotate_bone_toward(sk,b,tip-middle,origin+direction*distance-middle)
+
+func rotate_bone_toward(sk: Skeleton3D, index: int, source: Vector3, destination: Vector3) -> void:
+	if source.length_squared()<.000001 or destination.length_squared()<.000001: return
+	var global_basis := sk.get_bone_global_pose(index).basis.orthonormalized()
+	var change := Quaternion(source.normalized(),destination.normalized())
+	var parent := sk.get_bone_parent(index)
+	var parent_basis := sk.get_bone_global_pose(parent).basis.orthonormalized() if parent>=0 else Basis.IDENTITY
+	sk.set_bone_pose_rotation(index,(parent_basis.inverse()*Basis(change)*global_basis).get_rotation_quaternion())
+
+func orient(sk: Skeleton3D,index: int,world_basis: Basis) -> void:
+	if index<0: return
+	var parent:=sk.get_bone_parent(index)
+	var parent_basis:=sk.get_bone_global_pose(parent).basis.orthonormalized() if parent>=0 else Basis.IDENTITY
+	sk.set_bone_pose_rotation(index,(parent_basis.inverse()*sk.global_basis.orthonormalized().inverse()*world_basis.orthonormalized()).get_rotation_quaternion())
+
+func reference_basis(sk: Skeleton3D,index: int) -> Basis:
+	# Preserve each retargeted bone's authored axis convention (feet differ from hips).
+	return rig.global_basis.orthonormalized().inverse()*sk.global_basis.orthonormalized()*sk.get_bone_global_rest(index).basis.orthonormalized()
+
+static func controller_hand_basis(left_hand: bool) -> Basis:
+	var sign_side:=1.0 if left_hand else -1.0
+	return Basis(Vector3.BACK*sign_side,Vector3.DOWN,Vector3.RIGHT*sign_side)
+
+static func leg_pole(body: Dictionary,side: String,hip: Vector3,frame: Transform3D) -> Vector3:
+	var pelvis:Basis=frame.basis*body.hips.basis
+	var forward:Vector3=-pelvis.z;forward.y=0
+	if forward.length()<.1:forward=-frame.basis.z;forward.y=0
+	forward=forward.normalized()
+	var foot=body.get(side+"_foot")
+	if foot is Transform3D:
+		var toe:Vector3=-(frame.basis*foot.basis).z;toe.y=0
+		if toe.length()>.1:
+			var angle:=forward.signed_angle_to(toe.normalized(),Vector3.UP)
+			forward=forward.rotated(Vector3.UP,clampf(angle,-PI/6,PI/6)*.5)
+	return hip+forward*.65+forward.cross(Vector3.UP)*(-.06 if side=="left" else .06)
 
 func setup(avatar: Node3D) -> void:
-	rig = avatar
-	var sk := get_skeleton()
-	for i in range(sk.get_bone_count()):
-		ids[sk.get_bone_name(i)] = i
-		rest[i] = sk.get_bone_global_rest(i)
+	rig=avatar
 
 static func elbow_position(a: Vector3, target: Vector3, pole: Vector3, upper: float, lower: float) -> Vector3:
 	var offset := target - a
@@ -23,64 +186,3 @@ static func elbow_position(a: Vector3, target: Vector3, pole: Vector3, upper: fl
 		bend = axis.cross(Vector3.RIGHT)
 		if bend.length_squared() < 0.0001: bend = axis.cross(Vector3.UP)
 	return a + axis * along + bend.normalized() * height
-
-func aim(sk: Skeleton3D, bone: int, current: Vector3, desired: Vector3) -> void:
-	if current.length_squared() < 0.000001 or desired.length_squared() < 0.000001: return
-	var pose := sk.get_bone_global_pose(bone)
-	pose.basis = Basis(Quaternion(current.normalized(), desired.normalized())) * pose.basis
-	sk.set_bone_global_pose(bone, pose)
-
-func solve(sk: Skeleton3D, prefix: String, upper_name: String, lower_name: String, end_name: String, target_world: Vector3, pole_world: Vector3) -> void:
-	var upper: int = ids[prefix + upper_name]
-	var lower: int = ids[prefix + lower_name]
-	var end: int = ids[prefix + end_name]
-	var a := sk.get_bone_global_pose(upper).origin
-	var b := sk.get_bone_global_pose(lower).origin
-	var c := sk.get_bone_global_pose(end).origin
-	var target := sk.to_local(target_world)
-	var upper_length := a.distance_to(b)
-	var lower_length := b.distance_to(c)
-	if minf(upper_length, lower_length) < 0.005: return
-	var elbow := elbow_position(a, target, sk.to_local(pole_world), upper_length, lower_length)
-	aim(sk, upper, b - a, elbow - a)
-	b = sk.get_bone_global_pose(lower).origin
-	c = sk.get_bone_global_pose(end).origin
-	aim(sk, lower, c - b, target - b)
-
-func orient(sk: Skeleton3D, bone: int, world_basis: Basis) -> void:
-	var pose := sk.get_bone_global_pose(bone)
-	pose.basis = sk.global_basis.orthonormalized().inverse() * world_basis.orthonormalized()
-	sk.set_bone_global_pose(bone, pose)
-
-func _process_modification_with_delta(_delta: float) -> void:
-	if not is_instance_valid(rig) or not is_instance_valid(rig.head): return
-	var sk := get_skeleton()
-	if rest.is_empty(): return
-	for i in range(sk.get_bone_count()): sk.reset_bone_pose(i)
-	var hips: int = ids.Hips
-	var hip_pose := sk.get_bone_global_pose(hips)
-	var crouch: float = clampf(rig.head.global_position.y - rig.global_position.y - rig.standing_height, -0.65, 0.15)
-	hip_pose.origin += sk.global_basis.inverse() * Vector3(0, crouch, 0)
-	sk.set_bone_global_pose(hips, hip_pose)
-	for side in ["Left", "Right"]:
-		var sign_x := -1.0 if side == "Left" else 1.0
-		var hand_target: Node3D = rig.left_target if side == "Left" else rig.right_target
-		var elbow := rig.to_global(Vector3(sign_x * 0.65, 0.95 + crouch, 0.05))
-		solve(sk, side, "UpperArm", "LowerArm", "Hand", hand_target.global_position, elbow)
-		var palm_basis := hand_target.global_basis * Basis(Vector3.RIGHT, -PI / 2) * Basis(Vector3.UP, PI if side == "Left" else 0.0)
-		orient(sk, ids[side + "Hand"], palm_basis)
-		var phase: float = rig.walk_phase + (PI if side == "Right" else 0.0)
-		var stride: float = minf(rig.walk_speed / 2.0, 1.0)
-		var foot := rig.to_global(Vector3(sign_x * 0.13, 0.08 + maxf(0.0, sin(phase)) * 0.10 * stride, cos(phase) * 0.20 * stride))
-		solve(sk, side, "UpperLeg", "LowerLeg", "Foot", foot, rig.to_global(Vector3(sign_x * 0.16, 0.65, -0.8)))
-		orient(sk, ids[side + "Foot"], rig.global_basis * Basis(Vector3.UP, PI))
-		# Basic grip curl; optional finger bones are not required for loading.
-		var curl: float = rig.left_curl if side == "Left" else 0.65
-		for finger in ["Index", "Middle", "Ring", "Little"]:
-			for joint in ["Proximal", "Intermediate", "Distal"]:
-				var key: String = side + finger + joint
-				if ids.has(key):
-					var index: int = ids[key]
-					sk.set_bone_pose_rotation(index, sk.get_bone_rest(index).basis.get_rotation_quaternion() * Quaternion(Vector3.RIGHT, -curl))
-	var head_index: int = ids.Head
-	orient(sk, head_index, rig.head.global_basis * Basis(Vector3.UP, PI))

@@ -1,0 +1,46 @@
+[
+  {
+    "id": "lakeside",
+    "source_url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/lakeside_4k.hdr",
+    "runtime": "assets/environment/locations/lakeside_4k.hdr",
+    "size": [
+      4096,
+      2048
+    ],
+    "sha256": "07d7414eb7a76f99f7ea0ea7c3956d38910b70c92fc69e5f3a46860e54690826",
+    "license": "CC0-1.0"
+  },
+  {
+    "id": "lake_pier",
+    "source_url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/lake_pier_4k.hdr",
+    "runtime": "assets/environment/locations/lake_pier_4k.hdr",
+    "size": [
+      4096,
+      2048
+    ],
+    "sha256": "7619ad3a042b22eaa773addd5ee172b0d9b6747005a04e30ccafa203d24c4485",
+    "license": "CC0-1.0"
+  },
+  {
+    "id": "gray_pier",
+    "source_url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/gray_pier_4k.hdr",
+    "runtime": "assets/environment/locations/gray_pier_4k.hdr",
+    "size": [
+      4096,
+      2048
+    ],
+    "sha256": "a196de93cfeec5712fb580625e72b08fdf757dc84acff799ea53aa1b090f9ad6",
+    "license": "CC0-1.0"
+  },
+  {
+    "id": "bell_park_pier",
+    "source_url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/bell_park_pier_4k.hdr",
+    "runtime": "assets/environment/locations/bell_park_pier_4k.hdr",
+    "size": [
+      4096,
+      2048
+    ],
+    "sha256": "b0c37c5c7f7bdfe5d1fa23c9647a56bf24af62c8a5b53d0b1e7ecabba9d0aea3",
+    "license": "CC0-1.0"
+  }
+]

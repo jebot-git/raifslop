@@ -1,0 +1,68 @@
+[
+  {
+    "species": "Thymallus thymallus",
+    "file": "assets/models/fish/grayling.glb",
+    "bytes": 3069524,
+    "triangles": 50806,
+    "sha256": "2ae92611b5b18235c35ea741e49b44229fcffb98f205c326355c55e4781d6e72",
+    "license": "CC0-1.0",
+    "reference": "https://canalrivertrust.org.uk/things-to-do/fishing/caring-for-our-fish/freshwater-fish-species/grayling",
+    "pipeline": "tools/build_photographic_fish.py",
+    "texture_reference": "source/fish_references/grayling.png"
+  },
+  {
+    "species": "Barbus barbus",
+    "file": "assets/models/fish/barbel.glb",
+    "bytes": 2670144,
+    "triangles": 36826,
+    "sha256": "43b67b7ee8b6d89128fe1ac542b39090d4759557fff850cbe20d5772ed2d0eca",
+    "license": "CC0-1.0",
+    "reference": "https://canalrivertrust.org.uk/things-to-do/fishing/caring-for-our-fish/freshwater-fish-species/barbel",
+    "pipeline": "tools/build_photographic_fish.py",
+    "texture_reference": "source/fish_references/barbel.png"
+  },
+  {
+    "species": "Leuciscus leuciscus",
+    "file": "assets/models/fish/dace.glb",
+    "bytes": 2675456,
+    "triangles": 33010,
+    "sha256": "31e0243e2ec5b0894962ca88c3bc7c7c8642f5abb5817e48de6b35c73d38070f",
+    "license": "CC0-1.0",
+    "reference": "https://www.fisheriesireland.ie/fish-species/dace-leuciscus-leucisus",
+    "pipeline": "tools/build_photographic_fish.py",
+    "texture_reference": "source/fish_references/dace.png"
+  },
+  {
+    "species": "Alburnus alburnus",
+    "file": "assets/models/fish/bleak.glb",
+    "bytes": 2454172,
+    "triangles": 31850,
+    "sha256": "89085224a032937f1e4c73ef2aa3c4b993a752844bccbe8ea9e4baf185b4f91a",
+    "license": "CC0-1.0",
+    "reference": "https://www.fishbase.se/summary/Alburnus-alburnus.html",
+    "pipeline": "tools/build_photographic_fish.py",
+    "texture_reference": "source/fish_references/bleak.png"
+  },
+  {
+    "species": "Gobio gobio",
+    "file": "assets/models/fish/gudgeon.glb",
+    "bytes": 2542348,
+    "triangles": 35582,
+    "sha256": "6a0290f632a19642dbf69b239c7406c4353faa23b129e2deb71319164a6c5d4d",
+    "license": "CC0-1.0",
+    "reference": "https://www.fisheriesireland.ie/fish-species/gudgeon-gobio-gobio",
+    "pipeline": "tools/build_photographic_fish.py",
+    "texture_reference": "source/fish_references/gudgeon.png"
+  },
+  {
+    "species": "Salvelinus fontinalis",
+    "file": "assets/models/fish/brook_trout.glb",
+    "bytes": 2811812,
+    "triangles": 39602,
+    "sha256": "4c152a7482df3077d5663d42d29f53dc27e696de3bb8b1d56efab0aab2d18304",
+    "license": "CC0-1.0",
+    "reference": "https://dnr.maryland.gov/fisheries/pages/fish-facts.aspx?fishname=brook+trout",
+    "pipeline": "tools/build_photographic_fish.py",
+    "texture_reference": "source/fish_references/brook_trout.png"
+  }
+]
