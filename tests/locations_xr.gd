@@ -29,7 +29,7 @@ func click_control(g, point: Vector2) -> void:
 	var ray: Dictionary = preload("res://scripts/menu_ray.gd").sample(g)
 	check(not ray.is_empty(), "Tracked fingertip ray available")
 	if ray.is_empty(): return
-	var orientation := Transform3D(Basis.IDENTITY, ray.origin).looking_at(target, Vector3.UP).basis
+	var orientation := Transform3D(Basis.IDENTITY, ray.get("aim_origin",ray.origin)).looking_at(target, Vector3.UP).basis
 	var pose := Transform3D(orientation, g.right.global_position)
 	controllers[1].set_pose("aim", g.origin.global_transform.affine_inverse()*pose,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
 	await settle()

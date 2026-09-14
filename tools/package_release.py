@@ -10,7 +10,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'builds'
 OUT = BUILD / 'release'
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 TARGETS = ['Linux', 'Windows', 'Quest', 'Pico']
 
 def digest(path):
@@ -19,11 +19,9 @@ def digest(path):
 
 def copy_notices(dest):
     shutil.copy2(ROOT / 'ASSET_CREDITS.md', dest / 'ASSET_CREDITS.md')
-    for source in [ROOT / 'README.md', *sorted((ROOT / 'docs').rglob('*')),
-                   *sorted((ROOT / 'source/audio').rglob('CREDITS.md'))]:
-        if not source.is_file() or source.name.startswith('.') or source.suffix == '.import':
-            continue
-        target = dest / source.relative_to(ROOT)
+    # Documentation and screenshots stay in the repository. Ship attribution only.
+    for source in sorted((ROOT / 'source/audio').rglob('CREDITS.md')):
+        target = dest / 'notices/audio' / source.relative_to(ROOT / 'source/audio')
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
     for folder in [ROOT / 'addons', ROOT / 'assets/avatars', ROOT / 'assets/audio']:
@@ -41,6 +39,8 @@ def archive(folder, dest, prefix=''):
             if file.is_file():
                 z.write(file, Path(prefix) / file.relative_to(folder))
     with zipfile.ZipFile(dest) as z:
+        if any('docs' in Path(name).parts or Path(name).name == 'README.md' for name in z.namelist()):
+            raise SystemExit('Documentation leaked into release archive: ' + str(dest))
         if z.testzip() is not None:
             raise SystemExit('Archive integrity failure: ' + str(dest))
 

@@ -1,33 +1,38 @@
-## Reused from FPSloppa 5105fb8cfa38c76aa1d5d172af3047fe2d12ae0d.
+## FPSloppa-derived background dragging, with GUI ownership preserved.
 extends ScrollContainer
-## Trigger dragging across child controls without turning a drag into a click.
-var pressed:=false
-var dragging:=false
-var start:=Vector2.ZERO
-var initial:=0
-var vr_mode_override:=false
+var pressed := false
+var dragging := false
+var start := Vector2.ZERO
+var initial := 0
+var vr_mode_override := false
 func _ready() -> void:
-	scroll_deadzone=100000
-	horizontal_scroll_mode=SCROLL_MODE_DISABLED
-	vertical_scroll_mode=SCROLL_MODE_AUTO
+	scroll_deadzone = 100000
+	horizontal_scroll_mode = SCROLL_MODE_DISABLED
+	vertical_scroll_mode = SCROLL_MODE_AUTO
+func _gui_input(event: InputEvent) -> void:
+	var vr := vr_mode_override or XRServer.primary_interface != null and XRServer.primary_interface.is_initialized()
+	if not vr: return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		# Only background events bubble here. Controls and overlays own their presses.
+		var hovered := get_viewport().gui_get_hovered_control()
+		while hovered != null and hovered != self:
+			if hovered is BaseButton or hovered is LineEdit or hovered is TextEdit or hovered is Range or hovered is ItemList: return
+			hovered = hovered.get_parent_control()
+		if hovered != self: return
+		pressed = true
+		dragging = false
+		start = get_global_mouse_position()
+		initial = scroll_vertical
 func _input(event: InputEvent) -> void:
-	if not is_visible_in_tree():pressed=false;return
-	var vr:=vr_mode_override or XRServer.primary_interface!=null and XRServer.primary_interface.is_initialized()
-	if not vr:return
-	if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			for selector in get_tree().get_nodes_in_group("fishing_selectors"):
-				if selector.get_viewport()==get_viewport() and selector.popup.visible:return
-			pressed=get_global_rect().has_point(event.position);dragging=false
-			start=event.position;initial=scroll_vertical
-		elif pressed:
-			pressed=false
-			if dragging:
-				for button in find_children("*","BaseButton",true,false):button.set_pressed_no_signal(false)
-				get_viewport().set_input_as_handled()
-	elif event is InputEventMouseMotion and pressed:
-		var distance:float=(event.position.y-start.y)/maxf(.01,get_global_transform_with_canvas().get_scale().y)
-		if absf(distance)>8:dragging=true
+	if not is_visible_in_tree(): pressed = false; dragging = false; return
+	if not pressed: return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		pressed = false
+		if dragging: get_viewport().set_input_as_handled()
+		dragging = false
+	elif event is InputEventMouseMotion:
+		var distance: float = (event.position.y-start.y)/maxf(.01,get_global_transform_with_canvas().get_scale().y)
+		if absf(distance) > 16: dragging = true
 		if dragging:
-			scroll_vertical=initial-roundi(distance)
+			scroll_vertical = initial-roundi(distance)
 			get_viewport().set_input_as_handled()

@@ -29,6 +29,9 @@ var library
 var list: ItemList
 var status: Label
 var picker: FileDialog
+var vrm_browser: PanelContainer
+var import_button: Button
+var avatar_actions: HBoxContainer
 var preview_camera: Camera3D
 var preview: SubViewport
 
@@ -88,12 +91,14 @@ func _ready() -> void:
 	column.add_child(status)
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 18)
-	column.add_child(buttons)
-	var import_button := Button.new()
+	avatar_actions = buttons
+	shell.add_child(buttons)
+	shell.move_child(buttons, 3)
+	import_button = Button.new()
 	import_button.text = "Import .vrm"
 	import_button.custom_minimum_size = Vector2(230, 52)
 	buttons.add_child(import_button)
-	import_button.pressed.connect(func(): picker.popup_centered_ratio(0.75))
+	import_button.pressed.connect(_open_import)
 	turn_mode = CheckButton.new()
 	turn_mode.text = "Smooth turn"
 	buttons.add_child(turn_mode)
@@ -105,6 +110,14 @@ func _ready() -> void:
 	picker.use_native_dialog = true
 	add_child(picker)
 	picker.file_selected.connect(func(path: String): import_requested.emit(path))
+	var browser_layer := CanvasLayer.new(); browser_layer.layer = 50; add_child(browser_layer)
+	var browser_shade := ColorRect.new(); browser_shade.color = Color(0,0,0,.4); browser_shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	browser_layer.add_child(browser_shade); browser_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); browser_shade.hide()
+	vrm_browser = preload("res://scripts/ui/vrm_browser.gd").new(); browser_layer.add_child(vrm_browser)
+	vrm_browser.visibility_changed.connect(func(): browser_shade.visible = vrm_browser.visible)
+	vrm_browser.file_selected.connect(func(path: String): import_requested.emit(path))
+	vrm_browser.closed.connect(func(): keyboard.hide())
+	_bind_keyboard(vrm_browser)
 	refresh()
 	_build_locations()
 
@@ -252,6 +265,10 @@ func _build_shell() -> void:
 	var resume:=Button.new();resume.text="Return to the water";resume.custom_minimum_size=Vector2(250,44);bottom.add_child(resume);resume.pressed.connect(func(): closed.emit())
 
 func scroll_page(pixels: float) -> void:
+	if is_instance_valid(vrm_browser) and vrm_browser.visible:
+		vrm_browser.files.get_v_scroll_bar().value += pixels
+		return
+	if is_instance_valid(keyboard) and keyboard.visible: return
 	if pages.has(active_page): pages[active_page].view.scroll_vertical += roundi(pixels)
 
 func attach_help() -> void:
@@ -297,7 +314,9 @@ func show_page(id: String) -> void:
 	if id == "tackle": refresh_tackle()
 	if not pages.has(id):return
 	if is_instance_valid(keyboard): keyboard.hide()
+	if is_instance_valid(vrm_browser): vrm_browser.hide()
 	active_page=id
+	if is_instance_valid(avatar_actions): avatar_actions.visible = id == "avatar"
 	if is_instance_valid(location_actions): location_actions.visible = id == "waters"
 	for key in pages:
 		pages[key].view.visible=key==id
@@ -327,6 +346,18 @@ func _bind_keyboard(node: Node) -> void:
 		node.focus_entered.connect(func():
 			if get_viewport() is SubViewport and XRServer.primary_interface!=null: keyboard.open_for(node))
 	for child in node.get_children():_bind_keyboard(child)
+
+func _open_import() -> void:
+	if get_viewport() is SubViewport:
+		keyboard.hide()
+		vrm_browser.open()
+	else:
+		picker.popup_centered_ratio(0.75)
+
+func close_overlays() -> void:
+	keyboard.hide()
+	vrm_browser.hide()
+	picker.hide()
 
 func attach_shadow_controls(policy: Node) -> void:
 	var choice=preload("res://scripts/ui/choice.gd").new()

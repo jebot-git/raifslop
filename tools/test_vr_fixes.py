@@ -6,7 +6,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'test-results/vr-fixes'
-SUITES = sys.argv[1:] or ['run_tests', 'hand_tracking', 'tracking_orientation', 'avatar_scaling', 'vrm_import_integrity', 'vr_ik', 'avatar_tracking', 'avatar_locomotion', 'fish_guide', 'guide_camera', 'shark_ambience_menu', 'network_guards', 'vr_interactions', 'tester_feedback', 'tackle', 'fishing_feedback', 'quit_game', 'rod_holster', 'locations', 'raised_ankle', 'pier_gameplay', 'tracking_warning', 'menu_ray', 'vr_presentation']
+SUITES = sys.argv[1:] or ['run_tests', 'hand_tracking', 'tracking_orientation', 'avatar_scaling', 'vrm_import_integrity', 'vr_ik', 'avatar_tracking', 'avatar_locomotion', 'fish_guide', 'guide_camera', 'shark_ambience_menu', 'network_guards', 'vr_interactions', 'tester_feedback', 'tackle', 'fishing_feedback', 'quit_game', 'rod_holster', 'locations', 'raised_ankle', 'pier_gameplay', 'tracking_warning', 'menu_ray', 'menu_controls', 'vr_presentation']
 failures = []
 for suite in SUITES:
     data = OUT / suite

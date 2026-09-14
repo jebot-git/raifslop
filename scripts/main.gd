@@ -31,6 +31,7 @@ var menu_laser: MeshInstance3D
 var menu_ray_start := Vector3.ZERO
 var menu_open := false
 var menu_last_position := Vector2.ZERO
+var menu_filtered_position := Vector2(-1, -1)
 var menu_mouse_down := false
 var avatar_loading := false
 var desktop_left: Node3D
@@ -803,6 +804,8 @@ func _select_location(id: String, persist := true) -> bool:
 func _toggle_avatar_menu() -> void:
 	if avatar_loading: return
 	menu_open = not menu_open
+	menu_filtered_position = Vector2(-1, -1)
+	if not menu_open: avatar_menu.close_overlays()
 	if not menu_open and menu_mouse_down:
 		menu_mouse_down = false
 		var release := InputEventMouseButton.new()
@@ -895,7 +898,7 @@ func _pointer_position() -> Vector2:
 	var ray_direction: Vector3 = ray.direction
 	menu_ray_start = ray_origin
 	var plane := Plane(avatar_panel.global_basis.z, avatar_panel.global_position)
-	var hit = plane.intersects_ray(ray_origin, ray_direction)
+	var hit = plane.intersects_ray(ray.get("aim_origin", ray_origin), ray_direction)
 	if hit == null: return Vector2(-1, -1)
 	var local: Vector3 = avatar_panel.to_local(hit)
 	var uv := Vector2(local.x / 1.8 + 0.5, 0.5 - local.y / 1.296)
@@ -909,25 +912,32 @@ func _update_menu_pointer() -> void:
 	menu_pointer.visible = pos.x >= 0
 	if is_instance_valid(menu_laser): menu_laser.visible = pos.x >= 0
 	if pos.x < 0:
-		if menu_mouse_down: _menu_click(false)
+		menu_filtered_position = Vector2(-1, -1)
+		if menu_mouse_down: _menu_click(false, true)
 		return
+	if menu_filtered_position.x >= 0:
+		pos = menu_filtered_position.lerp(pos, 1.0-exp(-24.0*clampf(get_process_delta_time(),1.0/180.0,1.0/30.0)))
+	menu_filtered_position = pos
+	menu_pointer.global_position = avatar_panel.to_global(Vector3((pos.x/1000.0-.5)*1.8,(.5-pos.y/720.0)*1.296,.01))
 	if is_instance_valid(menu_laser):
 		var segment := menu_pointer.global_position - menu_ray_start
 		var up := segment.normalized()
 		var axis := Vector3.RIGHT if absf(up.dot(Vector3.UP)) > .99 else up.cross(Vector3.UP).normalized()
 		menu_laser.global_transform = Transform3D(Basis(axis,segment,axis.cross(up)),menu_ray_start+segment*.5)
-	menu_last_position = pos
 	var event := InputEventMouseMotion.new()
 	event.position = pos
 	event.global_position = pos
+	event.relative = pos-menu_last_position
+	menu_last_position = pos
 	event.button_mask = MOUSE_BUTTON_MASK_LEFT if menu_mouse_down else 0
 	avatar_menu_view.push_input(event, true)
 
-func _menu_click(pressed: bool) -> void:
-	var pos := _pointer_position()
-	if pos.x < 0:
-		if pressed or not menu_mouse_down: return
-		pos = menu_last_position
+func _menu_click(pressed: bool, cancel := false) -> void:
+	if pressed and menu_filtered_position.x < 0: _update_menu_pointer()
+	if pressed and menu_filtered_position.x < 0: return
+	if not pressed and not menu_mouse_down: return
+	# Click the displayed cursor; do not resample a newly curled trigger finger.
+	var pos := Vector2(-100,-100) if cancel else menu_last_position
 	menu_mouse_down = pressed
 	var event := InputEventMouseButton.new()
 	event.position = pos

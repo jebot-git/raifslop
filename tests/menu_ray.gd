@@ -24,6 +24,15 @@ func run():
 	for joint in [tip,distal]:hand.set_hand_joint_flags(joint,XRHandTracker.HAND_JOINT_FLAG_POSITION_VALID)
 	hand.set_hand_joint_transform(tip,Transform3D(Basis.IDENTITY,Vector3(.1,1.2,-.3)))
 	hand.set_hand_joint_transform(distal,Transform3D(Basis.IDENTITY,Vector3(.1,1.2,-.27)))
+	hand.hand_tracking_source = XRHandTracker.HAND_TRACKING_SOURCE_CONTROLLER
+	var stable := Ray.sample(g)
+	hand.set_hand_joint_transform(tip,Transform3D(Basis.IDENTITY,Vector3(.15,1.1,-.25)))
+	g.avatar.right_index_tip += Vector3(.03,-.05,.04)
+	var curled := Ray.sample(g)
+	check(curled.source != "native" and curled.aim_origin.is_equal_approx(stable.aim_origin) and curled.direction.is_equal_approx(stable.direction),"Controller-inferred curl and avatar finger motion cannot move the aim ray")
+	hand.set_hand_joint_transform(tip,Transform3D(Basis.IDENTITY,Vector3(.1,1.2,-.3)))
+	hand.hand_tracking_source = XRHandTracker.HAND_TRACKING_SOURCE_UNOBSTRUCTED
+	controller.invalidate_pose("aim")
 	g.origin.rotation.y=.4;XRServer.world_scale=1.2
 	ray=Ray.sample(g)
 	check(ray.get("source")=="native" and ray.origin.is_equal_approx(g.origin.to_global(Vector3(.1,1.2,-.3)*1.2)),"Native fingertip takes priority and respects tracking world scale")

@@ -32,6 +32,14 @@ def api(method,path,data=None,allow_missing=False):
 base='/repos/'+repo+'/releases'
 release=api('GET',base+'/tags/'+version,allow_missing=True)
 if release is None:
+    # GitHub's tag endpoint omits drafts. Find an interrupted upload explicitly.
+    page=1
+    while True:
+        candidates=api('GET',base+'?per_page=100&page='+str(page))
+        release=next((item for item in candidates if item['tag_name']==version),None)
+        if release is not None or len(candidates)<100:break
+        page+=1
+if release is None:
     release=api('POST',base,{'tag_name':version,'target_commitish':commit,'name':'Real AI Fishing '+version.removeprefix('v'),'body':(root/'docs'/('RELEASE_NOTES_'+version.removeprefix('v')+'.md')).read_text(),'draft':True,'prerelease':False})
 assert release['draft'], 'Release already published; refusing to modify it'
 expected=[]
@@ -49,8 +57,13 @@ for name in sorted(p.name for p in assets_dir.iterdir() if p.is_file()):
     connection.putrequest('POST',url.path+'?'+urllib.parse.urlencode({'name':name}))
     for key,value in {**headers,'Content-Type':'application/octet-stream','Content-Length':str(path.stat().st_size)}.items():connection.putheader(key,value)
     connection.endheaders()
+    print('UPLOADING',name,flush=True)
     with path.open('rb') as f:
-        while chunk:=f.read(2*1024*1024):connection.send(chunk)
+        sent=0; milestone=25
+        while chunk:=f.read(2*1024*1024):
+            connection.send(chunk);sent+=len(chunk)
+            if sent*100/path.stat().st_size>=milestone:
+                print('TRANSFER',name,str(milestone)+'%',flush=True);milestone+=25
     response=connection.getresponse();raw=response.read();status=response.status;connection.close()
     if status!=201:raise SystemExit(f'Upload {name}: {status} {raw.decode()[:500]}')
     result=json.loads(raw)
