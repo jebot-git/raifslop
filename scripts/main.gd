@@ -57,6 +57,7 @@ var bobber: MeshInstance3D
 var line_mesh: ImmediateMesh
 var line_material: StandardMaterial3D
 var fish_display: Node3D
+var hooked_fish: Node3D
 var catch_bounds := AABB()
 var catch_twitch = preload("res://scripts/catch_twitch.gd").new()
 var catch_rotation := Quaternion.IDENTITY
@@ -111,6 +112,8 @@ func _ready() -> void:
 	add_child(ambience);ambience.setup(self)
 	shoulder_radio=preload("res://scripts/voice/shoulder_radio.gd").new()
 	add_child(shoulder_radio);shoulder_radio.setup(self)
+	hooked_fish=preload("res://scripts/hooked_fish.gd").new()
+	add_child(hooked_fish);hooked_fish.setup(self)
 	fishing_feedback=preload("res://scripts/fishing_feedback.gd").new()
 	add_child(fishing_feedback);fishing_feedback.setup(self)
 	shadow_policy=preload("res://scripts/shadow_policy.gd").new()
@@ -346,7 +349,7 @@ func _left_button(button: String) -> void:
 		return
 	if menu_open: return
 	if button == "ax_button":
-		_select_bait((game.bait + 1) % Session.BAITS.size())
+		_select_bait((game.bait + 1) % game.bait_count())
 	elif button == "by_button":
 		_primary_action()
 
@@ -364,6 +367,7 @@ func _right_pressed(button: String) -> void:
 	if button == "trigger_click" and game.state in [Session.State.READY, Session.State.LOST] and not rod_holster.stowed:
 		if game.state == Session.State.LOST: game.reset()
 		casting = true
+		if game.is_fly_fishing():game.fly.begin_cast()
 		peak_speed = 0.0
 	elif button == "ax_button" and game.state in [Session.State.LANDED, Session.State.LOST]:
 		_primary_action()
@@ -375,6 +379,11 @@ func _right_released(button: String) -> void:
 		return
 	if button == "trigger_click" and casting:
 		casting = false
+		if game.is_fly_fishing():
+			game.fly.charging=false
+			if game.fly.strokes>0 and left.get_has_tracking_data() and right.get_has_tracking_data():_cast(game.fly.cast_power())
+			else:game.message="Hold trigger, sweep back then forward, and release."
+			return
 		if left.get_has_tracking_data() and right.get_has_tracking_data() and peak_speed > 0.55:
 			_cast(clampf(peak_speed * 3.0, 5.0, 24.0))
 		else:
@@ -401,6 +410,7 @@ func _cast_direction() -> Vector3:
 	return direction.normalized() if direction.length() > 0.01 else Vector3.FORWARD
 
 func _landing_distance(anchor: Vector3, direction: Vector3) -> float:
+	if game.is_fly_fishing():return maxf(1.6,(-4.4-anchor.z)/minf(-.1,direction.z))
 	# Find the first foreground obstruction while retrieving from open water.
 	# The view ray catches decks above water as well as railings. Reserve room
 	# for lateral fight movement and stop .65 m before the float is hidden.
@@ -420,8 +430,10 @@ func _cast(power: float) -> void:
 	cast_anchor = Vector3(rod.global_position.x, water_level+.05, rod.global_position.z)
 	var endpoint := cast_anchor + direction * power
 	if endpoint.z > 1.5:
-		game.message = "Aim out over the lake, away from the shore."
+		game.message = "Aim out over open water, away from the shore."
 		return
+	if game.is_fly_fishing() and (endpoint.z> -4.0 or endpoint.z< -19.0):
+		game.message="Place the fly in the river channel, 4–19 metres ahead of the bank.";return
 	var landing := _landing_distance(cast_anchor, direction)
 	if clampf(power, 5.0, 24.0) < landing + .5:
 		game.message = "Cast farther into open water, or move closer to the edge."
@@ -430,6 +442,7 @@ func _cast(power: float) -> void:
 	game.cast(power)
 	cast_start = tip.global_position
 	cast_target = cast_anchor + direction * game.cast_distance
+	game.fly.start=cast_target
 	escape_offset=Vector3.ZERO
 	fishing_feedback.cast_swish()
 
@@ -455,6 +468,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if menu_open:
 		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE: _toggle_avatar_menu()
+		return
+	if not xr and game.is_fly_fishing() and game.state==Session.State.READY and not rod_holster.stowed and event is InputEventKey and event.keycode==KEY_SPACE and not event.echo:
+		if event.pressed:game.fly.begin_cast()
+		elif game.fly.charging:
+			game.fly.charging=false
+			if game.fly.charge_age>=.2:_cast(game.fly.cast_power())
+			else:game.message="Hold SPACE briefly for the backcast, then release forward."
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
@@ -503,6 +523,7 @@ func _process(delta: float) -> void:
 	_update_avatar(delta)
 	if avatar_loading: return
 	if fish_guide.held:
+		game.fly.charging=false;game.fly.strip_engaged=false
 		fight_input.reset()
 		casting = false
 		reel_tracker.engaged = false
@@ -511,6 +532,7 @@ func _process(delta: float) -> void:
 		_update_line()
 		return
 	if menu_open:
+		game.fly.charging=false;game.fly.strip_engaged=false
 		fight_input.reset()
 		_layout_avatar_menu()
 		_update_menu_pointer()
@@ -521,6 +543,7 @@ func _process(delta: float) -> void:
 		_update_line()
 		return
 	if rod_holster.stowed:
+		game.fly.charging=false;game.fly.strip_engaged=false
 		_update_line()
 		return
 	gesture_cooldown = maxf(0.0, gesture_cooldown - delta)
@@ -529,6 +552,7 @@ func _process(delta: float) -> void:
 		var tracked: bool = right.get_has_tracking_data() and left.get_has_tracking_data() and (not is_instance_valid(tracking_manager) or tracking_manager.focused)
 		rod.visible = right.get_has_tracking_data()
 		if not tracked:
+			game.fly.charging=false;game.fly.strip_engaged=false
 			fight_input.reset()
 			tracking_was_valid = false
 			casting = false
@@ -545,26 +569,50 @@ func _process(delta: float) -> void:
 		velocity = origin.global_basis * ((origin.to_local(tip.global_position) - last_tip) / maxf(delta, 0.001))
 		if casting:
 			peak_speed = maxf(peak_speed, maxf(0.0, velocity.dot(_cast_direction())))
+			if game.is_fly_fishing():game.fly.stroke(delta,velocity.dot(_cast_direction()))
 		var reel_pos := rod.to_local(left.global_position) - crank.position
 		reel = reel_tracker.sample(reel_pos, left.get_float("grip") > 0.55 and not shoulder_radio.held, delta)
+		if game.is_fly_fishing():
+			var strip_rate:float=game.fly.strip(origin.global_basis.inverse()*(left.global_position-head.global_position),left.get_float("grip")>.55 and not shoulder_radio.held,delta)
+			reel=maxf(reel,strip_rate) if game.state==Session.State.FIGHT else strip_rate
+			if game.state==Session.State.WAITING and velocity.x<-.45:game.fly.mend(-1)
 		if game.state == Session.State.BITE and velocity.y > 0.9:
 			game.strike()
 		if game.state == Session.State.FIGHT:
 			var facing := Basis(Vector3.UP,atan2(head.global_basis.z.x,head.global_basis.z.z))
 			var direction := fight_input.sample(game.cue,origin.global_basis.inverse()*(tip.global_position-head.global_position),origin.global_basis.inverse()*facing, -rod.global_basis.z.y)
 			game.gesture(direction)
+			if game.jump_time>0.0:
+				game.tug(fight_input.sample_tug(game.jump_count,game.cue,origin.global_basis.inverse()*(tip.global_position-head.global_position),delta,origin.global_basis.inverse()*facing))
 		else: fight_input.reset()
 	else:
+		if game.is_fly_fishing() and game.fly.charging:game.fly.stroke(delta,0)
+		if game.is_fly_fishing() and game.state==Session.State.WAITING:
+			if Input.is_action_just_pressed("ui_left"):game.fly.mend(-1)
+			elif Input.is_action_just_pressed("ui_right"):game.fly.mend(1)
 		reel = (1.8 if Input.is_key_pressed(KEY_SHIFT) else 1.0) if Input.is_key_pressed(KEY_R) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) else 0.0
 		game.gesture(0 if Input.is_key_pressed(KEY_LEFT) else 1 if Input.is_key_pressed(KEY_RIGHT) else 2 if Input.is_key_pressed(KEY_UP) else -1)
+		if game.jump_time>0:
+			game.tug(0 if Input.is_action_just_pressed("ui_left") else 1 if Input.is_action_just_pressed("ui_right") else -1)
 	# Retrieval accepts either winding direction; the handle follows the actual hand.
 	crank.rotation.x += reel_tracker.angular_delta if xr else reel * TAU * delta
 	fishing_feedback.reel_rate = reel
 	if game.state == Session.State.FIGHT and game.cue >= 0:
-		escape_offset=escape_offset.move_toward(fish_escape_direction() * 1.1, delta * 1.8)
+		if game.jump_time>0:
+			if game.jump_time<=Session.JUMP_AIR:escape_offset+=fish_escape_direction()*delta*1.8
+		else:escape_offset=escape_offset.move_toward(fish_escape_direction() * 1.1, delta * 1.8)
 	last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
+	var prior_takeovers: int=game.takeover_count
+	if game.is_fly_fishing() and game.state==Session.State.FIGHT:
+		game.fly.current_speed=Session.Fly.current(bobber.global_position,game.location_id).length()
 	game.tick(minf(delta, 0.05), reel, maxf(0.0, -rod.global_basis.z.y))
+	if game.takeover_count!=prior_takeovers: fight_input.reset()
+	hooked_fish.age+=delta
 	_settle_fish_escape()
+	_constrain_river_fish(delta)
+	if game.is_fly_fishing() and last_state==Session.State.BITE and game.state==Session.State.FIGHT:
+		cast_target=game.fly.start+game.fly.offset
+		game.distance=cast_anchor.distance_to(cast_target)
 	if game.state != last_state:
 		if game.state == Session.State.BITE:
 			_tone(880, 0.18)
@@ -619,6 +667,15 @@ func _update_catch(delta: float) -> void:
 		var hook := tip.global_position - Vector3.UP * 0.28
 		fish_display.global_transform = Transform3D(orientation, hook - orientation * _catch_mouth())
 
+func _constrain_river_fish(delta:float)->void:
+	if not game.is_fly_fishing() or game.state!=Session.State.FIGHT or game.jump_time>0:return
+	var direction:Vector3=(cast_target-cast_anchor).normalized()
+	var at:Vector3=cast_anchor+direction*game.distance+escape_offset
+	at+=Session.Fly.current(at,game.location_id)*delta*.18
+	at.z=clampf(at.z,-18.3,-4.0);at.x=clampf(at.x,-110,110)
+	cast_target=at-escape_offset
+	game.distance=cast_anchor.distance_to(cast_target)
+
 func _settle_fish_escape() -> void:
 	if game.state != Session.State.FIGHT or game.cue >= 0 or escape_offset.is_zero_approx(): return
 	# The counter ends where the fish actually swam. Rebase the retrieval ray
@@ -642,15 +699,19 @@ func fish_escape_direction() -> Vector3:
 	return away.normalized() if away.length_squared() > .001 else Vector3.FORWARD
 
 func _update_line() -> void:
+	if game.state!=Session.State.FIGHT and is_instance_valid(hooked_fish):hooked_fish.update(0)
 	var tension_color := Color("d8f5e5")
 	if game.state == Session.State.FIGHT:
 		if game.tension < .25: tension_color = Color("53a9ef").lerp(tension_color, game.tension / .25)
 		elif game.tension > .75: tension_color = tension_color.lerp(Color("ff5344"), (game.tension - .75) / .25)
+	if game.is_fly_fishing() and game.state!=Session.State.FIGHT:tension_color=Color("d9e6a4")
 	line_material.albedo_color = tension_color
 	var active: bool = game.state in [Session.State.CASTING, Session.State.WAITING, Session.State.BITE, Session.State.FIGHT]
 	var ready: bool = game.state == Session.State.READY and not rod_holster.stowed
 	bobber.visible = active or ready
-	if is_instance_valid(rod_status): rod_status.bait_visual.visible = ready
+	bobber.scale=Vector3.ONE*(.32 if game.is_fly_fishing() else 1.0)
+	if game.is_fly_fishing() and game.bait==0:bobber.hide()
+	if is_instance_valid(rod_status): rod_status.bait_visual.visible = ready or (game.is_fly_fishing() and active)
 	line_mesh.clear_surfaces()
 	if xr and game.state == Session.State.LANDED and fish_display.visible:
 		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
@@ -664,11 +725,16 @@ func _update_line() -> void:
 		rod_status.bait_visual.global_position = bobber.global_position + Vector3.DOWN * .18
 		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
 		line_mesh.surface_add_vertex(tip.global_position)
+		if game.is_fly_fishing() and game.fly.charging:
+			for i in 24:
+				var t:=i/23.0
+				line_mesh.surface_add_vertex(tip.global_position+Vector3(sin(t*TAU)*.5,sin(t*PI)*1.1,cos(game.fly.charge_age*5)*sin(t*PI)*3.0))
 		line_mesh.surface_add_vertex(bobber.global_position)
 		line_mesh.surface_add_vertex(rod_status.bait_visual.global_position)
 		line_mesh.surface_end()
 		return
 	if not active:
+		if is_instance_valid(hooked_fish):hooked_fish.update(0)
 		return
 	if game.state == Session.State.CASTING:
 		var progress: float = 1.0 - game.timer / 0.8
@@ -681,14 +747,26 @@ func _update_line() -> void:
 			var progress: float = 1.0-game.submerge_time/(Session.SUBMERGE_WARNING+Session.SUBMERGE_DURATION)
 			bobber.position.y-=sin(progress*PI)*.28
 	else:
+		if game.is_fly_fishing():cast_target=game.fly.start+game.fly.offset
 		bobber.position = cast_target + Vector3(0, sin(time * 3.0) * 0.025, 0)
 		if game.state == Session.State.BITE:
 			bobber.position.y -= 0.10 + sin(time * 22) * 0.05
+	if game.is_fly_fishing():
+		rod_status.bait_visual.global_position=bobber.global_position+Vector3.DOWN*(.4 if game.bait==1 else 0.0)
+		if game.state==Session.State.BITE and game.bait==0:rod_status.bait_visual.position.y-=.04
+	hooked_fish.update(0)
+	if game.jump_time>0:bobber.hide()
+	var line_end:Vector3=bobber.position
+	if game.jump_time>0 and hooked_fish.visible:line_end=hooked_fish.global_position
 	line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
 	for i in range(25):
 		var t := i / 24.0
-		var p := tip.global_position.lerp(bobber.position, t)
+		var p := tip.global_position.lerp(line_end, t)
+		if game.is_fly_fishing():
+			if game.state==Session.State.CASTING:p.y+=sin(t*TAU)*sin((1.0-game.timer/.8)*PI)*1.1
+			elif game.state==Session.State.WAITING:p.x-=sin(t*PI)*(1.0-game.fly.drag)*.7
 		p.y -= sin(t * PI) * (lerpf(.65, .025, game.tension) if game.state == Session.State.FIGHT else 0.5)
+		if game.is_fly_fishing() and game.state==Session.State.WAITING:p.y=maxf(p.y,water_level+.01)
 		line_mesh.surface_add_vertex(p)
 	line_mesh.surface_end()
 
@@ -839,6 +917,9 @@ func _select_location(id: String, persist := true) -> bool:
 	water_material.set_shader_parameter("ripple_strength", entry.ripples)
 	water_level=entry.get("water_level",-.35)
 	water_surface.position.y=water_level
+	water_material.set_shader_parameter("river_flow",.6 if id=="meadow_bend" else 1.1 if id=="boulder_run" else 0.0)
+	water_material.set_shader_parameter("blend_start",1000.0 if Session.Fly.river(id) else 14.0)
+	water_material.set_shader_parameter("blend_end",1100.0 if Session.Fly.river(id) else 45.0)
 	water_material.set_shader_parameter("protect_panorama_foreground",entry.get("protect_panorama_foreground",false))
 	water_material.set_shader_parameter("panorama_water_region",entry.get("panorama_water_region",Vector4(0,1,0,1)))
 	if id == "lake_pier": Shore.blend_harbour_ground(foreground, water_material)
@@ -848,6 +929,9 @@ func _select_location(id: String, persist := true) -> bool:
 	if is_instance_valid(ambience): ambience.select_location(id)
 	game.location_id = id
 	game.location_name = entry.name
+	game.bait=clampi(game.bait,0,game.bait_count()-1)
+	game.fly.reset()
+	game.message="Hold trigger: sweep back, forward, release. Strip with left grip; mend upstream." if xr and game.is_fly_fishing() else "Hold SPACE briefly, release to cast. R strips line; LEFT mends upstream." if game.is_fly_fishing() else "Choose your bait, then cast into open water."
 	if is_instance_valid(rod_status): rod_status.update_bait()
 	hud.location_mood = entry.mood
 	hud.queue_redraw()

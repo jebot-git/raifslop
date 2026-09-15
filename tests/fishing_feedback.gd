@@ -28,6 +28,18 @@ func run():
  f.reel_rate=1.7;f._process(.02);check(is_equal_approx(f.reel_player.pitch_scale,1.7),"Reeling speed changes ratchet speed")
  f.reel_rate=0;f._process(.02);check(not f.reel_player.playing,"Stopped crank stops sound")
  check(f.events.ripple==1,"Fight-start ripple does not repeat every frame")
+ g.location_id="lakeside";g.fish_index=3;g._takeover(S.WELS)
+ var ripples: int=f.events.ripple
+ f._process(.02)
+ check(f.events.predator==1 and f.events.ripple==ripples+1,"Predator takeover has a positional splash and ripple")
+ check(f.splashes[(f.splash_slot+2)%3].max_db==-1,"Takeover splash is louder than ordinary fight splashes")
+ check(f.takeover_surface.visible and f.takeover_fx.get_shader_parameter("burst"),"Takeover displays a dedicated expanding water burst")
+ var burst_position:Vector3=f.takeover_surface.global_position
+ root_game.bobber.position.x+=1
+ f._process(.02)
+ check(f.takeover_surface.global_position==burst_position,"Takeover burst remains at impact while predator swims away")
+ f._process(.02)
+ check(f.events.predator==1 and f.events.ripple==ripples+1,"Takeover audio never repeats each frame")
  root_game.origin.rotation.y=.8
  for cue in range(3):
   g.cue=cue;f._process(.02)

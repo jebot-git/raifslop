@@ -1,0 +1,5 @@
+{
+  "mode": "built-in imagegen",
+  "prompt": "Use case: photorealistic-natural. Asset type: transparent game scenery rock cutout. Create one low, wide formation of three interlocking rounded coastal granite boulders, about 4 metres wide and 1.8 metres high, full formation visible with transparent margins. Simon's Town South African shoreline visual character: weathered warm grey granite, subdued sandy ochre staining, rounded massive forms, fine granular texture, broad natural cracks, darker contact crevices and rough irregular foot. Eye-level frontal photograph, moderate sun from upper left with soft sky fill, restrained natural brightness. Actual transparent alpha background, including around the uneven silhouette; no sky, landscape, plants, ground plane, cast shadow outside the rock footprint, buildings, people, water, white border, text, checkerboard or stylization. Landscape 1536x1024. Intended as a low background rock formation whose base will be buried in real 3D terrain.",
+  "saved_path": "assets/environment/shore_details/simons_granite.png"
+}

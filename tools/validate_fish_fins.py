@@ -8,6 +8,7 @@ from mathutils.bvhtree import BVHTree
 ROOT=Path(__file__).resolve().parents[1]
 names=['roach','tench',*json.loads((ROOT/'source/fish_references/anatomy.json').read_text())]
 names += list(json.loads((ROOT/'source/fish_references/marine/anatomy.json').read_text()))
+names += list(json.loads((ROOT/'source/fish_references/predators/anatomy.json').read_text()))
 report={}
 for name in names:
     bpy.ops.wm.read_factory_settings(use_empty=True)

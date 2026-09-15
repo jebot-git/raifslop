@@ -1,0 +1,17 @@
+{
+  "mode": "built-in imagegen",
+  "images": [
+    {
+      "id": "wels_catfish",
+      "prompt": "Use case: scientific-educational. Asset type: lifelike side-reference and skin texture for a volumetric 3D fishing game model. Pure white background, no shadow, no water, no text, no labels. Single whole animal in exact orthographic SIDE PROFILE, HEAD TO THE RIGHT, tail to left, straight horizontal body. Wide 1536x1024 composition, entire silhouette visible with white margin. Soft diffuse even lighting, natural detailed skin, no dramatic shine, accurate anatomy, all fins visible. Adult Wels catfish Silurus glanis: large broad flattened head, tiny eyes, wide mouth, smooth scaleless olive brown mottled skin and pale cream belly. Long muscular tapering body; very small single dorsal fin well forward, extremely long anal fin along underside of rear body, rounded tail fin NOT forked. One pair of long maxillary barbels at mouth corners and two pairs of shorter chin barbels. Pectoral fins just behind head; paired pelvic fins. Do not depict a channel catfish, no adipose fin. Body heavy at head and chest with long eel-like rear taper.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-c1bc491d-6674-4873-9e8e-3a2be724c8bc.png",
+      "saved": "source/fish_references/predators/wels_catfish.png"
+    },
+    {
+      "id": "bronze_whaler",
+      "prompt": "Use case: scientific-educational. Asset type: lifelike side-reference and skin texture for a volumetric 3D fishing game model. Pure white background, no shadow, no water, no text, no labels. Single whole animal in exact orthographic SIDE PROFILE, HEAD TO THE RIGHT, tail to left, straight horizontal body. Wide 1536x1024 composition, entire silhouette visible with white margin. Soft diffuse even lighting, natural detailed skin, no dramatic shine, accurate anatomy, all fins visible. Adult bronze whaler / copper shark Carcharhinus brachyurus: streamlined muscular bronze-grey upper body and white underside, pointed rounded snout, small round eye, five distinct vertical gill slits just ahead of the broad swept-back pectoral fin. One large triangular first dorsal around midbody, a much smaller second dorsal near tail, small pelvic and anal fins. Asymmetric crescent shark tail with a much longer upper lobe and terminal notch, smaller pointed lower lobe. Natural bronze coloration with subtle fin-edge shading, no blacktip-shark markings, no interdorsal ridge. Mouth under snout almost closed, no exaggerated exposed teeth. Exact side profile, pectoral fin clearly separated from body silhouette and directed diagonally down-left.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-fa89c674-92e1-4eb7-b506-f1ec44a8d0ee.png",
+      "saved": "source/fish_references/predators/bronze_whaler.png"
+    }
+  ]
+}

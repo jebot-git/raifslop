@@ -69,6 +69,13 @@ def audit(path):
     assert set(hashes.values()) <= set(remaps.values()), 'Orphan texture payload'
     for required in ['ASSET_CREDITS.md','assets/models/locations/manifest.json',
                      'scripts/voice/shoulder_radio.gd','scripts/network/threaded_peer.gd',
+                     'scripts/fly_fishing.gd','scripts/hooked_fish.gd','scripts/river_foreground.gd',
+                     'assets/models/fish/wels_catfish.glb','assets/models/fish/bronze_whaler.glb',
+                     'assets/environment/rivers/river_shrubs.png','assets/environment/rivers/river_alder.png',
+                     'assets/environment/rivers/river_bank.png',
+                     'assets/environment/shore_details/lakeshore_reeds.png',
+                     'assets/environment/shore_details/simons_granite.png',
+                     'assets/audio/ambience/meadow_bend.ogg','assets/audio/ambience/boulder_run.ogg',
                      'assets/avatars/vita.vrm','assets/avatars/victoria.vrm','assets/avatars/sharkperson.vrm']:
         assert required in names or required in remaps, ('Missing runtime file', required)
     panoramas = {}

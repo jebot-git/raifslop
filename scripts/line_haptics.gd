@@ -3,6 +3,7 @@ extends RefCounted
 const S=preload("res://scripts/fishing_session.gd")
 var state := S.State.READY
 var cue := -1
+var takeover_count := 0
 var running := false
 var submerge := S.Submerge.NONE
 var tension_peak := .35
@@ -15,11 +16,14 @@ func sample(game, delta: float) -> Dictionary:
 	var event := {}
 	if game.state != state:
 		match game.state:
-			S.State.BITE: event={"kind":"bite","strength":.8,"duration":.24}
+			S.State.BITE: event={"kind":"bite","strength":.35 if game.is_fly_fishing() else .8,"duration":.24}
 			S.State.FIGHT: event={"kind":"hook","strength":.35,"duration":.12}
 			S.State.LANDED: event={"kind":"landed","strength":.35,"duration":.25}
 			S.State.LOST: event={"kind":"lost","strength":.7,"duration":.3}
 		state=game.state;tension_peak=game.tension
+	if game.takeover_count!=takeover_count:
+		if game.state==S.State.FIGHT:event={"kind":"predator","strength":.45,"duration":.2}
+		takeover_count=game.takeover_count
 	var effective: bool=game.effective_counter()
 	if event.is_empty() and controlled and not effective:
 		event={"kind":"release","strength":0.0,"duration":.01}
@@ -45,7 +49,7 @@ func sample(game, delta: float) -> Dictionary:
 
 func sample_reel(game, rate: float, delta: float) -> Dictionary:
 	reel_cooldown=maxf(0.0,reel_cooldown-delta)
-	if game.state!=S.State.FIGHT or rate<=.03:
+	if (game.state!=S.State.FIGHT and not (game.is_fly_fishing() and game.state==S.State.WAITING)) or rate<=.03:
 		reel_phase=0.0;reel_cooldown=0.0
 		return {}
 	# Twelve detents per accepted crank turn, with bounded pulse frequency.

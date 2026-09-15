@@ -10,6 +10,7 @@ func check(ok: bool, label: String) -> void:
 func _initialize() -> void: run.call_deferred()
 func fight(index := 0, rod := 0):
 	var sim = S.new()
+	sim.predator_encounters_enabled=false
 	sim.fish_index = index
 	sim.tackle.equipped = rod
 	sim.state = S.State.BITE
@@ -76,7 +77,7 @@ func run() -> void:
 		var times := []
 		for rod in [0, 3]:
 			var sim = fight(index, rod); var elapsed := 0.0
-			for frame in range(18000):
+			for frame in range(54000):
 				if sim.state != S.State.FIGHT: break
 				if sim.cue >= 0: sim.gesture(sim.cue)
 				var rate := 0.0 if sim.is_running() or sim.tension > .7 else 1.0

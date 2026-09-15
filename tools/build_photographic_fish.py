@@ -106,7 +106,7 @@ def build(name,d):
     for xy in [origin,np.array(poly[j]),np.array(poly[j+1])]:
      x,y=xy;ok,pt,n,_=body.ray_cast(pos(x,y,side*.35),Vector((0,-side,0)))
      point=pt if ok else pos(x,y,side*thickness*.65)
-     point.y+=side*(.001+min(.028,np.linalg.norm(xy-origin)/length*.25))
+     point.y+=side*(.001+min(d.get("pectoral_spread",.028),np.linalg.norm(xy-origin)/length*d.get("pectoral_lift",.25)))
      pv.append(point);pc.append((x,y))
     pf.append((base,base+1,base+2) if side>0 else (base+2,base+1,base))
    mesh('Paired pectoral fin',pv,pf,finmat,pc)

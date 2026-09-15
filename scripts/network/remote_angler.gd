@@ -12,6 +12,7 @@ var rod := Node3D.new()
 var rod_visual: Node3D
 var caught := Node3D.new()
 var float_mesh: MeshInstance3D
+var fly_lure: Node3D
 var label := Label3D.new()
 var line := ImmediateMesh.new()
 var target: Dictionary = {}
@@ -30,6 +31,7 @@ func _ready() -> void:
 	rod_visual.equip(0)
 	var sphere := SphereMesh.new(); sphere.radius=.045; sphere.height=.14
 	float_mesh=game.mesh_node(sphere,self,Vector3.ZERO,game.material(Color("ff784e")))
+	fly_lure=preload("res://scripts/bait_visual.gd").new();add_child(fly_lure);fly_lure.hide()
 	game.mesh_node(line,self,Vector3.ZERO,game.material(Color("d8f5e5")))
 	# Visible while a custom VRM is transferring; never creates a local camera.
 	game.box(fallback,Vector3(0,1.05,0),Vector3(.35,.6,.20),game.material(Color("4d7667")))
@@ -98,7 +100,13 @@ func _process(delta: float) -> void:
 	rod.global_transform=rendered.rod; caught.global_transform=rendered.fish
 	caught.visible=target.caught
 	float_mesh.global_position=rendered.bobber
-	float_mesh.visible=target.state in [1,2,3,4]
+	var fly_mode:bool=Fish.Fly.river(target.location)
+	float_mesh.visible=target.state in [1,2,3,4] and not (fly_mode and target.bait==0)
+	float_mesh.scale=Vector3.ONE*(.32 if fly_mode else 1.0)
+	fly_lure.visible=fly_mode and target.state in [1,2,3,4]
+	if fly_mode:
+		fly_lure.set_bait(clampi(target.bait,0,1),false,true)
+		fly_lure.global_position=rendered.bobber-Vector3.UP*(.4 if target.bait==1 else 0)
 	fallback.global_position=rendered.feet
 	if is_instance_valid(avatar):
 		var body: Dictionary={}
@@ -117,7 +125,7 @@ func _process(delta: float) -> void:
 
 func _draw_line() -> void:
 	line.clear_surfaces()
-	if target.caught or float_mesh.visible:
+	if target.caught or float_mesh.visible or fly_lure.visible:
 		line.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
 		line.surface_add_vertex(rendered.tip)
 		if target.caught:

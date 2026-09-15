@@ -1,10 +1,15 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled;
 #include "res://shaders/panorama_sampling.gdshaderinc"
+uniform sampler2D hooked_depth : hint_depth_texture, repeat_disable, filter_nearest;
+uniform vec3 hooked_position = vec3(0.0);
+uniform float hooked_radius = .5;
+uniform float hooked_visibility = 0.0;
 uniform mat3 sky_inverse = mat3(1.0);
 uniform float sky_energy = 0.8;
 uniform vec3 deep_color : source_color = vec3(0.025, 0.15, 0.17);
 uniform float water_roughness : hint_range(0.05, 1.0) = 0.22;
+uniform float river_flow = 0.0;
 uniform float ripple_strength : hint_range(0.0, 1.5) = 1.0;
 uniform float blend_start = 14.0;
 uniform float blend_end = 45.0;
@@ -22,7 +27,7 @@ void vertex() {
 	world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 void fragment() {
-	vec2 p = world_position.xz;
+	vec2 p = world_position.xz-vec2(TIME*river_flow,0.0);
 	// Analytic wave slopes in metres, independent of mesh UV size.
 	vec2 slope = vec2(.45,.22) * cos(dot(p,vec2(.45,.22))+TIME*.55) * .008;
 	slope += vec2(2.3,.8) * cos(dot(p,vec2(2.3,.8))-TIME*1.1) * .011;
@@ -39,6 +44,7 @@ void fragment() {
 	float fresnel = .0204 + .9796 * pow(1.0-clamp(dot(-incident,normal),0.0,1.0),5.0);
 	vec3 near_water = mix(deep_color*.32, reflection, fresnel);
 	float distance_to_view = length(world_position.xz-CAMERA_POSITION_WORLD.xz);
+	near_water+=vec3(.045,.06,.05)*pow(max(0.0,sin(p.x*4.0+p.y*.7+sin(p.y*2.0))*sin(p.y*7.0+sin(p.x*.9))),8.0)*min(river_flow,.7);
 	float distant = smoothstep(blend_start,blend_end,distance_to_view);
 	vec3 photograph = panorama_sample(sky_inverse * incident, true) * sky_energy;
 	if (protect_panorama_foreground) {
@@ -53,4 +59,16 @@ void fragment() {
 	}
 	// At the mesh boundary, use the very same photographed water visible behind it.
 	ALBEDO = mix(near_water, photograph, distant);
+	float fish_window=1.0-smoothstep(hooked_radius*.4,hooked_radius,length(world_position.xz-hooked_position.xz));
+	// Only reveal shallow geometry at the fish, not a circular hole through the lake bed.
+	float scene_depth=texture(hooked_depth,SCREEN_UV).r;
+	#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	vec3 under_ndc=vec3(SCREEN_UV,scene_depth)*2.0-1.0;
+	#else
+	vec3 under_ndc=vec3(SCREEN_UV*2.0-1.0,scene_depth);
+	#endif
+	vec4 under_view=INV_PROJECTION_MATRIX*vec4(under_ndc,1.0);
+	vec3 under_world=(INV_VIEW_MATRIX*vec4(under_view.xyz/under_view.w,1.0)).xyz;
+	fish_window*=1.0-smoothstep(hooked_radius*.4,hooked_radius*.6,length(under_world-hooked_position));
+	ALPHA=1.0-hooked_visibility*fish_window*.78*(1.0-fresnel);
 }

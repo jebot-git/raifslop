@@ -13,8 +13,8 @@ func run() -> void:
 	var all_seen := {}
 	var layouts := {}
 	for location in Locations.CATALOG:
-		var roster := Session.species_for_location(location.id)
-		check(roster.size() >= (6 if Session.is_marine_location(location.id) else 10) and roster.size() == (func():
+		var roster := Session.species_for_location(location.id, false)
+		check(roster.size() >= (3 if Session.Fly.river(location.id) else 6 if Session.is_marine_location(location.id) else 10) and roster.size() == (func():
 			var unique := {}
 			for i in roster: unique[i] = true
 			return unique.size()).call(), "Distinct local species at " + location.id)
@@ -25,7 +25,7 @@ func run() -> void:
 		var s := Session.new()
 		s.location_id = location.id
 		s.rng.seed = 1773
-		for bait in range(Session.BAITS.size()):
+		for bait in range(s.bait_count()):
 			var pool := Session.species_for_bait(bait, location.id)
 			check(not pool.is_empty(), "Bait has local fish: " + location.id + " / " + Session.BAITS[bait])
 			var valid := true
@@ -39,7 +39,7 @@ func run() -> void:
 				all_seen[s.fish_index] = true
 			check(valid, "Normal casting respects location and bait")
 		check(seen.size() == roster.size(), "Every local species reachable")
-	check(all_seen.size() == Session.SPECIES.size(), "Entire real-species catalogue reachable")
+	check(all_seen.size() == Session.SPECIES.filter(func(row): return not row.get("predator",false)).size(), "Every direct-bait species reachable")
 	check(layouts.size() == Session.LOCATION_SPECIES.size(), "Locations have distinct rosters")
 	var g = load("res://scenes/main.tscn").instantiate()
 	root.add_child(g)

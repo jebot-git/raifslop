@@ -1,0 +1,20 @@
+[
+  {
+    "path": "assets/environment/rivers/river_shrubs.png",
+    "original": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-8247619d-a60f-4350-b9bb-88618e3eb997.png",
+    "bytes": 3055140,
+    "sha256": "990ccb274218a9efb7e92a009d9f16a47be49ea97ec603a980e09896ecf51211"
+  },
+  {
+    "path": "assets/environment/rivers/river_alder.png",
+    "original": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-fc113423-12a5-4d40-9bbd-05ad30291da0.png",
+    "bytes": 2856276,
+    "sha256": "1dd4d4e6cb721d2cb04d323bca2b34ceb04fa2a5d16f35b2a53ba4e317f6a2b2"
+  },
+  {
+    "path": "assets/environment/rivers/river_bank.png",
+    "original": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-6f4d3eeb-cba6-4d44-b283-b37322211c34.png",
+    "bytes": 3822970,
+    "sha256": "c68a962c156a0c1c677b7473a1bb5082f3c60dd13a50c0090b896af2234a3252"
+  }
+]

@@ -2,12 +2,16 @@ extends Node3D
 ## Recognizable tackle silhouettes at physical lure scale; no imported physics.
 var selected := -1
 var marine := false
-func set_bait(index: int, saltwater: bool = false) -> void:
-	if selected==index and marine==saltwater:return
-	marine=saltwater
+var fly_mode := false
+func set_bait(index: int, saltwater: bool = false, fly_fishing:bool=false) -> void:
+	if selected==index and marine==saltwater and fly_mode==fly_fishing:return
+	marine=saltwater;fly_mode=fly_fishing
 	selected=index
 	for child in get_children():remove_child(child);child.queue_free()
-	if marine:
+	if fly_mode:
+		if index==0:fly()
+		else:nymph()
+	elif marine:
 		match index:
 			0: ragworm()
 			1: squid()
@@ -138,3 +142,8 @@ func streamer() -> void:
 		segment(Vector3(0,-.005,0),Vector3(sin(angle)*.007,-.07,cos(angle)*.005),.0006,blue if i<4 else white,"StreamerFiber")
 	for side in [-1,1]:oval(Vector3(side*.004,-.006,0),Vector3.ONE*.002,mat("252a2c"),"StreamerEye")
 	hook(Vector3(0,-.004,0),1.1)
+
+func nymph():
+	hook(Vector3.ZERO)
+	oval(Vector3(0,0,0),Vector3(.004,.004,.004),mat("cba754",.7),"NymphBead")
+	segment(Vector3(0,-.003,0),Vector3(0,-.014,0),.0025,mat("594834"),"NymphBody")

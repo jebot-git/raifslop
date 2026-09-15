@@ -106,3 +106,17 @@ Godot OpenXR Vendors 5.1.0 is bundled for platform support, with SDK/loader lice
 ## Marine fish (2026-09-15)
 
 Eight original photographic-style marine fish models: blacktail, galjoen, hottentot, red roman, white steenbras, elf/bluefish, Cape yellowtail and harder mullet. Built-in OpenAI imagegen side-reference illustrations, reviewed body landmarks, Blender reconstruction and Cycles normal bakes; no external source artwork copied. [Sources, pipeline and retained prompts](docs/MARINE_FISH.md), [runtime manifest](docs/marine_fish_assets.json). Packed source: `source/marine_fish.blend`.
+
+## Rare predators (2026-09-15)
+
+Wels catfish and bronze whaler shark: original built-in OpenAI imagegen reference illustrations, reviewed anatomical landmarks, Blender reconstruction and Cycles normal bakes. No third-party source artwork copied. [Sources, model pipeline and retained exact prompts](docs/PREDATOR_ENCOUNTERS.md), [runtime manifest](docs/predator_fish_assets.json). Packed editable source: `source/predator_fish.blend`.
+
+## Fly-fishing rivers (2026-09-15)
+
+Meadow Bend and Boulder Run use original procedural terrain and layered vegetation, with original built-in OpenAI imagegen alder/shrub cutouts and a grass/soil/pebble texture. Existing credited Poly Haven distant panoramas and gravel materials are reused. River ambience is original seeded, filtered noise synthesis. [Implementation, retained exact prompts and asset manifest](docs/FLY_FISHING.md).
+
+## Shore cutouts (2026-09-15)
+
+Original built-in OpenAI imagegen transparent reed/sedge cutout for Gray Pier. Lakeside reuses the original river shrub and ground-cover textures. Crossed vegetation geometry and soft ground patches are original code-authored assets. [Implementation, exact prompt and saved asset provenance](docs/SHORE_TRANSITIONS.md).
+
+Simon's Town rear granite cutout: original built-in OpenAI imagegen artwork on code-authored shallow curved geometry. [Exact prompt, source checksum and placement notes](docs/SHORE_TRANSITIONS.md#simons-town-rear-rock-trial).

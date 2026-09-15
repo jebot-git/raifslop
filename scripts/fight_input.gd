@@ -20,4 +20,22 @@ func sample(cue: int, tip_from_head: Vector3, facing: Basis = Basis.IDENTITY, ro
 		held = amount >= (EXIT_DISTANCE if held else ENTER_DISTANCE)
 	return cue if held else -1
 func reset() -> void:
-	previous_cue=-1;held=false
+	previous_cue=-1;held=false;tug_event=-1
+
+var tug_event := -1
+var tug_previous := Vector3.ZERO
+var tug_start := Vector3.ZERO
+var tug_age := 0.0
+var tug_facing := Basis.IDENTITY
+func sample_tug(event_id:int, cue:int, position:Vector3, delta:float, facing:Basis) -> int:
+	if event_id!=tug_event or delta<=0.0 or delta>.1:
+		tug_event=event_id;tug_previous=position;tug_start=position;tug_age=0.0;tug_facing=facing
+		return -1
+	var movement := tug_facing.inverse()*(position-tug_previous)
+	var travel := tug_facing.inverse()*(position-tug_start)
+	tug_previous=position;tug_age+=delta
+	var sign_value := -1.0 if cue==0 else 1.0
+	var rapid := movement.x*sign_value/delta>=1.0 and travel.x*sign_value>=.09
+	if tug_age>=.15 or rapid:
+		tug_start=position;tug_age=0.0
+	return cue if rapid else -1

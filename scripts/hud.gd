@@ -72,15 +72,18 @@ func _draw() -> void:
 		text_at("Keep the marker in the green band", Vector2(1064, 607), 12, muted)
 		if game.cue >= 0:
 			card(Rect2(485, 360, 470, 147), Color(0.07, 0.21, 0.16, 0.96))
-			text_at(["←  PULL LEFT · HOLD", "PULL RIGHT · HOLD  →", "↑  LIFT ROD · HOLD"][game.cue], Vector2(515, 414), 25, mint)
-			text_at("Keep holding" if game.counter_active else "Pull farther, then hold", Vector2(515, 457), 20, ink)
+			text_at((["← QUICK TUG LEFT", "QUICK TUG RIGHT →"][game.cue] if game.jump_time>0 else ["←  PULL LEFT · HOLD", "PULL RIGHT · HOLD  →", "↑  LIFT ROD · HOLD"][game.cue]), Vector2(515, 414), 25, mint)
+			text_at(("JUMP · STOP REELING · QUICK SIDEWAYS TUG" if game.jump_time>0 else "Keep holding" if game.counter_active else "Pull farther, then hold"), Vector2(515, 457), 20, ink)
 	if state == 3:
 		card(Rect2(520, 350, 400, 130), Color("a55232"))
 		text_at("BITE!", Vector2(641, 402), 34, ink, true)
 		text_at("Lift now" if vr_mode else "Press SPACE to strike", Vector2(579, 443), 20)
+	if game.is_fly_fishing():
+		text_at("HOLD SPACE / RELEASE: fly cast · R: strip · ←: mend upstream" if not vr_mode else "BACK / FORWARD: cast · LEFT GRIP + PULL: strip · SWEEP LEFT: mend",Vector2(40,670),18,mint)
+		if game.state==2:text_at("DRIFT QUALITY  %d%%" % int(game.fly.quality*100),Vector2(560,410),24,mint)
 	card(Rect2(32, 698, 1376, 170))
 	text_at("YOUR TACKLE", Vector2(56, 728), 11, muted)
-	for i in range(game.BAITS.size()):
+	for i in range(game.bait_count()):
 		var tile := bait_rect(i)
 		var x := tile.position.x
 		var y := tile.position.y
@@ -89,13 +92,13 @@ func _draw() -> void:
 		draw_circle(Vector2(x + 16, y + 15), 4, mint if selected else muted)
 		text_at("%d  %s" % [i + 1, game.bait_name(i)], Vector2(x + 28, y + 20), 14, mint if selected else ink)
 		text_at(game.bait_hint(i), Vector2(x + 14, y + 39), 11, muted)
-	var action: String = "CAST LINE" if state == 0 else ("RELEASE & CONTINUE" if state == 5 else ("TRY AGAIN" if state == 6 else "SPACE / STRIKE"))
+	var action: String = ("QUICK FLY CAST" if game.is_fly_fishing() else "CAST LINE") if state == 0 else ("RELEASE & CONTINUE" if state == 5 else ("TRY AGAIN" if state == 6 else "SPACE / STRIKE"))
 	card(Rect2(897, 747, 483, 89), Color("a5dcb9") if state in [0, 5, 6] else Color("254537"))
 	text_at(action, Vector2(937, 799), 20, Color("102e24") if state in [0, 5, 6] else ink)
 	if not vr_mode:
-		text_at("SPACE  cast / strike / release     •     R / left mouse reel · Shift faster     •     Arrow keys  counter     •     Right-drag  aim rod", Vector2(265, 889), 12, ink)
+		text_at("HOLD / RELEASE SPACE: fly cast · R: strip · LEFT: upstream mend · SPACE on take: strike" if game.is_fly_fishing() else "SPACE  cast / strike / release     •     R / left mouse reel · Shift faster     •     Arrow keys  counter     •     Right-drag  aim rod", Vector2(265, 889), 12, ink)
 	else:
-		text_at("Left X: bait   •   Right trigger: hold, swing, release   •   Left grip + circle: reel   •   Right A: release", Vector2(75, 889), 17, ink)
+		text_at("TRIGGER: back / forward cast · LEFT GRIP + PULL: strip · SWEEP UPSTREAM: mend" if game.is_fly_fishing() else "Left X: bait   •   Right trigger: hold, swing, release   •   Left grip + circle: reel   •   Right A: release", Vector2(75, 889), 17, ink)
 	if tracking_lost:
 		card(Rect2(400, 330, 640, 170))
 		text_at("Tracking paused", Vector2(450, 395), 30, ink, true)
@@ -110,7 +113,7 @@ func _gui_input(event: InputEvent) -> void:
 		if Rect2(1030, 160, 378, 110).has_point(p):
 			avatar_requested.emit()
 			accept_event()
-		for i in range(game.BAITS.size()):
+		for i in range(game.bait_count()):
 			if bait_rect(i).has_point(p):
 				bait_selected.emit(i)
 				accept_event()
@@ -143,11 +146,12 @@ func _draw_vr() -> void:
 		draw_circle(Vector2(40 + game.tension * 920, 375), 15, Color("ff916e") if game.tension > 0.8 else mint)
 		text_at(game.reel_instruction(), Vector2(40, 437), 30, mint)
 		if game.cue >= 0:
-			text_at(["← PULL LEFT · HOLD", "PULL RIGHT · HOLD →", "↑ LIFT ROD · HOLD"][game.cue], Vector2(40, 490), 32, ink)
-			text_at("Keep holding" if game.counter_active else "Pull farther, then hold",Vector2(40,557),27,ink)
+			text_at((["← QUICK TUG LEFT", "QUICK TUG RIGHT →"][game.cue] if game.jump_time>0 else ["← PULL LEFT · HOLD", "PULL RIGHT · HOLD →", "↑ LIFT ROD · HOLD"][game.cue]), Vector2(40, 490), 32, ink)
+			text_at(("JUMP · STOP REELING · QUICK SIDEWAYS TUG" if game.jump_time>0 else "Keep holding" if game.counter_active else "Pull farther, then hold"),Vector2(40,557),27,ink)
 	elif game.state == 5:
 		text_at("Hold LEFT GRIP: inspect fish in your hand.", Vector2(40, 366), 27, ink)
 		text_at("Release grip: hang fish from the rod.", Vector2(40, 416), 27, ink)
 		text_at("Either stick: rotate fish. RIGHT A: release.", Vector2(40, 466), 27, ink)
+	if game.is_fly_fishing() and game.state==2:text_at("MEND LEFT · Natural drift %d%%" % int(game.fly.quality*100),Vector2(40,490),27,mint)
 	if game.state != 4: text_at("STICKS: rotate catch   B: menu" if game.state == 5 else "LEFT STICK: walk   RIGHT STICK: turn   B: menu", Vector2(40, 554), 24, muted)
 	text_at("LEFT X: bait   RIGHT A: release   LEFT HIP + GRIP: guide", Vector2(40, 603), 22, muted)

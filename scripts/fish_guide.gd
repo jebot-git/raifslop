@@ -39,7 +39,9 @@ const DESCRIPTIONS = {
  "Lithognathus lithognathus": "A silvery seabream with dark vertical bars and a long blunt snout. It searches sand for invertebrates.",
  "Pomatomus saltatrix": "A streamlined blue-green and silver predator with a large toothed mouth. Also called shad, it pursues small fish along the coast.",
  "Seriola lalandi": "A powerful schooling predator with a yellow flank stripe and deeply forked yellow tail. It hunts fish and squid in coastal waters.",
- "Chelon richardsonii": "A silver mullet with a blunt head, fine horizontal stripes and two separate dorsal fins. It feeds in shallow coastal and estuarine water."
+ "Chelon richardsonii": "A silver mullet with a blunt head, fine horizontal stripes and two separate dorsal fins. It feeds in shallow coastal and estuarine water.",
+ "Silurus glanis":"A huge scaleless catfish with a broad head, six barbels and a long anal fin. A rare predator that can seize a smaller freshwater fish during retrieval.",
+ "Carcharhinus brachyurus":"A bronze-grey coastal shark with five gill slits and a long upper tail lobe. A rare predator that can take a hooked mullet or other small coastal fish."
 }
 var entries: Dictionary = {}
 var selected := -1

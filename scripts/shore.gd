@@ -9,6 +9,7 @@ static func vector(values: Array) -> Vector3:
 	return Vector3(values[0], values[1], values[2])
 
 static func create(id: String) -> Node3D:
+	if id in ["meadow_bend","boulder_run"]:return preload("res://scripts/river_foreground.gd").create(id)
 	var records := catalog()
 	if not records.has(id): return null
 	var record: Dictionary = records[id]
@@ -45,10 +46,16 @@ static func create(id: String) -> Node3D:
 	var life := preload("res://scripts/environment_life.gd").new()
 	root.add_child(life)
 	life.configure(id)
+	var details=preload("res://scripts/shore_details.gd").create(id)
+	if details!=null:root.add_child(details)
 	return root
 
 static func prepare_lighting(node: Node, id: String) -> void:
 	if node is MeshInstance3D:
+		# These separate coarse plant meshes are superseded by grounded cutouts.
+		if (id=="lakeside" and str(node.name)=="lakeside_grass") or (id=="gray_pier" and str(node.name)=="gray_pier_reed"):
+			node.hide()
+		if id=="gray_pier":preload("res://scripts/shore_details.gd").remove_old_seed_heads(node)
 		var baked := str(node.name).contains("BakedForeground")
 		for index in range(node.mesh.get_surface_count()):
 			var source := node.get_active_material(index) as StandardMaterial3D

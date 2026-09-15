@@ -148,3 +148,7 @@ Rod holster: bring the right hand to the right hip and squeeze grip to fold/stas
 Benches and boat seats are noncollidable. Successful travel closes the menu. VR has no floating status/tracking window; holding a catch in the left hand shows its name, length and weight as text above the fish.
 
 All six locations ship native 8192 × 4096 HDR panoramas through one standard loading path, with restrained sharpening, mipmapped filtering and shared sky/water color processing. Holding the guide keeps the rod in the right hand; stashing is explicit at the right hip. [Visual settings and validation](docs/PANORAMA_QUALITY.md).
+
+### Fly-fishing rivers
+
+Meadow Bend and Boulder Run add fly casting, dry flies/nymphs, drifting, upstream mending and line stripping. Nymphs use a small strike indicator; dry flies signal surface takes. [Controls, river environments and validation](docs/FLY_FISHING.md).

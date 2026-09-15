@@ -39,6 +39,8 @@ const SPECIES = [
 	{"name": "Elf / bluefish", "latin": "Pomatomus saltatrix", "length": 45.0, "weight": 1.1, "rarity": 2, "endurance": 120.0, "power": 1.2, "bait": 2, "habitat": "marine", "model": "res://assets/models/fish/elf.glb"},
 	{"name": "Cape yellowtail", "latin": "Seriola lalandi", "length": 85.0, "weight": 5.5, "rarity": 3, "endurance": 170.0, "power": 1.4, "bait": 2, "habitat": "marine", "model": "res://assets/models/fish/yellowtail.glb"},
 	{"name": "Harder mullet", "latin": "Chelon richardsonii", "length": 32.0, "weight": 0.4, "rarity": 1, "endurance": 75.0, "power": 0.8, "bait": 0, "habitat": "marine", "model": "res://assets/models/fish/harder.glb"},
+	{"name":"Wels catfish", "latin":"Silurus glanis", "length":180.0, "weight":45.0, "rarity":5, "endurance":400.0, "power":1.7, "bait":-1, "habitat":"freshwater", "predator":true, "model":"res://assets/models/fish/wels_catfish.glb"},
+	{"name":"Bronze whaler shark", "latin":"Carcharhinus brachyurus", "length":240.0, "weight":100.0, "rarity":5, "endurance":520.0, "power":2.1, "bait":-1, "habitat":"marine", "predator":true, "model":"res://assets/models/fish/bronze_whaler.glb"},
 ]
 # Stable indices preserve existing catch records and model mapping.
 const MARINE_BAITS = ["Ragworm", "Squid", "Spinner", "Prawn", "Sardine", "Saltwater fly"]
@@ -50,8 +52,45 @@ const LOCATION_SPECIES = {
  "gray_pier": [0,1,2,3,4,5,6,7,8,11,12,13,15,16],
  "bell_park_pier": [0,1,2,3,4,5,8,9,10,11,13,14,16,17],
  "simons_town_rocks": [18,19,20,21,23,24],
- "blouberg_sunrise_2": [18,19,22,23,24,25]
+ "blouberg_sunrise_2": [18,19,22,23,24,25],
+ "meadow_bend":[11,12,9,14],
+ "boulder_run":[10,11,12]
 }
+# A single chance per eligible retrieval, never a per-frame probability.
+const PREDATOR_CHANCE := .02
+const WELS := 26
+const BRONZE_WHALER := 27
+const PREDATOR_PREY = {WELS:[0,3,7,14,15,16], BRONZE_WHALER:[18,23,25]}
+# 0/1/2: directional hold; 3: deep pull; 4: slack rush; 5: long run.
+const PREDATOR_SEQUENCES = {WELS:[5,2,3,0,3,1,4], BRONZE_WHALER:[5,0,3,1,5,2,4]}
+var predator_encounters_enabled := true
+var encounter_rng := RandomNumberGenerator.new()
+var predator_checked := false
+var retrieval_time := 0.0
+var retrieved_metres := 0.0
+var rebaited_from := -1
+var takeover_count := 0
+var predator_step := 0
+var predator_run_time := 0.0
+var predator_notice_time := 0.0
+var predator_opening_time := 0.0
+const FightProfiles = preload("res://scripts/fish_fight_profiles.gd")
+var fight_step := 0
+var dive_step := 0
+var mirror_fight := false
+const JUMP_WARNING := .7
+const JUMP_AIR := 1.2
+var jump_time := 0.0
+var jump_tug := false
+var jump_resolved := false
+var jump_count := 0
+var jump_attempts := 0
+var next_jump := 7.0
+var jumps_enabled := true
+const Fly = preload("res://scripts/fly_fishing.gd")
+var fly=Fly.new()
+func is_fly_fishing()->bool:return Fly.river(location_id)
+func bait_count()->int:return 2 if is_fly_fishing() else BAITS.size()
 const Tackle = preload("res://scripts/tackle.gd")
 var tackle = Tackle.new()
 var counter_rest := 0.0
@@ -90,24 +129,40 @@ var location_name := "Lakeside"
 
 func _init() -> void:
 	rng.randomize()
+	encounter_rng.randomize()
 
 func select_bait(index: int) -> void:
 	if state == State.READY:
-		bait = clampi(index, 0, BAITS.size() - 1)
+		bait = clampi(index, 0, bait_count() - 1)
 
-static func species_for_location(id: String) -> Array:
-	return LOCATION_SPECIES.get(id, LOCATION_SPECIES["lakeside"]).duplicate()
+static func species_for_location(id: String, include_predators: bool = true) -> Array:
+	var result: Array = LOCATION_SPECIES.get(id, LOCATION_SPECIES["lakeside"]).duplicate()
+	if include_predators and not Fly.river(id): result.append(BRONZE_WHALER if is_marine_location(id) else WELS)
+	return result
+
+static func predator_for_prey(index: int, id: String) -> int:
+	if Fly.river(id) or not LOCATION_SPECIES.has(id) or index not in LOCATION_SPECIES[id]: return -1
+	var predator := BRONZE_WHALER if is_marine_location(id) else WELS
+	return predator if index in PREDATOR_PREY[predator] else -1
+
+func is_predator() -> bool:
+	return bool(SPECIES[fish_index].get("predator",false))
 
 static func is_marine_location(id: String) -> bool:
 	return id in ["simons_town_rocks", "blouberg_sunrise_2"]
 
 func bait_name(index: int) -> String:
+	if is_fly_fishing():return ["Dry fly","Nymph"][clampi(index,0,1)]
 	return (MARINE_BAITS if is_marine_location(location_id) else BAITS)[clampi(index,0,BAITS.size()-1)]
 
 static func species_for_bait(index: int, id: String = "") -> Array[int]:
 	var candidates: Array[int] = []
-	var local := species_for_location(id) if not id.is_empty() else range(SPECIES.size())
+	if Fly.river(id):
+		for i in LOCATION_SPECIES[id]:candidates.append(i)
+		return candidates
+	var local := species_for_location(id, false) if not id.is_empty() else range(SPECIES.size())
 	for i in local:
+		if SPECIES[i].get("predator",false): continue
 		if SPECIES[i].get("habitat", "freshwater")=="marine":
 			if i in MARINE_BAIT_SPECIES.get(index, []): candidates.append(i)
 		elif SPECIES[i].bait==index or i in EXTRA_BAIT_SPECIES.get(index, []):
@@ -115,14 +170,17 @@ static func species_for_bait(index: int, id: String = "") -> Array[int]:
 	return candidates
 
 func bait_hint(index: int) -> String:
+	if is_fly_fishing():return "Surface drift · Watch the rise" if index==0 else "Subsurface · Watch indicator"
 	var pool := species_for_bait(index, location_id)
 	var hints := ["Worm feeders", "Reef / surf fish", "Coastal predators", "Crustacean feeders", "Baitfish hunters", "Coastal fly fish"] if is_marine_location(location_id) else ["Worm feeders", "Coarse fish", "Predators", "Shoal fish", "Surface feeders", "Trout / chub"]
-	return "%d species · %s" % [pool.size(), hints[clampi(index, 0, BAITS.size() - 1)]]
+	return "%d species · %s" % [pool.size(), hints[clampi(index, 0, bait_count() - 1)]]
 
 func cast(power: float) -> void:
 	if state != State.READY:
 		return
+	fly.reset()
 	cast_distance = clampf(power, 5.0, 24.0)
+	fly.start=Vector3(0,0,-cast_distance)
 	distance = cast_distance
 	state = State.CASTING
 	timer = 0.8
@@ -131,6 +189,8 @@ func cast(power: float) -> void:
 func strike() -> void:
 	if state == State.BITE:
 		state = State.FIGHT
+		predator_checked=false;retrieval_time=0.0;retrieved_metres=0.0;rebaited_from=-1
+		predator_step=0;predator_run_time=0.0;predator_notice_time=0.0;predator_opening_time=0.0
 		tension = 0.4
 		stamina = 1.0
 		resistance=1.0;counter_direction=-1;counter_active=false
@@ -142,6 +202,17 @@ func strike() -> void:
 		danger_side = 0
 		failed_counters = 0
 		_reset_submerge()
+		jump_attempts=0;next_jump=7.0
+		fight_step=0;dive_step=0;mirror_fight=rng.randf()<.5
+		if not is_predator():
+			next_submerge=float(FightProfiles.profile(fish_index).dive_gap)*.7*FightProfiles.tempo(fish_index)
+			next_submerge_kind=FightProfiles.profile(fish_index).dives[0]
+			var family: String=FightProfiles.SPECIES[fish_index][0]
+			if family in ["runner","cruiser","ambush"]:
+				var profile := FightProfiles.profile(fish_index)
+				var tempo := FightProfiles.tempo(fish_index)
+				phase=(float(profile.cycle)-float(profile.run))*tempo+.01
+				next_cue=float(profile.run)*tempo+.8
 		message = "Hook set! Reel steadily; ease off during a run."
 	elif state == State.WAITING:
 		lose("Too early. Wait for the float to dip.")
@@ -153,7 +224,8 @@ func gesture(direction: int) -> bool:
 	return state == State.FIGHT and cue >= 0 and cue == direction
 
 func counter_seconds() -> float:
-	return 2.0 + float(SPECIES[fish_index].get("power",1.0)) * .6
+	var base := (3.0 if is_predator() else 2.0) + float(SPECIES[fish_index].get("power",1.0)) * .6
+	return base if is_predator() else base*float(FightProfiles.profile(fish_index).hold)
 
 func _counter_tick(delta: float) -> void:
 	counter_active = cue >= 0 and counter_direction == cue
@@ -165,28 +237,41 @@ func _counter_tick(delta: float) -> void:
 	tension = clampf(tension-progress*.16,0.0,1.0)
 	if resistance <= .00001:
 		cue=-1
-		counter_rest=3.5+(1.0-stamina)*2.0
+		counter_rest=(2.5+(1.0-stamina)*1.5) if is_predator() else (3.5+(1.0-stamina)*2.0)
+		if not is_predator(): counter_rest*=float(FightProfiles.profile(fish_index).rest)*rng.randf_range(.92,1.08)
 		phase=0.0;next_cue=counter_rest
+		if not is_predator() and FightProfiles.SPECIES[fish_index][0] in ["runner","cruiser"]:
+			# Leave room for a complete run between directional counters.
+			next_cue=counter_rest+float(FightProfiles.profile(fish_index).cycle)*FightProfiles.tempo(fish_index)+.4
 		message="Fish tired! Reel it closer."
 
 
 func is_running() -> bool:
-	return state == State.FIGHT and submerge == Submerge.NONE and counter_rest <= 0.0 and fmod(phase, 9.0) > 5.5
+	if jump_time>0.0:return false
+	if is_predator(): return state==State.FIGHT and predator_run_time>0.0
+	var p := FightProfiles.profile(fish_index)
+	var tempo := FightProfiles.tempo(fish_index)
+	return state == State.FIGHT and submerge == Submerge.NONE and counter_rest <= 0.0 and fmod(phase, float(p.cycle)*tempo) > (float(p.cycle)-float(p.run))*tempo
 
 func _reset_submerge() -> void:
+	jump_time=0.0;jump_resolved=false;jump_tug=false
 	submerge=Submerge.NONE;submerge_time=0.0;next_submerge=9.0
 	next_submerge_kind=Submerge.PULL;reel_rate=0.0
+	predator_run_time=0.0;predator_notice_time=0.0;predator_opening_time=0.0
 
 func submerge_active() -> bool:
 	return state==State.FIGHT and submerge!=Submerge.NONE and submerge_time<=SUBMERGE_DURATION
 
 func effective_counter() -> bool:
 	if state!=State.FIGHT: return false
+	if jump_time>0.0:return counter_active and reel_rate<=.1
+	if is_predator() and is_running():return reel_rate<=.1
 	if submerge_active():
 		return reel_rate<=.1 if submerge==Submerge.PULL else reel_rate>=FAST_REEL_RATE
 	return counter_active
 
 func reel_instruction() -> String:
+	if jump_time>0.0:return "JUMP · STOP REELING · TUG " + ("LEFT" if cue==0 else "RIGHT")
 	if submerge==Submerge.PULL: return "FISH DIVING · STOP REELING"
 	if submerge==Submerge.SLACK: return "FISH RUSHING IN · REEL FASTER"
 	return "FISH RUNNING · STOP REELING" if is_running() else "REEL STEADILY"
@@ -195,7 +280,7 @@ func _submerge_tick(delta: float) -> void:
 	if submerge!=Submerge.NONE:
 		submerge_time=maxf(0.0,submerge_time-delta)
 		if submerge_time<=0.0:
-			submerge=Submerge.NONE;next_submerge=rng.randf_range(11.0,15.0)
+			submerge=Submerge.NONE;next_submerge=float(FightProfiles.profile(fish_index).dive_gap)*FightProfiles.tempo(fish_index)*rng.randf_range(.9,1.1)
 			phase=0.0;next_cue=maxf(next_cue,2.0)
 			message="Fish resurfaced. Reel steadily."
 		return
@@ -203,7 +288,93 @@ func _submerge_tick(delta: float) -> void:
 	# Do not overlap directional holds/runs, or start at already unsafe tension.
 	if next_submerge<=0.0 and cue<0 and counter_rest<=0.0 and not is_running() and tension>=.25 and tension<=.75:
 		submerge=next_submerge_kind
-		next_submerge_kind=Submerge.SLACK if submerge==Submerge.PULL else Submerge.PULL
+		dive_step+=1
+		var dives: Array=FightProfiles.profile(fish_index).dives
+		next_submerge_kind=dives[dive_step%dives.size()]
+		submerge_time=SUBMERGE_WARNING+SUBMERGE_DURATION
+		message=reel_instruction()
+
+func _try_jump() -> bool:
+	if not jumps_enabled or fish_index not in [10,11] or stamina<.55 or jump_attempts>=2 or next_jump>0.0:return false
+	if cue>=0 or submerge!=Submerge.NONE or is_running() or counter_rest>0.0 or distance<landing_distance+2 or tension<.25 or tension>.75:return false
+	next_jump=18.0; jump_attempts+=1
+	if rng.randf()>(.60 if fish_index==10 else .35):return false
+	_start_jump(rng.randi_range(0,1))
+	return true
+
+func _start_jump(direction: int) -> void:
+	jump_time=JUMP_WARNING+JUMP_AIR;jump_resolved=false;jump_tug=false;jump_count+=1
+	cue=clampi(direction,0,1);resistance=1.0;counter_active=false;counter_direction=-1
+	message="Fish rising to jump! " + reel_instruction()
+
+func tug(direction: int) -> void:
+	if state==State.FIGHT and jump_time>0.0 and jump_time<=JUMP_AIR and direction==cue:
+		jump_tug=true
+
+func _jump_tick(delta: float) -> void:
+	counter_active=jump_tug and reel_rate<=.1 and not jump_resolved
+	jump_tug=false;counter_direction=-1
+	if counter_active:
+		stamina=maxf(0.0,stamina-.28);jump_resolved=true;resistance=0.0
+		message="Jump countered! Fish exhausted."
+	jump_time=maxf(0.0,jump_time-delta)
+	if jump_time<=0.0:
+		if not jump_resolved:
+			stamina=minf(1.0,stamina+.25);message="Missed jump — fish recovered strength."
+		cue=-1;counter_active=false;counter_rest=3.0;next_cue=3.0;phase=0.0
+		next_submerge=maxf(next_submerge,4.0)
+
+func _try_predator(delta: float, rate: float, previous_distance: float) -> void:
+	if not predator_encounters_enabled or predator_checked or is_predator() or state!=State.FIGHT: return
+	var predator := predator_for_prey(fish_index, location_id)
+	if predator<0: predator_checked=true;return
+	# Count actual active retrieval, not waiting, running, paused time or repeated rolls.
+	if rate<.2 or is_running() or submerge!=Submerge.NONE or tension<=SLACK_LIMIT: return
+	var progress := maxf(0.0,previous_distance-distance)
+	if progress<=0.0:return
+	retrieval_time+=delta;retrieved_metres+=progress
+	if retrieval_time<6.0 or retrieved_metres<2.0 or distance<landing_distance+3.0:return
+	predator_checked=true
+	if encounter_rng.randf()<PREDATOR_CHANCE: _takeover(predator)
+
+func _takeover(predator: int) -> void:
+	if state!=State.FIGHT or is_predator() or predator_for_prey(fish_index,location_id)!=predator:return
+	rebaited_from=fish_index;fish_index=predator;takeover_count+=1;predator_checked=true
+	stamina=1.0 # Preserve the prey fight’s tension and accumulated line strain.
+	cue=-1;cue_time=0.0;counter_direction=-1;counter_active=false;resistance=1.0
+	failed_counters=0;phase=0.0;counter_rest=0.0
+	_reset_submerge();predator_step=1;next_cue=0.0;predator_notice_time=.6
+	predator_opening_time=7.0 if predator==WELS else 9.0
+	predator_run_time=predator_opening_time
+	message="%s took your %s!\nSTOP REELING — powerful run!" % [SPECIES[predator].name,SPECIES[rebaited_from].name]
+
+func _predator_sequence_tick(delta: float) -> void:
+	if submerge!=Submerge.NONE:
+		submerge_time=maxf(0.0,submerge_time-delta)
+		if submerge_time<=0.0:
+			submerge=Submerge.NONE;next_cue=2.5;counter_rest=2.5
+			message="Predator resurfaced. Reel it closer."
+		return
+	if predator_run_time>0.0:
+		predator_run_time=maxf(0.0,predator_run_time-delta)
+		if predator_run_time<=0.0:next_cue=2.5;counter_rest=2.5;message="Run ended. Recover some line."
+		return
+	if cue>=0 or counter_rest>0.0:return
+	next_cue-=delta
+	if next_cue>0.0:return
+	var sequence: Array=PREDATOR_SEQUENCES[fish_index]
+	var action: int=sequence[predator_step%sequence.size()]
+	# Recovery is never cut short by a dive at unsafe tension.
+	if action>=3 and (tension<.25 or tension>.75):return
+	predator_step+=1
+	if action<3:
+		cue=action;cue_time=8.0;resistance=1.0
+		message="Large predator turning — hold the counter."
+	elif action==5:
+		predator_run_time=4.5 if fish_index==WELS else 6.0
+		message="Powerful run! Stop reeling."
+	else:
+		submerge=Submerge.PULL if action==3 else Submerge.SLACK
 		submerge_time=SUBMERGE_WARNING+SUBMERGE_DURATION
 		message=reel_instruction()
 
@@ -230,32 +401,57 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 					if roll <= 0.0:
 						fish_index = index
 						break
-				message = "Watch the float. A quick lift sets the hook."
+				message = "Drift naturally. Mend upstream (left) to reduce drag." if is_fly_fishing() else "Watch the float. A quick lift sets the hook."
 		State.WAITING:
-			timer -= delta
+			if is_fly_fishing():
+				fly.drift(delta,reel,location_id,bait==1)
+				if fly.age>32.0 or fly.start.z+fly.offset.z> -4.0:
+					reset();message="Drift finished. Cast upstream again.";return
+				timer-=delta*fly.quality
+			else:timer -= delta
 			if timer <= 0.0:
 				state = State.BITE
-				timer = 1.8
-				message = "BITE! Lift the rod now!"
+				timer = (1.25 if bait==0 else 1.6) if is_fly_fishing() else 1.8
+				message = "TAKE! Lift the rod now!" if is_fly_fishing() else "BITE! Lift the rod now!"
 		State.BITE:
 			timer -= delta
 			if timer <= 0.0:
 				lose("Missed the bite. Cast again.")
 		State.FIGHT:
 			reel_rate=clampf(reel,0.0,2.0)
+			if jump_time>0.0:
+				_jump_tick(delta)
+				return
+			next_jump=maxf(0.0,next_jump-delta)
+			if _try_jump():return
+			if predator_notice_time>0.0:
+				predator_notice_time=maxf(0.0,predator_notice_time-delta)
+			predator_opening_time=maxf(0.0,predator_opening_time-delta)
+			var previous_distance := distance
 			_counter_tick(delta)
 			if counter_rest > 0.0: counter_rest = maxf(0.0, counter_rest - delta)
-			_submerge_tick(delta)
+			if _try_jump():return
+			if is_predator(): _predator_sequence_tick(delta)
+			else: _submerge_tick(delta)
 			if counter_rest<=0.0 and submerge==Submerge.NONE: phase += delta
 			var power: float = SPECIES[fish_index].get("power", 1.0)
 			var running := is_running()
 			var rate := clampf(reel, 0.0, 2.0)
 			var durability: float = tackle.rod().durability
 			var escape_load := (0.025 + stamina * 0.065) * power if running or cue >= 0 else 0.0
+			if is_predator() and counter_active: escape_load *= .45
 			# Fatigued fish pull less; upgraded lines carry more load before the red band.
-			var load := rate * (0.17 if running else 0.0) + maxf(rod_lift, 0.0) * 0.035 + escape_load
+			var current_load := minf(.045,fly.current_speed*.035) if is_fly_fishing() else 0.0
+			var load := current_load + rate * (0.17 if running else 0.0) + maxf(rod_lift, 0.0) * 0.035 + escape_load
 			# Keep enough reel response to recover slack even with the strongest rod.
 			var change := delta * (rate * 0.12 + load / sqrt(durability) - (0.065 if running else 0.075))
+			if is_predator() and running and rate<=.1:
+				change=delta*(.62-tension)*.6
+			if predator_opening_time>0.0:
+				# A brief reaction window softens the shock but never resets an overloaded line.
+				if rate<=.1: change=delta*(.62-tension)*.9
+				elif predator_notice_time>0.0: change=delta*.10/durability
+				else: change=delta*(.15+rate*.85)/sqrt(durability)
 			if submerge_active():
 				# A deep pull loads a wound reel; a fish rushing toward us creates slack.
 				# Both remain recoverable with the requested reel response on every rod.
@@ -265,9 +461,11 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 					change=delta*(rate*.22-.30)
 			# Bound the load buildup so warning haptics give time to ease off.
 			var limit := MAX_SUBMERGE_CHANGE if submerge_active() else MAX_TENSION_RISE
+			if predator_opening_time>0.0: limit=1.5
 			tension += clampf(change, -delta * (MAX_SUBMERGE_CHANGE if submerge_active() else .18), delta * limit)
 			if running:
-				distance += delta * 0.35 * stamina * power
+				distance += delta * (1.0 if is_predator() else float(FightProfiles.profile(fish_index).speed)) * stamina * power
+				if is_predator():distance=minf(distance,cast_distance+18.0)
 			elif tension > 0.12:
 				distance -= delta * rate * (1.05 + (1.0 - stamina) * 0.9) / power
 			stamina = maxf(0.0, stamina - delta * rate * 0.8 * float(tackle.rod().fatigue) / float(SPECIES[fish_index].endurance))
@@ -279,12 +477,16 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 				danger_time += delta
 			else:
 				danger_time = 0.0
-			if danger_time > (STRAIN_GRACE * sqrt(durability) if tension > 0.5 else 1.8):
+			var strain_grace := .45 if predator_opening_time>0.0 else STRAIN_GRACE
+			if danger_time > (strain_grace * sqrt(durability) if tension > 0.5 else 1.8):
 				lose("Line snapped. Ease off the reel." if tension > 0.5 else "The hook slipped. Keep some tension.")
 				return
-			if submerge==Submerge.NONE: next_cue -= delta
-			if submerge==Submerge.NONE and cue < 0 and next_cue <= 0.0:
-				cue = rng.randi_range(0, 2)
+			if not is_predator() and submerge==Submerge.NONE: next_cue -= delta
+			if not is_predator() and submerge==Submerge.NONE and cue < 0 and next_cue <= 0.0:
+				var directions: Array=FightProfiles.profile(fish_index).directions
+				cue = directions[fight_step%directions.size()]
+				if mirror_fight and cue<2: cue=1-cue
+				fight_step+=1
 				cue_time = COUNTER_WINDOW
 				resistance = 1.0
 			if cue >= 0:
@@ -298,7 +500,9 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 					cue = -1
 					next_cue = 3.0
 					message = "Missed counter (%d/%d). Keep control of the fish." % [failed_counters, MAX_FAILED_COUNTERS]
-			if distance <= landing_distance and stamina <= 0.35:
+			_try_predator(delta,rate,previous_distance)
+			if predator_notice_time>0.0:return
+			if distance <= landing_distance and stamina <= (.15 if is_predator() else .35):
 				state = State.LANDED
 				_reset_submerge()
 				catches += 1
@@ -306,6 +510,7 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 				var size_factor := rng.randf_range(0.85, 1.15)
 				fish["length"] *= size_factor
 				fish["weight"] *= pow(size_factor, 3.0)
+				if rebaited_from>=0:fish["bait_fish_latin"]=SPECIES[rebaited_from].latin
 				fish["location_id"] = location_id
 				fish["location_name"] = location_name
 				last_reward = Tackle.reward(SPECIES[fish_index], float(fish.length))
@@ -326,8 +531,10 @@ func lose(reason: String) -> void:
 	message = reason
 
 func reset() -> void:
+	fly.reset()
 	_reset_submerge()
 	state = State.READY
+	predator_checked=false;retrieval_time=0.0;retrieved_metres=0.0;rebaited_from=-1;predator_step=0
 	failed_counters = 0
 	danger_time = 0.0
 	danger_side = 0

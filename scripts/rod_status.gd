@@ -6,6 +6,7 @@ var label: Label3D
 var remaining := 0.0
 var previous_bait := -1
 var previous_marine := false
+var previous_fly := false
 func _ready() -> void:
 	bait_visual=preload("res://scripts/bait_visual.gd").new();add_child(bait_visual)
 	label=Label3D.new();add_child(label)
@@ -16,10 +17,12 @@ func _ready() -> void:
 	update_bait()
 func update_bait() -> void:
 	var marine: bool = game_root.game.is_marine_location(game_root.game.location_id)
-	if previous_bait==game_root.game.bait and previous_marine==marine:return
+	var fly:bool=game_root.game.is_fly_fishing()
+	if previous_bait==game_root.game.bait and previous_marine==marine and previous_fly==fly:return
+	previous_fly=fly
 	previous_marine=marine
 	previous_bait=game_root.game.bait
-	bait_visual.set_bait(previous_bait,marine)
+	bait_visual.set_bait(previous_bait,marine,fly)
 	label.text=game_root.game.bait_name(previous_bait)
 func show_bait() -> void:
 	update_bait();label.text=game_root.game.bait_name(game_root.game.bait)

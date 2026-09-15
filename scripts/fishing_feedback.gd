@@ -6,9 +6,15 @@ var reel_rate:=0.0
 var haptics=preload("res://scripts/line_haptics.gd").new()
 var previous:=S.State.READY
 var cue_previous:=-1
+var takeover_previous:=0
+var jump_previous:=0
+var jump_was_active:=false
 var clock:=0.0
 var splash_wait:=0.0
 var burst_age:=2.0
+var takeover_burst_age:=2.0
+var takeover_surface: MeshInstance3D
+var takeover_fx: ShaderMaterial
 var escape:=Vector3.ZERO
 var reel_player: AudioStreamPlayer3D
 var cast_player: AudioStreamPlayer3D
@@ -21,7 +27,7 @@ var last_splash:=0
 var splash_streams: Array[AudioStreamWAV]=[]
 var surface: MeshInstance3D
 var water_fx: ShaderMaterial
-var events: Dictionary={"cast":0,"splash":0,"land":0,"ripple":0}
+var events: Dictionary={"cast":0,"splash":0,"land":0,"ripple":0,"predator":0}
 func setup(root: Node) -> void:
  game_root=root
  cast_player=player("cast");reel_player=player("reel")
@@ -36,6 +42,10 @@ func setup(root: Node) -> void:
  surface=MeshInstance3D.new();var plane:=PlaneMesh.new();plane.size=Vector2(8,8);surface.mesh=plane
  water_fx=ShaderMaterial.new();water_fx.shader=load("res://assets/environment/fish_wake.gdshader")
  surface.material_override=water_fx;surface.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(surface);surface.hide()
+ takeover_surface=MeshInstance3D.new();takeover_surface.mesh=plane
+ takeover_fx=water_fx.duplicate();takeover_surface.material_override=takeover_fx
+ takeover_surface.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+ add_child(takeover_surface);takeover_surface.hide()
 func player(kind: String) -> AudioStreamPlayer3D:
  var p:=AudioStreamPlayer3D.new();p.stream=load("res://assets/audio/fishing/"+kind+".wav");p.unit_size=5;p.max_distance=65;p.volume_db=-3;add_child(p);return p
 func cast_swish() -> void:
@@ -72,18 +82,40 @@ func _process(delta: float) -> void:
   game_root.left.trigger_haptic_pulse("haptic",0.0,reel_pulse.strength,reel_pulse.duration,0.0)
  clock+=delta
  reel_player.global_position=game_root.crank.global_position
- if g.state==S.State.FIGHT and reel_rate>.03:
+ if (g.state==S.State.FIGHT or (g.is_fly_fishing() and g.state==S.State.WAITING)) and reel_rate>.03:
   reel_player.pitch_scale=clampf(reel_rate,.4,2.0)
   if not reel_player.playing:reel_player.play()
  else:reel_player.stop()
  if g.state!=previous:
   if g.state==S.State.WAITING:
    splash(game_root.bobber.global_position,false,true);splash_wait=1.1
+  elif g.state==S.State.BITE and g.is_fly_fishing():
+   ripple(game_root.bobber.global_position)
   elif g.state==S.State.FIGHT:
    ripple(game_root.bobber.global_position);splash_wait=1.4
   elif g.state==S.State.LANDED:
    splash(surface.global_position,true);burst_age=0
   previous=g.state
+ if g.jump_count!=jump_previous:
+  ripple(game_root.bobber.global_position);jump_previous=g.jump_count
+ if jump_was_active and g.jump_time<=0 and g.state==S.State.FIGHT:
+  splash(game_root.bobber.global_position)
+ jump_was_active=g.jump_time>0
+ if g.takeover_count!=takeover_previous:
+  if g.state==S.State.FIGHT:
+   splash(game_root.bobber.global_position);ripple(game_root.bobber.global_position)
+   var impact=splashes[(splash_slot+2)%splashes.size()]
+   impact.volume_db=-1;impact.max_db=-1;impact.unit_size=7.0
+   takeover_burst_age=0.0
+   takeover_surface.global_position=game_root.bobber.global_position
+   takeover_surface.global_position.y=game_root.water_level+.055
+   takeover_fx.set_shader_parameter("burst",true)
+   takeover_fx.set_shader_parameter("strength",1.8)
+   splash_wait=2.5;events.predator+=1
+  takeover_previous=g.takeover_count
+ takeover_burst_age+=delta
+ takeover_surface.visible=takeover_burst_age<1.8
+ takeover_fx.set_shader_parameter("clock",takeover_burst_age)
  if g.state==S.State.FIGHT:
   surface.show();surface.global_position=game_root.bobber.global_position;surface.global_position.y=game_root.water_level+.045
   escape=game_root.fish_escape_direction()

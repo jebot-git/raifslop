@@ -11,6 +11,9 @@ func run() -> void:
 	var meshes: Array=[];var insect_kinds: Array=[];var flight_speeds: Array=[]
 	for entry in g.Locations.CATALOG:
 		g.game.reset();check(g._select_location(entry.id,false),"Visit "+entry.name)
+		if entry.id in ["meadow_bend","boulder_run"]:
+			check(g.foreground.name=="RiverForeground","River uses its own procedural scenery")
+			continue
 		var life=g.foreground.get_node("EnvironmentalLife")
 		check(life.bird_count==life.birds.multimesh.instance_count and life.insect_count==life.insects.multimesh.instance_count,"Wildlife counts match habitat: "+entry.id)
 		meshes.append(life.birds.multimesh.mesh.get_aabb().size)
@@ -40,7 +43,7 @@ func run() -> void:
 		check(g.game.state==g.Session.State.CASTING and is_equal_approx(g.cast_target.y,g.water_level+.05),"Float cast follows selected water height: "+entry.id)
 		g.game.state=g.Session.State.WAITING;g._update_line()
 		check(absf(g.bobber.position.y-g.water_level-.05)<.03,"Waiting float rests at selected water surface")
-	check(meshes.size()==g.Locations.CATALOG.size() and meshes[0]!=meshes[1] and meshes[1]!=meshes[2] and meshes[2]!=meshes[3],"Bird species have distinct silhouettes")
+	check(meshes.size()==preload("res://scripts/environment_life.gd").PROFILES.size() and meshes[0]!=meshes[1] and meshes[1]!=meshes[2] and meshes[2]!=meshes[3],"Bird species have distinct silhouettes")
 	check(insect_kinds==["fly","none","midge","dragonfly","none","none"] and flight_speeds[0]!=flight_speeds[1] and flight_speeds[2]!=flight_speeds[3],"Waters vary insect species and flight speeds")
 	g.queue_free();await process_frame;await create_timer(.3).timeout
 	print("WATER_WILDLIFE_RESULT ",failures);quit(0 if failures.is_empty() else 1)

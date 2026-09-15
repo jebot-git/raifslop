@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Wels catfish",
+    "latin": "Silurus glanis",
+    "model": "assets/models/fish/wels_catfish.glb",
+    "sha256": "dccdf298997b8f3831f7269d116a19e74a3e4935cc39d3e72a5429390c0f6113",
+    "bytes": 2579532
+  },
+  {
+    "name": "Bronze whaler shark",
+    "latin": "Carcharhinus brachyurus",
+    "model": "assets/models/fish/bronze_whaler.glb",
+    "sha256": "0f1ef74eb5198077f81a7d1997f9c3e21d38e0882a49685f33100e1bff58c255",
+    "bytes": 2222376
+  }
+]

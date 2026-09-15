@@ -11,6 +11,7 @@ func check(condition: bool, message: String) -> void:
 
 func _initialize() -> void:
 	var s = Session.new()
+	s.predator_encounters_enabled=false
 	s.rng.seed = 42
 	s.select_bait(2)
 	s.cast(100)
@@ -88,17 +89,18 @@ func _initialize() -> void:
 			seen[s.fish_index] = true
 			pools_valid = pools_valid and s.fish_index in Session.species_for_bait(bait_index, s.location_id)
 	check(pools_valid, "Every cast must choose a species compatible with its bait")
-	check(seen.size() == Session.species_for_location(s.location_id).size(), "All local species must be reachable through normal casting")
+	check(seen.size() == Session.species_for_location(s.location_id, false).size(), "All local species must be reachable through normal casting")
 	# Full fights verify that every power profile can be landed at maximum cast range.
 	for index in range(Session.SPECIES.size()):
 		var species: Dictionary = Session.SPECIES[index]
 		var fight = Session.new()
+		fight.predator_encounters_enabled=false
 		fight.rng.seed = 1234 + index
 		fight.fish_index = index
 		fight.state = Session.State.BITE
 		fight.distance = 24.0
 		fight.strike()
-		for frame in range(18000):
+		for frame in range(54000):
 			if fight.state != Session.State.FIGHT: break
 			if fight.cue >= 0: fight.gesture(fight.cue)
 			var rate := 0.0 if fight.is_running() else 1.0
