@@ -629,40 +629,40 @@
         "position": [
           0,
           -0.625,
-          3
+          1.5
         ],
         "size": [
-          10,
+          5,
           1.25,
-          12
+          6
         ],
         "yaw": 0,
         "role": "floor"
       },
       {
         "position": [
-          -5.0,
+          -2.5,
           0.4749999940395355,
-          3.0
+          1.5
         ],
         "size": [
           0.11,
           1.05,
-          12.08
+          6.08
         ],
         "yaw": 0.0,
         "role": "barrier"
       },
       {
         "position": [
-          5.0,
+          2.5,
           0.4749999940395355,
-          3.0
+          1.5
         ],
         "size": [
           0.11,
           1.05,
-          12.08
+          6.08
         ],
         "yaw": 0.0,
         "role": "barrier"
@@ -671,12 +671,12 @@
         "position": [
           0.0,
           0.4749999940395355,
-          9.0
+          4.5
         ],
         "size": [
           0.11,
           1.05,
-          10.08
+          5.08
         ],
         "yaw": 1.5707963267948966,
         "role": "barrier"
@@ -685,21 +685,21 @@
         "position": [
           0.0,
           0.375,
-          -3.0
+          -1.5
         ],
         "size": [
           0.11,
           0.85,
-          10.08
+          5.08
         ],
         "yaw": 1.5707963267948966,
         "role": "barrier"
       },
       {
         "position": [
-          -3,
+          0,
           0.48,
-          6
+          3
         ],
         "size": [
           1.85,
@@ -707,29 +707,13 @@
           0.7
         ],
         "yaw": 0,
-        "role": "seat",
-        "enabled": false
-      },
-      {
-        "position": [
-          3,
-          0.48,
-          6
-        ],
-        "size": [
-          1.85,
-          1.0,
-          0.7
-        ],
-        "yaw": 0,
-        "role": "seat",
-        "enabled": false
+        "role": "seat"
       }
     ],
-    "triangles": 3944,
+    "triangles": 3148,
     "shore_connected": true,
     "material_batches": 5,
-    "bytes": 4010812
+    "bytes": 3960660
   },
   "gray_pier": {
     "model": "res://assets/models/locations/lit/gray_pier.glb",
@@ -1476,10 +1460,10 @@
         "role": "seat"
       }
     ],
-    "triangles": 12300,
+    "triangles": 20760,
     "shore_connected": true,
     "material_batches": 7,
-    "bytes": 8178940
+    "bytes": 9893696
   },
   "blouberg_sunrise_2": {
     "model": "res://assets/models/locations/lit/blouberg_sunrise_2.glb",

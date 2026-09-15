@@ -70,6 +70,7 @@ def audit(path):
     for required in ['ASSET_CREDITS.md','assets/models/locations/manifest.json',
                      'scripts/voice/shoulder_radio.gd','scripts/network/threaded_peer.gd',
                      'scripts/fly_fishing.gd','scripts/hooked_fish.gd','scripts/river_foreground.gd',
+                     'scripts/ui/vr_item_list.gd','assets/models/rods/fly_handle.glb',
                      'assets/models/fish/wels_catfish.glb','assets/models/fish/bronze_whaler.glb',
                      'assets/environment/rivers/river_shrubs.png','assets/environment/rivers/river_alder.png',
                      'assets/environment/rivers/river_bank.png',
@@ -78,6 +79,11 @@ def audit(path):
                      'assets/audio/ambience/meadow_bend.ogg','assets/audio/ambience/boulder_run.ogg',
                      'assets/avatars/vita.vrm','assets/avatars/victoria.vrm','assets/avatars/sharkperson.vrm']:
         assert required in names or required in remaps, ('Missing runtime file', required)
+    for tier in ['willow', 'reed', 'heron', 'kingfisher']:
+        for mode in ['', '_fly']:
+            for state in ['', '_folded']:
+                required = f'assets/models/rods/{tier}{mode}{state}.glb'
+                assert required in names or required in remaps, ('Missing tackle model', required)
     panoramas = {}
     for source, target in remaps.items():
         if not source.endswith(('.hdr','.exr')): continue

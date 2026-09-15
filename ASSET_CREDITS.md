@@ -5,7 +5,7 @@ Downloaded 9 September 2026. Keep these credits with distributed builds.
 | Asset | Creator / source | License | Changes |
 |---|---|---|---|
 | Lakeside panorama | [Poly Haven — Lakeside](https://polyhaven.com/a/lakeside) | [CC0](https://polyhaven.com/license) | Original 2K HDR used as Godot sky |
-| Boulder 01 | [Rico Cilliers / Poly Haven](https://polyhaven.com/a/boulder_01) | [CC0](https://polyhaven.com/license) | Imported through Blender MCP; decimated to about 6.6k faces; 1K textures; GLB export |
+| Boulder 01 | [Rico Cilliers / Poly Haven](https://polyhaven.com/a/boulder_01) | [CC0](https://polyhaven.com/license) | Imported through Blender MCP; coastal boulders reuse the scan through a closed 508-face proxy with its photographic color baked to a 1K texture; GLB export |
 | European perch | [animalica / Sketchfab](https://sketchfab.com/3d-models/european-perch-fecae0f415b2400aadf298374797f8fc) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) — listed as CC Attribution in Sketchfab download metadata | Normalized to 0.35 m; reduced to about 18.9k faces; identical UV sets merged; textures resized to 2K; GLB export |
 
 The downloaded perch is a realistically shaped model, not a verified biological scan. The scan-based scenery component is Boulder 01. The NC-licensed alternate perch search result was not used. Generated dock/rod/stand-in geometry, shaders, UI and cue sounds are original to this prototype. System fonts use DejaVu at runtime and are not copied into the repository.
@@ -91,7 +91,7 @@ The thirteen current carp, pike and later-species GLBs supersede the earlier pro
 
 ## Rod reconstruction, native 4K skies and wildlife (2026-09-14)
 
-Four generic spinning rod models, cork grain, animated bird/insect meshes and app icon are original authored artwork. Blender source and real-tackle references: [SCENERY_DETAIL.md](docs/SCENERY_DETAIL.md). All four runtime panoramas now retain native 4K detail from the same credited Poly Haven CC0 sources; Lakeside 4K was downloaded from `https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/lakeside_4k.hdr`. Lighting remains subdued. No synthetic stereo images or Gaussian scan assets are included.
+Four tackle tiers with spinning and fly-reel variants, cork grain, animated bird/insect meshes and app icon are original authored artwork. Blender source and real-tackle references: [SCENERY_DETAIL.md](docs/SCENERY_DETAIL.md). The six runtime panoramas retain native 8K detail from the credited Poly Haven CC0 sources. Lighting remains subdued. No synthetic stereo images or Gaussian scan assets are included.
 
 Godot OpenXR Vendors 5.1.0 is bundled for platform support, with SDK/loader licenses retained in `addons/godotopenxrvendors/`. The inherited FPSloppa Linux face-source compatibility patch and build provenance are retained alongside it and in `tools/patches/`.
 

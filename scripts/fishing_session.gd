@@ -401,7 +401,7 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 					if roll <= 0.0:
 						fish_index = index
 						break
-				message = "Drift naturally. Mend upstream (left) to reduce drag." if is_fly_fishing() else "Watch the float. A quick lift sets the hook."
+				message = "Drift naturally. Sweep upstream against the current to mend." if is_fly_fishing() else "Watch the float. A quick lift sets the hook."
 		State.WAITING:
 			if is_fly_fishing():
 				fly.drift(delta,reel,location_id,bait==1)

@@ -6,6 +6,27 @@ func check(ok:bool,label:String):
  if not ok:failures.append(label);push_error(label)
 func _initialize():run.call_deferred()
 func run():
+ var mend_input=F.new()
+ mend_input.sample_mend(Vector3.ZERO,Basis.IDENTITY,.02)
+ check(mend_input.sample_mend(Vector3(-.02,0,0),Basis.IDENTITY,.02)==0,"Brief velocity spike does not mend")
+ var accepted:=0
+ for i in range(2,20):
+  if mend_input.sample_mend(Vector3(-i*.02,0,0),Basis.IDENTITY,.02)==-1:accepted+=1
+ check(accepted==1,"One deliberate sweep yields one mend")
+ mend_input.sample_mend(Vector3(-.38,0,0),Basis.IDENTITY,.02)
+ accepted=0
+ for i in range(1,14):
+  if mend_input.sample_mend(Vector3(-.38+i*.02,0,0),Basis.IDENTITY,.02)==1:accepted+=1
+ check(accepted==1,"Settling rearms a downstream sweep")
+ mend_input.reset_mend_gesture();mend_input.sample_mend(Vector3.ZERO,Basis.IDENTITY,.02)
+ check(mend_input.sample_mend(Vector3.ZERO,Basis(Vector3.UP,PI/2),.02)==0,"Turning without tracked hand movement cannot mend")
+ check(mend_input.sample_mend(Vector3(-2,0,0),Basis.IDENTITY,.02)==0,"Tracking teleport cannot mend")
+ var upstream=F.new();var untouched=F.new();upstream.start=Vector3(0,0,-11);untouched.start=upstream.start
+ upstream.drag=.8;untouched.drag=.8;upstream.mend(-1)
+ var drag_after:float=upstream.drag
+ check(not upstream.mend(-1) and upstream.drag==drag_after,"Mend cooldown rejects repeats")
+ upstream.drift(.3,0,"meadow_bend");untouched.drift(.3,0,"meadow_bend")
+ check(upstream.quality>untouched.quality and upstream.mend_bend()<-.8,"Accepted upstream mend improves the same drift and visibly bows line")
  var clean=F.new();clean.start=Vector3(0,0,-11)
  var dragged=F.new();dragged.start=clean.start
  for i in 500:
@@ -22,7 +43,7 @@ func run():
  check(input.strokes==1 and input.cast_power()>8,"Back/forward stroke adds cast distance")
  input.begin_cast();input.stroke(.2,-1);input.stroke(2,0);input.stroke(.1,1)
  check(input.strokes==0,"Overlong backcast misses the forward timing window")
- check(input.strip(Vector3.ZERO,true,.02)==0 and input.strip(Vector3(0,0,.1),true,.05)>0,"Left-hand pull strips line")
+ check(input.strip(Vector3.ZERO,1,.02,Vector3.ZERO,Vector3(0,0,-.3))==0 and input.strip(Vector3(0,0,.1),1,.05,Vector3.ZERO,Vector3(0,0,-.3))>0,"Left-hand pull strips line")
  for id in ["meadow_bend","boulder_run"]:
   for bait in 2:
    var s=S.new();s.location_id=id;s.rng.seed=6;s.select_bait(bait);s.cast(12);s.tick(1,0,0)
@@ -40,6 +61,8 @@ func run():
  for id in ["meadow_bend","boulder_run"]:
   g.game.reset();check(g._select_location(id,false),"River travel "+id)
   await physics_frame
+  g.rod_visual.equip(3,true)
+  check(g.rod_visual.fly_mode and g.rod_visual.model!=null,"Fly reel equips in river")
   var ground=g.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(0,2,1),Vector3(0,-2,1),1))
   check(not ground.is_empty(),"River spawn has solid ground")
   var shrubs=g.foreground.get_node("LayeredRiverShrubs")
@@ -49,6 +72,10 @@ func run():
   check(g.game.state==S.State.CASTING,"River bank allows real cast "+g.game.message)
   check(g.bobber.visible and g.bobber.scale.x<.4,"Nymph uses small strike indicator")
   check(g.rod_status.bait_visual.find_child("NymphBead",true,false)!=null,"Nymph model equipped")
+  var prior_state:int=g.game.state;g.game.state=S.State.WAITING;g.game.fly.drag=.8
+  check(g._mend_fly(-1) and g.rod_status.remaining>0 and g.rod_status.label.text.contains("Upstream"),"Mending confirms success above the rod")
+  check(not g._mend_fly(-1),"Rejected mend does not retrigger feedback")
+  g.game.state=prior_state
   if "--capture" in OS.get_cmdline_user_args():
    g.hud.hide();g.rod.hide();g.bobber.hide();g.rod_status.hide();g.avatar.hide();g.line_mesh.clear_surfaces()
    var camera:=Camera3D.new();g.add_child(camera);camera.current=true

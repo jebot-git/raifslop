@@ -46,6 +46,18 @@ func run() -> void:
 		check(g.water_material.get_shader_parameter("deep_color") == entry.water, "Location water colour is applied")
 		check(g.get_child_count() == count and g.foreground.get_meta("location_id") == entry.id and g.motor.global_position == g.foreground.get_meta("spawn"), "Travel replaces foreground and places player at safe arrival")
 		check(g.game.journal == journal_before, "Travel preserves existing catches")
+		if entry.id in ["lakeside", "gray_pier", "bell_park_pier"]:
+			var distant_vertices := 0
+			for node in g.foreground.find_children("*", "MeshInstance3D", true, false):
+				for surface in node.mesh.get_surface_count():
+					var material: Material = node.mesh.surface_get_material(surface)
+					if not material or not material.resource_name.begins_with("FG_bank"): continue
+					for vertex in node.mesh.surface_get_arrays(surface)[Mesh.ARRAY_VERTEX]:
+						var point: Vector3 = node.global_transform * vertex
+						if maxf(absf(point.x),point.z) >= 100:
+							distant_vertices += 1
+							check(point.y <= -.399, "Far land meets the water horizon: " + entry.id)
+			check(distant_vertices > 0, "Distant land geometry exercised: " + entry.id)
 		var preview: Texture2D = load(entry.preview)
 		check(preview.get_width() <= 768, "Menu uses a small preview")
 		if "--capture" in OS.get_cmdline_user_args():

@@ -3,6 +3,34 @@ from pathlib import Path
 import json, struct
 import numpy as np
 ROOT=Path(__file__).resolve().parents[1]
+def compact(doc, binary):
+    """Discard the original unfolded accessor payload after generating folded sections."""
+    assert not doc.get('skins') and not doc.get('animations')
+    used = set()
+    for mesh in doc['meshes']:
+        for primitive in mesh['primitives']:
+            used.update(primitive['attributes'].values())
+            if 'indices' in primitive: used.add(primitive['indices'])
+    accessors = sorted(used); remap = {old: new for new, old in enumerate(accessors)}
+    for mesh in doc['meshes']:
+        for primitive in mesh['primitives']:
+            primitive['attributes'] = {key: remap[value] for key, value in primitive['attributes'].items()}
+            if 'indices' in primitive: primitive['indices'] = remap[primitive['indices']]
+    doc['accessors'] = [doc['accessors'][i] for i in accessors]
+    refs = doc['accessors'] + [image for image in doc.get('images', []) if 'bufferView' in image]
+    assert all('sparse' not in ref for ref in refs)
+    views = sorted({ref['bufferView'] for ref in refs}); remap = {old: new for new, old in enumerate(views)}
+    packed = bytearray(); compact_views = []
+    for index in views:
+        view = doc['bufferViews'][index].copy()
+        start = view.get('byteOffset', 0); data = binary[start:start+view['byteLength']]
+        assert len(data) == view['byteLength']
+        packed.extend(b'\0' * (-len(packed) % 4)); view['byteOffset'] = len(packed)
+        packed.extend(data); compact_views.append(view)
+    for ref in refs: ref['bufferView'] = remap[ref['bufferView']]
+    doc['bufferViews'] = compact_views
+    doc['buffers'] = [{'byteLength': len(packed)}]
+    return packed
 def fold(path):
     raw=path.read_bytes();size=struct.unpack_from('<I',raw,12)[0];doc=json.loads(raw[20:20+size]);binary=bytearray(raw[28+size:])
     node=doc['nodes'][0];x,y,z,w=node.get('rotation',[0,0,0,1])
@@ -43,7 +71,9 @@ def fold(path):
         result=np.asarray(result)
         primitives.append({'attributes':{'POSITION':store(result[:,:3],'VEC3'),'NORMAL':store(result[:,3:6],'VEC3'),'TEXCOORD_0':store(result[:,6:],'VEC2')},'material':primitive['material'],'mode':4})
     doc['meshes']=[{'name':path.stem+' folded','primitives':primitives}];doc['nodes']=[{'mesh':0,'name':'Folded rod'}];doc['scenes']=[{'nodes':[0]}];doc['scene']=0;doc['buffers']=[{'byteLength':len(binary)}]
+    binary=compact(doc,binary)
     encoded=json.dumps(doc,separators=(',',':')).encode();encoded+=b' '*((-len(encoded))%4);binary.extend(b'\0'*((-len(binary))%4))
     output=struct.pack('<III',0x46546c67,2,28+len(encoded)+len(binary))+struct.pack('<II',len(encoded),0x4e4f534a)+encoded+struct.pack('<II',len(binary),0x004e4942)+binary
     path.with_name(path.stem+'_folded.glb').write_bytes(output);print(path.stem,'folded',len(output),'bytes')
-for name in ['willow','reed','heron','kingfisher']:fold(ROOT/'assets/models/rods'/f'{name}.glb')
+for name in ['willow','reed','heron','kingfisher']:
+    for suffix in ['', '_fly']:fold(ROOT/'assets/models/rods'/f'{name}{suffix}.glb')

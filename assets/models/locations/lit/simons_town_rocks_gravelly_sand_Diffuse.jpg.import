@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://uv4yec5f5xt0"
-path="res://.godot/imported/simons_town_rocks_gravelly_sand_Diffuse.jpg-ff8fec0301f5a26d18b8c1b7b1d3615e.ctex"
+path.bptc="res://.godot/imported/simons_town_rocks_gravelly_sand_Diffuse.jpg-ff8fec0301f5a26d18b8c1b7b1d3615e.bptc.ctex"
+path.astc="res://.godot/imported/simons_town_rocks_gravelly_sand_Diffuse.jpg-ff8fec0301f5a26d18b8c1b7b1d3615e.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c8e416ad617198e50f8ccb043c9b9df4"
@@ -14,12 +16,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/locations/lit/simons_town_rocks_gravelly_sand_Diffuse.jpg"
-dest_files=["res://.godot/imported/simons_town_rocks_gravelly_sand_Diffuse.jpg-ff8fec0301f5a26d18b8c1b7b1d3615e.ctex"]
+dest_files=["res://.godot/imported/simons_town_rocks_gravelly_sand_Diffuse.jpg-ff8fec0301f5a26d18b8c1b7b1d3615e.bptc.ctex", "res://.godot/imported/simons_town_rocks_gravelly_sand_Diffuse.jpg-ff8fec0301f5a26d18b8c1b7b1d3615e.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

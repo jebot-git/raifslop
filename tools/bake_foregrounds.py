@@ -100,4 +100,9 @@ for m in ob.data.materials:
 ob.data.uv_layers.active_index=0;ob.data.uv_layers['UVMap'].active_render=True
 bpy.ops.export_scene.gltf(filepath=str(OUT/(ID+'.glb')),export_format='GLB',use_active_scene=True,export_yup=True,export_apply=True,export_lights=False)
 bpy.data.libraries.write(str(ROOT/'source/locations'/(ID+'_lighting.blend')),set([s]),path_remap='RELATIVE',fake_user=True,compress=True)
+manifest=ROOT/'assets/models/locations/manifest.json'
+records=json.loads(manifest.read_text())
+records[ID]['triangles']=sum(sum(len(p.vertices)-2 for p in obj.data.polygons) for obj in s.objects if obj.type=='MESH')
+records[ID]['bytes']=(OUT/(ID+'.glb')).stat().st_size
+manifest.write_text(json.dumps(records,indent=2)+'\n')
 print('LIGHTING_DONE',ID,flush=True)

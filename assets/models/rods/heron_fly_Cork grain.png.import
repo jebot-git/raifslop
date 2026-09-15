@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b31btwvbo7ah"
-path="res://.godot/imported/gray_pier_gravelly_sand_Rough.png-7a0cbf83500b031008072f38e1009cbf.ctex"
+uid="uid://botgfy6crggsd"
+path="res://.godot/imported/heron_fly_Cork grain.png-f07ae58318e9dfbc5348cb0a74739a38.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "35f94195d7a2c32ead1eb5042c6c025a"
+"md5": "737268a54d164cf91b574147c45f52bd"
 }
 
 [deps]
 
-source_file="res://assets/models/locations/lit/gray_pier_gravelly_sand_Rough.png"
-dest_files=["res://.godot/imported/gray_pier_gravelly_sand_Rough.png-7a0cbf83500b031008072f38e1009cbf.ctex"]
+source_file="res://assets/models/rods/heron_fly_Cork grain.png"
+dest_files=["res://.godot/imported/heron_fly_Cork grain.png-f07ae58318e9dfbc5348cb0a74739a38.ctex"]
 
 [params]
 

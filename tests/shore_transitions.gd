@@ -21,6 +21,11 @@ func run():
      var hit=g.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(at+Vector3.UP,at-Vector3.UP,1))
      check(not hit.is_empty(),"Plant base has supporting ground: "+str(at))
    check(details.get_node("CrossedShorePlants").multimesh.mesh.get_surface_count()==1,"Crossed clumps batch into one vegetation surface")
+   if id=="gray_pier":
+    # Include the whole crossed card footprint plus sway, not just its root.
+    var bench:=Rect2(Vector2(-3.83,8.15),Vector2(1.86,.7)).grow(.1)
+    for footprint in details.get_meta("plant_footprints"):
+     check(not footprint.intersects(bench),"Reed leaves clear the Gray Pier bench")
   else:
    for group_name in ["LayeredRiverShrubs","RiverAlders"]:
     var group=g.foreground.get_node(group_name)

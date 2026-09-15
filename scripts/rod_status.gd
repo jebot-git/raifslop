@@ -27,6 +27,8 @@ func update_bait() -> void:
 func show_bait() -> void:
 	update_bait();label.text=game_root.game.bait_name(game_root.game.bait)
 	remaining=2.2;label.show()
+func show_notice(text:String) -> void:
+	label.text=text;remaining=1.8;label.show()
 func _process(delta: float) -> void:
 	update_bait()
 	remaining=maxf(0,remaining-delta)

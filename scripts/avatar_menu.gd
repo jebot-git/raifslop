@@ -6,6 +6,8 @@ signal quit_requested
 var quit_button: Button
 var tutorial_button: Button
 var turn_mode: CheckButton
+var smooth_turn_speed: HSlider
+var snap_turn_angle: HSlider
 signal turn_mode_changed(smooth: bool)
 signal location_selected(id: String)
 const Locations = preload("res://scripts/locations.gd")
@@ -58,7 +60,7 @@ func _ready() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 18)
 	column.add_child(row)
-	list = ItemList.new()
+	list = preload("res://scripts/ui/vr_item_list.gd").new()
 	list.custom_minimum_size = Vector2(480, 260)
 	list.add_theme_font_size_override("font_size", 23)
 	row.add_child(list)
@@ -120,6 +122,30 @@ func _ready() -> void:
 	_bind_keyboard(vrm_browser)
 	refresh()
 	_build_locations()
+	_build_turn_controls()
+
+func _build_turn_controls() -> void:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation",22)
+	_register_page("controls","Controls",page)
+	var title := Label.new();title.text="Turning";title.add_theme_font_size_override("font_size",28);page.add_child(title)
+	turn_mode.reparent(page)
+	smooth_turn_speed=_turn_slider(page,"Smooth turn speed",30,360,15,75,"°/s")
+	snap_turn_angle=_turn_slider(page,"Snap turn angle",15,90,15,30,"°")
+	var hint := Label.new();hint.text="Turn with the right stick. Snap turning waits for the stick to return to center.";hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_child(hint)
+	show_page(active_page)
+
+func _turn_slider(page:VBoxContainer,title:String,low:float,high:float,step_size:float,initial:float,unit:String) -> HSlider:
+	var label := Label.new();page.add_child(label)
+	var row := HBoxContainer.new();row.add_theme_constant_override("separation",18);page.add_child(row)
+	var less := Button.new();less.text="−";less.custom_minimum_size=Vector2(64,48);row.add_child(less)
+	var slider := HSlider.new();slider.min_value=low;slider.max_value=high;slider.step=step_size;slider.value=initial;slider.size_flags_horizontal=SIZE_EXPAND_FILL;row.add_child(slider)
+	var more := Button.new();more.text="+";more.custom_minimum_size=Vector2(64,48);row.add_child(more)
+	var update := func(value:float):label.text=title+" · "+str(roundi(value))+unit
+	slider.value_changed.connect(update);update.call(initial)
+	less.pressed.connect(func():slider.value-=slider.step)
+	more.pressed.connect(func():slider.value+=slider.step)
+	return slider
 
 func _build_locations() -> void:
 	locations_page = VBoxContainer.new()
@@ -135,7 +161,7 @@ func _build_locations() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 20)
 	locations_page.add_child(row)
-	location_list = ItemList.new()
+	location_list = preload("res://scripts/ui/vr_item_list.gd").new()
 	location_list.custom_minimum_size = Vector2(310, 305)
 	location_list.add_theme_font_size_override("font_size", 23)
 	location_list.add_theme_constant_override("v_separation", 20)
@@ -286,6 +312,9 @@ func attach_help() -> void:
 When the float dips, lift the rod quickly to set the hook.",
 		"Reel: hold left grip beside the crank and circle your hand.
 Ease off during runs; keep line tension in the green band.",
+		"Fly fishing: hold left grip near the line above the handle and pull to strip.
+Sweep the rod upstream, against the current, to mend. A pulse, line loop
+and rod message confirm it. Desktop: LEFT mends upstream; RIGHT adds drag.",
 		"Fight: pull in the indicated direction and HOLD.
 Strong rod pulses mean your counter is working.
 Diving: stop reeling. Rushing inward: wind faster.

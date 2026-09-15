@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bde2t8ld60c8"
-path="res://.godot/imported/gray_pier_gravelly_sand_Diffuse.jpg-7d67eb529840227c773dde2fae990c8f.ctex"
+path.bptc="res://.godot/imported/gray_pier_gravelly_sand_Diffuse.jpg-7d67eb529840227c773dde2fae990c8f.bptc.ctex"
+path.astc="res://.godot/imported/gray_pier_gravelly_sand_Diffuse.jpg-7d67eb529840227c773dde2fae990c8f.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c8e416ad617198e50f8ccb043c9b9df4"
@@ -14,12 +16,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/locations/lit/gray_pier_gravelly_sand_Diffuse.jpg"
-dest_files=["res://.godot/imported/gray_pier_gravelly_sand_Diffuse.jpg-7d67eb529840227c773dde2fae990c8f.ctex"]
+dest_files=["res://.godot/imported/gray_pier_gravelly_sand_Diffuse.jpg-7d67eb529840227c773dde2fae990c8f.bptc.ctex", "res://.godot/imported/gray_pier_gravelly_sand_Diffuse.jpg-7d67eb529840227c773dde2fae990c8f.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

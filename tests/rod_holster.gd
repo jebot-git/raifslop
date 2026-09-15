@@ -10,9 +10,10 @@ func run():
 	g.set_process(false);g.motor.set_physics_process(false)
 	var h=g.rod_holster
 	for tier in 4:
-		g.rod_visual.equip(tier)
-		var folded: AABB=preload("res://scripts/fish_size.gd").bounds(g.rod_visual.folded_model)
-		check(folded.size.z<.73 and folded.size.z>.6,"Rod folds into compact sections: "+str(tier))
+		for fly in [false,true]:
+			g.rod_visual.equip(tier,fly)
+			var folded: AABB=preload("res://scripts/fish_size.gd").bounds(g.rod_visual.folded_model)
+			check(folded.size.z<.73 and folded.size.z>.6,"Rod folds into compact sections: "+str(tier)+" fly="+str(fly))
 	var tracker:=XRControllerTracker.new();tracker.name="holster_test_right";XRServer.add_tracker(tracker)
 	var right:=XRController3D.new();right.tracker=tracker.name;right.pose="grip";g.origin.add_child(right);g.right=right;g.xr=true;g.tracking_manager.focused=true
 	g.head.rotation.y=.7;h.update_holster()

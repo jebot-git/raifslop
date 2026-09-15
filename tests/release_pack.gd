@@ -42,6 +42,12 @@ func run() -> void:
 			var model = scene.instantiate();model.free()
 	var game = load("res://scenes/main.tscn").instantiate(); root.add_child(game)
 	await create_timer(.4).timeout
+	game.set_process(false);game.motor.set_physics_process(false)
+	for tier in 4:
+		for fly in [false,true]:
+			game.rod_visual.equip(tier,fly)
+			check(game.rod_visual.model!=null and game.rod_visual.folded_model!=null,"Pack contains rod tier %d fly=%s"%[tier,str(fly)])
+	check(game.avatar_menu.list.get_script()==load("res://scripts/ui/vr_item_list.gd"),"VRM list uses packed drag-scrolling script")
 	for entry in game.Locations.CATALOG:
 		game._select_location(entry.id, false)
 		await process_frame

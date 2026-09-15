@@ -178,7 +178,7 @@ func _build_environment() -> void:
 	sun.directional_shadow_max_distance = 24.0
 	add_child(sun)
 	var water := PlaneMesh.new()
-	water.size = Vector2(160, 160)
+	water.size = Vector2(512, 512) # Cover the full modeled shore, including rear aprons.
 	water.subdivide_width = 64
 	water.subdivide_depth = 64
 	var wm := ShaderMaterial.new()
@@ -294,12 +294,18 @@ func _load_player_preferences() -> void:
 	cfg.load("user://player.cfg")
 	var smooth = cfg.get_value("controls", "smooth_turn", false)
 	motor.smooth_turn = smooth if smooth is bool else false
+	var speed = cfg.get_value("controls","smooth_turn_speed",75.0)
+	motor.smooth_turn_speed=clampf(float(speed),30,360) if (speed is float or speed is int) and is_finite(speed) else 75.0
+	var angle = cfg.get_value("controls","snap_turn_angle",30.0)
+	motor.snap_turn_angle=clampf(float(angle),15,90) if (angle is float or angle is int) and is_finite(angle) else 30.0
 	var bait = cfg.get_value("tackle", "bait", 0)
 	game.bait = clampi(int(bait), 0, Session.BAITS.size()-1) if (bait is int or bait is float) and is_finite(bait) else 0
 
 func _save_player_preferences() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("controls", "smooth_turn", motor.smooth_turn)
+	cfg.set_value("controls", "smooth_turn_speed", motor.smooth_turn_speed)
+	cfg.set_value("controls", "snap_turn_angle", motor.snap_turn_angle)
 	cfg.set_value("tackle", "bait", game.bait)
 	var error := cfg.save("user://player.cfg")
 	if error != OK: push_warning("Cannot save player settings: " + error_string(error))
@@ -507,7 +513,7 @@ func _update_tracking_warning(delta: float) -> void:
 		hud.queue_redraw()
 
 func _process(delta: float) -> void:
-	if is_instance_valid(rod_visual): rod_visual.equip(game.tackle.equipped)
+	if is_instance_valid(rod_visual): rod_visual.equip(game.tackle.equipped,game.is_fly_fishing())
 	if server_only: return
 	rod_holster.update_holster()
 	fish_guide.update_device()
@@ -523,7 +529,7 @@ func _process(delta: float) -> void:
 	_update_avatar(delta)
 	if avatar_loading: return
 	if fish_guide.held:
-		game.fly.charging=false;game.fly.strip_engaged=false
+		game.fly.charging=false;game.fly.release_strip(true)
 		fight_input.reset()
 		casting = false
 		reel_tracker.engaged = false
@@ -532,7 +538,7 @@ func _process(delta: float) -> void:
 		_update_line()
 		return
 	if menu_open:
-		game.fly.charging=false;game.fly.strip_engaged=false
+		game.fly.charging=false;game.fly.release_strip(true)
 		fight_input.reset()
 		_layout_avatar_menu()
 		_update_menu_pointer()
@@ -543,7 +549,7 @@ func _process(delta: float) -> void:
 		_update_line()
 		return
 	if rod_holster.stowed:
-		game.fly.charging=false;game.fly.strip_engaged=false
+		game.fly.charging=false;game.fly.release_strip(true)
 		_update_line()
 		return
 	gesture_cooldown = maxf(0.0, gesture_cooldown - delta)
@@ -552,7 +558,7 @@ func _process(delta: float) -> void:
 		var tracked: bool = right.get_has_tracking_data() and left.get_has_tracking_data() and (not is_instance_valid(tracking_manager) or tracking_manager.focused)
 		rod.visible = right.get_has_tracking_data()
 		if not tracked:
-			game.fly.charging=false;game.fly.strip_engaged=false
+			game.fly.charging=false;game.fly.release_strip(true)
 			fight_input.reset()
 			tracking_was_valid = false
 			casting = false
@@ -573,9 +579,15 @@ func _process(delta: float) -> void:
 		var reel_pos := rod.to_local(left.global_position) - crank.position
 		reel = reel_tracker.sample(reel_pos, left.get_float("grip") > 0.55 and not shoulder_radio.held, delta)
 		if game.is_fly_fishing():
-			var strip_rate:float=game.fly.strip(origin.global_basis.inverse()*(left.global_position-head.global_position),left.get_float("grip")>.55 and not shoulder_radio.held,delta)
-			reel=maxf(reel,strip_rate) if game.state==Session.State.FIGHT else strip_rate
-			if game.state==Session.State.WAITING and velocity.x<-.45:game.fly.mend(-1)
+			# Sample current tracking input; cached IK attachments are for rendering.
+			# Head motion and locomotion must not become a strip through solver lag.
+			var strip_rate:float=_sample_fly_strip(delta)
+			# A fly strip owns the offhand; it cannot also turn the spinning reel.
+			reel=strip_rate
+			reel_tracker.engaged=false;reel_tracker.angular_delta=0.0
+			var raw_tip:Vector3=(right.transform*preload("res://scripts/rod_holster.gd").HELD_POSE)*Vector3(0,0,-1.68)
+			var mend:int=game.fly.sample_mend(raw_tip,origin.global_basis,delta,game.state==Session.State.WAITING)
+			if mend!=0:_mend_fly(mend)
 		if game.state == Session.State.BITE and velocity.y > 0.9:
 			game.strike()
 		if game.state == Session.State.FIGHT:
@@ -588,24 +600,28 @@ func _process(delta: float) -> void:
 	else:
 		if game.is_fly_fishing() and game.fly.charging:game.fly.stroke(delta,0)
 		if game.is_fly_fishing() and game.state==Session.State.WAITING:
-			if Input.is_action_just_pressed("ui_left"):game.fly.mend(-1)
-			elif Input.is_action_just_pressed("ui_right"):game.fly.mend(1)
+			if Input.is_action_just_pressed("ui_left"):_mend_fly(-1)
+			elif Input.is_action_just_pressed("ui_right"):_mend_fly(1)
 		reel = (1.8 if Input.is_key_pressed(KEY_SHIFT) else 1.0) if Input.is_key_pressed(KEY_R) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) else 0.0
 		game.gesture(0 if Input.is_key_pressed(KEY_LEFT) else 1 if Input.is_key_pressed(KEY_RIGHT) else 2 if Input.is_key_pressed(KEY_UP) else -1)
 		if game.jump_time>0:
 			game.tug(0 if Input.is_action_just_pressed("ui_left") else 1 if Input.is_action_just_pressed("ui_right") else -1)
 	# Retrieval accepts either winding direction; the handle follows the actual hand.
-	crank.rotation.x += reel_tracker.angular_delta if xr else reel * TAU * delta
+	crank.rotation.x += reel_tracker.angular_delta if xr else 0.0 if game.is_fly_fishing() else reel * TAU * delta
 	fishing_feedback.reel_rate = reel
 	if game.state == Session.State.FIGHT and game.cue >= 0:
-		if game.jump_time>0:
-			if game.jump_time<=Session.JUMP_AIR:escape_offset+=fish_escape_direction()*delta*1.8
-		else:escape_offset=escape_offset.move_toward(fish_escape_direction() * 1.1, delta * 1.8)
+		if game.jump_time<=0:escape_offset=escape_offset.move_toward(fish_escape_direction() * 1.1, delta * 1.8)
 	last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
 	var prior_takeovers: int=game.takeover_count
 	if game.is_fly_fishing() and game.state==Session.State.FIGHT:
 		game.fly.current_speed=Session.Fly.current(bobber.global_position,game.location_id).length()
+	var was_jumping: bool=game.jump_time>0
 	game.tick(minf(delta, 0.05), reel, maxf(0.0, -rod.global_basis.z.y))
+	if was_jumping and game.jump_time<=0 and game.state==Session.State.FIGHT:
+		var landing: Vector3=hooked_fish.landing_position()
+		cast_target=Vector3(landing.x,water_level+.05,landing.z)
+		game.distance=cast_anchor.distance_to(cast_target)
+		escape_offset=Vector3.ZERO
 	if game.takeover_count!=prior_takeovers: fight_input.reset()
 	hooked_fish.age+=delta
 	_settle_fish_escape()
@@ -698,6 +714,24 @@ func fish_escape_direction() -> Vector3:
 	away.y = 0
 	return away.normalized() if away.length_squared() > .001 else Vector3.FORWARD
 
+func _sample_fly_strip(delta: float) -> float:
+	var outlet := origin.to_local(rod.to_global(Session.Fly.LINE_OUTLET))
+	var guide := origin.to_local(rod.to_global(Session.Fly.LINE_GUIDE))
+	var available: bool = not shoulder_radio.held and game.state in [Session.State.READY, Session.State.CASTING, Session.State.WAITING, Session.State.BITE, Session.State.FIGHT]
+	return game.fly.strip(origin.to_local(left.global_position), left.get_float("grip"), delta, outlet, guide, available)
+
+func _fly_hand_position() -> Vector3:
+	if is_instance_valid(avatar):
+		var grip = avatar.hand_grip_pose(true)
+		if grip is Transform3D: return grip.origin
+	return left.global_position
+
+func _append_fly_grip_line() -> void:
+	if not game.is_fly_fishing():return
+	line_mesh.surface_add_vertex(rod.to_global(Session.Fly.LINE_OUTLET))
+	if xr and game.fly.strip_engaged:line_mesh.surface_add_vertex(_fly_hand_position())
+	line_mesh.surface_add_vertex(rod.to_global(Session.Fly.LINE_GUIDE))
+
 func _update_line() -> void:
 	if game.state!=Session.State.FIGHT and is_instance_valid(hooked_fish):hooked_fish.update(0)
 	var tension_color := Color("d8f5e5")
@@ -724,6 +758,7 @@ func _update_line() -> void:
 		bobber.global_position = tip.global_position + Vector3.DOWN * .30
 		rod_status.bait_visual.global_position = bobber.global_position + Vector3.DOWN * .18
 		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+		_append_fly_grip_line()
 		line_mesh.surface_add_vertex(tip.global_position)
 		if game.is_fly_fishing() and game.fly.charging:
 			for i in 24:
@@ -757,18 +792,27 @@ func _update_line() -> void:
 	hooked_fish.update(0)
 	if game.jump_time>0:bobber.hide()
 	var line_end:Vector3=bobber.position
-	if game.jump_time>0 and hooked_fish.visible:line_end=hooked_fish.global_position
+	if game.jump_time>0 and hooked_fish.visible:line_end=hooked_fish.mouth_position()
 	line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+	_append_fly_grip_line()
 	for i in range(25):
 		var t := i / 24.0
 		var p := tip.global_position.lerp(line_end, t)
 		if game.is_fly_fishing():
 			if game.state==Session.State.CASTING:p.y+=sin(t*TAU)*sin((1.0-game.timer/.8)*PI)*1.1
-			elif game.state==Session.State.WAITING:p.x-=sin(t*PI)*(1.0-game.fly.drag)*.7
+			elif game.state==Session.State.WAITING:p.x+=sin(t*PI)*(-(1.0-game.fly.drag)*.7+game.fly.mend_bend())
 		p.y -= sin(t * PI) * (lerpf(.65, .025, game.tension) if game.state == Session.State.FIGHT else 0.5)
 		if game.is_fly_fishing() and game.state==Session.State.WAITING:p.y=maxf(p.y,water_level+.01)
 		line_mesh.surface_add_vertex(p)
 	line_mesh.surface_end()
+
+func _mend_fly(direction:int) -> bool:
+	if not game.is_fly_fishing() or game.state!=Session.State.WAITING or game.fly.mend_cooldown>0 or direction==0:return false
+	var improved:bool=game.fly.mend(direction)
+	game.message="Upstream mend · Natural drift" if improved else "Downstream mend · More drag"
+	rod_status.show_notice(game.message)
+	if xr and right.get_has_tracking_data():right.trigger_haptic_pulse("haptic",0.0,.24 if improved else .12,.09 if improved else .045,0.0)
+	return true
 
 func _show_fish() -> void:
 	for child in fish_display.get_children():
@@ -870,6 +914,10 @@ func _build_avatar_menu() -> void:
 	avatar_menu.quit_requested.connect(_quit_game)
 	avatar_menu.turn_mode.button_pressed = motor.smooth_turn
 	avatar_menu.turn_mode_changed.connect(func(enabled: bool): motor.smooth_turn = enabled; _save_player_preferences())
+	avatar_menu.smooth_turn_speed.value=motor.smooth_turn_speed
+	avatar_menu.snap_turn_angle.value=motor.snap_turn_angle
+	avatar_menu.smooth_turn_speed.value_changed.connect(func(value:float):motor.smooth_turn_speed=value;_save_player_preferences())
+	avatar_menu.snap_turn_angle.value_changed.connect(func(value:float):motor.snap_turn_angle=value;_save_player_preferences())
 	avatar_menu.location_selected.connect(func(id: String):
 		if _select_location(id) and menu_open: _toggle_avatar_menu())
 
@@ -916,14 +964,20 @@ func _select_location(id: String, persist := true) -> bool:
 	water_material.set_shader_parameter("water_roughness", entry.roughness)
 	water_material.set_shader_parameter("ripple_strength", entry.ripples)
 	water_level=entry.get("water_level",-.35)
+	# Cover the submerged ends of the tapered mainland too. A short plane
+	# exposes those distant triangles as a second floating strip at the horizon.
+	water_surface.mesh.size=Vector2(512,512)
 	water_surface.position.y=water_level
 	water_material.set_shader_parameter("river_flow",.6 if id=="meadow_bend" else 1.1 if id=="boulder_run" else 0.0)
 	water_material.set_shader_parameter("blend_start",1000.0 if Session.Fly.river(id) else 14.0)
 	water_material.set_shader_parameter("blend_end",1100.0 if Session.Fly.river(id) else 45.0)
 	water_material.set_shader_parameter("protect_panorama_foreground",entry.get("protect_panorama_foreground",false))
+	water_material.set_shader_parameter("replace_near_jetty",id=="lake_pier")
+	water_material.set_shader_parameter("coastal_foreground",id=="simons_town_rocks")
+	water_material.set_shader_parameter("beach_sides",id=="blouberg_sunrise_2")
 	water_material.set_shader_parameter("panorama_water_region",entry.get("panorama_water_region",Vector4(0,1,0,1)))
-	if id == "lake_pier": Shore.blend_harbour_ground(foreground, water_material)
-	elif entry.has("ground_bounds"): Shore.blend_harbour_ground(foreground, water_material, entry.ground_bounds, true)
+	if id == "lake_pier": Shore.blend_harbour_ground(foreground, water_material, Vector4(0,1.5,2.5,3))
+	elif entry.has("ground_bounds"): Shore.blend_harbour_ground(foreground, water_material, entry.ground_bounds, true, entry.get("ground_transition",Vector2(6,6)))
 	current_location = id
 	if is_instance_valid(shadow_policy): shadow_policy.apply_materials(foreground)
 	if is_instance_valid(ambience): ambience.select_location(id)

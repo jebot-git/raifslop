@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bej4x1t0vj60l"
-path="res://.godot/imported/bell_park_pier_brown_planks_03_Diffuse.jpg-e75b9058920eaad5f6f61534278ea848.ctex"
+path.bptc="res://.godot/imported/bell_park_pier_brown_planks_03_Diffuse.jpg-e75b9058920eaad5f6f61534278ea848.bptc.ctex"
+path.astc="res://.godot/imported/bell_park_pier_brown_planks_03_Diffuse.jpg-e75b9058920eaad5f6f61534278ea848.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "af64ab27593b8e6511595c3092ae2f1f"
@@ -14,12 +16,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/locations/lit/bell_park_pier_brown_planks_03_Diffuse.jpg"
-dest_files=["res://.godot/imported/bell_park_pier_brown_planks_03_Diffuse.jpg-e75b9058920eaad5f6f61534278ea848.ctex"]
+dest_files=["res://.godot/imported/bell_park_pier_brown_planks_03_Diffuse.jpg-e75b9058920eaad5f6f61534278ea848.bptc.ctex", "res://.godot/imported/bell_park_pier_brown_planks_03_Diffuse.jpg-e75b9058920eaad5f6f61534278ea848.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

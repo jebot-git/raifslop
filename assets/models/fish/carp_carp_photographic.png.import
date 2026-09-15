@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b1lutbl1kxxve"
-path="res://.godot/imported/carp_carp_photographic.png-1640a1d6d585b678f0bd42f7384dfc99.ctex"
+path.bptc="res://.godot/imported/carp_carp_photographic.png-1640a1d6d585b678f0bd42f7384dfc99.bptc.ctex"
+path.astc="res://.godot/imported/carp_carp_photographic.png-1640a1d6d585b678f0bd42f7384dfc99.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "b9e1db23342b6d91af590a7edfdb9df9"
@@ -14,12 +16,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/fish/carp_carp_photographic.png"
-dest_files=["res://.godot/imported/carp_carp_photographic.png-1640a1d6d585b678f0bd42f7384dfc99.ctex"]
+dest_files=["res://.godot/imported/carp_carp_photographic.png-1640a1d6d585b678f0bd42f7384dfc99.bptc.ctex", "res://.godot/imported/carp_carp_photographic.png-1640a1d6d585b678f0bd42f7384dfc99.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

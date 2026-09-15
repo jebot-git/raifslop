@@ -14,6 +14,14 @@ func run() -> void:
 		await physics_frame
 		var entry: Dictionary=g.Locations.find_location(id)
 		check(g.water_material.get_shader_parameter("protect_panorama_foreground")==entry.get("protect_panorama_foreground",false),"Coastal water preset "+id)
+		check(g.water_material.get_shader_parameter("coastal_foreground")== (id=="simons_town_rocks"),"Foreground water coverage resets on travel")
+		if id=="simons_town_rocks":
+			var rear=g.foreground.get_node("RearRockTransitions")
+			var rocks:MultiMesh=rear.get_node("CurvedRockCards").multimesh
+			check(rocks.instance_count==6,"Rear reconstruction has three paired depth tiers")
+			# The headless renderer does not retain MultiMesh transform buffers.
+			var bases:Array=rear.get_meta("bases")
+			check(bases[4].z-bases[0].z>10,"Rear layers provide spatial depth")
 		check(g.foreground.get_node("EnvironmentalLife").insect_count==0,"Coastal birds without inland insect swarm")
 		check(g.ambience.voices[id].player.stream.get_length()>120,"Long recorded surf bed "+id)
 		for point in [Vector3(0,.1,.65),Vector3(0,.1,-2.5),Vector3(2,.1,-2)]:

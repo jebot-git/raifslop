@@ -1,5 +1,5 @@
 extends Node3D
-## FPSloppa shoulder_radio (8898d03), adapted to fishing's left support hand.
+## FPSloppa shoulder_radio (b0fc725), adapted to fishing's left support hand.
 var game_root: Node3D
 var held:=false
 var active:=false
@@ -41,6 +41,8 @@ func update() -> void:
 	active=held and (g.left.is_button_pressed("trigger_click") or g.left.get_float("trigger")>.55)
 	voice.set_radio(active)
 	model.show();model.global_transform=g.left.global_transform if held else mount
+	# FPSloppa: the grip forward axis points toward the fingertips.
+	if held:model.rotate_object_local(Vector3.RIGHT,-PI/2)
 	label.visible=held or near
 	label.text="ALL WATERS · RADIO" if active else "HOLD TRIGGER · TALK" if held else "GRAB RADIO"
 	label.modulate=Color("87e8ae") if active else Color("e5d5ad")

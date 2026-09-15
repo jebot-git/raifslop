@@ -1,12 +1,14 @@
 extends SceneTree
 var failures: Array=[]
 var last_wrist := Transform3D.IDENTITY
+var last_left_wrist := Transform3D.IDENTITY
 func _initialize() -> void: run.call_deferred()
 func check(ok: bool, label: String) -> void:
 	print("PASS " if ok else "FAIL ",label)
 	if not ok: failures.append(label)
 func record_wrist(_grip: Transform3D, rig: Node3D) -> void:
 	last_wrist=rig.skeleton.global_transform*rig.skeleton.get_bone_global_pose(rig.right_hand_bone)
+	last_left_wrist=rig.skeleton.global_transform*rig.skeleton.get_bone_global_pose(rig.left_hand_bone)
 func run() -> void:
 	var g=load("res://scenes/main.tscn").instantiate();root.add_child(g)
 	await create_timer(.4).timeout
@@ -27,6 +29,10 @@ func run() -> void:
 			await process_frame;await process_frame
 			var grip: Transform3D=rig.hand_grip_pose()
 			var label: String=path.get_file()+" "+str(offset)
+			var left_grip: Transform3D=rig.hand_grip_pose(true)
+			var left_wrist: Transform3D=last_left_wrist
+			check(absf(left_grip.origin.distance_to(left_wrist.origin)-.06)<.001,"Offhand line attachment stays at solved palm: "+label)
+			check(left_grip.basis.is_equal_approx(g.left.global_basis.orthonormalized()),"Offhand grip undoes VRM wrist correction: "+label)
 			check((g.rod.global_transform*g.rod_holster.HELD_POSE.affine_inverse()).is_equal_approx(grip),"Rod follows rendered hand: "+label)
 			check(grip.origin.distance_to(last_wrist.origin)<.061 and grip.origin.distance_to(last_wrist.origin)>.059,"Handle stays at palm: "+label)
 			check(grip.basis.is_equal_approx(g.right.global_basis.orthonormalized()) and is_equal_approx(g.tip.global_position.distance_to(grip.origin),1.68),"Wrist rotation and physical rod length preserved: "+label)

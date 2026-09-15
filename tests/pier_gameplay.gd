@@ -33,6 +33,7 @@ func run():
 	g.set_process(false);g.motor.set_physics_process(false)
 	check(g.avatar_menu.active_page!="help" and not g.menu_open,"Even legacy tutorial preference cannot open instructions at startup")
 	for entry in g.Locations.CATALOG:
+		if S.Fly.river(entry.id):continue # River casts and landing bounds are covered by fly_fishing.gd.
 		g.game.reset();g._select_location(entry.id,false)
 		await physics_frame;await physics_frame
 		g._cast(24)

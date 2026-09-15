@@ -94,7 +94,7 @@ func _process(delta: float) -> void:
 		rendered[key]=rendered[key].lerp(target[key],blend)
 	head.global_transform=rendered.head
 	left.global_transform=rendered.left; right.global_transform=rendered.right
-	rod_visual.equip(target.rod_tier)
+	rod_visual.equip(target.rod_tier,Fish.Fly.river(target.location))
 	rod_visual.set_folded(preload("res://scripts/rod_holster.gd").remote_stowed(target))
 	rod_visual.crank.rotation.x=lerp_angle(rod_visual.crank.rotation.x,target.reel_angle,blend)
 	rod.global_transform=rendered.rod; caught.global_transform=rendered.fish
@@ -127,6 +127,12 @@ func _draw_line() -> void:
 	line.clear_surfaces()
 	if target.caught or float_mesh.visible or fly_lure.visible:
 		line.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+		if not target.caught and Fish.Fly.river(target.location):
+			line.surface_add_vertex(rod.to_global(Fish.Fly.LINE_OUTLET))
+			if target.in_hand:
+				var grip = avatar.hand_grip_pose(true) if is_instance_valid(avatar) else null
+				line.surface_add_vertex(grip.origin if grip is Transform3D else rendered.left.origin)
+			line.surface_add_vertex(rod.to_global(Fish.Fly.LINE_GUIDE))
 		line.surface_add_vertex(rendered.tip)
 		if target.caught:
 			if target.in_hand: line.surface_add_vertex(rendered.left.origin)

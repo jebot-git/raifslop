@@ -10,7 +10,7 @@ func run():
 	g.set_process(false);g.motor.set_physics_process(false)
 	var args:=OS.get_cmdline_user_args()
 	if "--write" in args:
-		g.motor.smooth_turn=true;g.game.bait=4
+		g.motor.smooth_turn=true;g.motor.smooth_turn_speed=210;g.motor.snap_turn_angle=60;g.game.bait=4
 		g.ambience.volume=.3;g.ambience.muted=true
 		g.tracking_manager.seated=true;g.tracking_manager.expressions_enabled=false
 		g.tracking_manager.tracked_leg_animation=true;g.tracking_manager.tracking.enabled=false
@@ -27,6 +27,7 @@ func run():
 		await create_timer(2).timeout
 		push_error("Exit path failed to quit");quit(1);return
 	check(g.motor.smooth_turn and g.avatar_menu.turn_mode.button_pressed,"Turn mode restores in motor and menu")
+	check(g.motor.smooth_turn_speed==210 and g.avatar_menu.smooth_turn_speed.value==210 and g.motor.snap_turn_angle==60 and g.avatar_menu.snap_turn_angle.value==60,"Turning speed and snap angle restore in motor and menu")
 	check(g.game.bait==4,"Selected bait restores")
 	check(is_equal_approx(g.ambience.volume,.3) and g.ambience.muted,"Ambience volume and mute restore")
 	var m=g.tracking_manager

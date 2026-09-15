@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d2now1ka6vgbl"
-path="res://.godot/imported/lakeside_gravelly_sand_Rough.png-3c379060f8475586f989e31150055084.ctex"
+uid="uid://spvp2fhdfihq"
+path="res://.godot/imported/willow_fly_Cork grain.png-24b8fbbff8f3c9b1a0c6c4a012dbd57e.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "35f94195d7a2c32ead1eb5042c6c025a"
+"md5": "737268a54d164cf91b574147c45f52bd"
 }
 
 [deps]
 
-source_file="res://assets/models/locations/lit/lakeside_gravelly_sand_Rough.png"
-dest_files=["res://.godot/imported/lakeside_gravelly_sand_Rough.png-3c379060f8475586f989e31150055084.ctex"]
+source_file="res://assets/models/rods/willow_fly_Cork grain.png"
+dest_files=["res://.godot/imported/willow_fly_Cork grain.png-24b8fbbff8f3c9b1a0c6c4a012dbd57e.ctex"]
 
 [params]
 

@@ -94,7 +94,7 @@ func run() -> void:
 	var menu = game.avatar_menu
 	menu.show(); menu.show_page("tackle")
 	await process_frame; await process_frame
-	check(menu.size.x <= 900 and menu.tabs.size.x <= 864, "Six tabs fit the desktop and VR panel width")
+	check(menu.size.x <= 900 and menu.tabs.size.x <= 864, "Section tabs fit the desktop and VR panel width")
 	check(menu.pages.tackle.view.visible and menu.tackle_buttons.size() == 4, "Tackle shop integrated into shared desktop/VR menu")
 	game.game.tackle.shekels = 600; game.game.tackle.owned.assign([0]); game.game.tackle.equipped = 0
 	menu.refresh_tackle(); menu.tackle_buttons[1].pressed.emit()

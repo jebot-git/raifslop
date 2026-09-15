@@ -21,7 +21,19 @@ static func create(id: String) -> Node3D:
 	root.set_meta("spawn", vector(record.spawn))
 	var visual := scene.instantiate()
 	root.add_child(visual)
+	if id in ["lakeside", "gray_pier", "bell_park_pier"]:
+		slope_distant_land(visual)
+	if id=="simons_town_rocks":coastal_footings(visual)
 	prepare_lighting(visual, id)
+	if id=="blouberg_sunrise_2":
+		# Cast/landing rays must see the curved sand slope, not only the flat
+		# walking-area proxy, or a retrieved float can disappear into the shore.
+		for node in visual.find_children("*","MeshInstance3D",true,false):
+			var sand:bool= node.mesh.get_surface_count()>0
+			for surface in node.mesh.get_surface_count():
+				var mat:Material=node.mesh.surface_get_material(surface)
+				sand=sand and mat!=null and mat.resource_name.begins_with("FG_sand")
+			if sand:node.create_trimesh_collision()
 	for proxy in record.colliders:
 		if proxy.get("role", "") == "seat" or not proxy.get("enabled", true): continue
 		var body := StaticBody3D.new()
@@ -50,6 +62,54 @@ static func create(id: String) -> Node3D:
 	if details!=null:root.add_child(details)
 	return root
 
+static func slope_distant_land(node: Node, parent_transform := Transform3D.IDENTITY) -> void:
+	var transform := parent_transform
+	if node is Node3D: transform *= node.transform
+	if node is MeshInstance3D:
+		var mesh := ArrayMesh.new()
+		for surface in node.mesh.get_surface_count():
+			var arrays: Array = node.mesh.surface_get_arrays(surface)
+			var material: Material = node.mesh.surface_get_material(surface)
+			if material and material.resource_name.begins_with("FG_bank"):
+				var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+				for i in vertices.size():
+					var point: Vector3 = transform * vertices[i]
+					# Beyond the protected paths, ease the rising apron down to the
+					# water horizon. Preserve the original submerged shoreline toe.
+					var weight := smoothstep(14.0, 45.0, maxf(absf(point.x), point.z))
+					point.y = lerpf(point.y, minf(point.y, -.85), weight)
+					vertices[i] = transform.affine_inverse() * point
+				arrays[Mesh.ARRAY_VERTEX] = vertices
+			mesh.add_surface_from_arrays(node.mesh.surface_get_primitive_type(surface), arrays)
+			mesh.surface_set_material(surface, material)
+		node.mesh = mesh
+	for child in node.get_children(): slope_distant_land(child, transform)
+
+static func coastal_footings(root:Node3D) -> void:
+	var stone:Material
+	for node in root.find_children("*","MeshInstance3D",true,false):
+		for surface in node.mesh.get_surface_count():
+			var mat:Material=node.mesh.surface_get_material(surface)
+			# The scan uses an atlas with empty islands; the terrace material tiles.
+			if mat and mat.resource_name.begins_with("FG_stone") and not mat.resource_name.contains("scan"):stone=mat
+	if stone==null:return
+	# Continuous stone shoulders bridge the terrace-to-boulder gaps. They
+	# extend below water and under the rocks instead of ending at their faces.
+	var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var quads:Array=[]
+	for side in [-1.0,1.0]:
+		quads.append([Vector3(side*4.4,-.015,-3.05),Vector3(side*8.8,-.9,-5.2),Vector3(side*8.8,-.9,9),Vector3(side*4.4,-.015,7.1)])
+	quads.append([Vector3(-4.4,-.015,-2.98),Vector3(4.4,-.015,-2.98),Vector3(6,-1.25,-6.5),Vector3(-6,-1.25,-6.5)])
+	for quad in quads:
+		var normal:Vector3=(quad[1]-quad[0]).cross(quad[2]-quad[0]).normalized()
+		if normal.y<0:normal=-normal
+		for i in [0,1,2,0,2,3]:
+			var p:Vector3=quad[i]
+			st.set_normal(normal);st.set_uv(Vector2(p.x,p.z)*.5);st.add_vertex(p)
+	var mesh:=MeshInstance3D.new();mesh.name="CoastalStoneFootings";mesh.mesh=st.commit()
+	var mat:StandardMaterial3D=stone.duplicate();mat.cull_mode=BaseMaterial3D.CULL_DISABLED
+	mesh.mesh.surface_set_material(0,mat);root.add_child(mesh);mesh.create_trimesh_collision()
+
 static func prepare_lighting(node: Node, id: String) -> void:
 	if node is MeshInstance3D:
 		# These separate coarse plant meshes are superseded by grounded cutouts.
@@ -75,6 +135,9 @@ static func prepare_lighting(node: Node, id: String) -> void:
 				mat.set_shader_parameter("albedo_tex", source.albedo_texture)
 				mat.set_shader_parameter("normal_tex", source.normal_texture)
 				mat.set_shader_parameter("normal_depth", .28 if source.normal_enabled else 0.0)
+				if id=="blouberg_sunrise_2" and source.resource_name.begins_with("FG_sand"):
+					mat.set_shader_parameter("base_color",source.albedo_color*1.6)
+					mat.set_shader_parameter("normal_depth",.1)
 				mat.set_shader_parameter("rough_tex", source.roughness_texture)
 				mat.set_shader_parameter("has_roughness", source.roughness_texture != null)
 				var channel := Vector4.ZERO
@@ -95,10 +158,12 @@ static func prepare_lighting(node: Node, id: String) -> void:
 				node.set_surface_override_material(index, mat)
 	for child in node.get_children(): prepare_lighting(child, id)
 
-static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := Vector4(0,3,5,6), terrain_only := false) -> void:
+static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := Vector4(0,3,5,6), terrain_only := false, transition_width := Vector2(6,6)) -> void:
 	var blend := ShaderMaterial.new()
 	blend.shader = preload("res://assets/environment/harbour_ground.gdshader")
 	blend.set_shader_parameter("ground_bounds", bounds)
+	blend.set_shader_parameter("transition_width", transition_width)
+	blend.set_shader_parameter("projection_origin", root.get_meta("spawn",Vector3(0,.02,.65))+Vector3.UP*1.63)
 	for setting in ["panorama", "sky_inverse", "sky_energy", "detail_strength", "vibrance", "shadow_lift"]:
 		blend.set_shader_parameter(setting, water.get_shader_parameter(setting))
 	for node in root.find_children("*", "MeshInstance3D", true, false):

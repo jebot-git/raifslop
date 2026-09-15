@@ -151,22 +151,19 @@ def build(id):
   for x in [-6.2,6.2]:
    for z in [-3.4,-4.4]:plants(x,z,30,True)
  elif id=='lake_pier':
-  land(lambda x:7.0,'concrete')
-  slab('concrete',(0,-.625,3),(10,1.25,12))
-  # Expansion joints, capped quay edge and metal bollards.
-  for x in [-5,-2.5,0,2.5,5]:box('rubber',(x,.002,3),(.018,.008,12))
-  for z in [-3,0,3,6,9]:box('rubber',(0,.002,z),(10,.008,.018))
-  for x in [-5,5]:
-   rail((x,-3),(x,9),'steel',.95)
-   box('concrete',(x,-.02,3),(.26,.16,12.2))
-  rail((-5,9),(5,9),'steel',.95)
-  rail((-5,-3),(5,-3),'steel',.75)
-  for x in [-4,-2,2,4]:
-   beam('steel',(x,0,-2.65),(x,.42,-2.65),.10,12);beam('steel',(x-.18,.35,-2.65),(x+.18,.35,-2.65),.045)
-  bench(-3,6);bench(3,6)
-  coil(-4,-2.2);cleat(4,-2.4)
-  # Fender strips on the outer face of the harbour wall.
-  for x in [-4,-2,0,2,4]:box('rubber',(x,-.3,-3.07),(.24,.5,.12))
+  # The panorama was shot on a narrow harbour head, not a broad tiled plaza.
+  land(lambda x:4.0,'concrete')
+  slab('concrete',(0,-.625,1.5),(5,1.25,6))
+  for x in [-2.5,2.5]:
+   rail((x,-1.5),(x,4.5),'steel',.95)
+   box('concrete',(x,-.02,1.5),(.20,.12,6.2))
+  rail((-2.5,4.5),(2.5,4.5),'steel',.95)
+  rail((-2.5,-1.5),(2.5,-1.5),'steel',.75)
+  for x in [-1.8,1.8]:
+   beam('steel',(x,0,-1.2),(x,.42,-1.2),.10,12);beam('steel',(x-.18,.35,-1.2),(x+.18,.35,-1.2),.045)
+  bench(0,3)
+  coil(-1.8,-.7);cleat(1.8,-.9)
+  for x in [-1.8,0,1.8]:box('rubber',(x,-.3,-1.57),(.24,.5,.12))
  elif id=='gray_pier':
   land(lambda x:4.4+.5*math.sin(x*.2))
   planks(0,1,1.8,10,'weathered');planks(0,-4.5,4.8,3,'weathered')
@@ -237,6 +234,7 @@ def build(id):
   def sand_point(x,row):
    z,y=row
    if z<-3:z+=(.6*math.sin(x*.2)+.18*math.sin(x*.6))*min(1,(-z-3)/4)
+   if z<0:z-=max(0,abs(x)-3.5)*.45*min(1,-z/3)
    if abs(x)>9 and z>-3:y+=min(.7,(abs(x)-9)*.04)*(1+.22*math.sin(x*.4+z*.2))
    return (x,y,z)
   for i in range(len(xs)-1):

@@ -17,7 +17,7 @@ func _ready() -> void:
 	path_field = LineEdit.new(); path_field.placeholder_text = "Folder or .vrm path"; path_field.size_flags_horizontal = SIZE_EXPAND_FILL; row.add_child(path_field)
 	path_field.text_submitted.connect(_open_path)
 	var go := Button.new(); go.text = "Go"; row.add_child(go); go.pressed.connect(func(): _open_path(path_field.text))
-	files = ItemList.new(); files.custom_minimum_size.y = 156; files.size_flags_vertical = SIZE_EXPAND_FILL; column.add_child(files)
+	files = preload("res://scripts/ui/vr_item_list.gd").new(); files.custom_minimum_size.y = 156; files.size_flags_vertical = SIZE_EXPAND_FILL; column.add_child(files)
 	files.item_selected.connect(func(_i: int): open_button.disabled = false)
 	files.item_activated.connect(func(i: int): _open_path(files.get_item_metadata(i)))
 	message = Label.new(); message.text = "Choose a folder or VRM file, then Open."; message.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS; column.add_child(message)

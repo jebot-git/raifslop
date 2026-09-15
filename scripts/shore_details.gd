@@ -22,12 +22,14 @@ static func create(id:String)->Node3D:
  else:
   for side in [-1.0,1.0]:
    for z in [-2.0,.2,2.4,4.5]:locations.append(Vector3(side*2.25,-.43,z))
-   for z in [7.0,8.3,9.4]:locations.append(Vector3(side*3.4,-.045,z))
+   # The left bench occupies x=-3.83..-1.97, z=8.15..8.85. Leave
+   # clearance for the crossed leaves, their random offset and their sway.
+   for z in ([7.0] if side<0 else [7.0,8.3,9.4]):locations.append(Vector3(side*3.4,-.045,z))
  var texture_path:="res://assets/environment/rivers/river_shrubs.png" if id=="lakeside" else "res://assets/environment/shore_details/lakeshore_reeds.png"
  if not ResourceLoader.exists(texture_path):return root
  var multi:=MultiMesh.new();multi.transform_format=MultiMesh.TRANSFORM_3D;multi.use_custom_data=true;multi.mesh=crossed_mesh();multi.instance_count=locations.size()
  var rng:=RandomNumberGenerator.new();rng.seed=116 if id=="lakeside" else 218
- var placements:Array=[]
+ var placements:Array=[];var footprints:Array[Rect2]=[]
  for i in locations.size():
   var height:=rng.randf_range(.5,.85) if id=="lakeside" else rng.randf_range(.9,1.35)
   var width:=height*1.65 if id=="lakeside" else height*.9
@@ -35,10 +37,12 @@ static func create(id:String)->Node3D:
   multi.set_instance_transform(i,Transform3D(Basis(Vector3.UP,rng.randf_range(-PI,PI)).scaled_local(Vector3(width,height,width)),at))
   multi.set_instance_custom_data(i,Color(rng.randf_range(.82,.95),0,0,1))
   placements.append(at)
+  var radius:float=width*.5+.025
+  footprints.append(Rect2(Vector2(at.x,at.z)-Vector2.ONE*radius,Vector2.ONE*radius*2))
  var plants:=MultiMeshInstance3D.new();plants.name="CrossedShorePlants";plants.multimesh=multi
  var mat:=ShaderMaterial.new();mat.shader=SHADER;mat.set_shader_parameter("foliage",load(texture_path));mat.set_shader_parameter("sway",.012);mat.set_shader_parameter("exposure",.25 if id=="gray_pier" else .45)
  plants.material_override=mat;root.add_child(plants)
- root.set_meta("plant_bases",placements);root.set_meta("cross_sections",3)
+ root.set_meta("plant_bases",placements);root.set_meta("plant_footprints",footprints);root.set_meta("cross_sections",3)
  for at in locations:
   if at.y<-.2:continue
   var patch:=MeshInstance3D.new();patch.name="SoftGroundCover"

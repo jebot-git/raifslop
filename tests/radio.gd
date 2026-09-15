@@ -48,6 +48,12 @@ func run() -> void:
 	tracker.set_input("grip",1.0);tracker.set_input("trigger_click",true);await process_frame;radio.update()
 	check(radio.held and voice.radio_channel() and voice.wants_transmit(),"Fresh shoulder grab and trigger activate cross-water radio in voice-activation mode")
 	check(not g.rod_holster.stowed,"Using radio keeps rod available")
+	for orientation in [Basis.IDENTITY, Basis.from_euler(Vector3(.4,.8,-.6))]:
+		tracker.set_pose("grip",Transform3D(orientation,g.origin.to_local(mount.origin)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+		await process_frame;radio.update();radio.update()
+		var expected: Basis=left.global_basis*Basis(Vector3.RIGHT,-PI/2)
+		check(radio.model.global_basis.is_equal_approx(expected),"Held radio matches FPSloppa rotation without accumulating")
+		check(radio.model.global_position.is_equal_approx(left.global_position),"Rotation preserves radio grip position")
 	tracker.set_input("trigger_click",false);await process_frame;radio.update()
 	check(radio.held and not voice.radio_channel() and not voice.wants_transmit(),"Trigger release silences held radio without leaking voice activation locally")
 	voice.mode=1;tracker.set_input("trigger_click",true);await process_frame;radio.update()

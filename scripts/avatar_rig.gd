@@ -17,6 +17,8 @@ var right_index_tip_frame := -10
 var index_tip_bone := -1
 var index_tip_offset := Vector3.ZERO
 var right_hand_bone := -1
+var left_grip: Variant = null
+var left_hand_bone := -1
 var right_grip: Variant = null
 var right_grip_frame := -10
 var skeleton: Skeleton3D
@@ -91,6 +93,7 @@ func configure(root: Node3D) -> bool:
 	solver.setup(self)
 	_setup_index_tip()
 	right_hand_bone = skeleton.find_bone("RightHand")
+	left_hand_bone = skeleton.find_bone("LeftHand")
 	solver.modification_processed.connect(_capture_hand_attachments)
 	skeleton.add_child(eyes)
 	add_to_group("fishing_avatar_rigs")
@@ -168,6 +171,10 @@ func _setup_index_tip() -> void:
 
 func _capture_hand_attachments() -> void:
 	# Read while modifiers are applied. Godot restores raw poses after this signal.
+	if left_hand_bone >= 0 and not xr_pose.is_empty():
+		var wrist := skeleton.global_transform * skeleton.get_bone_global_pose(left_hand_bone)
+		var grip_basis := wrist.basis.orthonormalized() * IK.controller_hand_basis(true).inverse()
+		left_grip = Transform3D(grip_basis, wrist.origin - grip_basis.y * .06)
 	if right_hand_bone >= 0 and not xr_pose.is_empty():
 		var wrist := skeleton.global_transform * skeleton.get_bone_global_pose(right_hand_bone)
 		# Undo the controller-to-humanoid axes and wrist offset used by IK.
@@ -180,8 +187,8 @@ func _capture_hand_attachments() -> void:
 		right_index_tip = skeleton.to_global(skeleton.get_bone_global_pose(index_tip_bone) * index_tip_offset)
 		right_index_tip_frame = Engine.get_process_frames()
 
-func hand_grip_pose() -> Variant:
-	return right_grip if Engine.get_process_frames() - right_grip_frame <= 2 else null
+func hand_grip_pose(left_hand := false) -> Variant:
+	return (left_grip if left_hand else right_grip) if Engine.get_process_frames() - right_grip_frame <= 2 else null
 
 func index_touch_position() -> Variant:
 	return right_index_tip if Engine.get_process_frames() - right_index_tip_frame <= 2 else null

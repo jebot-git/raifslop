@@ -11,6 +11,8 @@ var blocked := false
 var tracking_focused := true
 var catch_controls := false
 var smooth_turn := false
+var smooth_turn_speed := 75.0
+var snap_turn_angle := 30.0
 var turn_latched := false
 var capsule := CapsuleShape3D.new()
 var shape := CollisionShape3D.new()
@@ -76,12 +78,7 @@ func _physics_process(delta: float) -> void:
 		stick = Vector2.ZERO
 		turn_axis = 0.0
 		velocity = Vector3.ZERO
-	if smooth_turn:
-		if absf(turn_axis) > 0.18: turn(-turn_axis * deg_to_rad(75) * delta)
-	elif absf(turn_axis) > 0.65 and not turn_latched:
-		turn(-signf(turn_axis) * deg_to_rad(30))
-		turn_latched = true
-	if absf(turn_axis) < 0.25: turn_latched = false
+	apply_turn_input(turn_axis, delta)
 	var forward := -head.global_basis.z
 	forward.y = 0.0
 	if forward.length() < 0.01: forward = -origin.global_basis.z
@@ -96,3 +93,11 @@ func _physics_process(delta: float) -> void:
 	last_motion = (global_position - before) / maxf(delta, 0.001)
 	if global_position.y < -3.0:
 		relocate(safe_spawn)
+
+func apply_turn_input(axis:float,delta:float) -> void:
+	if smooth_turn:
+		if absf(axis) > 0.18: turn(-axis * deg_to_rad(smooth_turn_speed) * delta)
+	elif absf(axis) > 0.65 and not turn_latched:
+		turn(-signf(axis) * deg_to_rad(snap_turn_angle))
+		turn_latched = true
+	if absf(axis) < 0.25: turn_latched = false

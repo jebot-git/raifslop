@@ -36,17 +36,30 @@ def export(scene,name):
  for o in obs:o.select_set(True)
  bpy.context.view_layer.objects.active=obs[0];bpy.ops.object.join();bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
  bpy.ops.export_scene.gltf(filepath=str(OUT/(name+'.glb')),export_format='GLB',use_active_scene=True,export_animations=False)
-for index,name in enumerate(['willow','reed','heron','kingfisher']):
+for variant in range(8):
+ index=variant%4;fly=variant>=4
+ name=['willow','reed','heron','kingfisher'][index]+('_fly' if fly else '')
  scene=bpy.data.scenes.new('Rod_'+name);scenes.append(scene);bpy.context.window.scene=scene
- accent=material(name+' wraps',[(.16,.22,.13),(.13,.2,.21),(.26,.22,.13),(.06,.19,.23)][index],.35,.4)
+ accent=material(name+' wraps',[(.18,.25,.10),(.48,.53,.56),(.65,.35,.075),(.025,.52,.66)][index],.5,.3)
+ carbon=material(name+' blank',[(.028,.055,.018),(.025,.045,.075),(.20,.018,.03),(.01,.16,.23)][index],.4,.3)
+ reel_metal=material(name+' reel finish',[(.07,.09,.05),(.38,.43,.47),(.45,.21,.055),(.04,.32,.43)][index],.75,.3)
  grip=cork if index in [0,2] else rubber
  # One continuous tapered carbon blank rather than thick segmented sticks.
  cylinder('Tapered carbon blank',(0,0,.19),(0,0,-1.68),.0065,carbon,.0009)
- cylinder('Rear grip',(0,0,.21),(0,0,.055),.017,grip,.0185)
+ if index in [1,3]:
+  cylinder('Split grip butt',(0,0,.21),(0,0,.155),.019,grip,.015)
+  cylinder('Exposed split seat',(0,0,.155),(0,0,.095),.009,carbon)
+  cylinder('Split grip palm',(0,0,.095),(0,0,.055),.015,grip,.019)
+ else:cylinder('Rear grip',(0,0,.21),(0,0,.055),.017 if index==0 else .022,grip,.0185)
  cylinder('Butt cap',(0,0,.217),(0,0,.203),.0185,rubber)
  cylinder('Reel seat',(0,0,.052),(0,0,-.082),.012,carbon)
  for z in [.04,.03,-.07,-.08]:cylinder('Machined seat ring',(0,0,z+.003),(0,0,z-.003),.014,steel)
- cylinder('Foregrip',(0,0,-.09),(0,0,-.16),.018,grip,.014)
+ cylinder('Foregrip',(0,0,-.09),(0,0,-.16),.018 if index<2 else .024,grip,.014)
+ if index>=2:
+  for z in [-.095,-.15,.065,.20]:cylinder('Premium grip collar',(0,0,z+.005),(0,0,z-.005),.023 if z<0 else .022,accent)
+ if index==3:
+  for z in [-.105,-.12,-.135]:torus('Ribbed EVA grip',(0,0,z),.022,.002,accent)
+ for z in [-.21,-.27]:cylinder('Tier colour band',(0,0,z+.015),(0,0,z-.015),.0075,accent)
  for z in [-.16,-.19,-.24]:cylinder('Thread binding',(0,0,z+.009),(0,0,z-.009),.007,accent)
  # Diminishing ceramic line guides under the spinning rod.
  for i,z in enumerate([-.31,-.55,-.8,-1.02,-1.22,-1.4,-1.55,-1.678]):
@@ -54,20 +67,32 @@ for index,name in enumerate(['willow','reed','heron','kingfisher']):
   torus('Line guide',(0,y,z),r,.0012,steel);torus('Ceramic ring',(0,y,z),r-.0014,.001,ceramic)
   tube('Guide support',[(0,-.004,z+.024),(0,y-r*.7,z),(0,-.004,z-.019)],.0013,steel)
   cylinder('Guide wrap',(0,0,z+.026),(0,0,z+.008),max(.002,.0055*(1-i/10)),accent)
- # Reel foot, neck, gear housing and forward-facing spool.
- tube('Reel stem',[(0,-.008,.012),(0,-.047,.006),(0,-.071,.041)],.008,carbon)
+ # Fly reels have a transverse open-arbor drum and a short direct crank.
+ # Spinning reels retain their forward spool, rotor and bail.
+ tube('Reel stem',[(0,-.008,.012),(0,-.047,.006),(0,-.071,.041)],.008,reel_metal)
  cylinder('Reel mounting foot',(0,-.012,-.055),(0,-.012,.052),.0045,steel)
- ellipsoid('Gear housing',(0,-.081,.042),(.025,.032,.042),carbon)
- cylinder('Spool axle',(0,-.081,.018),(0,-.081,-.074),.006,steel)
- cylinder('Spool',(0,-.081,-.035),(0,-.081,-.071),.024,steel)
- cylinder('Wound fishing line',(0,-.081,-.039),(0,-.081,-.066),.023,line)
- for z in [-.035,-.071]:torus('Spool lip',(0,-.081,z),.025,.002,steel)
- cylinder('Drag adjustment',(0,-.081,-.074),(0,-.081,-.08),.012,rubber)
- bail=[]
- for j in range(25):
-  a=math.pi*j/24;bail.append((.034*math.cos(a),-.081+.035*math.sin(a),-.066-.023*math.sin(a)))
- tube('Bail wire',bail,.0015,steel)
- for side in [-1,1]:tube('Rotor arm',[(side*.022,-.08,.007),(side*.034,-.081,-.066)],.004,accent)
+ if fly:
+  for x in [-.03,.03]:
+   torus('Fly reel open rim',(x,-.075,.04),.053,.004,reel_metal,axis=(1,0,0))
+   for j in range(8+index*2):
+    a=j*math.tau/(8+index*2)
+    cylinder('Fly spool spoke',(x,-.075+math.cos(a)*.017,.04+math.sin(a)*.017),(x,-.075+math.cos(a)*.05,.04+math.sin(a)*.05),.0028,accent)
+  cylinder('Fly reel arbor',(-.033,-.075,.04),(.033,-.075,.04),.018,reel_metal)
+  cylinder('Fly line backing',(-.023,-.075,.04),(.023,-.075,.04),.036,line)
+  cylinder('Fly drag dial',(.031,-.075,.04),(.039,-.075,.04),.014,rubber)
+ else:
+  scale=1.0+index*.09
+  ellipsoid('Gear housing',(0,-.081,.042),(.025*scale,.032*scale,.042),reel_metal)
+  cylinder('Spool axle',(0,-.081,.018),(0,-.081,-.074),.006,steel)
+  cylinder('Spool',(0,-.081,-.035),(0,-.081,-.071),.024*scale,reel_metal)
+  cylinder('Wound fishing line',(0,-.081,-.039),(0,-.081,-.066),.023*scale,line)
+  for z in [-.035,-.071]:torus('Spool lip',(0,-.081,z),.025*scale,.002,accent)
+  cylinder('Drag adjustment',(0,-.081,-.074),(0,-.081,-.08),.012,rubber)
+  bail=[]
+  for j in range(25):
+   a=math.pi*j/24;bail.append((.043*math.cos(a),-.081+.043*math.sin(a),-.066-.023*math.sin(a)))
+  tube('Bail wire',bail,.0015,steel)
+  for side in [-1,1]:tube('Rotor arm',[(side*.022,-.08,.007),(side*.043,-.081,-.066)],.004,accent)
  cylinder('Crank spindle',(-.085,-.075,.04),(0,-.075,.04),.004,steel)
  export(scene,name)
 scene=bpy.data.scenes.new('Reel_handle');scenes.append(scene);bpy.context.window.scene=scene
@@ -76,5 +101,10 @@ tube('Cranked metal arm',[(0,0,0),(-.008,.037,0),(-.014,.08,0)],.004,steel)
 cylinder('Knob spindle',(-.014,.08,0),(-.039,.08,0),.003,steel)
 ellipsoid('Reel paddle',(-.035,.08,0),(.014,.023,.014),rubber)
 export(scene,'handle')
+scene=bpy.data.scenes.new('Fly_reel_handle');scenes.append(scene);bpy.context.window.scene=scene
+# Short crank lies against the left spool face, using the existing X-axis pivot.
+tube('Fly direct crank',[(0,0,0),(.049,0,0),(.049,.039,0)],.003,steel)
+cylinder('Fly crank knob',(.049,.039,0),(.028,.039,0),.007,rubber)
+export(scene,'fly_handle')
 bpy.data.libraries.write(str(ROOT/'source/rods.blend'),set(scenes),path_remap='RELATIVE',fake_user=True,compress=True)
 print('RODS_COMPLETE')
