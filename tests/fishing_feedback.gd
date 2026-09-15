@@ -22,9 +22,12 @@ func run():
  f.splash(root_game.bobber.global_position)
  check(f.last_splash!=variant and f.splash_streams.size()==3,"Recorded fight splashes avoid immediate repeats")
  g.state=S.State.BITE;g.strike();root_game._update_line();f.reel_rate=1;f._process(.02)
+ check(f.events.ripple==1 and f.ripple_player.playing,"Hooked fish starts with a subtle recorded ripple")
+ check(f.ripple_player.global_position.is_equal_approx(root_game.bobber.global_position) and f.ripple_player.max_db<=-8,"Fight-start ripple is quiet and located at the fish")
  check(f.reel_player.playing,"Accepted reeling runs ratchet loop")
  f.reel_rate=1.7;f._process(.02);check(is_equal_approx(f.reel_player.pitch_scale,1.7),"Reeling speed changes ratchet speed")
  f.reel_rate=0;f._process(.02);check(not f.reel_player.playing,"Stopped crank stops sound")
+ check(f.events.ripple==1,"Fight-start ripple does not repeat every frame")
  root_game.origin.rotation.y=.8
  for cue in range(3):
   g.cue=cue;f._process(.02)
@@ -34,6 +37,10 @@ func run():
   check(f.surface.visible and f.water_fx.get_shader_parameter("directional"),"Fight cue shows directional surface wake: "+str(cue))
  f.reel_rate=1;root_game.menu_open=true;f._process(.02);check(not f.reel_player.playing,"Menu pauses reel audio")
  root_game.menu_open=false
+ g.cue=-1;g.submerge=S.Submerge.PULL;g.submerge_time=2
+ f._process(.02)
+ check(f.water_fx.get_shader_parameter("strength")<.4 and is_equal_approx(f.surface.global_position.y,root_game.water_level+.045),"Submerged fish leaves a quieter wake on the actual water surface")
+ g.submerge=S.Submerge.NONE
  g.tension=0;root_game._update_line();var slack_color=root_game.line_material.albedo_color
  g.tension=1;root_game._update_line();var tight_color=root_game.line_material.albedo_color
  check(slack_color.b>slack_color.r and tight_color.r>tight_color.b,"Line shows blue slack and red high tension")

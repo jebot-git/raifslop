@@ -13,3 +13,5 @@ The trout recording is described by its author as a roughly 14-inch trout being 
 Changes: selected short excerpts, mono downmix at 44.1 kHz, 120 Hz high-pass and 4–4.3 kHz low-pass filtering, mild transient compression, 25 ms onset and 150 ms tail fades, conservative peak level matching. The resulting `splash.wav`, `splash_2.wav`, `splash_3.wav` and `land.wav` are adaptations of the trout recording under CC BY 4.0; retain its title, creator, source, license and this modification notice with distributed builds. `cast.wav` and `impact.wav` derive from the CC0 recordings. No endorsement is implied.
 
 Exact excerpt times, output levels and SHA-256 hashes: [fishing_audio_assets.json](../../../docs/fishing_audio_assets.json). Reproduce with `python3 tools/build_fishing_audio.py` (requires ffmpeg). `reel.wav` retains its prior authored CC0 synthesis.
+
+`ripple.wav` uses the quiet tail of the same CC0 river recording (0.70–1.40 s), low-pass filtered at 2.2 kHz and limited to −30 dBFS peak for fight-start and escape cues. Rebuild it alone with `python3 tools/build_fishing_audio.py --only ripple`.

@@ -5,6 +5,11 @@
     "bytes": 1652716
   },
   {
+    "file": "assets/audio/ambience/blouberg_sunrise_2.ogg",
+    "sha256": "f895058d1eb6923073ecdc34bf4c91eaf233fdf89eeaade8cf7b29da2acc1965",
+    "bytes": 1229167
+  },
+  {
     "file": "assets/audio/ambience/gray_pier.ogg",
     "sha256": "168011cf7b829a403bf4bf0d8ff4bb5bbd6b1e3bc3f20d71f01b775585854a3f",
     "bytes": 1659872
@@ -18,6 +23,11 @@
     "file": "assets/audio/ambience/lakeside.ogg",
     "sha256": "651b19166e9f6013e7d3cf892d2181513fef37c3987a5506b0c38f3e43a46927",
     "bytes": 1732904
+  },
+  {
+    "file": "assets/audio/ambience/simons_town_rocks.ogg",
+    "sha256": "971715542c7f0f4cf9ccf2883af04995c833b345b98d6a5dd353d1f7de4da045",
+    "bytes": 1559293
   },
   {
     "file": "assets/audio/ambience/timber.ogg",

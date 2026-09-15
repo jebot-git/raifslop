@@ -1,0 +1,52 @@
+[
+  {
+    "file": "assets/models/locations/lit/simons_town_rocks.glb",
+    "bytes": 8324064,
+    "sha256": "52d13053dcfb3a3ff4e75f52053e42e3bfd932c57d11f0c4ad5e7359c86cf276"
+  },
+  {
+    "file": "assets/audio/ambience/simons_town_rocks.ogg",
+    "bytes": 1559293,
+    "sha256": "971715542c7f0f4cf9ccf2883af04995c833b345b98d6a5dd353d1f7de4da045"
+  },
+  {
+    "file": "assets/textures/lighting/simons_town_rocks_sky.exr",
+    "bytes": 2076110,
+    "sha256": "8c3eac77ac8e4668fed816fb7530664d4a1e834749aa8853ba68e12751217578"
+  },
+  {
+    "file": "assets/textures/lighting/simons_town_rocks_irradiance.exr",
+    "bytes": 2239049,
+    "sha256": "6801439f2e97c5fdd4ea92072354f387fff5e17057e95fe2576be919df682928"
+  },
+  {
+    "file": "assets/textures/lighting/simons_town_rocks_ao.png",
+    "bytes": 540085,
+    "sha256": "eee089312a4a275faa9ed7d8cd97fc6b5e4a93444ae85bc298165809bc9acd94"
+  },
+  {
+    "file": "assets/models/locations/lit/blouberg_sunrise_2.glb",
+    "bytes": 4489460,
+    "sha256": "5af9a6c9c3daf1a4410f1fbf6628d4d1d228e94011a70f9d2a2bb0b528870303"
+  },
+  {
+    "file": "assets/audio/ambience/blouberg_sunrise_2.ogg",
+    "bytes": 1229167,
+    "sha256": "f895058d1eb6923073ecdc34bf4c91eaf233fdf89eeaade8cf7b29da2acc1965"
+  },
+  {
+    "file": "assets/textures/lighting/blouberg_sunrise_2_sky.exr",
+    "bytes": 1619809,
+    "sha256": "2e7070da830c79476d001c660cc6ffb6434246306c12e145a4fd00e81250d8e5"
+  },
+  {
+    "file": "assets/textures/lighting/blouberg_sunrise_2_irradiance.exr",
+    "bytes": 1778359,
+    "sha256": "5794b63a59969ebd641a799c7f13d54724c0b4fbf0cfc4a49c13ada9cf1d9b94"
+  },
+  {
+    "file": "assets/textures/lighting/blouberg_sunrise_2_ao.png",
+    "bytes": 239433,
+    "sha256": "851c3d5b07133fcacceff9ed3ba7ff30705cb73afccdb5725ee7ee0038e093a4"
+  }
+]

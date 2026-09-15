@@ -12,16 +12,20 @@ var burst_age:=2.0
 var escape:=Vector3.ZERO
 var reel_player: AudioStreamPlayer3D
 var cast_player: AudioStreamPlayer3D
+var ripple_player: AudioStreamPlayer3D
+var submerge_previous := S.Submerge.NONE
+var was_paused := false
 var splashes: Array[AudioStreamPlayer3D]=[]
 var splash_slot:=0
 var last_splash:=0
 var splash_streams: Array[AudioStreamWAV]=[]
 var surface: MeshInstance3D
 var water_fx: ShaderMaterial
-var events: Dictionary={"cast":0,"splash":0,"land":0}
+var events: Dictionary={"cast":0,"splash":0,"land":0,"ripple":0}
 func setup(root: Node) -> void:
  game_root=root
  cast_player=player("cast");reel_player=player("reel")
+ ripple_player=player("ripple");ripple_player.volume_db=-6;ripple_player.max_db=-8
  cast_player.unit_size=1.5;cast_player.volume_db=-8;cast_player.max_db=-8
  for file in ["splash","splash_2","splash_3"]:
   splash_streams.append(load("res://assets/audio/fishing/"+file+".wav"))
@@ -36,6 +40,8 @@ func player(kind: String) -> AudioStreamPlayer3D:
  var p:=AudioStreamPlayer3D.new();p.stream=load("res://assets/audio/fishing/"+kind+".wav");p.unit_size=5;p.max_distance=65;p.volume_db=-3;add_child(p);return p
 func cast_swish() -> void:
  cast_player.global_position=game_root.tip.global_position;cast_player.play();events.cast+=1
+func ripple(at: Vector3) -> void:
+ ripple_player.global_position=at;ripple_player.play();events.ripple+=1
 func splash(at: Vector3, landing:=false, impact:=false) -> void:
  var p:=splashes[splash_slot];splash_slot=(splash_slot+1)%splashes.size()
  if landing or impact:
@@ -51,10 +57,19 @@ func _process(delta: float) -> void:
  var g=game_root.game
  var paused: bool=game_root.rod_holster.stowed or game_root.menu_open or game_root.fish_guide.held or game_root.avatar_loading or (game_root.xr and (not game_root.right.get_has_tracking_data() or not game_root.left.get_has_tracking_data() or not game_root.tracking_manager.focused))
  if paused:
-  reel_player.stop();return
+  reel_player.stop();ripple_player.stop();haptics.pause()
+  if not was_paused and game_root.xr:
+   for hand in [game_root.right,game_root.left]:
+    if hand.get_has_tracking_data(): hand.trigger_haptic_pulse("haptic",0.0,0.0,.01,0.0)
+  was_paused=true
+  return
+ was_paused=false
  var pulse:Dictionary=haptics.sample(g,delta)
  if not pulse.is_empty() and game_root.xr:
   game_root.right.trigger_haptic_pulse("haptic",0.0,pulse.strength,pulse.duration,0.0)
+ var reel_pulse: Dictionary=haptics.sample_reel(g,reel_rate,delta)
+ if not reel_pulse.is_empty() and game_root.xr:
+  game_root.left.trigger_haptic_pulse("haptic",0.0,reel_pulse.strength,reel_pulse.duration,0.0)
  clock+=delta
  reel_player.global_position=game_root.crank.global_position
  if g.state==S.State.FIGHT and reel_rate>.03:
@@ -62,23 +77,28 @@ func _process(delta: float) -> void:
   if not reel_player.playing:reel_player.play()
  else:reel_player.stop()
  if g.state!=previous:
-  if g.state in [S.State.WAITING,S.State.FIGHT]:
-   splash(game_root.bobber.global_position,false,g.state==S.State.WAITING);splash_wait=1.1
+  if g.state==S.State.WAITING:
+   splash(game_root.bobber.global_position,false,true);splash_wait=1.1
+  elif g.state==S.State.FIGHT:
+   ripple(game_root.bobber.global_position);splash_wait=1.4
   elif g.state==S.State.LANDED:
    splash(surface.global_position,true);burst_age=0
   previous=g.state
  if g.state==S.State.FIGHT:
-  surface.show();surface.global_position=game_root.bobber.global_position;surface.global_position.y=-.305
+  surface.show();surface.global_position=game_root.bobber.global_position;surface.global_position.y=game_root.water_level+.045
   escape=game_root.fish_escape_direction()
   water_fx.set_shader_parameter("heading",Vector2(escape.x,escape.z))
   water_fx.set_shader_parameter("directional",g.cue>=0)
   water_fx.set_shader_parameter("burst",false)
-  water_fx.set_shader_parameter("strength",1.0 if g.cue>=0 or g.is_running() else .4)
+  water_fx.set_shader_parameter("strength",.2 if g.submerge!=S.Submerge.NONE else 1.0 if g.cue>=0 or g.is_running() else .4)
   water_fx.set_shader_parameter("clock",clock)
   splash_wait-=delta
-  if (g.cue>=0 and g.cue!=cue_previous) or splash_wait<=0:
+  if (g.cue>=0 and g.cue!=cue_previous) or (g.submerge!=S.Submerge.NONE and g.submerge!=submerge_previous):
+   ripple(surface.global_position);splash_wait=1.1
+  elif splash_wait<=0 and g.submerge==S.Submerge.NONE:
    splash(surface.global_position);splash_wait=randf_range(1.0,1.5) if g.is_running() or g.cue>=0 else randf_range(2.0,2.8)
  elif burst_age<1.8:
   burst_age+=delta;surface.show();water_fx.set_shader_parameter("burst",true);water_fx.set_shader_parameter("clock",burst_age);water_fx.set_shader_parameter("strength",1.0)
  else:surface.hide()
  cue_previous=g.cue
+ submerge_previous=g.submerge

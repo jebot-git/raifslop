@@ -2002,5 +2002,29 @@
     "action": "removed",
     "reason": "Documentation images excluded from Godot imports",
     "bytes": 967
+  },
+  {
+    "path": "source/models/locations",
+    "bytes": 26688192,
+    "reason": "Regenerable intermediate exports, build output or cache; editable sources and signing key retained",
+    "action": "removed for 0.1.4"
+  },
+  {
+    "path": "tools/__pycache__",
+    "bytes": 283011,
+    "reason": "Regenerable intermediate exports, build output or cache; editable sources and signing key retained",
+    "action": "removed for 0.1.4"
+  },
+  {
+    "path": "builds",
+    "bytes": 3213092083,
+    "reason": "Regenerable intermediate exports, build output or cache; editable sources and signing key retained",
+    "action": "removed for 0.1.4"
+  },
+  {
+    "path": ".godot",
+    "bytes": 1596698295,
+    "reason": "Regenerable intermediate exports, build output or cache; editable sources and signing key retained",
+    "action": "removed for 0.1.4"
   }
 ]

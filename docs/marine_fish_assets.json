@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Blacktail",
+    "latin": "Diplodus capensis",
+    "model": "assets/models/fish/blacktail.glb",
+    "sha256": "4b617949a318020f056a74db8746051f4c500d307e14bf79d49e6a250c1ac055",
+    "bytes": 4090816
+  },
+  {
+    "name": "Galjoen",
+    "latin": "Dichistius capensis",
+    "model": "assets/models/fish/galjoen.glb",
+    "sha256": "85b8d9c0b16fef4fccda38e6a4f53c0be225972c2336b3d37ed7fc8996c8178b",
+    "bytes": 4438192
+  },
+  {
+    "name": "Hottentot",
+    "latin": "Pachymetopon blochii",
+    "model": "assets/models/fish/hottentot.glb",
+    "sha256": "6f39f6d2a2331440736322d91bdcf2eb45c9953518064d7fe28235e1e0162a74",
+    "bytes": 4128616
+  },
+  {
+    "name": "Red roman",
+    "latin": "Chrysoblephus laticeps",
+    "model": "assets/models/fish/roman.glb",
+    "sha256": "1fd0498b583b1d6d933a80516efe9bf965f87b80656e664021a635b3303f0f4a",
+    "bytes": 3971932
+  },
+  {
+    "name": "White steenbras",
+    "latin": "Lithognathus lithognathus",
+    "model": "assets/models/fish/white_steenbras.glb",
+    "sha256": "62264c3cfc008894340fb8baab48669cf80ed753791749f18ed92a1cb218ab3d",
+    "bytes": 3464568
+  },
+  {
+    "name": "Elf / bluefish",
+    "latin": "Pomatomus saltatrix",
+    "model": "assets/models/fish/elf.glb",
+    "sha256": "c778c570f55c29e433157bfd2fd324a7293534f80ed2328265959f539345d01c",
+    "bytes": 3029312
+  },
+  {
+    "name": "Cape yellowtail",
+    "latin": "Seriola lalandi",
+    "model": "assets/models/fish/yellowtail.glb",
+    "sha256": "3f15bd46dac8cb07782941462062865d910185472e41034cbe51f20061f1bd65",
+    "bytes": 2948128
+  },
+  {
+    "name": "Harder mullet",
+    "latin": "Chelon richardsonii",
+    "model": "assets/models/fish/harder.glb",
+    "sha256": "9e82034fb5dab4926ea015ed376de2d0c92a84e8b111ec823e1c69f15815457e",
+    "bytes": 2797596
+  }
+]

@@ -46,5 +46,13 @@
     "duration": 0.91,
     "peak_dbfs": -24.0,
     "sha256": "f9ea32ca7ac98552317e4f9f96e045fc11958b9bc3db8fe4acfae5325f46fa2e"
+  },
+  {
+    "file": "assets/audio/fishing/ripple.wav",
+    "source": "source/audio/fishing/river_plop.mp3",
+    "start": 0.7,
+    "duration": 0.7,
+    "peak_dbfs": -30.0,
+    "sha256": "2bd3073235ed14f4843aedcdc27e52ffb9699663086d8aff5d9d6792299ba0b8"
   }
 ]

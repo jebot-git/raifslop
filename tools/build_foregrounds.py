@@ -28,6 +28,7 @@ material('timber',(.5,.38,.25),'brown_planks_03')
 material('concrete',(.6,.6,.55),'concrete_floor_02')
 material('gravel',(.47,.42,.3),'gravelly_sand')
 material('mud',(.2,.18,.13),'gravelly_sand')
+material('sand',(.78,.74,.66),'aerial_beach_01')
 material('bank',(.3,.34,.2),'aerial_grass_rock')
 material('stone',(.4,.38,.33),'concrete_floor_02')
 material('steel',(.26,.3,.31),metal=.8,rough=.35)
@@ -69,13 +70,19 @@ def build(id):
  def rail(a,b,mat='timber',height=.85):
   aa=Vector((a[0],0,a[1]));bb=Vector((b[0],0,b[1]));length=(bb-aa).length;n=math.ceil(length/1.8)
   for i in range(n+1):
-   p=aa.lerp(bb,i/n);beam(mat,p-Vector((0,.18,0)),p+Vector((0,height+.05,0)),.045)
-  for h in [height*.5,height]:beam(mat,aa+Vector((0,h,0)),bb+Vector((0,h,0)),.025 if mat=='steel' else .033)
+   p=aa.lerp(bb,i/n);beam('weathered' if mat=='rope' else mat,p-Vector((0,.18,0)),p+Vector((0,height+.05,0)),.05 if mat=='rope' else .045)
+  if mat=='rope':
+   for segment in range(n):
+    a0=aa.lerp(bb,segment/n);b0=aa.lerp(bb,(segment+1)/n)
+    def sag(t):return a0.lerp(b0,t)+Vector((0,height-.14*4*t*(1-t),0))
+    for j in range(12):beam('rope',sag(j/12),sag((j+1)/12),.022,8)
+  else:
+   for h in [height*.5,height]:beam(mat,aa+Vector((0,h,0)),bb+Vector((0,h,0)),.025 if mat=='steel' else .033)
   center=(aa+bb)/2+Vector((0,height/2,0));direction=bb-aa
   col(center,(.11,height+.1,length+.08),'barrier',math.atan2(direction.x,direction.z))
  def rock(x,z,size):
   center=(x,-.20,z);rings=[]
-  for y,r in [(-.18,.7),(.18,1),(.65,.55)]:
+  for y,r in [(-1.2/size if id=='simons_town_rocks' else -.18,.7),(.18,1),(.65,.55)]:
    rings.append([(x+math.cos(i*math.tau/7)*size*r*(.85+rng.random()*.3),y*size,z+math.sin(i*math.tau/7)*size*r*(.85+rng.random()*.3)) for i in range(7)])
   face('stone',rings[0]);face('stone',list(reversed(rings[-1])))
   if z>-2.2:col((x,.22*size,z),(size*1.1,size*.5,size*1.1),'prop')
@@ -119,6 +126,8 @@ def build(id):
   def point(x,depth):
    z=front(x)+depth
    y=-.65 if depth==0 else -.10 if depth==1.8 else min(1.8,depth*.024)+.12*math.sin(x*.14)
+   # A harbour apron is level; its toe must reach beneath the lowered water.
+   if id=='lake_pier': y=-1.25 if depth==0 else -.10
    if (id=='lakeside' and abs(x)<=8 and z<=25) or (id=='gray_pier' and abs(x)<=4.5 and z<=10) or (id=='lake_pier' and abs(x)<=5 and z<=9): y=min(y,-.10)
    return (x,y,z)
   for i in range(len(xs)-1):
@@ -129,21 +138,21 @@ def build(id):
  spawn=[0,.02,.65]
  if id=='lakeside':
   land(lambda x:-3.5 if abs(x)<=8 else -3.5+min(12,(abs(x)-8)*.27)+.8*math.sin(x*.21))
-  slab('gravel',(0,-.24,5.3),(16,.48,15.4))
+  slab('bank',(0,-.24,5.3),(16,.48,15.4))
   # An irregular stony water margin; low kerb keeps feet on the supported shore.
   for i in range(24):rock(-7.8+i*.68,-2.55+rng.uniform(-.22,.08),rng.uniform(.28,.55))
   col((0,.22,-2.4),(16,.5,.25))
   for side in [-1,1]:
-   rail((side*7.8,-2.1),(side*7.8,12.7),height=.85)
+   rail((side*7.8,-2.1),(side*7.8,12.7),'rope',height=.85)
    for j in range(18):
     rock(side*rng.uniform(6.8,7.5),rng.uniform(-1.5,12),rng.uniform(.2,.55));plants(side*7.1,rng.uniform(-1,12),12)
-  rail((-7.8,12.8),(7.8,12.8))
+  rail((-7.8,12.8),(7.8,12.8),'rope')
   bench(-4,7);bench(4,9)
   for x in [-6.2,6.2]:
    for z in [-3.4,-4.4]:plants(x,z,30,True)
  elif id=='lake_pier':
   land(lambda x:7.0,'concrete')
-  slab('concrete',(0,-.35,3),(10,.7,12))
+  slab('concrete',(0,-.625,3),(10,1.25,12))
   # Expansion joints, capped quay edge and metal bollards.
   for x in [-5,-2.5,0,2.5,5]:box('rubber',(x,.002,3),(.018,.008,12))
   for z in [-3,0,3,6,9]:box('rubber',(0,.002,z),(10,.008,.018))
@@ -161,15 +170,15 @@ def build(id):
  elif id=='gray_pier':
   land(lambda x:4.4+.5*math.sin(x*.2))
   planks(0,1,1.8,10,'weathered');planks(0,-4.5,4.8,3,'weathered')
-  slab('mud',(0,-.23,8),(9,.46,4))
-  for x in [-.9,.9]:rail((x,-3),(x,6),'weathered',.8)
-  rail((-2.4,-6),(2.4,-6),'weathered',.65)
-  rail((-2.4,-6),(-2.4,-3),'weathered',.8);rail((2.4,-6),(2.4,-3),'weathered',.8)
-  rail((-2.4,-3),(-.9,-3),'weathered',.8);rail((.9,-3),(2.4,-3),'weathered',.8)
+  slab('bank',(0,-.23,8),(9,.46,4))
+  for x in [-.9,.9]:rail((x,-3),(x,6),'rope',.8)
+  rail((-2.4,-6),(2.4,-6),'rope',.65)
+  rail((-2.4,-6),(-2.4,-3),'rope',.8);rail((2.4,-6),(2.4,-3),'rope',.8)
+  rail((-2.4,-3),(-.9,-3),'rope',.8);rail((.9,-3),(2.4,-3),'rope',.8)
   for x in [-.72,.72]:
    for z in [-5.8,-3,0,3,5.8]:beam('wood_end',(x,-1.1,z),(x,-.14,z),.09)
-  rail((-4.5,6),(-.9,6),'weathered');rail((.9,6),(4.5,6),'weathered')
-  rail((-4.5,6),(-4.5,10),'weathered');rail((4.5,6),(4.5,10),'weathered');rail((-4.5,10),(4.5,10),'weathered')
+  rail((-4.5,6),(-.9,6),'rope');rail((.9,6),(4.5,6),'rope')
+  rail((-4.5,6),(-4.5,10),'rope');rail((4.5,6),(4.5,10),'rope');rail((-4.5,10),(4.5,10),'rope')
   for side in [-1,1]:
    for z in range(-2,10):plants(side*rng.uniform(1.8,4),z,28,True)
   bench(-2.9,8.5);coil(1.7,-4.8)
@@ -205,6 +214,41 @@ def build(id):
   beam('rope',(-1.3,.2,2.25),(-3,.20,3.5),.022)
   beam('rope',(1.3,.2,2.25),(3,.20,3.5),.022)
   spawn=[0,.02,.35]
+ elif id=='simons_town_rocks':
+  # Low stone terrace embedded in a rocky shore; solid footings cross the waterline.
+  land(lambda x:4+min(8,abs(x)*.22),'gravel')
+  slab('stone',(0,-.65,2),(9,1.3,10))
+  for x in [-4.5,4.5]:
+   rail((x,-3),(x,7),'rope',.85)
+   for z in range(-4,9,2):
+    size=rng.uniform(1.2,2.2)
+    rock(x+(size*1.25+.25)*(1 if x>0 else -1),z,size)
+  rail((-4.5,-3),(4.5,-3),'rope',.65)
+  rail((-4.5,7),(4.5,7),'rope',.85)
+  for x in [-3,-1.5,1.5,3]:
+   size=rng.uniform(.7,1.1);rock(x,-3-size*1.25-.25,size)
+  bench(-2.5,5.5);coil(3,-2);cleat(3.5,-2.5)
+  for side in [-1,1]:
+   for j in range(16):plants(side*rng.uniform(5,9),rng.uniform(5,13),10)
+ elif id=='blouberg_sunrise_2':
+  # Continuous sandy shore: a level, supported fishing area meets a submerged slope.
+  xs=[-120,-60,-30,-16,-12,-9,-6,-3,0,3,6,9,12,16,30,60,120]
+  rows=[(-12,-1.2),(-7,-.75),(-4,-.12),(-3,0),(0,0),(6,0),(12,0),(16,.12),(24,.35),(50,.55),(90,.6),(150,.6)]
+  def sand_point(x,row):
+   z,y=row
+   if z<-3:z+=(.6*math.sin(x*.2)+.18*math.sin(x*.6))*min(1,(-z-3)/4)
+   if abs(x)>9 and z>-3:y+=min(.7,(abs(x)-9)*.04)*(1+.22*math.sin(x*.4+z*.2))
+   return (x,y,z)
+  for i in range(len(xs)-1):
+   for j in range(len(rows)-1):
+    face('sand',[sand_point(xs[i],rows[j+1]),sand_point(xs[i+1],rows[j+1]),sand_point(xs[i+1],rows[j]),sand_point(xs[i],rows[j])])
+  col((0,-.6,4.5),(18,1.2,15),'floor')
+  # Comfortable dry-sand bounds; no man-made pier, deck, rail or mooring props.
+  col((0,.45,-3.15),(18,1,.2));col((0,.45,12.15),(18,1,.2))
+  for x in [-9.15,9.15]:col((x,.45,4.5),(.2,1,15.5))
+  for side in [-1,1]:
+   for j in range(14):plants(side*rng.uniform(10,15),rng.uniform(13,22),8)
+  scene['shore_connected']=True
  else:raise ValueError(id)
  objects=[]
  for mat,(vertices,faces) in groups.items():
@@ -213,7 +257,7 @@ def build(id):
   for poly in mesh.polygons:
    normal=poly.normal;axis=max(range(3),key=lambda i:abs(normal[i]));axes=[i for i in range(3) if i!=axis]
    for loop in poly.loop_indices:
-    co=mesh.vertices[mesh.loops[loop].vertex_index].co;uv.data[loop].uv=(co[axes[0]]*(.08 if mat=='bank' else .5),co[axes[1]]*(.08 if mat=='bank' else .5))
+    co=mesh.vertices[mesh.loops[loop].vertex_index].co;uv.data[loop].uv=(co[axes[0]]*(.08 if mat in ['bank','sand'] else .5),co[axes[1]]*(.08 if mat in ['bank','sand'] else .5))
   ob=bpy.data.objects.new(id+'_'+mat,mesh);scene.collection.objects.link(ob);ob.data.materials.append(MATS[mat]);objects.append(ob)
  # Export only this scene and retain separate material batches (not thousands of nodes).
  old=bpy.context.window.scene;bpy.context.window.scene=scene
@@ -226,7 +270,10 @@ def build(id):
  return scene
 
 def finish():
- (ROOT/'assets/models/locations/manifest.json').write_text(json.dumps(RECORDS,indent=2))
+ path=ROOT/'assets/models/locations/manifest.json'
+ records=json.loads(path.read_text()) if path.exists() else {}
+ records.update(RECORDS)
+ path.write_text(json.dumps(records,indent=2)+'\n')
  bpy.data.libraries.write(str(ROOT/'source/foregrounds.blend'),set(SCENES),path_remap='RELATIVE',fake_user=True,compress=True)
  print('Saved four foregrounds and collision manifest')
 

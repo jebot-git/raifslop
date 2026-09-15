@@ -11,13 +11,16 @@ TEX=ROOT/'source/textures/foreground'
 BAKE=ROOT/'assets/textures/lighting';BAKE.mkdir(parents=True,exist_ok=True)
 PROFILES={'lakeside':(.55,.42,(-35,-40,0),(1,.95,.87)), 'lake_pier':(.3,.35,(-12,-20,0),(1,.96,.9)), 'gray_pier':(.08,.48,(-50,-40,0),(.9,.95,1)), 'bell_park_pier':(.4,.38,(-28,40,0),(1,.97,.9))}
 bpy.ops.wm.read_factory_settings(use_empty=True)
-with bpy.data.libraries.load(str(ROOT/'source/foregrounds.blend')) as (src,dst):dst.scenes=[next(n for n in src.scenes if n.split('.')[0]=='Foreground_'+ID)]
+PROFILES.update({'simons_town_rocks':(.5,.4,(-38,-65,0),(1,.97,.9)), 'blouberg_sunrise_2':(.16,.4,(-8,95,0),(1,.85,.72))})
+library='coastal_foregrounds.blend' if ID in ['simons_town_rocks','blouberg_sunrise_2'] else 'foregrounds.blend'
+with bpy.data.libraries.load(str(ROOT/'source'/library)) as (src,dst):dst.scenes=[next(n for n in src.scenes if n.split('.')[0]=='Foreground_'+ID)]
 s=dst.scenes[0];bpy.context.window.scene=s
 # Separate far terrain, so bake texels concentrate on the reachable foreground.
 near=[]
 for ob in list(s.objects):
  if ob.type!='MESH':continue
- if ob.name.split('.')[0].endswith(('_grass','_reed')):continue
+ # Thin rope uses a uniform runtime material instead of undersized atlas islands.
+ if ob.name.split('.')[0].endswith(('_grass','_reed','_rope')):continue
  if max(ob.dimensions)>60:
   keep=[];far=[]
   for p in ob.data.polygons:

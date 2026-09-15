@@ -1,0 +1,45 @@
+{
+  "mode": "built-in imagegen",
+  "images": [
+    {
+      "id": "blacktail",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Generate one adult South African blacktail seabream (Diplodus capensis): deep oval silver body with fine realistic scales, dark grey dorsal back, pale belly, small terminal mouth, a very distinct broad black band around the caudal peduncle immediately before the forked grey tail, continuous spiny then soft dorsal fin, grey translucent fins. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish, all fins naturally spread and visible, no perspective foreshortening. One fish only, centered, entire silhouette fits with a small margin, on perfectly plain pure white background. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike specimen texture, sharp fin rays, no shadows on background, no labels, no text, no props, no water, no extra fins. Intended as a model reference, not a poster.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-44a68a72-6508-45f8-ac8b-71bdecfdcdfb.png"
+    },
+    {
+      "id": "galjoen",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Pure white background with no shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult South African galjoen (Dichistius capensis): robust deep oval body, small mouth, charcoal-grey fine scales with seven faint darker vertical bars, dark grey spiny dorsal fin continuing into softer rear dorsal, slightly forked tail and dark pectoral/pelvic/anal fins. All characteristic fins attached naturally to the body.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-37314a66-8fa4-4e41-88f0-3ebacca12b8c.png"
+    },
+    {
+      "id": "hottentot",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Pure white background with no shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult South African hottentot seabream (Pachymetopon blochii): deep oval bronze-grey body, small terminal mouth and rounded forehead, fine silver-bronze scales, continuous spiny and soft dorsal, forked dark grey tail, dark pectoral and anal fins, no distinct vertical black bars, no caudal black band.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-e07e51c4-813d-4e9a-b2bd-f54593a63948.png"
+    },
+    {
+      "id": "roman",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Pure white background with no shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult South African red roman seabream (Chrysoblephus laticeps): deep-bodied red-orange fish with pinkish scales and a distinct broad white vertical saddle stripe across the middle flank, sloping forehead, reddish-orange spiny dorsal and reddish forked tail, large dark eye, robust small-mouthed head.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-22f92729-cf08-412d-b144-933bf7f3ba74.png"
+    },
+    {
+      "id": "white_steenbras",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Pure white background with no shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult white steenbras (Lithognathus lithognathus): elongated silver seabream with a relatively deep body, long blunt pig-like snout and small thick-lipped mouth, six or seven grey vertical flank bars, pale belly, continuous spiny and soft grey dorsal, a forked grey tail and grey lower fins.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-8efcb854-b96f-4110-b9b5-866ca66c892c.png"
+    },
+    {
+      "id": "elf",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Pure white background with no shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult elf / bluefish (Pomatomus saltatrix): streamlined powerful silvery body with a blue-green upper back, large slightly upturned terminal mouth with small sharp teeth, yellowish iris, two separate dorsal fins (small spiny first dorsal and long low soft second dorsal), forked grey tail, long low anal fin, silver pectoral fins. No lateral yellow stripe.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-d38cab50-fda8-4239-9291-61f11d6edc5f.png"
+    },
+    {
+      "id": "yellowtail",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Pure white background with no shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult Cape yellowtail (Seriola lalandi): elongated streamlined torpedo body, blue-green back, silver flank with a clean golden-yellow stripe from eye to tail base, deeply forked bright yellow caudal fin, yellow-tinged lower fins, small spiny first dorsal followed by longer soft second dorsal. Strong narrow caudal peduncle, no finlets.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-4924f5c0-f72f-4472-95ce-8168981c75c6.png"
+    },
+    {
+      "id": "harder",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Pure white background with no shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult South African harder mullet (Chelon richardsonii): streamlined cylindrical silver-grey body with several subtle dark longitudinal stripes along the flanks, broad blunt head, small mouth, silvery belly, two widely separated dorsal fins (small four-spined first fin and small triangular soft rear dorsal), deeply forked grey tail, grey pectoral and pelvic fins. No barbels.",
+      "source": "/home/blux/.codex/generated_images/01a0a38d-3b84-7a10-b5ae-2614bbd79f09/exec-7acb5186-bd55-4cc3-96f8-f3bbff067af9.png"
+    }
+  ]
+}

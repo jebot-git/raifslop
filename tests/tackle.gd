@@ -81,6 +81,8 @@ func run() -> void:
 				if sim.cue >= 0: sim.gesture(sim.cue)
 				var rate := 0.0 if sim.is_running() or sim.tension > .7 else 1.0
 				if sim.tension < .18: rate = .8
+				if sim.submerge==S.Submerge.PULL: rate=0.0
+				elif sim.submerge==S.Submerge.SLACK: rate=1.4 if sim.tension>.7 else 1.8
 				sim.tick(1.0 / 90, rate, .2); elapsed += 1.0 / 90
 			check(sim.state == S.State.LANDED, "Land %s with rod %d" % [S.SPECIES[index].name, rod])
 			times.append(elapsed)

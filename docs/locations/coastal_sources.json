@@ -1,0 +1,46 @@
+[
+  {
+    "id": "simons_town_rocks",
+    "source_url": "https://polyhaven.com/a/simons_town_rocks",
+    "authors": {
+      "Greg Zaal": "All",
+      "Rico Cilliers": "Backplates"
+    },
+    "license": "CC0",
+    "license_url": "https://polyhaven.com/license",
+    "acquired": "2026-09-15",
+    "download": {
+      "size": 97010586,
+      "md5": "5e5a749fd5ad2c448bbbc4bac6c78798",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/8k/simons_town_rocks_8k.hdr"
+    },
+    "sha256": "1411b97efc470e36d574ad1664708aac9c3c404bb2e217423b92a502380968ef",
+    "runtime": "res://assets/environment/locations/simons_town_rocks_8k.hdr",
+    "native_size": [
+      8192,
+      4096
+    ]
+  },
+  {
+    "id": "blouberg_sunrise_2",
+    "source_url": "https://polyhaven.com/a/blouberg_sunrise_2",
+    "authors": {
+      "Greg Zaal": "All",
+      "Rico Cilliers": "Backplates"
+    },
+    "license": "CC0",
+    "license_url": "https://polyhaven.com/license",
+    "acquired": "2026-09-15",
+    "download": {
+      "size": 93271074,
+      "md5": "4381a9d1eb26a1657a7298f2c3002e05",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/8k/blouberg_sunrise_2_8k.hdr"
+    },
+    "sha256": "f4fa8403f605f3ff456d67812e1613aa590a456e1c3d86433c8f2001f5777c2f",
+    "runtime": "res://assets/environment/locations/blouberg_sunrise_2_8k.hdr",
+    "native_size": [
+      8192,
+      4096
+    ]
+  }
+]

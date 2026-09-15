@@ -1,18 +1,30 @@
 extends Node3D
 ## Recognizable tackle silhouettes at physical lure scale; no imported physics.
 var selected := -1
-func set_bait(index: int) -> void:
-	if selected==index:return
+var marine := false
+func set_bait(index: int, saltwater: bool = false) -> void:
+	if selected==index and marine==saltwater:return
+	marine=saltwater
 	selected=index
 	for child in get_children():remove_child(child);child.queue_free()
-	match index:
-		0: worm()
-		1: corn()
-		2: spinner()
-		3: maggots()
-		4: bread()
-		5: fly()
+	if marine:
+		match index:
+			0: ragworm()
+			1: squid()
+			2: spinner()
+			3: prawn()
+			4: sardine()
+			5: streamer()
+	else:
+		match index:
+			0: worm()
+			1: corn()
+			2: spinner()
+			3: maggots()
+			4: bread()
+			5: fly()
 	set_meta("bait_type",index)
+	set_meta("marine",marine)
 func mat(color: String,metallic: float=0.0) -> StandardMaterial3D:
 	var m:=StandardMaterial3D.new();m.albedo_color=Color(color);m.metallic=metallic;m.roughness=.22 if metallic>0 else .82;return m
 func oval(at: Vector3,radii: Vector3,material: Material,node_name: String) -> MeshInstance3D:
@@ -83,3 +95,46 @@ func fly() -> void:
 		for i in 5:segment(Vector3(0,-.004-i*.002,0),Vector3(sign_x*(.012-i*.001),-.010-i*.002,.002),.0005,hackle,"HackleFiber")
 	for i in 3:segment(Vector3(0,-.022,0),Vector3((i-1)*.005,-.037,0),.0006,tail,"FlyTail")
 	hook(Vector3(0,-.005,0),.8)
+
+func ragworm() -> void:
+	worm()
+	var bristle:=mat("d29770")
+	for i in range(2,16):
+		var t:=float(i)/17
+		var at:=Vector3(sin(t*TAU*1.15)*.008,-t*.061,cos(t*PI)*.003)
+		for side in [-1,1]: segment(at,at+Vector3(side*.007,.002,0),.00045,bristle,"RagwormBristle")
+func squid() -> void:
+	var flesh:=mat("efe0db")
+	oval(Vector3(0,-.018,0),Vector3(.006,.026,.0025),flesh,"SquidStrip")
+	for i in 3:
+		segment(Vector3((i-1)*.003,-.034,0),Vector3((i-1)*.006,-.07+i*.003,0),.0015,flesh,"SquidTentacle")
+	hook(Vector3(0,-.004,0))
+func prawn() -> void:
+	var shell_material:=mat("cb997f");var legs:=mat("e0bb98")
+	for i in 10:
+		var t:=float(i)/9
+		var at:=Vector3(sin(t*PI)*.015,-t*.052,0)
+		oval(at,Vector3(.006,.004,.004)*(1-t*.5),shell_material,"PrawnSegment")
+		if i<6:
+			for side in [-1,1]:segment(at,at+Vector3(side*.011,-.005,.003),.0005,legs,"PrawnLeg")
+	for side in [-1,1]:
+		segment(Vector3.ZERO,Vector3(side*.012,.023,0),.00045,legs,"PrawnAntenna")
+		oval(Vector3(side*.003,-.004,.004),Vector3.ONE*.001,mat("242626"),"PrawnEye")
+	oval(Vector3(0,-.054,0),Vector3(.008,.004,.0015),legs,"PrawnTail")
+	hook(Vector3(0,-.008,0))
+func sardine() -> void:
+	var silver:=mat("b8c9cc",.35)
+	oval(Vector3(0,-.035,0),Vector3(.009,.037,.006),silver,"SardineBody")
+	oval(Vector3(0,-.034,-.003),Vector3(.007,.032,.004),mat("3b6875",.2),"SardineBack")
+	for side in [-1,1]:
+		var tail:=oval(Vector3(side*.006,-.077,0),Vector3(.004,.013,.0015),silver,"SardineTail");tail.rotation.z=side*-.6
+		oval(Vector3(side*.007,-.012,.002),Vector3(.001,.002,.002),mat("171e23"),"SardineEye")
+	hook(Vector3(0,-.013,.005))
+func streamer() -> void:
+	var white:=mat("e8e8de");var blue:=mat("45848d")
+	oval(Vector3(0,-.017,0),Vector3(.003,.018,.003),white,"StreamerBody")
+	for i in 12:
+		var angle:=TAU*i/12
+		segment(Vector3(0,-.005,0),Vector3(sin(angle)*.007,-.07,cos(angle)*.005),.0006,blue if i<4 else white,"StreamerFiber")
+	for side in [-1,1]:oval(Vector3(side*.004,-.006,0),Vector3.ONE*.002,mat("252a2c"),"StreamerEye")
+	hook(Vector3(0,-.004,0),1.1)

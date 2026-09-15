@@ -44,6 +44,8 @@ func _initialize() -> void:
 		var rate := 0.0 if s.is_running() else 1.0
 		if s.tension < 0.18: rate = 0.8
 		if s.tension > 0.7: rate = 0.0
+		if s.submerge==Session.Submerge.PULL: rate=0.0
+		elif s.submerge==Session.Submerge.SLACK: rate=1.4 if s.tension>.7 else 1.8
 		s.tick(1.0 / 90.0, rate, 0.2)
 	check(s.state == Session.State.LANDED, "Competent play must land a fish")
 	check(s.journal.size() == 1 and s.catches == 1, "Catch must be recorded once")
@@ -102,6 +104,8 @@ func _initialize() -> void:
 			var rate := 0.0 if fight.is_running() else 1.0
 			if fight.tension < 0.18: rate = 0.8
 			if fight.tension > 0.7: rate = 0.0
+			if fight.submerge==Session.Submerge.PULL: rate=0.0
+			elif fight.submerge==Session.Submerge.SLACK: rate=1.4 if fight.tension>.7 else 1.8
 			fight.tick(1.0 / 90.0, rate, 0.2)
 		check(fight.state == Session.State.LANDED, "Full fight must land " + species.name)
 		if fight.journal.is_empty(): continue

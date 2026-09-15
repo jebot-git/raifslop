@@ -31,7 +31,15 @@ const DESCRIPTIONS = {
  "Carassius carassius": "A bronze, deep-bodied carp relative with a rounded dorsal fin and no mouth barbels.",
  "Squalius cephalus": "A broad-headed river fish with large dark-edged scales and orange-red lower fins.",
  "Oncorhynchus mykiss": "A streamlined trout with dark spots, a pink stripe along its sides and a small adipose fin.",
- "Salmo trutta": "A trout with golden-brown flanks, dark and red spots, and a small adipose fin."
+ "Salmo trutta": "A trout with golden-brown flanks, dark and red spots, and a small adipose fin.",
+ "Diplodus capensis": "A silver coastal seabream identified by the broad black band at the base of its tail. It feeds around rocky shores.",
+ "Dichistius capensis": "A deep-bodied grey fish of rocky and sandy surf zones. It grazes food from submerged rocks.",
+ "Pachymetopon blochii": "A bronze-grey seabream with a small mouth and forked tail, associated with rocky reefs and kelp along the west coast.",
+ "Chrysoblephus laticeps": "A red reef seabream with a pale vertical band across its flank. Adults are closely associated with their home reefs.",
+ "Lithognathus lithognathus": "A silvery seabream with dark vertical bars and a long blunt snout. It searches sand for invertebrates.",
+ "Pomatomus saltatrix": "A streamlined blue-green and silver predator with a large toothed mouth. Also called shad, it pursues small fish along the coast.",
+ "Seriola lalandi": "A powerful schooling predator with a yellow flank stripe and deeply forked yellow tail. It hunts fish and squid in coastal waters.",
+ "Chelon richardsonii": "A silver mullet with a blunt head, fine horizontal stripes and two separate dorsal fins. It feeds in shallow coastal and estuarine water."
 }
 var entries: Dictionary = {}
 var selected := -1

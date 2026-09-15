@@ -5,7 +5,7 @@ name their root empties Downloaded_bream and Downloaded_zander.
 Subsequent builds can reuse the runtime GLBs. The authored tench is rebuilt from
 its retained texture and profile. Run with Blender --python or MCP/runpy.
 """
-import math
+import math, sys
 from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
@@ -14,6 +14,8 @@ from mathutils.geometry import tessellate_polygon
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'assets/models/fish'
 OUT.mkdir(parents=True, exist_ok=True)
+sys.path.insert(0,str(ROOT/'tools'))
+from fish_fin_geometry import repair_fins
 scene = bpy.data.scenes.new('Realistic freshwater fish')
 bpy.context.window.scene = scene
 roots = {}
@@ -198,6 +200,7 @@ bpy.ops.object.convert(target='MESH')
 bpy.ops.object.join()
 body=bpy.context.object
 body.name='tench_realistic'
+repair_fins(body);body['fin_roots_repaired']=True
 roots['tench']=body
 export('tench',[body])
 
@@ -236,6 +239,7 @@ select(parts)
 bpy.ops.object.join()
 body=bpy.context.object
 body.name='roach_realistic'
+repair_fins(body);body['fin_roots_repaired']=True
 roots['roach']=body
 export('roach',[body])
 

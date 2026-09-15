@@ -1,6 +1,6 @@
 # Real AI Fishing
 
-A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. 18 real fish species, 14 catchable at each location, six bait choices, four selectable photographed waterside settings, four distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
+A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. 18 real fish species, 14 catchable at each location, six bait choices, six selectable photographed waterside settings, six distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
 
 Open `project.godot` in Godot 4.7.2 and press F6/F5, or launch:
 
@@ -24,7 +24,7 @@ Catches now earn **shekels** based on species rarity and specimen size. Open **F
 | Choose bait | Left X cycles while ready | 1–6 or click a bait |
 | Cast | Look toward open water; hold right trigger, swing rod forward, release | Space or Cast Line |
 | Set hook | Lift rod sharply during the 1.8-second bite window | Space |
-| Reel | Hold left grip near the reel; circle left hand in the crank plane | Hold R or left mouse |
+| Reel | Hold left grip near the reel; circle left hand in the crank plane | Hold R or left mouse; add Shift to wind faster |
 | Counter a fish | Sweep rod left/right or lift as prompted | Left / Right / Up arrow |
 | Aim | Move/rotate the right controller, full 6DoF | Right mouse drag |
 | Field Guide | Left grip near lower handle at left hip; release to dock | G to open/close |
@@ -41,6 +41,8 @@ VR casting aims along the horizontal direction at the **center of the headset vi
 In VR, landed fish hang head-up below the rod tip on the line. Hold left grip to grasp the string 8 cm above the fish’s mouth; lift your hand to inspect the fish hanging beneath it; releasing grip returns it to the rod. The fish stays vertical and head-up in both positions, regardless of hand tilt. Either joystick axis spins it around the vertical axis at up to about 103°/s, with a deadzone; stick walking and turning are suppressed while a catch is displayed. Physical room-scale movement remains available. Right A releases the catch and restores stick locomotion.
 
 Use the line colour and haptic feedback to judge tension. Stop reeling during runs; resume before the line becomes completely slack. Directional counters reduce stamina and tension. A tired fish lands before foreground geometry can hide the bobber. Prolonged extreme tension snaps the line; slack lets the hook slip. Catch records persist in Godot's `user://journal.json`.
+
+Strong repeated rod-hand pulses mean your counter is working; releasing or pulling the wrong way stops them. The left hand feels crank detents while reeling. A quiet water ripple announces the hooked fish and escape attempts. During submerging moves, follow the prompt: **stop reeling** against a deep pull, or **reel faster** when the fish rushes inward and creates slack. Each move gives a brief warning before tension changes rapidly.
 
 Open **V → Locations** (VR: **right B → Locations**) to choose Lakeside, Lake Pier, Gray Pier or Bell Park Pier. Select **Fish here** while ready to cast. Each spot has its own lighting and water preset; selection persists, and catches record their location. Walk a gravel cove at Lakeside, a concrete harbour quay at Lake Pier, a weathered reed boardwalk at Gray Pier, or a moored fishing boat at Bell Park Pier. Travel places you at a safe arrival point on the new model.
 
@@ -79,7 +81,7 @@ The perch uses an attributed third-party model; carp and pike currently use simp
 
 ## Scope of this first version
 
-- Four native 8K waterside panoramas, animated 3D water, and distinct textured cove, quay, boardwalk and boat models connected to modeled shore.
+- Six native 8K waterside panoramas with animated water and walkable foregrounds, including a rocky coast and walkable sunrise beach. [Coastal locations](docs/COASTAL_LOCATIONS.md) have distinct marine rosters with eight [marine species](docs/MARINE_FISH.md) and saltwater baits.
 - Room-scale tracked head and controller poses; rod follows the right hand. Off-hand reeling is measured in rod-local coordinates so moving the rod does not itself turn the crank. Tracking loss pauses the simulation; re-grabs and tracking jumps reset the reel sample.
 - Bite timing, directional responses, fish runs, stamina, line tension, win/loss/retry and local catch persistence. Audio and controller vibration mark bites and successful counters.
 - A world-space VR menu, handheld guide status, a separate desktop interface, collision-based free locomotion, and selectable runtime VRM avatars with visible hands.
@@ -128,7 +130,7 @@ Casting swishes, crank-speed reel sounds and positional fight/landing splashes a
 
 ## Soft lighting and shadows
 
-All four foregrounds use baked sky/bounce lighting, static sun shadows and AO, with restrained normal maps and broad material highlights. FPSloppa-derived MToon lighting helps avatars fit those surroundings. **Avatar → Moving shadows** selects soft contact blobs or dynamic shadows; static scenery shadows remain baked in either mode. [Pipeline, previews and performance comparison](docs/ENVIRONMENT_LIGHTING.md).
+All six foregrounds use baked sky/bounce lighting, static sun shadows and AO, with restrained normal maps and broad material highlights. FPSloppa-derived MToon lighting helps avatars fit those surroundings. **Avatar → Moving shadows** selects soft contact blobs or dynamic shadows; static scenery shadows remain baked in either mode. [Pipeline, previews and performance comparison](docs/ENVIRONMENT_LIGHTING.md).
 
 ## Release downloads
 
@@ -145,4 +147,4 @@ Rod holster: bring the right hand to the right hip and squeeze grip to fold/stas
 
 Benches and boat seats are noncollidable. Successful travel closes the menu. VR has no floating status/tracking window; holding a catch in the left hand shows its name, length and weight as text above the fish.
 
-All four locations now ship native 8192 × 4096 HDR panoramas through one standard loading path, with restrained sharpening, mipmapped filtering and shared sky/water color processing. Holding the guide keeps the rod in the right hand; stashing is explicit at the right hip. [Visual settings and validation](docs/PANORAMA_QUALITY.md).
+All six locations ship native 8192 × 4096 HDR panoramas through one standard loading path, with restrained sharpening, mipmapped filtering and shared sky/water color processing. Holding the guide keeps the rod in the right hand; stashing is explicit at the right hip. [Visual settings and validation](docs/PANORAMA_QUALITY.md).

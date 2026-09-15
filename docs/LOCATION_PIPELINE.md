@@ -15,7 +15,7 @@ These real photographs were downloaded through Blender MCP's Poly Haven asset li
 
 ## Preparation and runtime budget
 
-The four playable sky originals live once under `assets/environment/locations/*_8k.hdr`, at native **8192 × 4096** resolution. `tools/prepare_locations.py` generates **768 × 384 JPEG** menu previews with AgX tone mapping from those originals; it does not resample the runtime sky. Source URLs and hashes are recorded in [native_8k.json](locations/native_8k.json), with original acquisition provenance in [sources.json](locations/sources.json).
+The six playable sky originals live once under `assets/environment/locations/*_8k.hdr`, at native **8192 × 4096** resolution. `tools/prepare_locations.py` generates **768 × 384 JPEG** menu previews with AgX tone mapping from those originals; it does not resample the runtime sky. Source URLs and hashes are recorded in [native_8k.json](locations/native_8k.json), with original acquisition provenance in [sources.json](locations/sources.json).
 
 The previous 2K runtime derivatives and unused River Alcove download were removed during release cleanup. Earlier optimization records describe the retired 2K stage. Browsing loads only small previews; location changes retain one active sky, with a 128-pixel reflection radiance map. Measured device performance remains an acceptance task.
 
@@ -23,7 +23,7 @@ The previous 2K runtime derivatives and unused River Alcove download were remove
 
 ## Visual limits and expansion
 
-These are hybrid scenes: a photographed sky plus authored 3D foreground. The panoramas provide rotational scenery but no translational parallax or surveyed collision. The foreground layouts are artistic interpretations; the distant shoreline transition and water reflections remain approximations; the photographs were not reconstructed into terrain. Each location has a distinct fourteen-species gameplay roster; these are not surveys of the source locations’ ecology. See [rosters](LOCATION_SPECIES.md).
+These are hybrid scenes: a photographed sky plus authored 3D foreground. The panoramas provide rotational scenery but no translational parallax or surveyed collision. The foreground layouts are artistic interpretations; the distant shoreline transition and water reflections remain approximations; the photographs were not reconstructed into terrain. The four inland locations have distinct fourteen-species gameplay rosters; the two coastal locations have distinct six-species marine rosters; these are not surveys of the source locations’ ecology. See [rosters](LOCATION_SPECIES.md).
 
 River Alcove was evaluated as a reference and removed during release cleanup; its acquisition record remains for provenance. No Gaussian splat renderer is installed. For future scans, retain licenses, normalize metres/orientation in Blender, decimate and create LODs, then export modest GLB assets. For splats, first select a Godot renderer supporting stereoscopic OpenXR, validate sorting/depth/clipping and GPU budgets, and supply collision proxies.
 
@@ -37,3 +37,7 @@ XDG_DATA_HOME=/tmp/fishing-location-captures ./run.sh --desktop --script res://t
 ```
 
 Current foreground captures: [Lakeside](locations/lakeside_foreground.png), [Lake Pier](locations/lake_pier_foreground.png), [Gray Pier](locations/gray_pier_foreground.png), [Bell Park Pier](locations/bell_park_pier_foreground.png). See [validation](VALIDATION.md) for native OpenXR synthetic results and limitations.
+
+## Coastal additions
+
+[Coastal Rocks and Sunrise Beach](COASTAL_LOCATIONS.md) extend the same native 8K / authored foreground / baked lighting pipeline. Their panoramas were downloaded from the public Poly Haven API; [source URLs, license and checksums](locations/coastal_sources.json) are retained separately.

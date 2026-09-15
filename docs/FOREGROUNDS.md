@@ -4,7 +4,7 @@ Each playable location loads a distinct Blender-authored GLB with photographed P
 
 | Location | Walkable model | Triangles | Material batches | GLB MiB |
 |---|---|---:|---:|---:|
-| lakeside | 16 × 15.4 m gravel cove, rocks and benches | 7,332 | 8 | 9.72 |
+| lakeside | 16 × 15.4 m grassy cove, rocks and benches | 7,332 | 8 | 9.72 |
 | lake_pier | 10 × 12 m concrete quay, rails and mooring posts | 3,944 | 5 | 3.83 |
 | gray_pier | 1.8 × 10 m boardwalk, 4.8 × 3 m fishing platform and bank | 11,868 | 8 | 8.48 |
 | bell_park_pier | 3.1 × 6.2 m tapered boat, stern seat and tackle box | 3,719 | 9 | 4.75 |
@@ -42,3 +42,17 @@ XDG_DATA_HOME=/tmp/fishing-foreground-captures ./run.sh --desktop --script res:/
 ```
 
 The suite walks the player to each water edge, checks collision holds, verifies arrival floors and model replacement, tests travel from the far shore into the boat, checks the tapered bow, and tests current-location fall recovery. Native stereo/controller coverage uses `tests/locations_xr.gd`. See [validation results](VALIDATION.md).
+
+## Coastal additions
+
+[Coastal Rocks and Sunrise Beach](COASTAL_LOCATIONS.md) add a stone terrace with submerged boulders and a sagging rope barrier, and an 18 × 15 m modeled sandy shore. Their editable scenes live in `source/coastal_foregrounds.blend`; the dedicated coastal builder preserves the inland library and merges collision records. `tools/validate_coastal_geometry.py` checks every rock in both the source and exported model for waterline depth and barrier clearance.
+
+## Natural-location rope barriers
+
+Lakeside’s side and rear boundaries and Gray Pier’s boardwalk, casting platform and landward boundaries now use sagging rope on weathered timber posts. Their collider geometry, safe arrivals and disabled bench proxies are preserved exactly. The harbour quay and boat retain their existing hardware. Rebuild these two source scenes with `tools/rebuild_natural_barriers.py`, then run `tools/bake_foregrounds.py` for `lakeside` and `gray_pier`. The rebuild preserves the other source scenes, including the corrected harbour ground. `tests/natural_barriers_render.gd` captures eye-level views and checks the exported models contain raised rope spans.
+
+Rope spans and coils use one unshaded natural-tan material (`#9b8158`) across locations. They do not receive the tiny baked atlas islands or faceted lighting that produced patchy dark segments. The larger posts and surrounding scenery retain baked lighting.
+
+### Grassy inland ground
+
+Lakeside’s supported cove and Gray Pier’s landward landing use the retained `aerial_grass_rock` PBR material, matching their surrounding banks instead of gravel/mud. Both runtime foregrounds and lighting atlases are rebuilt from the source library. Pier planks, collision proxies and arrival positions retain their existing layout.

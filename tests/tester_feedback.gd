@@ -31,7 +31,7 @@ func run():
 	s.strike();check(h.sample(s,.02).get("kind")=="hook","Hook set produces rumble event")
 	s.cue=0;check(h.sample(s,.02).get("kind")=="fight","Fish directional fight produces rumble event")
 	s.phase=6;check(h.sample(s,.02).get("kind")=="run","Fish run produces rumble event")
-	s.tension=.75;check(h.sample(s,1.0).get("kind")=="tension","Rising tension produces rumble event")
+	s.tension=.75;check(h.sample(s,1.0).is_empty(),"Uncountered escape does not reward rising tension with rumble")
 	check(h.sample(s,.01).is_empty(),"Steady tension does not spam haptics")
 	var game=load("res://scenes/main.tscn").instantiate();root.add_child(game);await create_timer(.3).timeout
 	game.set_process(false);game.motor.set_physics_process(false)

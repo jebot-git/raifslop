@@ -1,11 +1,13 @@
 """Reconstruct textured fish from retained side references and reviewed anatomy landmarks.
 Run in Blender. Original roach/tench/bream/zander/perch assets are preserved.
 """
-import bpy, math, json, numpy as np
+import bpy, math, json, sys, numpy as np
 from pathlib import Path
 from mathutils import Vector
 ROOT=Path(__file__).resolve().parents[1]; REF=ROOT/'source/fish_references'; OUT=ROOT/'assets/models/fish'; TEX=ROOT/'source/textures/fish'
 DATA=json.loads((REF/'anatomy.json').read_text()); scenes=[]
+sys.path.insert(0,str(ROOT/'tools'))
+from fish_fin_geometry import repair_fins
 
 def build(name,d):
  scene=bpy.data.scenes.new('Photographic_'+name);bpy.context.window.scene=scene;scenes.append(scene)
@@ -64,6 +66,12 @@ def build(name,d):
    a=i*(N+1)+j;faces.append((a,a+1,a+N+2,a+N+1))
  faces.extend([tuple(reversed(range(N+1))),tuple((len(dense)-1)*(N+1)+j for j in range(N+1))])
  body=mesh(name+' reconstructed body',verts,faces,mat,coords)
+ def inside_region(x,y,poly):
+  inside=False
+  for i,(ax,ay) in enumerate(poly):
+   bx,by=poly[i-1]
+   if (ay>y)!=(by>y) and x<(bx-ax)*(y-ay)/(by-ay)+ax:inside=not inside
+  return inside
  # Thin fin surfaces follow the photographed contour. Only external fins/tail are kept;
  # body and cheek are fully volumetric, not a billboard.
  mask=(pixels[:,:,:3].min(axis=2)<.94)
@@ -76,7 +84,8 @@ def build(name,d):
   for x in range(0,W-step,step):
    yy=y+step/2;xx=x+step/2
    if xx< xmin or xx>xmax:continue
-   if xx>1200:continue # cheek and jaws are volumetric; do not duplicate them as a flat fringe
+   if d.get('fin_regions') and not any(inside_region(xx,yy,poly) for poly in d['fin_regions']):continue
+   if xx>d.get("fin_max_x",1200):continue # cheek and jaws are volumetric; do not duplicate them as a flat fringe
    if not mask[H-1-int(yy),int(xx)]:continue
    if dense[0,0] <= xx <= dense[-1,0]:
     top=np.interp(xx,dense[:,0],dense[:,1]);bottom=np.interp(xx,dense[:,0],dense[:,2])
@@ -158,9 +167,11 @@ def build(name,d):
  # Normalize all extremities to exactly one metre; journal sizing and mouth anchoring stay valid.
  lo=min(v.co.x for v in body.data.vertices);hi=max(v.co.x for v in body.data.vertices)
  for v in body.data.vertices:v.co.x=(v.co.x-(lo+hi)/2)/(hi-lo);v.co.y/=(hi-lo);v.co.z/=(hi-lo)
+ repair_fins(body,photographic=True);body['fin_roots_repaired']=True
  bpy.ops.export_scene.gltf(filepath=str(OUT/(name+'.glb')),export_format='GLB',use_active_scene=True,export_animations=False)
  print('PHOTOGRAPHIC_FISH_COMPLETE',name,flush=True)
 
-for name,data in DATA.items():
- if (REF/(name+'.png')).exists():build(name,data)
-bpy.data.libraries.write(str(ROOT/'source/photographic_fish.blend'),set(scenes),path_remap='RELATIVE',fake_user=True,compress=True)
+if __name__ == "__main__":
+ for name,data in DATA.items():
+  if (REF/(name+'.png')).exists():build(name,data)
+ bpy.data.libraries.write(str(ROOT/'source/photographic_fish.blend'),set(scenes),path_remap='RELATIVE',fake_user=True,compress=True)

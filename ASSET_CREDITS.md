@@ -94,3 +94,15 @@ The thirteen current carp, pike and later-species GLBs supersede the earlier pro
 Four generic spinning rod models, cork grain, animated bird/insect meshes and app icon are original authored artwork. Blender source and real-tackle references: [SCENERY_DETAIL.md](docs/SCENERY_DETAIL.md). All four runtime panoramas now retain native 4K detail from the same credited Poly Haven CC0 sources; Lakeside 4K was downloaded from `https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/lakeside_4k.hdr`. Lighting remains subdued. No synthetic stereo images or Gaussian scan assets are included.
 
 Godot OpenXR Vendors 5.1.0 is bundled for platform support, with SDK/loader licenses retained in `addons/godotopenxrvendors/`. The inherited FPSloppa Linux face-source compatibility patch and build provenance are retained alongside it and in `tools/patches/`.
+
+## Coastal location trials
+
+- [Simon's Town Rocks](https://polyhaven.com/a/simons_town_rocks) and [Blouberg Sunrise 2](https://polyhaven.com/a/blouberg_sunrise_2): HDRIs by Greg Zaal, with backplates credited to Rico Cilliers; Poly Haven, CC0. Native 8K HDR downloads, source checksums and author metadata are in `docs/locations/coastal_sources.json`. Powered by Poly Haven.
+- Recorded surf by jasinski, excerpts by qubodup: [Beach Ocean Waves](https://opengameart.org/content/beach-ocean-waves), CC0. See `source/audio/CREDITS.md`.
+- Coastal terrace, sand shore, railings and rocks are original metre-scaled geometry built with the existing foreground texture library and its retained credits.
+
+- [Aerial Beach 01](https://polyhaven.com/a/aerial_beach_01): photographed sand PBR maps by Rob Tuytel, Poly Haven, CC0; 2K diffuse, roughness and OpenGL normal originals retained under `source/textures/foreground/`.
+
+## Marine fish (2026-09-15)
+
+Eight original photographic-style marine fish models: blacktail, galjoen, hottentot, red roman, white steenbras, elf/bluefish, Cape yellowtail and harder mullet. Built-in OpenAI imagegen side-reference illustrations, reviewed body landmarks, Blender reconstruction and Cycles normal bakes; no external source artwork copied. [Sources, pipeline and retained prompts](docs/MARINE_FISH.md), [runtime manifest](docs/marine_fish_assets.json). Packed source: `source/marine_fish.blend`.

@@ -47,3 +47,13 @@ The existing avatar/locomotion suite also passes 24 checks. Physical headset app
 ## Twelve-species catalogue expansion
 
 Five further species and distinct ten-species location rosters are documented in [location species and bait](LOCATION_SPECIES.md), including sources, new model gallery and six-bait compatibility.
+
+## Catch motion and fin repair — 15 September 2026
+
+Caught fish make a short, low-amplitude body/tail twitch every 2.8–5.2 seconds, with a still interval between bursts. Two catch-local mesh shapes deform the body and fins together; the head and mouth remain fixed at the hand/string attachment. Each shape limits lateral bend to 1.8% of fish length and preserves mouth-to-tail extent. Shared imported meshes remain unchanged; only the displayed catch gets animation shapes.
+
+The roach and tench's detached paired fins now root into the skin. Those two fish and the thirteen photographic reconstructions have thin extruded membranes so their dorsal fins do not disappear edge-on. Small disconnected tracing speckles were removed. Retained Blender sources and both build scripts include the same root repair; downloaded perch, bream and zander geometry is preserved.
+
+The enforced avatar **body** height is 1.70 m; the 1.65 m constant is its **eye** reference. Catch sizing already uses journal centimetres × 0.01 in that same metre-based world. A 58 cm carp is therefore 0.58 m, or 34.1% of avatar height. No additional scale multiplier was needed.
+
+Validation: `tests/catch_twitch.gd` checks all eighteen species, journal lengths, bounded deformation, fixed heads, avatar proportions, XR scale independence and rod attachment. `tests/fish_species.gd` checks imported materials and geometry. `tools/validate_fish_fins.py` checks roots, bounds and dorsal silhouettes in all fifteen repaired assets through Blender; `tests/catch_twitch_render.gd` captures neutral and bent poses beside 10 cm ruler divisions. These are desktop/simulated checks, not physical-headset validation.

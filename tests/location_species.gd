@@ -14,11 +14,13 @@ func run() -> void:
 	var layouts := {}
 	for location in Locations.CATALOG:
 		var roster := Session.species_for_location(location.id)
-		check(roster.size() >= 10 and roster.size() == (func():
+		check(roster.size() >= (6 if Session.is_marine_location(location.id) else 10) and roster.size() == (func():
 			var unique := {}
 			for i in roster: unique[i] = true
-			return unique.size()).call(), "At least ten distinct species at " + location.id)
+			return unique.size()).call(), "Distinct local species at " + location.id)
 		layouts[str(roster)] = true
+		for index in roster:
+			check((Session.SPECIES[index].get("habitat", "freshwater")=="marine") == Session.is_marine_location(location.id), "Habitat matches location")
 		var seen := {}
 		var s := Session.new()
 		s.location_id = location.id
@@ -38,7 +40,7 @@ func run() -> void:
 			check(valid, "Normal casting respects location and bait")
 		check(seen.size() == roster.size(), "Every local species reachable")
 	check(all_seen.size() == Session.SPECIES.size(), "Entire real-species catalogue reachable")
-	check(layouts.size() == Locations.CATALOG.size(), "Locations have distinct rosters")
+	check(layouts.size() == Session.LOCATION_SPECIES.size(), "Locations have distinct rosters")
 	var g = load("res://scenes/main.tscn").instantiate()
 	root.add_child(g)
 	current_scene = g

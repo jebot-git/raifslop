@@ -2,6 +2,17 @@
 
 Implemented 14 September 2026.
 
+## Counter and submerging update — 15 September 2026
+
+- Correct held counters pulse the rod hand at 0.78–1.0 strength. Wrong/released input cancels the pulse immediately. Unanswered escapes give only a brief 0.10–0.12 announcement; rising tension during that escape no longer produces misleading strong feedback.
+- Accepted winding produces twelve left-hand detents per turn, capped at 25 pulses/second. Pauses, tracking loss and stopped winding suppress feedback.
+- Hook set and new escape attempts play a dedicated, positional `ripple.wav`: the filtered tail of the existing CC0 river recording, capped at −30 dBFS. The regular splash pool remains separate.
+- Submerging alternates deep pulls and inward rushes. A 0.8-second warning precedes 3.2 seconds of faster tension changes (bounded at 0.28/second). Stop winding for a deep pull; wind at least 1.4 turns/second for an inward rush. Stopping a deep pull settles tension toward 0.45 instead of draining it to slack. Desktop Shift + R/left mouse supplies faster winding.
+- Submerging waits for a safe tension band and the end of directional counters/recovery. It does not overlap runs or directional holds. Resurfacing leaves two seconds before another directional prompt. The float dips and its surface wake becomes quieter at the selected location's water height.
+- Validation: `fight_mechanics.gd` covers response, scheduling, resets and haptics at 30/72/90 FPS; `run_tests.gd` and `tackle.gd` simulate complete fights with the new reel responses; `fishing_feedback.gd`, `session_feedback.gd` and `tester_feedback.gd` cover integration and prior behaviour. Controller pulse strength still needs physical-headset feel testing.
+
+The sections below describe the earlier implementation and its validation.
+
 - Accepted casts play a positional swish at the rod tip. Rejected casts do not make a sound.
 - Actual crank input during a fight drives a looping ratchet at the reel, with pitch following crank speed. Stopping, opening menus, viewing the Guide or losing VR tracking stops the loop.
 - Float entry, hook set and fighting create positional splashes. Landing produces one separate, longer splash at the last surface position and an expanding ring; inspecting a held catch never repeats it.

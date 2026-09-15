@@ -82,7 +82,8 @@ def audit(path):
         else:
             assert target.endswith('.res'), ('Desktop HDR not compressed', source)
         if source.endswith('_8k.hdr'): panoramas[source] = len(data)
-    assert len(panoramas) == 4, panoramas
+    expected_panoramas = {str(p.relative_to(ROOT)) for p in (ROOT / "assets/environment/locations").glob("*_8k.hdr")}
+    assert set(panoramas) == expected_panoramas and len(panoramas) == 6, panoramas
     result = {'artifact':str(path),'entries':len(names),'asset_bytes':sum(sizes.values()),
               'unique_texture_payloads':len(hashes),'texture_aliases':len([v for v in remaps.values() if v in hashes.values()]),
               'panoramas':panoramas,'largest':sorted(sizes.items(), key=lambda p:-p[1])[:20]}

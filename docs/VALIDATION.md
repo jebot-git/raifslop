@@ -175,3 +175,11 @@ Validation: simulation166, tackle81, models113, rosters77, guide33, network guar
 After removing the old Godot cache and importing the cleaned project, all eighteen headless suites passed: simulation, avatar/locomotion, fish models, tackle, Field Guide, Guide camera, network guards, locations, species rosters, foreground collision, environment lighting, avatar tracking, hand tracking, orientation, blob shadows, fishing feedback, rod/environment and menu/ambience. The avatar camera assertion was updated to allow the intentional Guide UI layer while still requiring world/body visibility and excluding the head-only layer.
 
 Separate-process dedicated/ad-hoc multiplayer and native Monado stereo multiplayer passed. The real Vulkan rod/environment test passed 40 checks, and rod/stereo captures were reviewed. Native hardware tracking, Windows runtime and physical Quest/Pico acceptance remain untested. Existing exit cleanup and OpenXR teardown diagnostics persist; no failing assertions or script errors remained. Raw logs are local under ignored `test-results/cleanup-*`.
+
+## Marine rosters — 2026-09-15
+
+Two marine-only coastal rosters, eight new textured species at appended indices 18–25, saltwater tackle visuals/names and eight guide silhouettes/descriptions. Simulation230, rosters173, model179, guide41 and tackle105 assertions passed. Network guards, coastal travel, marine bait switching, and catch-twitch suites reported no failures. Fin-root/dorsal audit passed all23 reconstructed exports; inspected the final runtime gallery. Evidence and limitations: [marine fish](MARINE_FISH.md).
+
+## 0.1.4 clean release regression
+
+After clearing generated caches and importing the project afresh, all 30 headless suites passed: fishing simulation, fight mechanics, fishing/session/tester feedback, fish models and guide, marine travel and rosters, coastal scenery, catch twitch, tackle, wildlife, foreground movement, lighting, rod environment/holster/attachment, avatar scale/locomotion/tracking, hand tracking, tracking orientation, guide camera, locations, network guards, menu controls, ambience, blob shadows and bait visuals. Logs are retained in `test-results/release014/`. Device-validation limits remain in the release notes.

@@ -26,24 +26,24 @@
   {
     "location": "gray_pier",
     "model": "assets/models/locations/lit/gray_pier.glb",
-    "bytes": 9018692,
-    "sha256": "332f5cc91477157ca7472b74f71a2b24b6fc7cc5415086a710854faeabcfed60",
-    "mesh_nodes": 3,
+    "bytes": 6357276,
+    "sha256": "9d1f565158a65c13d31497f1faa81792f70aaaad3d21990aa18c44886b3749f7",
+    "mesh_nodes": 4,
     "atlases": [
       {
         "file": "assets/textures/lighting/gray_pier_ao.png",
-        "bytes": 597513,
-        "sha256": "92e7a1847313e76a6d70a12f749ad03f13def99426faac07a3d18ac09ada63dc"
+        "bytes": 556371,
+        "sha256": "86e2fecb5b2c58e4aabdf8bedf7c6abf9f20f3eabcd04d89bbad8d475ea27c70"
       },
       {
         "file": "assets/textures/lighting/gray_pier_irradiance.exr",
-        "bytes": 2614244,
-        "sha256": "d89ec0b07a51e20f18f6c8af38e769f33b039676289566ff8ea9786647b32997"
+        "bytes": 2664099,
+        "sha256": "9360af359e1b22fcd278af1029532450726d4439b3082acc68a0181b8915df1b"
       },
       {
         "file": "assets/textures/lighting/gray_pier_sky.exr",
-        "bytes": 2517893,
-        "sha256": "cab2c72f4b23a8a0f6379c07ad53680333bcf33ce51041cd9fa5878df5afd17d"
+        "bytes": 2525882,
+        "sha256": "f6cdd3939474d99eab9241d1bd2e342a11116218de56ddc7422509b0abba5301"
       }
     ]
   },
@@ -74,24 +74,24 @@
   {
     "location": "lakeside",
     "model": "assets/models/locations/lit/lakeside.glb",
-    "bytes": 10260692,
-    "sha256": "62e49f67d197e715beaf278ac671a11499706e8bcecd934a1ee5e7a64f52c67f",
-    "mesh_nodes": 4,
+    "bytes": 7829460,
+    "sha256": "777eab73fd0b764039319de75e5bff612772c6f9f9d73b4ae2954e0416429e4e",
+    "mesh_nodes": 5,
     "atlases": [
       {
         "file": "assets/textures/lighting/lakeside_ao.png",
-        "bytes": 619957,
-        "sha256": "79cb7df2921434d2574c7e21ce1a213463003f7dadfa536730fcd26f518df7f2"
+        "bytes": 599110,
+        "sha256": "63e6126d4ab198fbd110926e54e15365d89172a683d5c9d95f54be2b81e40578"
       },
       {
         "file": "assets/textures/lighting/lakeside_irradiance.exr",
-        "bytes": 2691873,
-        "sha256": "7d4e0df4ee8f13d6f56a4caf24a6d592a629bdb6c4f7180cc55778e7759bfea2"
+        "bytes": 2672824,
+        "sha256": "e9b92853ef8d50fae04ad7d11a80c1a832d7abb155c0920a739f60724c8bd0e0"
       },
       {
         "file": "assets/textures/lighting/lakeside_sky.exr",
-        "bytes": 2419635,
-        "sha256": "2a7be8e8be83a2b51e7fd09d96fb837ba2aec90823dd35ed1489424d06aa8b74"
+        "bytes": 2322471,
+        "sha256": "96030a7eb55010b4c708ce0b874fec830557a44b6f9d64a0ec71b38126167009"
       }
     ]
   }

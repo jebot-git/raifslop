@@ -287,6 +287,8 @@ When the float dips, lift the rod quickly to set the hook.",
 		"Reel: hold left grip beside the crank and circle your hand.
 Ease off during runs; keep line tension in the green band.",
 		"Fight: pull in the indicated direction and HOLD.
+Strong rod pulses mean your counter is working.
+Diving: stop reeling. Rushing inward: wind faster.
 Three missed counters, sustained slack or strain lose the fish.",
 		"Guide: left grip at your left hip. Press its buttons with your
 right index finger. Right grip at your right hip folds/stashes the rod.",
@@ -294,7 +296,7 @@ right index finger. Right grip at your right hip folds/stashes the rod.",
 Move with the left stick, turn with the right stick. Right B: menu.",
 		"Radio: grab at left shoulder, hold left trigger to talk to all waters.
 Release grip to dock. Desktop radio: hold B. Nearby voice: T / left stick click.",
-		"Desktop: SPACE cast/strike/release; hold R to reel; arrows to
+		"Desktop: SPACE cast/strike/release; hold R to reel (Shift: faster); arrows to
 counter; G guide; J stash rod; V menu; WASD move; Q/E turn."
 	]:
 		var label := Label.new()

@@ -25,7 +25,7 @@ func run() -> void:
 	for location in preload("res://scripts/locations.gd").CATALOG:
 		g.game.reset();g._select_location(location.id,false)
 		var life=g.foreground.get_node("EnvironmentalLife")
-		check(life.birds.multimesh.instance_count<=7 and life.insects.multimesh.instance_count==4,"Bounded wildlife count")
+		check(life.birds.multimesh.instance_count<=8 and life.insects.multimesh.instance_count<=3,"Bounded wildlife count")
 		var before: Transform3D=life.birds.multimesh.get_instance_transform(0)
 		life._process(10.0)
 		var after: Transform3D=life.birds.multimesh.get_instance_transform(0)

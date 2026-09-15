@@ -2,7 +2,7 @@
 """Prepare quiet recorded fishing foley; synthesize only the unchanged reel loop.
 Requires ffmpeg. See source/audio/fishing/CREDITS.md for licenses and excerpts.
 """
-import array,hashlib,json,math,random,struct,subprocess,wave
+import argparse,array,hashlib,json,math,random,struct,subprocess,wave
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'assets/audio/fishing';OUT.mkdir(parents=True,exist_ok=True)
@@ -15,9 +15,16 @@ CUTS={
  'splash_2':('trout_splashes',1.24,.60,-26,4300),
  'splash_3':('trout_splashes',2.53,.54,-26,4300),
  'land':('trout_splashes',3.10,.91,-24,4000),
+ 'ripple':('river_plop',.70,.70,-30,2200),
 }
-manifest=[]
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--only',choices=list(CUTS),help='Rebuild one recorded effect')
+args=parser.parse_args()
+manifest_path=ROOT/'docs/fishing_audio_assets.json'
+manifest=json.loads(manifest_path.read_text()) if args.only else []
+if args.only: manifest=[entry for entry in manifest if entry['file']!=f'assets/audio/fishing/{args.only}.wav']
 for name,(source,start,duration,peak_db,cutoff) in CUTS.items():
+ if args.only and name!=args.only:continue
  filters=f'highpass=f=120,lowpass=f={cutoff},acompressor=threshold=0.045:ratio=2.5:attack=15:release=100:makeup=1,afade=t=in:d=0.025,afade=t=out:st={duration-.15}:d=0.15'
  raw=subprocess.run(['ffmpeg','-v','error','-ss',str(start),'-i',str(SOURCE/(source+'.mp3')),'-t',str(duration),'-af',filters,'-ar','44100','-ac','1','-f','f32le','-'],check=True,capture_output=True).stdout
  samples=array.array('f');samples.frombytes(raw)
@@ -26,6 +33,9 @@ for name,(source,start,duration,peak_db,cutoff) in CUTS.items():
  path=OUT/(name+'.wav')
  with wave.open(str(path),'wb') as w:w.setnchannels(1);w.setsampwidth(2);w.setframerate(44100);w.writeframes(pcm)
  manifest.append({'file':str(path.relative_to(ROOT)),'source':str((SOURCE/(source+'.mp3')).relative_to(ROOT)),'start':start,'duration':duration,'peak_dbfs':round(20*math.log10(peak*gain),2),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+if args.only:
+ manifest_path.write_text(json.dumps(manifest,indent=2)+'\n')
+ raise SystemExit(0)
 # Existing reel sound is deliberately unchanged by this pass.
 rng=random.Random(705);data=bytearray();low=0.;sr=22050;duration=1.
 for i in range(sr):

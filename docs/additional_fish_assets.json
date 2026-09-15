@@ -1,9 +1,9 @@
 {
   "rudd": {
     "model": "assets/models/fish/rudd.glb",
-    "bytes": 3007612,
-    "sha256": "add7900ac11b1292111d3f7fac8bd0d42097a7dd9ee2df49fa817131e7fe6e8c",
-    "triangles": 41700,
+    "bytes": 3749752,
+    "sha256": "a52850067a00223d4b59c4a07065e18153e9ebdd26d3b73264dddbd42f65390e",
+    "triangles": 76878,
     "surfaces": 3,
     "skin_size": [
       1536,
@@ -18,9 +18,9 @@
   },
   "crucian_carp": {
     "model": "assets/models/fish/crucian_carp.glb",
-    "bytes": 3236284,
-    "sha256": "76f59bc697b8a0a16334c15484930ebf592198a860e54f884eb30756be96d202",
-    "triangles": 52310,
+    "bytes": 4230332,
+    "sha256": "497654687e826f350d809be9c711bb42a4e55241e6ef10d6d7a8e7bd35a16de8",
+    "triangles": 99014,
     "surfaces": 3,
     "skin_size": [
       1536,
@@ -35,9 +35,9 @@
   },
   "chub": {
     "model": "assets/models/fish/chub.glb",
-    "bytes": 2863624,
-    "sha256": "1143184d87aad5a54ef9cffe332bda1edcd11e14081aeae20802da42de339aa4",
-    "triangles": 37742,
+    "bytes": 3531216,
+    "sha256": "43c11272a3c060074ad330c94ffe4ed1fd7c8567b11cfa4bd599b82697e1f91c",
+    "triangles": 69674,
     "surfaces": 3,
     "skin_size": [
       1536,
@@ -52,9 +52,9 @@
   },
   "rainbow_trout": {
     "model": "assets/models/fish/rainbow_trout.glb",
-    "bytes": 2850184,
-    "sha256": "bd8dd74b3617fe061377d5fd3c7c199414a78578b711cf189ac55ff341f2392e",
-    "triangles": 35150,
+    "bytes": 3454372,
+    "sha256": "b2c748a6bdeb6d829624ecbfd80d564766bced7d4216fa188e957473cde12e94",
+    "triangles": 64034,
     "surfaces": 3,
     "skin_size": [
       1536,
@@ -69,9 +69,9 @@
   },
   "brown_trout": {
     "model": "assets/models/fish/brown_trout.glb",
-    "bytes": 2775528,
-    "sha256": "a8ef564bfa60135edddd5f7a1fa6d6207a0c13ce6f63e2778ad6e2364b3fac7b",
-    "triangles": 37166,
+    "bytes": 3434984,
+    "sha256": "1afff0621848f1ffe4597f25149f47e45837bd6d21f0affcf1c048df5bc4a57a",
+    "triangles": 68654,
     "surfaces": 3,
     "skin_size": [
       1536,

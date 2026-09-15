@@ -5,6 +5,7 @@ var bait_visual: Node3D
 var label: Label3D
 var remaining := 0.0
 var previous_bait := -1
+var previous_marine := false
 func _ready() -> void:
 	bait_visual=preload("res://scripts/bait_visual.gd").new();add_child(bait_visual)
 	label=Label3D.new();add_child(label)
@@ -14,11 +15,14 @@ func _ready() -> void:
 	label.no_depth_test=false;label.hide()
 	update_bait()
 func update_bait() -> void:
-	if previous_bait==game_root.game.bait:return
+	var marine: bool = game_root.game.is_marine_location(game_root.game.location_id)
+	if previous_bait==game_root.game.bait and previous_marine==marine:return
+	previous_marine=marine
 	previous_bait=game_root.game.bait
-	bait_visual.set_bait(previous_bait)
+	bait_visual.set_bait(previous_bait,marine)
+	label.text=game_root.game.bait_name(previous_bait)
 func show_bait() -> void:
-	update_bait();label.text=game_root.game.BAITS[game_root.game.bait]
+	update_bait();label.text=game_root.game.bait_name(game_root.game.bait)
 	remaining=2.2;label.show()
 func _process(delta: float) -> void:
 	update_bait()

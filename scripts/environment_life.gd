@@ -1,10 +1,12 @@
 extends Node3D
 ## Per-water cosmetic wildlife: real stereo depth, no collision or networking.
 const PROFILES = {
-	"lakeside":{"bird":"swallow","birds":8,"insect":"butterfly","insects":5,"plumage":Color("344958"),"insect_color":Color("e8ac52"),"span":.55,"tail":.32,"height":4.0,"radius":18.0,"speed":.22,"flap":12.0,"glide":.3},
+	"lakeside":{"bird":"swallow","birds":8,"insect":"fly","insects":2,"plumage":Color("344958"),"insect_color":Color("696b65"),"span":.55,"tail":.32,"height":4.0,"radius":18.0,"speed":.22,"flap":12.0,"glide":.3},
 	"lake_pier":{"bird":"gull","birds":4,"insect":"none","insects":0,"plumage":Color("d1d7d9"),"insect_color":Color.WHITE,"span":1.25,"tail":.20,"height":14.0,"radius":32.0,"speed":.065,"flap":3.8,"glide":.85},
-	"gray_pier":{"bird":"swift","birds":5,"insect":"midge","insects":18,"plumage":Color("3d403b"),"insect_color":Color("837a60"),"span":.7,"tail":.24,"height":3.0,"radius":13.0,"speed":.30,"flap":17.0,"glide":.2},
-	"bell_park_pier":{"bird":"tern","birds":3,"insect":"dragonfly","insects":6,"plumage":Color("bdc6cb"),"insect_color":Color("43a9ac"),"span":.95,"tail":.38,"height":7.0,"radius":23.0,"speed":.13,"flap":6.5,"glide":.6}
+	"gray_pier":{"bird":"swift","birds":5,"insect":"midge","insects":3,"plumage":Color("3d403b"),"insect_color":Color("837a60"),"span":.7,"tail":.24,"height":3.0,"radius":13.0,"speed":.30,"flap":17.0,"glide":.2},
+	"simons_town_rocks":{"bird":"gull","birds":6,"insect":"none","insects":0,"plumage":Color("e2e2d9"),"insect_color":Color.WHITE,"span":1.35,"tail":.22,"height":12.0,"radius":30.0,"speed":.09,"flap":3.8,"glide":.85},
+	"blouberg_sunrise_2":{"bird":"tern","birds":5,"insect":"none","insects":0,"plumage":Color("d0d5dc"),"insect_color":Color.WHITE,"span":.9,"tail":.4,"height":8.0,"radius":27.0,"speed":.16,"flap":6.5,"glide":.65},
+	"bell_park_pier":{"bird":"tern","birds":3,"insect":"dragonfly","insects":2,"plumage":Color("bdc6cb"),"insect_color":Color("43a9ac"),"span":.95,"tail":.38,"height":7.0,"radius":23.0,"speed":.13,"flap":6.5,"glide":.6}
 }
 var birds := MultiMeshInstance3D.new()
 var insects := MultiMeshInstance3D.new()
@@ -43,8 +45,8 @@ void fragment() { ALBEDO=plumage.rgb*COLOR.rgb; ROUGHNESS=0.94; SPECULAR=0.08; }
 	birds.material_override=mat
 	var small:=mat.duplicate()
 	small.set_shader_parameter("plumage",profile.insect_color)
-	small.set_shader_parameter("flap_rate",14.0 if profile.insect=="butterfly" else 55.0)
-	small.set_shader_parameter("amplitude",1.5 if profile.insect=="butterfly" else .22)
+	small.set_shader_parameter("flap_rate",55.0)
+	small.set_shader_parameter("amplitude",.22)
 	small.set_shader_parameter("glide_amount",0.0)
 	insects.material_override=small;insects.visible=insect_count>0
 	update_positions()
@@ -75,16 +77,17 @@ func bird_mesh() -> ArrayMesh:
 	st.generate_normals();return st.commit()
 func insect_mesh() -> ArrayMesh:
 	var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	# Broad paired butterfly wings, narrow dragonfly pairs, or minute midge wings.
-	var butterfly: bool=profile.insect=="butterfly"
-	var span: float=.065 if butterfly else .052 if profile.insect=="dragonfly" else .006
-	var chord: float=.035 if butterfly else .009 if profile.insect=="dragonfly" else .003
+	# Flies and midges have one small wing pair; dragonflies retain two narrow pairs.
+	var dragonfly: bool=profile.insect=="dragonfly"
+	var span: float=.052 if dragonfly else .006
+	var chord: float=.009 if dragonfly else .003
 	for side in [-1.0,1.0]:
-		for z in [-1.0,1.0]:
+		for z in ([-1.0,1.0] if dragonfly else [0.0]):
 			for v in [Vector3(0,0,z*.008),Vector3(side*span,0,z*.008-chord),Vector3(side*span*.75,0,z*.008+chord)]:
-				st.set_uv(Vector2(1,0));st.set_color(Color(1,.8,.45) if butterfly else Color(.75,.9,.9));st.add_vertex(v)
-	var length: float=.045 if profile.insect=="dragonfly" else .025 if butterfly else .007
-	for v in [Vector3(0,.004,-length),Vector3(-.003,0,length),Vector3(.003,0,length)]:
+				st.set_uv(Vector2(1,0));st.set_color(Color(.75,.9,.9));st.add_vertex(v)
+	var length: float=.045 if dragonfly else .0035
+	var width: float=.003 if dragonfly else .0012
+	for v in [Vector3(0,width,-length),Vector3(-width,0,length),Vector3(width,0,length)]:
 		st.set_uv(Vector2.ZERO);st.set_color(Color(.22,.3,.25));st.add_vertex(v)
 	st.generate_normals();return st.commit()
 func _process(delta: float) -> void:
@@ -98,9 +101,10 @@ func bird_transform(i: int) -> Transform3D:
 	var basis:=Basis.looking_at(forward,Vector3.UP).rotated(forward,sin(a)*.18)
 	return Transform3D(basis,pos)
 func insect_transform(i: int) -> Transform3D:
-	var a:=elapsed*(2.8 if profile.insect=="midge" else .9)+i*1.7+location_seed
+	var small_fly: bool=profile.insect in ["fly","midge"]
+	var a:=elapsed*(2.8 if small_fly else .9)+i*1.7+location_seed
 	var center:=Vector3(-6.0+float(i%3)*6.0,1.1,-4.5)
-	var radius:=.32 if profile.insect=="midge" else 1.5
+	var radius:=.32 if small_fly else 1.5
 	if profile.insect=="dragonfly":center=Vector3(-5+float(i%2)*10,.65,-7)
 	var pos:=center+Vector3(sin(a)*radius,sin(a*1.8)*.25,cos(a*.7)*radius)
 	return Transform3D(Basis(Vector3.UP,-a),pos)

@@ -1,0 +1,34 @@
+{
+  "source_url": "https://polyhaven.com/a/aerial_beach_01",
+  "author": "Rob Tuytel",
+  "license": "CC0",
+  "maps": [
+    {
+      "file": "source/textures/foreground/aerial_beach_01_Diffuse.jpg",
+      "source": {
+        "size": 457152,
+        "md5": "b06496ad69bc0587e03e9cbcf9a80d76",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_beach_01/aerial_beach_01_diff_2k.jpg"
+      },
+      "sha256": "1803d7e2861b304bea6d2e124dcd4c657fcb93843b84c17bb2db98ce48a87e4e"
+    },
+    {
+      "file": "source/textures/foreground/aerial_beach_01_Rough.jpg",
+      "source": {
+        "size": 505596,
+        "md5": "e372484429ef0b815b5387429d199c6d",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_beach_01/aerial_beach_01_rough_2k.jpg"
+      },
+      "sha256": "318b440c109de7411f9e7443f38ae3cf873f34e90afd762c931bae3b23426da2"
+    },
+    {
+      "file": "source/textures/foreground/aerial_beach_01_nor_gl.jpg",
+      "source": {
+        "size": 863847,
+        "md5": "fdf59672f1e41cd406c2107f6cea538d",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_beach_01/aerial_beach_01_nor_gl_2k.jpg"
+      },
+      "sha256": "0f35185b7225fe2027897bb7e4586c7deb048817524f1ed104fdae7ce80bdc06"
+    }
+  ]
+}

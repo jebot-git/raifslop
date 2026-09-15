@@ -77,7 +77,7 @@ func status_rows() -> Array:
 		["LOCATION", session.location_name],
 		["SHEKELS AVAILABLE", str(session.tackle.shekels)],
 		["LAST CATCH EARNED", "+%d shekels" % earned],
-		["BAIT EQUIPPED", session.BAITS[session.bait]],
+		["BAIT EQUIPPED", session.bait_name(session.bait)],
 		["ROD EQUIPPED", session.tackle.rod().name + (" · stashed" if guide.game_root.rod_holster.stowed else "")],
 	]
 

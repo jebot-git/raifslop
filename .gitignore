@@ -11,3 +11,6 @@ android/
 .release-signing/
 
 data/
+
+# Intermediate unbaked foreground exports; editable Blender sources are retained.
+source/models/locations/

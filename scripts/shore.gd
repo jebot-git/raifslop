@@ -53,6 +53,14 @@ static func prepare_lighting(node: Node, id: String) -> void:
 		for index in range(node.mesh.get_surface_count()):
 			var source := node.get_active_material(index) as StandardMaterial3D
 			if source == null: continue
+			if source.resource_name.begins_with("FG_rope"):
+				# One consistent tan across spans and coils, including older baked models.
+				# Tiny atlas islands and faceted tube lighting must not stripe the rope.
+				var rope := StandardMaterial3D.new()
+				rope.albedo_color = Color("9b8158")
+				rope.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				node.set_surface_override_material(index, rope)
+				continue
 			if baked:
 				var mat := ShaderMaterial.new()
 				mat.shader = preload("res://assets/environment/baked_foreground.gdshader")
@@ -79,3 +87,19 @@ static func prepare_lighting(node: Node, id: String) -> void:
 				mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 				node.set_surface_override_material(index, mat)
 	for child in node.get_children(): prepare_lighting(child, id)
+
+static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := Vector4(0,3,5,6), terrain_only := false) -> void:
+	var blend := ShaderMaterial.new()
+	blend.shader = preload("res://assets/environment/harbour_ground.gdshader")
+	blend.set_shader_parameter("ground_bounds", bounds)
+	for setting in ["panorama", "sky_inverse", "sky_energy", "detail_strength", "vibrance", "shadow_lift"]:
+		blend.set_shader_parameter(setting, water.get_shader_parameter(setting))
+	for node in root.find_children("*", "MeshInstance3D", true, false):
+		for index in range(node.mesh.get_surface_count()):
+			var mat: Material = node.get_active_material(index)
+			var source: Material = node.mesh.surface_get_material(index)
+			# Coastal boulders and barrier posts must remain solid outside the walkable
+			# footprint; only terrain joins the distant photographic ground.
+			if terrain_only and source and not source.resource_name.begins_with("FG_gravel") and not source.resource_name.begins_with("FG_sand") and not source.resource_name.begins_with("FG_grass"):
+				continue
+			if mat: mat.next_pass = blend

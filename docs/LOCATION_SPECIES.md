@@ -77,3 +77,7 @@ Biological identities and identifying traits were checked against these referenc
 These original procedural assets have been superseded by `tools/build_photographic_fish.py` and `source/photographic_fish.blend`; current runtime GLBs use photographic-style textures. Source/asset license is CC0; no reference photographs were copied. `expanded_fish_assets.json` records sizes, triangle counts, hashes and references.
 
 Validation: fishing simulation166, tackle81, model integration113, location/bait77, field guide33 and network guards27 passed. Rendered location/gallery run79 passed; all six models were visually inspected. Full fights land all 18 species with starter and top-tier rods, and upgraded rods shorten every species' fight. Existing Godot exit cleanup warnings remain. Physical headset inspection was not repeated for this asset expansion.
+
+## Coastal scenery trials
+
+Coastal Rocks (`simons_town_rocks`) and Sunrise Beach (`blouberg_sunrise_2`) now have distinct marine-only rosters, eight additional species at stable appended indices 18–25, and six saltwater bait choices. See [marine fish](MARINE_FISH.md).

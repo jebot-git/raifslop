@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Blacktail",
+    "latin": "Diplodus capensis",
+    "length": 30.0,
+    "weight": 0.65,
+    "rarity": 1,
+    "endurance": 85.0,
+    "power": 0.85,
+    "bait": 0,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/blacktail.glb"
+  },
+  {
+    "name": "Galjoen",
+    "latin": "Dichistius capensis",
+    "length": 38.0,
+    "weight": 1.2,
+    "rarity": 2,
+    "endurance": 125.0,
+    "power": 1.1,
+    "bait": 0,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/galjoen.glb"
+  },
+  {
+    "name": "Hottentot",
+    "latin": "Pachymetopon blochii",
+    "length": 35.0,
+    "weight": 0.8,
+    "rarity": 1,
+    "endurance": 95.0,
+    "power": 0.95,
+    "bait": 1,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/hottentot.glb"
+  },
+  {
+    "name": "Red roman",
+    "latin": "Chrysoblephus laticeps",
+    "length": 40.0,
+    "weight": 1.4,
+    "rarity": 2,
+    "endurance": 125.0,
+    "power": 1.15,
+    "bait": 1,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/roman.glb"
+  },
+  {
+    "name": "White steenbras",
+    "latin": "Lithognathus lithognathus",
+    "length": 65.0,
+    "weight": 3.2,
+    "rarity": 3,
+    "endurance": 155.0,
+    "power": 1.3,
+    "bait": 3,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/white_steenbras.glb"
+  },
+  {
+    "name": "Elf / bluefish",
+    "latin": "Pomatomus saltatrix",
+    "length": 45.0,
+    "weight": 1.1,
+    "rarity": 2,
+    "endurance": 120.0,
+    "power": 1.2,
+    "bait": 2,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/elf.glb"
+  },
+  {
+    "name": "Cape yellowtail",
+    "latin": "Seriola lalandi",
+    "length": 85.0,
+    "weight": 5.5,
+    "rarity": 3,
+    "endurance": 170.0,
+    "power": 1.4,
+    "bait": 2,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/yellowtail.glb"
+  },
+  {
+    "name": "Harder mullet",
+    "latin": "Chelon richardsonii",
+    "length": 32.0,
+    "weight": 0.4,
+    "rarity": 1,
+    "endurance": 75.0,
+    "power": 0.8,
+    "bait": 0,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/harder.glb"
+  }
+]

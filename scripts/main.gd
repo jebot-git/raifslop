@@ -58,6 +58,7 @@ var line_mesh: ImmediateMesh
 var line_material: StandardMaterial3D
 var fish_display: Node3D
 var catch_bounds := AABB()
+var catch_twitch = preload("res://scripts/catch_twitch.gd").new()
 var catch_rotation := Quaternion.IDENTITY
 var catch_in_hand := false
 var hud: Control
@@ -498,6 +499,7 @@ func _process(delta: float) -> void:
 	motor.catch_controls = fish_guide.held or (xr and game.state == Session.State.LANDED)
 	if not xr: hud.visible = not menu_open and not fish_guide.held
 	time += delta
+	if fish_display.visible: catch_twitch.tick(delta)
 	_update_avatar(delta)
 	if avatar_loading: return
 	if fish_guide.held:
@@ -553,7 +555,7 @@ func _process(delta: float) -> void:
 			game.gesture(direction)
 		else: fight_input.reset()
 	else:
-		reel = 1.0 if Input.is_key_pressed(KEY_R) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) else 0.0
+		reel = (1.8 if Input.is_key_pressed(KEY_SHIFT) else 1.0) if Input.is_key_pressed(KEY_R) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) else 0.0
 		game.gesture(0 if Input.is_key_pressed(KEY_LEFT) else 1 if Input.is_key_pressed(KEY_RIGHT) else 2 if Input.is_key_pressed(KEY_UP) else -1)
 	# Retrieval accepts either winding direction; the handle follows the actual hand.
 	crank.rotation.x += reel_tracker.angular_delta if xr else reel * TAU * delta
@@ -675,6 +677,9 @@ func _update_line() -> void:
 		# Walking does not teleport the fish to the world origin or win a fight.
 		var direction := (cast_target - cast_anchor).normalized()
 		bobber.position = cast_anchor + direction * game.distance + escape_offset + Vector3(0, 0.02, 0)
+		if game.submerge!=Session.Submerge.NONE:
+			var progress: float = 1.0-game.submerge_time/(Session.SUBMERGE_WARNING+Session.SUBMERGE_DURATION)
+			bobber.position.y-=sin(progress*PI)*.28
 	else:
 		bobber.position = cast_target + Vector3(0, sin(time * 3.0) * 0.025, 0)
 		if game.state == Session.State.BITE:
@@ -709,6 +714,7 @@ func _show_fish() -> void:
 		mesh_node(tail, fish_display, Vector3(-0.33, 0, 0), material(Color("787648")))
 	var length_cm: float=game.journal.back().length if not game.journal.is_empty() else species.length
 	catch_bounds=preload("res://scripts/fish_size.gd").fit(fish_display,length_cm)
+	catch_twitch.configure(fish_display,catch_bounds,game.fish_index*7919+game.catches)
 	catch_rotation = Quaternion.IDENTITY
 	catch_in_hand = false
 	motor.catch_controls = xr
@@ -835,11 +841,14 @@ func _select_location(id: String, persist := true) -> bool:
 	water_surface.position.y=water_level
 	water_material.set_shader_parameter("protect_panorama_foreground",entry.get("protect_panorama_foreground",false))
 	water_material.set_shader_parameter("panorama_water_region",entry.get("panorama_water_region",Vector4(0,1,0,1)))
+	if id == "lake_pier": Shore.blend_harbour_ground(foreground, water_material)
+	elif entry.has("ground_bounds"): Shore.blend_harbour_ground(foreground, water_material, entry.ground_bounds, true)
 	current_location = id
 	if is_instance_valid(shadow_policy): shadow_policy.apply_materials(foreground)
 	if is_instance_valid(ambience): ambience.select_location(id)
 	game.location_id = id
 	game.location_name = entry.name
+	if is_instance_valid(rod_status): rod_status.update_bait()
 	hud.location_mood = entry.mood
 	hud.queue_redraw()
 	avatar_menu.refresh_locations(id, true)
