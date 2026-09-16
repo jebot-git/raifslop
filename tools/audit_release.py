@@ -50,6 +50,7 @@ def audit(path):
     mobile = path.suffix == '.apk'
     pack = APK(path) if mobile else Pack(path)
     names = set(pack.names()); remaps = {}; hashes = {}; sizes = {}
+    assert not any('bbq' in name.lower() for name in names), 'BBQ prototype included in release'
     for name in sorted(names):
         parts = PurePosixPath(name).parts
         assert parts[0] not in {'docs','source','tests','tools','builds','data','.release-signing'}, name
@@ -72,6 +73,7 @@ def audit(path):
                      'scripts/rear_parallax.gd','assets/environment/rear_parallax.gdshader',
                      'assets/environment/shore_details/fishing_plan_poster.svg',
                      'scripts/voice/shoulder_radio.gd','scripts/network/threaded_peer.gd',
+                     'scripts/controller_calibration.gd','scripts/fish_water_boundary.gd',
                      'scripts/fly_fishing.gd','scripts/hooked_fish.gd','scripts/river_foreground.gd',
                      'scripts/ui/vr_item_list.gd','assets/models/rods/fly_handle.glb',
                      'assets/models/fish/wels_catfish.glb','assets/models/fish/bronze_whaler.glb',

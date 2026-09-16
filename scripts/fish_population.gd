@@ -6,6 +6,7 @@ const RECOVERY_SECONDS := 240.0
 const CATCH_REMAINING := .35
 const OFF_BAIT_CHANCE := .15
 var waters: Dictionary = {}
+var layouts: Dictionary = {}
 var rng := RandomNumberGenerator.new()
 
 func _init() -> void:
@@ -37,6 +38,25 @@ static func sector_at(at: Vector3) -> int:
 
 static func sector_center(sector: int, water_y: float) -> Vector3:
 	return Vector3((sector % GRID_SIZE - 1) * 10.0, water_y, -8.0 - floori(float(sector) / GRID_SIZE) * 5.0)
+
+func set_layout(id: String, centres: Array[Vector3]) -> void:
+	assert(centres.size()==SECTOR_COUNT)
+	layouts[id]=centres.duplicate()
+
+func center_for(id: String, sector: int, water_y: float) -> Vector3:
+	var at: Vector3 = layouts[id][sector] if layouts.has(id) else sector_center(sector,water_y)
+	at.y=water_y
+	return at
+
+func sector_for(id: String, at: Vector3) -> int:
+	if not layouts.has(id): return sector_at(at)
+	var closest := 0
+	var distance := INF
+	for sector in SECTOR_COUNT:
+		var centre := center_for(id,sector,at.y)
+		var candidate := at.distance_squared_to(centre)
+		if candidate < distance: distance=candidate;closest=sector
+	return closest
 
 static func neighbors_of(sector: int) -> Array[int]:
 	var neighbors: Array[int] = []

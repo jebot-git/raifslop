@@ -73,7 +73,7 @@ func run() -> void:
 		g._process(.016)
 		check(is_equal_approx(g.crank.rotation.x,still_angle),"Visual snap cannot generate free reeling")
 		trackers[0].set_input(input,0.0);await process_frame;g._process(.016)
-		check(not g.reel_tracker.engaged and g.avatar.left_target==g.left,"Releasing " + input + " returns offhand to tracked pose")
+		check(not g.reel_tracker.engaged and g.avatar.left_target==g.calibrated_hands[0],"Releasing " + input + " returns offhand to tracked pose")
 	for tracker in trackers: XRServer.remove_tracker(tracker)
 	g.queue_free(); await process_frame; await create_timer(.3).timeout
 	print("TRACKED_CAST_RESULT ", failures); quit(0 if failures.is_empty() else 1)

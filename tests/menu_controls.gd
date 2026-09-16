@@ -29,7 +29,7 @@ func check_list_drag(list:ItemList,label:String):
 func run():
 	var g=load("res://scenes/main.tscn").instantiate(); root.add_child(g); await settle()
 	g.set_process(false);g.motor.set_physics_process(false)
-	view=SubViewport.new();view.size=Vector2i(1000,720);root.add_child(view)
+	view=SubViewport.new();view.size=Vector2i(1000,720);view.render_target_update_mode=SubViewport.UPDATE_ALWAYS;root.add_child(view)
 	var menu=g.avatar_menu; menu.reparent(view); menu.position=Vector2(50,30);menu.size=Vector2(900,656);menu.scale=Vector2.ONE;menu.show()
 	for page in menu.pages.values(): page.view.vr_mode_override=true
 	menu.show_page("avatar");await settle()
@@ -99,5 +99,19 @@ func run():
 	check(g.origin.global_basis.is_equal_approx(Basis(Vector3.UP,deg_to_rad(-45))*before),"Snap uses selected angle once per stick deflection")
 	g.motor.apply_turn_input(0,.02);g.motor.apply_turn_input(1,.02)
 	check(g.origin.global_basis.is_equal_approx(Basis(Vector3.UP,deg_to_rad(-90))*before),"Centering rearms the next snap")
+	var offset: HSlider = menu.calibration_sliders[6]
+	menu.pages.controls.view.ensure_control_visible(offset.get_parent()); await settle()
+	await click(offset.get_parent().get_child(2))
+	check(is_equal_approx(g.controller_calibration.offsets[1].x,.01), "Scrolled controller offset plus button adjusts casting hand")
+	var pitch: HSlider = menu.calibration_sliders[9]
+	menu.pages.controls.view.ensure_control_visible(pitch.get_parent()); await settle()
+	await click(pitch.get_parent().get_child(0))
+	check(g.controller_calibration.angles[1].x==-1, "Scrolled controller rotation minus button works")
+	if "--capture" in OS.get_cmdline_user_args():
+		await RenderingServer.frame_post_draw
+		view.get_texture().get_image().save_png("res://docs/controller_alignment.png")
+	menu.pages.controls.view.ensure_control_visible(menu.calibration_reset); await settle()
+	await click(menu.calibration_reset)
+	check(g.controller_calibration.pose(1).is_equal_approx(Transform3D.IDENTITY), "Reachable reset button clears controller calibration")
 	menu.close_overlays();menu.reparent(g);view.queue_free();g.queue_free();await settle();await create_timer(.3).timeout
 	print("MENU_CONTROLS_RESULT ",failures);quit(0 if failures.is_empty() else 1)

@@ -36,7 +36,7 @@ Catches now earn **shekels** based on species rarity and specimen size. Open **F
 | Read tutorial | Right B → Tutorial | V → Tutorial |
 | Quit | Right B → Quit game | Escape or menu Quit game |
 
-VR casting projects the **center of the headset view** onto the water, with no eye tracking. The water marker is the landing destination, within a 5–24 metre reach. Hold the trigger, sweep the rod back then forward, and release. Desktop uses a held Space backswing and release, with right-drag controlling the marker. Looking toward the shore rejects the cast.
+VR casting projects the **center of the headset view** onto the water; eye gaze does not steer it. The water marker is the landing destination, within a 5–24 metre reach. Hold the trigger, sweep the rod back then forward, and release. Desktop uses a held Space backswing and release, with right-drag controlling the marker. Aiming at real ground rejects the cast; invisible player barriers and underwater fish clearance do not block water-surface aiming. Under **Controls → Controller alignment**, adjust and save each controller’s position and rotation offsets. [Casting comfort, fish boundaries and guide discovery](docs/FISHING_COMFORT.md).
 
 In VR, landed fish hang head-up below the rod tip on the line. Hold left grip to grasp the string 8 cm above the fish’s mouth; lift your hand to inspect the fish hanging beneath it; releasing grip returns it to the rod. The fish stays vertical and head-up in both positions, regardless of hand tilt. Either joystick axis spins it around the vertical axis at up to about 103°/s, with a deadzone; stick walking and turning are suppressed while a catch is displayed. Physical room-scale movement remains available. Right A releases the catch and restores stick locomotion.
 
@@ -48,7 +48,7 @@ Fish occupy a 3×3 grid of nine sectors. Different species start in separate qua
 
 Open **V → Locations** (VR: **right B → Locations**) to choose Lakeside, Lake Pier, Gray Pier or Bell Park Pier. Select **Fish here** while ready to cast. Each spot has its own lighting and water preset; selection persists, and catches record their location. Walk a gravel cove at Lakeside, a concrete harbour quay at Lake Pier, a weathered reed boardwalk at Gray Pier, or a moored fishing boat at Bell Park Pier. Travel places you at a safe arrival point on the new model.
 
-A handheld **Field Guide** records discovered fish, their names, descriptions, species silhouettes and your longest specimen of each species. Smaller or equal catches never replace the record. Existing catches populate it from the saved journal. In VR, grab the lower handle at your left hip with left grip; the hand stays below the screen and controls. Fishing pauses while inspecting. See [Field Guide details and captures](docs/FIELD_GUIDE.md).
+A handheld **Field Guide** shows uncaught species as unnamed question marks with habitat and preferred-bait hints. Catches reveal their names, descriptions, species silhouettes and your longest specimen of each species. Smaller or equal catches never replace the record. Existing catches populate it from the saved journal. In VR, grab the lower handle at your left hip with left grip; the hand stays below the screen and controls. Fishing pauses while inspecting. See [Field Guide details and captures](docs/FIELD_GUIDE.md).
 
 ## Walking and avatars
 
@@ -163,7 +163,3 @@ granite boulders; Tidal Strand has a broad pale-sand shore, misty hills and drif
 Both use native 8K Poly Haven photographs, authored walkable shores, measured baked
 lighting, generated dune grass and kelp details, recorded surf and distinct marine
 rosters. [Sources, rebuild instructions and captures](docs/COASTAL_EXPANSION.md).
-
-## Shore BBQ prototype branch
-
-`prototype/shore-bbq` includes Secluded Cove and Tidal Strand and a shared leisure BBQ at all ten waters. Open **V / right B → BBQ → Start BBQ & visit**, or press **H** on desktop. Finish the current cast before visiting; your rod is stowed and bait stays ready. Use either pair of tongs to grill, turn and serve free food. Everyone at the location can watch or join. See [prototype controls, scope and validation](docs/BBQ_PROTOTYPE.md). This branch uses multiplayer protocol **4**; run matching prototype clients and servers. Published 0.1.8 remains separate.

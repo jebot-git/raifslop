@@ -30,7 +30,7 @@ static func create(id:String)->Node3D:
   n.position=Vector3(x,-.35,z);n.scale=Vector3(rng.randf_range(.4,1.2),.7,rng.randf_range(.4,1.0));root.add_child(n)
  if id=="boulder_run":
   for at in [Vector3(-7,-.6,-10),Vector3(5,-.6,-13),Vector3(15,-.6,-8)]:
-   var n:=MeshInstance3D.new();var mesh:=SphereMesh.new();mesh.radial_segments=10;mesh.rings=6;n.mesh=mesh;n.material_override=rockmat;n.position=at;n.scale=Vector3(2.1,2.4,1.8);root.add_child(n);n.create_trimesh_collision()
+   var n:=MeshInstance3D.new();var mesh:=SphereMesh.new();mesh.radial_segments=10;mesh.rings=6;n.mesh=mesh;n.material_override=rockmat;n.set_meta("fish_ground",true);n.position=at;n.scale=Vector3(2.1,2.4,1.8);root.add_child(n);n.create_trimesh_collision()
  # Crossed cutouts in separated depth groups retain silhouettes from oblique views.
  var shrub_texture=load("res://assets/environment/rivers/river_shrubs.png")
  var tree_texture=load("res://assets/environment/rivers/river_alder.png")
@@ -102,7 +102,7 @@ static func terrain(root:Node3D,far:bool,grass:Material,gravel:Material):
      points.append(Vector3(uv.x,bank_height(uv.x,uv.y,far),z))
     for index in ([0,2,1,1,2,3] if far else [0,1,2,1,3,2]):
      st.set_uv(Vector2(points[index].x,points[index].z)*.25);st.add_vertex(points[index])
-  st.generate_normals();var node:=MeshInstance3D.new();node.mesh=st.commit();node.material_override=gravel if strip==0 else grass
+  st.generate_normals();var node:=MeshInstance3D.new();node.mesh=st.commit();node.material_override=gravel if strip==0 else grass;node.set_meta("fish_ground",true)
   root.add_child(node);node.create_trimesh_collision()
   for body in node.find_children("*", "StaticBody3D", true, false):body.set_meta("role", "floor")
 

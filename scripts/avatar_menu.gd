@@ -14,6 +14,9 @@ const Locations = preload("res://scripts/locations.gd")
 var keyboard: PanelContainer
 var shell: VBoxContainer
 var tabs: HBoxContainer
+signal controller_calibration_changed
+var calibration_sliders: Array[HSlider] = []
+var calibration_reset: Button
 var content: Control
 var pages: Dictionary={}
 var active_page := "avatar"
@@ -133,13 +136,33 @@ func _build_turn_controls() -> void:
 	smooth_turn_speed=_turn_slider(page,"Smooth turn speed",30,360,15,75,"°/s")
 	snap_turn_angle=_turn_slider(page,"Snap turn angle",15,90,15,30,"°")
 	var hint := Label.new();hint.text="Turn with the right stick. Snap turning waits for the stick to return to center.";hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_child(hint)
+	var calibration_title := Label.new(); calibration_title.text = "Controller alignment"; calibration_title.add_theme_font_size_override("font_size", 28); page.add_child(calibration_title)
+	var calibration_hint := Label.new(); calibration_hint.text = "Adjust each grip to match your controller. Offsets follow the controller: X right, Y up, Z toward you. Rotation: pitch, yaw, roll. Casting aims from the center of your headset view."; calibration_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; page.add_child(calibration_hint)
+	for hand in ["Left controller", "Right / casting controller"]:
+		var heading := Label.new(); heading.text = hand; page.add_child(heading)
+		for axis in ["X", "Y", "Z"]:
+			calibration_sliders.append(_turn_slider(page, "Offset " + axis, -20, 20, 1, 0, " cm"))
+		for axis in ["Pitch", "Yaw", "Roll"]:
+			calibration_sliders.append(_turn_slider(page, axis, -60, 60, 1, 0, "°"))
+	calibration_reset = Button.new(); calibration_reset.text = "Reset controller alignment"; calibration_reset.custom_minimum_size.y = 48; page.add_child(calibration_reset)
 	show_page(active_page)
+
+func bind_controller_calibration(calibration) -> void:
+	for i in calibration_sliders.size():
+		var hand := i / 6; var axis := i % 3; var rotation := i % 6 >= 3
+		calibration_sliders[i].value = calibration.angles[hand][axis] if rotation else calibration.offsets[hand][axis] * 100.0
+		calibration_sliders[i].value_changed.connect(func(value: float):
+			if rotation: calibration.angles[hand][axis] = value
+			else: calibration.offsets[hand][axis] = value / 100.0
+			controller_calibration_changed.emit())
+	calibration_reset.pressed.connect(func():
+		for slider in calibration_sliders: slider.value = 0)
 
 func _turn_slider(page:VBoxContainer,title:String,low:float,high:float,step_size:float,initial:float,unit:String) -> HSlider:
 	var label := Label.new();page.add_child(label)
 	var row := HBoxContainer.new();row.add_theme_constant_override("separation",18);page.add_child(row)
 	var less := Button.new();less.text="−";less.custom_minimum_size=Vector2(64,48);row.add_child(less)
-	var slider := HSlider.new();slider.min_value=low;slider.max_value=high;slider.step=step_size;slider.value=initial;slider.size_flags_horizontal=SIZE_EXPAND_FILL;row.add_child(slider)
+	var slider := HSlider.new();slider.min_value=low;slider.max_value=high;slider.step=step_size;slider.value=initial;slider.size_flags_horizontal=SIZE_EXPAND_FILL;slider.size_flags_vertical=SIZE_SHRINK_CENTER;row.add_child(slider)
 	var more := Button.new();more.text="+";more.custom_minimum_size=Vector2(64,48);row.add_child(more)
 	var update := func(value:float):label.text=title+" · "+str(roundi(value))+unit
 	slider.value_changed.connect(update);update.call(initial)
@@ -268,7 +291,7 @@ func attach_tracking(manager: Node) -> void:
 		var action:=Button.new(); action.text=row[0]; action.custom_minimum_size.y=44; tracking_page.add_child(action); action.pressed.connect(row[1])
 	var info:=Label.new(); info.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; info.custom_minimum_size=Vector2(700,110); tracking_page.add_child(info)
 	var timer:=Timer.new(); timer.wait_time=.5; timer.autostart=true; tracking_page.add_child(timer)
-	timer.timeout.connect(func(): info.text=manager.message+"\n"+manager.tracking.status+"\nHold a T-pose for 1.1 s to calibrate body trackers.\nEye tracking animates your avatar; cast aim stays centered in your view.")
+	timer.timeout.connect(func(): info.text=manager.message+"\n"+manager.tracking.status+"\nHold a T-pose for 1.1 s to calibrate body trackers.\nEye tracking animates your avatar; cast aim follows the center of your view.")
 	tracking_page.hide()
 
 func _build_shell() -> void:
@@ -308,7 +331,7 @@ func attach_help() -> void:
 	tutorial_button.custom_minimum_size = Vector2(130, 44)
 	for instruction in [
 		"FISHING · VR controls",
-		"Cast: aim at the water marker. Hold trigger, sweep back then forward, release.
+		"Cast: look toward the water marker. Hold trigger, sweep back then forward, release.
 When the float dips, lift the rod quickly to set the hook.",
 		"Reel: hold left grip or trigger beside the crank and circle your hand.
 Ease off during runs; keep line tension in the green band.",

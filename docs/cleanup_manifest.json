@@ -2026,5 +2026,29 @@
     "bytes": 1596698295,
     "reason": "Regenerable intermediate exports, build output or cache; editable sources and signing key retained",
     "action": "removed for 0.1.4"
+  },
+  {
+    "path": "builds/Debug-GameplayFixes",
+    "bytes": 641028286,
+    "reason": "Obsolete debug exports; editable sources, prototype build and signing key retained",
+    "action": "removed for 0.1.9"
+  },
+  {
+    "path": "builds/Debug-MenuInput",
+    "bytes": 1047117113,
+    "reason": "Obsolete debug exports; editable sources, prototype build and signing key retained",
+    "action": "removed for 0.1.9"
+  },
+  {
+    "path": "builds/Debug-SessionFeedback",
+    "bytes": 1046320507,
+    "reason": "Obsolete debug exports; editable sources, prototype build and signing key retained",
+    "action": "removed for 0.1.9"
+  },
+  {
+    "path": "builds/Debug-VoiceRecovery",
+    "bytes": 1046282627,
+    "reason": "Obsolete debug exports; editable sources, prototype build and signing key retained",
+    "action": "removed for 0.1.9"
   }
 ]

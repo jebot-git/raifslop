@@ -45,6 +45,8 @@ func _initialize() -> void:
     s.tick(.02,rate,0)
    check(s.state==S.State.FIGHT and s.tension>S.SLACK_LIMIT and s.tension<S.STRAIN_LIMIT,"Correct play survives complete submerging move at tension "+str(initial))
  s=dive(S.Submerge.PULL);s.stamina=.1;s.distance=s.landing_distance;s.tick(.02,0,0)
+ check(s.state==S.State.FIGHT,"Landing still requires active final retrieval")
+ s.tick(.02,1,0)
  check(s.state==S.State.LANDED and s.submerge==S.Submerge.NONE,"Landing clears submerged state")
  var h=H.new();s=fight();h.sample(s,.01);s.cue=0;s.cue_time=6
  var onset:Dictionary=h.sample(s,.01)

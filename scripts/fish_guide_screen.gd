@@ -13,41 +13,37 @@ func _draw() -> void:
 		_draw_status()
 		return
 	label("FIELD GUIDE", Vector2(34, 65), 42, Color("a9dfb2"))
-	label("FRESHWATER COLLECTION", Vector2(36, 102), 23)
+	label("LAKE · SEA · RIVER", Vector2(36, 102), 23)
 	draw_line(Vector2(34, 127), Vector2(606, 127), Color("49715d"), 2)
 	var rows: Array = guide.ordered_entries()
-	label("%02d / %02d SPECIES FOUND" % [rows.size(), guide.Session.SPECIES.size()], Vector2(36, 174), 28)
-	if rows.is_empty():
-		label("Your waters. Your discoveries.", Vector2(36, 295), 32)
-		label("Catch a fish to add its species", Vector2(36, 370), 29)
-		label("and your personal size record.", Vector2(36, 412), 29)
-	else:
-		guide.selected = clampi(guide.selected, 0, rows.size() - 1)
-		var entry: Dictionary = rows[guide.selected]
-		label(entry.name, Vector2(36, 247), 39)
-		label(entry.latin, Vector2(36, 289), 27, Color("a9dfb2"))
-		var center := Vector2(320, 365)
-		var silhouette := Icons.contour(entry.latin, center, 120.0)
+	label("%02d / %02d SPECIES FOUND" % [guide.entries.size(), rows.size()], Vector2(36, 174), 28)
+	guide.selected = clampi(guide.selected, 0, rows.size() - 1)
+	var entry: Dictionary = rows[guide.selected]
+	label(entry.name, Vector2(36, 235), 39)
+	label(entry.latin if entry.discovered else "UNDISCOVERED", Vector2(36, 274), 26, Color("a9dfb2"))
+	var center := Vector2(320, 343)
+	if entry.discovered:
+		var silhouette := Icons.contour(entry.latin, center, 110.0)
 		draw_colored_polygon(silhouette, Color("a9dfb2"))
-		var edge := silhouette.duplicate()
-		edge.append(edge[0])
+		var edge := silhouette.duplicate(); edge.append(edge[0])
 		draw_polyline(edge, Color("d5f5ce"), 2.0, true)
-		draw_circle(center + Vector2(0.65, -0.04) * 120.0, 4, Color("112b28"))
-		# Wrap descriptions to the actual screen width.
-		var line := ""
-		var y := 467.0
-		for word in str(entry.description).split(" "):
-			var next := word if line.is_empty() else line + " " + word
-			if font.get_string_size(next, HORIZONTAL_ALIGNMENT_LEFT, -1, 27).x > 565:
-				label(line, Vector2(36, y), 27)
-				y += 34
-				line = word
-			else: line = next
-		label(line, Vector2(36, y), 27)
-		draw_rect(Rect2(28, 594, 584, 112), Color("234a3d"))
-		label("PERSONAL BEST · LENGTH", Vector2(46, 632), 26)
-		label("%.1f cm" % entry.length, Vector2(46, 689), 52, Color("b9f0c0"))
-		label("ENTRY %02d / %02d" % [guide.selected + 1, rows.size()], Vector2(36, 737), 25)
+		draw_circle(center + Vector2(0.65, -0.04) * 110.0, 4, Color("112b28"))
+	else:
+		label("?", Vector2(287, 382), 108, Color("a9dfb2"))
+	label("HABITAT · " + entry.habitat, Vector2(36, 435), 25, Color("a9dfb2"))
+	label("PREFERRED BAIT · " + entry.bait, Vector2(36, 474), 23, Color("a9dfb2"))
+	var line := ""
+	var y := 518.0
+	for word in str(entry.description).split(" "):
+		var next := word if line.is_empty() else line + " " + word
+		if font.get_string_size(next, HORIZONTAL_ALIGNMENT_LEFT, -1, 23).x > 565:
+			label(line, Vector2(36, y), 23); y += 29; line = word
+		else: line = next
+	label(line, Vector2(36, y), 23)
+	draw_rect(Rect2(28, 633, 584, 77), Color("234a3d"))
+	label("PERSONAL BEST" if entry.discovered else "NOT CAUGHT YET", Vector2(46, 663), 24)
+	label("%.1f cm" % entry.length if entry.discovered else "—", Vector2(370, 692), 37, Color("b9f0c0"))
+	label("ENTRY %02d / %02d" % [guide.selected + 1, rows.size()], Vector2(36, 747), 25)
 	label("FINGER: ‹ › PAGES · LEFT TRIGGER: CAMERA" if guide.game_root.xr else "C: CAMERA · ← →: BROWSE", Vector2(36, 782), 22)
 	label("RELEASE GRIP: RETURN TO BELT" if guide.game_root.xr else "G: CLOSE GUIDE", Vector2(36, 819), 21)
 

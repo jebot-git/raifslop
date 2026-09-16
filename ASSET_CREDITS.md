@@ -155,7 +155,3 @@ Blender reconstruction and baked normal maps. No third-party artwork copied.
 [exact prompts](docs/marine_expansion_prompts.json),
 [asset checksums](docs/marine_expansion_assets.json).
 Packed source: `source/marine_expansion.blend`.
-
-## Shore BBQ prototype
-
-The grill, cooler, tongs, serving plates, sausage, corn, mushroom and drink meshes were authored in Blender through Blender MCP with `tools/build_bbq.py`; editable source is `source/bbq.blend`. Metal surfaces use [Metal Plate](https://polyhaven.com/a/metal_plate) by Rob Tuytel, acquired through the Blender MCP Poly Haven integration at 1K, under [CC0](https://polyhaven.com/license). The mooring picnic deck reuses the already credited weathered timber texture. `assets/audio/bbq_sizzle.wav` is a procedurally synthesized original sound. Asset counts and provenance are recorded in `docs/bbq_assets.json`.

@@ -140,12 +140,12 @@ func run() -> void:
 	controllers[0].set_input("ax_button", true)
 	controllers[0].set_input("ax_button", false)
 	await settle()
-	check(guide.selected == posmod(page_before + 2, guide.entries.size() + 1) - 1, "Left X pages device without changing bait")
+	check(guide.selected == posmod(page_before + 2, guide.Session.SPECIES.size() + 1) - 1, "Left X pages device without changing bait")
 	page_before = guide.selected
 	controllers[1].set_input("primary", Vector2(1, 0))
 	var heading_before: Basis = g.origin.global_basis
 	await settle()
-	check(guide.selected == posmod(page_before + 2, guide.entries.size() + 1) - 1, "Joystick pages once per deflection")
+	check(guide.selected == posmod(page_before + 2, guide.Session.SPECIES.size() + 1) - 1, "Joystick pages once per deflection")
 	check(g.origin.global_basis.is_equal_approx(heading_before), "Browsing does not snap-turn player")
 	controllers[1].set_input("primary", Vector2.ZERO)
 	await settle()

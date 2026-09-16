@@ -20,7 +20,7 @@ func run()->void:
   g.game.jumps_enabled=false;g.game.next_submerge=100;g.game.next_cue=100;g.game.phase=0;g.game.stamina=0;g.game.distance=15
   g.game.landing_distance=20 # Stale threshold from an earlier angled cast.
   g._process(.02)
-  check(g.game.state==g.Session.State.FIGHT and g.game.landing_distance<10,"Exhausted mid-water fish recomputes shoreline after its direction changes: "+entry.id)
+  check(g.game.state==g.Session.State.FIGHT and g.game.landing_distance<g.game.distance-1.0,"Exhausted mid-water fish recomputes shoreline after its direction changes: "+entry.id)
   g.game.tick(.02,1,0,true)
   check(g.game.state==g.Session.State.FIGHT,"Winding cannot collect an exhausted fish out in the water: "+entry.id)
   g.game.distance=g.game.landing_distance

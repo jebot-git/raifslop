@@ -1,12 +1,12 @@
-# Real AI Fishing 0.1.8
+# Real AI Fishing 0.1.9
 
 Download the matching package from [Releases](https://github.com/jebot-git/raifslop/releases). This is an early prototype release.
 
-See [0.1.8 changes](RELEASE_NOTES_0.1.8.md). Packages omit documentation and screenshots, retaining asset credits and license notices. Version 0.1.8 retains the Android signing key used since 0.1.1. Android 0.1.1 uses a new signing key because the previous key was unavailable. Uninstall an older Quest/Pico APK before installing 0.1.1; uninstalling can erase local saves. Preserve accessible save data first.
+See [0.1.9 changes](RELEASE_NOTES_0.1.9.md). Packages omit documentation and screenshots, retaining asset credits and license notices. Version 0.1.9 retains the Android signing key used since 0.1.1. Android 0.1.1 uses a new signing key because the previous key was unavailable. Uninstall an older Quest/Pico APK before installing 0.1.1; uninstalling can erase local saves. Preserve accessible save data first.
 
 - **Linux x86_64:** extract the archive and run `Desktop.sh` or `VR.sh`. Keep the executable, PCK and shared libraries together. Requires Vulkan and, for VR, an active OpenXR runtime such as WiVRn/Monado or SteamVR.
 - **Windows x86_64:** extract the archive and run `Desktop.cmd` or `VR.cmd`. Keep the executable, PCK and DLLs together. PC VR uses the active OpenXR runtime.
-- **Quest / Pico ARM64:** install the matching APK using the headset's sideload workflow or `adb install -r RealAIFishing-0.1.8-Quest.apk` / `RealAIFishing-0.1.8-Pico.apk`. Enable developer mode first. Allow microphone permission for voice chat. The APKs use separate application IDs, optional vendor tracking features, and a local release signing key.
+- **Quest / Pico ARM64:** install the matching APK using the headset's sideload workflow or `adb install -r RealAIFishing-0.1.9-Quest.apk` / `RealAIFishing-0.1.9-Pico.apk`. Enable developer mode first. Allow microphone permission for voice chat. The APKs use separate application IDs, optional vendor tracking features, and a local release signing key.
 
 Desktop dedicated servers use `Server.sh` / `Server.cmd`, default UDP port 24567. Additional options include `--port 24567 --bind 0.0.0.0`. Eight slots are available, including the ad-hoc host. Hosting across the Internet requires reachable UDP; no matchmaking or NAT relay is bundled. Voice defaults to activation, and the Guide/progression remain local.
 
@@ -21,6 +21,8 @@ The first Android export generates `.release-signing/fishing.keystore` and priva
 To publish a validated release, push the clean source commit and matching `v<version>` tag, then run `python3 tools/publish_release.py` with an authenticated GitHub CLI (`GH_BIN` can select its executable). The publisher checks the local checksum list and commit, uploads to a draft, verifies GitHub's SHA256 digests and sizes, then makes that complete release public. It refuses to modify an already published release.
 
 ## Validation and limitations
+
+Version 0.1.9 excludes the BBQ prototype and retains multiplayer protocol 3. Live WiVRn verification captured both stereo eyes at 72 FPS with head and both controllers tracked. The test session is separate from standalone APK validation.
 
 Linux exported startup, real Vulkan rod/environment rendering, fish loading/sizing, and independent ENet ad-hoc/dedicated sessions with synthetic voice were tested locally. Quest and Pico APK signatures, 16 KiB alignment, ARM64 libraries and manifest permissions were checked. Connected WiVRn on Quest Pro exercised stereo rendering and catch/menu interactions, including scripted controller poses. The VR presentation and tracking regressions are documented in [tester feedback](TESTER_FEEDBACK.md).
 

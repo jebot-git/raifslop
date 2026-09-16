@@ -62,7 +62,7 @@ func update_feeding_ripples() -> void:
   var mesh := feeding_surfaces[sector]
   var activity: float = g.feeding_activity(sector)
   mesh.visible = activity > .02 and g.state in [S.State.READY, S.State.CASTING, S.State.WAITING]
-  mesh.global_position = S.Population.sector_center(sector, game_root.water_level + .025)
+  mesh.global_position = g.population.center_for(g.location_id, sector, game_root.water_level + .025)
   var mat: ShaderMaterial = mesh.material_override
   # Small periodic rings, no icons or species labels, fading as stocks deplete.
   mat.set_shader_parameter("clock", fmod(feeding_clock + sector * 1.7, 4.5))

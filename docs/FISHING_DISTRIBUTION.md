@@ -150,3 +150,5 @@ the float as the catch boundary. The threshold refreshes as the fish drifts or
 changes direction. Tired fish require active final retrieval at that boundary;
 `tests/shore_retrieval.gd` covers stale thresholds, exhausted mid-water fish and
 actual shoreline retrieval at all eight waters.
+
+The runtime now moves blocked grid centres into reachable open water for each location, using the full local regular-fish clearance. Feeding effects and bite selection share the same location-specific sector mapping. See [aiming and water checks](FISHING_COMFORT.md#aim-restoration-and-secluded-cove-water-check).

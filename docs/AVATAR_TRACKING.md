@@ -10,7 +10,7 @@ Open **Field station → Tracking** in desktop or VR. The fishing rig now reuses
 - **Visemes:** FPSloppa's acoustic five-vowel estimate from outgoing voice input animates the mouth locally and remotely. Tracked jaw motion takes priority over the acoustic mouth estimate. Speech decays back to neutral when updates stop. Voice activation is the default; saved voice choices are preserved.
 - **Leg animation:** FPSloppa's directional procedural gait and two-bone IK replace the previous fixed-axis stepping. Feet sample the actual ground collision; measured feet/knees override walking targets. Missing body tracking returns to procedural gait. Distance-based IK updates reduce work for remote avatars.
 
-**Casting aim remains the center of the head viewpoint. Eye tracking is cosmetic and never supplies the cast direction.** Tracking loss or application focus loss clears body/face samples; focus loss also pauses movement and casting input.
+**Casting aim follows the center of the head viewpoint. Eye gaze never supplies the cast direction.** [Controller alignment and comfort](FISHING_COMFORT.md). Tracking loss or application focus loss clears body/face samples; focus loss also pauses movement and casting input.
 
 ## Calibration
 
@@ -32,7 +32,7 @@ Protocol version 2 adds bounded body transforms relative to the player's capsule
 
 ## Validation
 
-`tests/hand_tracking.gd` and `tests/tracking_orientation.gd` adapt FPSloppa's controller/joint and orientation tests. `tests/avatar_tracking.gd` covers VRM expression binding, independent fingers, tracked feet, gait fallback, speech decay, eye/face sampling, missing/focus-lost trackers, T-pose detection, recentering and center-of-view casting aim. `tests/network_guards.gd` rejects malformed body/face/finger/viseme data.
+`tests/hand_tracking.gd` and `tests/tracking_orientation.gd` adapt FPSloppa's controller/joint and orientation tests. `tests/avatar_tracking.gd` covers VRM expression binding, independent fingers, tracked feet, gait fallback, speech decay, eye/face sampling, missing/focus-lost trackers, T-pose detection, recentering and eye-independent casting aim. `tests/network_guards.gd` rejects malformed body/face/finger/viseme data.
 
 `tools/test_multiplayer.py` covers these additional fields in actual dedicated/hosted sessions and late joins. `tools/test_multiplayer_xr.py` uses native simulated Monado stereo, injected body/face/controllers, and a separate desktop client; [stereo](multiplayer_eye0.png) and [desktop](multiplayer_desktop.png) captures show the resulting avatars. These tests do not establish physical tracker accuracy, headset permission behavior or comfort on real hardware.
 

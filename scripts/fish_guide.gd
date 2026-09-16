@@ -84,17 +84,29 @@ func ingest(journal: Array) -> bool:
 	if changed and is_instance_valid(screen): screen.queue_redraw()
 	return changed
 
+static func discovery_hint(index: int) -> Dictionary:
+	var species: Dictionary = Session.SPECIES[index]
+	var habitat := "Sea" if species.get("habitat", "freshwater") == "marine" else "River" if index in [9, 10, 11, 12, 14] else "Lake"
+	var bait: String = Session.MARINE_BAITS[species.bait] if habitat == "Sea" else Session.BAITS[species.bait]
+	if habitat == "River": bait = "Dry fly" if index in [12, 14] else "Nymph / wet fly"
+	if species.get("predator", false): bait = "Hooked coastal fish" if habitat == "Sea" else "Hooked freshwater fish"
+	return {"habitat": habitat, "bait": bait}
+
 func ordered_entries() -> Array:
 	var result := []
-	for species in Session.SPECIES:
-		if entries.has(species.latin): result.append(entries[species.latin])
+	for index in Session.SPECIES.size():
+		var species: Dictionary = Session.SPECIES[index]
+		var found := entries.has(species.latin)
+		var row: Dictionary = entries[species.latin].duplicate() if found else {"name": "?", "latin": "", "description": "Catch this fish to reveal its identity.", "length": 0.0}
+		row["discovered"] = found
+		row.merge(discovery_hint(index))
+		result.append(row)
 	return result
 
 func page(direction: int) -> void:
 	if is_instance_valid(photo_camera) and photo_camera.active: return
-	if entries.is_empty(): return
-	selected = posmod(selected + 1 + direction, entries.size() + 1) - 1
-	screen.queue_redraw()
+	selected = posmod(selected + 1 + direction, Session.SPECIES.size() + 1) - 1
+	if is_instance_valid(screen): screen.queue_redraw()
 
 func _ready() -> void:
 	device = Node3D.new()
@@ -227,7 +239,6 @@ func touch_position() -> Variant:
 	return _touch_from("none", null)
 
 func can_grab() -> bool:
-	if is_instance_valid(game_root.bbq) and game_root.bbq.holds(0):return false
 	return game_root.game.state not in [game_root.Session.State.BITE, game_root.Session.State.FIGHT]
 
 func update_device() -> void:
@@ -248,13 +259,13 @@ func update_device() -> void:
 		var tracked: bool = g.left.get_has_tracking_data()
 		var down: bool = tracked and g.left.get_float("grip") > 0.55
 		if held and not down: dock()
-		if not held and can_grab() and down and not grip_was_down and not g.menu_open and not (is_instance_valid(g.shoulder_radio) and g.shoulder_radio.held) and g.left.global_position.distance_to(dock_grip_position()) < 0.22:
+		if not held and can_grab() and down and not grip_was_down and not g.menu_open and not (is_instance_valid(g.shoulder_radio) and g.shoulder_radio.held) and g.controller_pose(0).origin.distance_to(dock_grip_position()) < 0.22:
 			held = true
 			screen.queue_redraw()
 		grip_was_down = down
 		if held:
 			# Fixed grip-relative pose: the player can naturally turn the screen over.
-			global_transform = g.left.global_transform * Transform3D(GRIP_BASIS, GRIP_OFFSET)
+			global_transform = g.controller_pose(0) * Transform3D(GRIP_BASIS, GRIP_OFFSET)
 			var touch = touch_position()
 			if touch is Vector3: press_buttons(touch)
 			else: reset_touch()

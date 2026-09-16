@@ -51,7 +51,7 @@ func run() -> void:
 			game.rod_visual.equip(tier,fly)
 			check(game.rod_visual.model!=null and game.rod_visual.folded_model!=null,"Pack contains rod tier %d fly=%s"%[tier,str(fly)])
 	check(game.avatar_menu.list.get_script()==load("res://scripts/ui/vr_item_list.gd"),"VRM list uses packed drag-scrolling script")
-	check(game.Locations.measured_lighting.size()==6,"Pack contains every measured sun profile")
+	check(game.Locations.measured_lighting.size()==8,"Pack contains every measured sun profile")
 	for entry in game.Locations.CATALOG:
 		check(game._select_location(entry.id, false),"Pack loads location "+entry.id)
 		if entry.id in ["lake_pier","simons_town_rocks"]:

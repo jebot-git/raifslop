@@ -12,7 +12,6 @@ const Locations = preload("res://scripts/locations.gd")
 var tracking_manager: Node
 var ambience: Node
 var shoulder_radio: Node3D
-var bbq: Node3D
 var network: Node
 var rod_status: Node3D
 var server_only := false
@@ -69,6 +68,8 @@ var hud: Control
 var last_tip := Vector3.ZERO
 var velocity := Vector3.ZERO
 var casting := false
+var controller_calibration = preload("res://scripts/controller_calibration.gd").new()
+var calibrated_hands: Array[Node3D] = []
 var cast_aim_target := Vector3.ZERO
 var cast_aim_anchor := Vector3.ZERO
 var cast_swing_axis := Vector3.FORWARD
@@ -87,6 +88,14 @@ var tracking_warning_time := 0.0
 var audio: AudioStreamPlayer
 var fishing_feedback: Node3D
 var shadow_policy: Node
+var cast_barriers: Array[RID] = []
+var cast_water_boundary = preload("res://scripts/fish_water_boundary.gd").new()
+var fish_boundary = preload("res://scripts/fish_water_boundary.gd").new()
+var fish_safe_position := Vector3(INF, INF, INF)
+var boundary_landing_direction := Vector3(INF, INF, INF)
+var boundary_landing_anchor := Vector3(INF, INF, INF)
+var boundary_landing_radius := -1.0
+var boundary_landing := .35
 var escape_offset := Vector3.ZERO
 var quitting := false
 
@@ -127,7 +136,6 @@ func _ready() -> void:
 	shadow_policy=preload("res://scripts/shadow_policy.gd").new()
 	add_child(shadow_policy);shadow_policy.setup(self)
 	_start_network()
-	bbq=preload("res://scripts/bbq/activity.gd").new();add_child(bbq);bbq.setup(self)
 	print("Real AI Fishing ready | ", "OpenXR" if xr else "Desktop", " | panorama + location foreground loaded")
 
 func material(color: Color, metal := 0.0) -> StandardMaterial3D:
@@ -238,6 +246,9 @@ func _build_rig() -> void:
 	left.button_pressed.connect(_left_button)
 	right.button_pressed.connect(_right_pressed)
 	right.button_released.connect(_right_released)
+	for controller in [left, right]:
+		var grip := Node3D.new(); grip.name = "CalibratedGrip"
+		controller.add_child(grip); calibrated_hands.append(grip)
 	motor.origin = origin
 	motor.head = head
 	motor.left = left
@@ -298,6 +309,8 @@ func _notification(what: int) -> void:
 func _load_player_preferences() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load("user://player.cfg")
+	controller_calibration.load_config(cfg)
+	_apply_controller_calibration()
 	var smooth = cfg.get_value("controls", "smooth_turn", false)
 	motor.smooth_turn = smooth if smooth is bool else false
 	var speed = cfg.get_value("controls","smooth_turn_speed",75.0)
@@ -307,8 +320,21 @@ func _load_player_preferences() -> void:
 	var bait = cfg.get_value("tackle", "bait", 0)
 	game.bait = clampi(int(bait), 0, Session.BAITS.size()-1) if (bait is int or bait is float) and is_finite(bait) else 0
 
+func controller_pose(hand: int) -> Transform3D:
+	return (left.global_transform if hand == 0 else right.global_transform) * controller_calibration.pose(hand)
+
+func controller_local_pose(hand: int) -> Transform3D:
+	return (left.transform if hand == 0 else right.transform) * controller_calibration.pose(hand)
+
+func _apply_controller_calibration() -> void:
+	for hand in calibrated_hands.size(): calibrated_hands[hand].transform = controller_calibration.pose(hand)
+	# A settings adjustment must never be interpreted as a cast or reel gesture.
+	casting = false; tracking_was_valid = false; reel_tracker.engaged = false
+	game.fly.reset_mend_gesture(); game.fly.release_strip(true)
+
 func _save_player_preferences() -> void:
 	var cfg := ConfigFile.new()
+	controller_calibration.save_config(cfg)
 	cfg.set_value("controls", "smooth_turn", motor.smooth_turn)
 	cfg.set_value("controls", "smooth_turn_speed", motor.smooth_turn_speed)
 	cfg.set_value("controls", "snap_turn_angle", motor.snap_turn_angle)
@@ -352,9 +378,6 @@ func _select_bait(index: int) -> void:
 	hud.queue_redraw()
 
 func _left_button(button: String) -> void:
-	if is_instance_valid(bbq) and bbq.holds(0):
-		if button == "ax_button":bbq.use(0,bbq.hovered,true)
-		return
 	if is_instance_valid(shoulder_radio) and shoulder_radio.held:return
 	if fish_guide.held:
 		if button == "trigger_click": fish_guide.photo_camera.toggle(); return
@@ -378,9 +401,6 @@ func _right_pressed(button: String) -> void:
 	if menu_open:
 		if button == "trigger_click": _menu_click(true)
 		return
-	if is_instance_valid(bbq) and bbq.holds(1):
-		if button == "ax_button":bbq.use(1,bbq.hovered,true)
-		return
 	if button == "trigger_click" and game.state in [Session.State.READY, Session.State.LOST] and not rod_holster.stowed:
 		if game.state == Session.State.LOST: game.reset()
 		_begin_cast()
@@ -396,7 +416,7 @@ func _right_released(button: String) -> void:
 		return
 	if button == "trigger_click" and casting:
 		game.fly.charging = false
-		if game.fly.strokes > 0 and cast_motion.release_allowed(right.transform * rod_holster.HELD_POSE, head.position.y, cast_swing_axis) and left.get_has_tracking_data() and right.get_has_tracking_data():
+		if game.fly.strokes > 0 and cast_motion.release_allowed(controller_local_pose(1) * rod_holster.HELD_POSE, head.position.y, cast_swing_axis) and left.get_has_tracking_data() and right.get_has_tracking_data():
 			_cast(game.fly.cast_power())
 		else:
 			game.message = "Hold trigger, sweep back then forward, and release."
@@ -414,7 +434,7 @@ func _primary_action() -> void:
 			motor.catch_controls = false
 
 func _cast_direction() -> Vector3:
-	# The swing is measured along the head's horizontal facing direction.
+	# Preserve the original head-relative casting gesture axis.
 	var direction := -head.global_basis.z if xr else -rod.global_basis.z
 	direction.y = 0
 	if direction.length() < 0.1:
@@ -423,7 +443,7 @@ func _cast_direction() -> Vector3:
 	return direction.normalized() if direction.length() > 0.01 else Vector3.FORWARD
 
 func _tracked_cast_tip() -> Vector3:
-	return (right.transform * rod_holster.HELD_POSE) * Vector3(0, 0, -1.68)
+	return (controller_local_pose(1) * rod_holster.HELD_POSE) * Vector3(0, 0, -1.68)
 
 func _sample_cast_swing(delta: float) -> void:
 	# Avatar IK can damp/lag the rendered tip. Cast from actual controller
@@ -434,7 +454,7 @@ func _sample_cast_swing(delta: float) -> void:
 	if delta <= 0.0 or delta > .1 or movement.length() > .5:
 		# Ignore discontinuities, retaining an already completed gesture.
 		return
-	var travel: float = cast_motion.sample(movement, right.transform * rod_holster.HELD_POSE, head.position.y, cast_swing_axis, game.fly.strokes > 0)
+	var travel: float = cast_motion.sample(movement, controller_local_pose(1) * rod_holster.HELD_POSE, head.position.y, cast_swing_axis, game.fly.strokes > 0)
 	var speed := travel / delta
 	peak_speed = maxf(peak_speed, maxf(0.0, speed))
 	var previous_strokes: int = game.fly.strokes
@@ -475,12 +495,64 @@ func _landing_distance(anchor: Vector3, direction: Vector3, reach := 24.0) -> fl
 				break
 			var ignored := ray.exclude
 			ignored.append(hit.rid);ray.exclude=ignored
-	return landing
+	# Match landing to the complete body clearance, including submerged slopes
+	# and raised decks; a fish can reach the boundary without swimming under it.
+	var radius := _fish_clearance()
+	if not boundary_landing_direction.is_finite() or boundary_landing_direction.distance_to(direction) > .002 or not boundary_landing_anchor.is_equal_approx(anchor) or not is_equal_approx(radius,boundary_landing_radius):
+		var start := fish_boundary.recover(anchor + direction * maxf(reach, 30.0), direction, radius)
+		var edge := fish_boundary.clip_motion(start, anchor, radius)
+		boundary_landing = maxf(.35, (edge-anchor).dot(direction) + .03)
+		boundary_landing_direction = direction; boundary_landing_anchor = anchor; boundary_landing_radius = radius
+	return maxf(landing, boundary_landing)
+
+func _configure_fishing_grid(id: String) -> void:
+	# Keep every feeding centre outside the full body/dive envelope of local
+	# regular fish. Relocate sectors, not the player's free water-surface aim.
+	var length_ := .0
+	for index in Session.species_for_location(id, false):
+		length_ = maxf(length_, float(Session.SPECIES[index].length)*.01)
+	fish_boundary.set_minimum_height(water_level-(maxf(.18,length_*.36)+length_*.30+.36))
+	var clearance := maxf(1.25, length_*.60+.35)
+	var spawn: Vector3 = foreground.get_meta("spawn")
+	var anchor := Vector3(spawn.x+.3,water_level+.05,spawn.z-.35)
+	var view := spawn+Vector3(0,1.65,0)
+	var centres: Array[Vector3] = []
+	for sector in Session.Population.SECTOR_COUNT:
+		var desired := Session.Population.sector_center(sector,water_level+.05)
+		var best := Vector3(INF,INF,INF)
+		var best_score := INF
+		# Search the castable disc. Retain original centres where they fit and
+		# choose nearby open-water cells around irregular banks and boulders.
+		for x in range(-23,24):
+			for z in range(-25,2):
+				var at := Vector3(float(x),water_level+.05,float(z))
+				var distance := anchor.distance_to(at)
+				if distance < 5.5 or distance > 23.0: continue
+				var score := at.distance_squared_to(desired)
+				if score >= best_score: continue
+				var separated := true
+				for centre in centres:
+					if centre.distance_to(at)<3.0: separated=false;break
+				if not separated or fish_boundary.blocked(at,clearance) or cast_water_boundary.blocked(at,.05): continue
+				if cast_water_boundary.segment_obstructed(view,at) or cast_water_boundary.segment_obstructed(spawn+Vector3(0,1.1,0),at): continue
+				# Geometry is immediately available here; physics colliders settle
+				# on the next tick. The surface boundary includes decks and rocks.
+				best=at;best_score=score
+		if best.is_finite(): centres.append(best)
+	if centres.size()==Session.Population.SECTOR_COUNT:
+		game.population.set_layout(id,centres)
+	else:
+		push_error("Unable to place every fishing sector in open water: " + id)
+	fish_boundary.set_minimum_height(water_level-.45)
+
+func _casting_anchor() -> Vector3:
+	var at := rod.global_position
+	return Vector3(at.x, water_level + .05, at.z)
 
 func _begin_cast() -> void:
 	if casting: return
 	cast_aim_target = _projected_cast_target()
-	cast_aim_anchor = Vector3(rod.global_position.x, water_level + .05, rod.global_position.z)
+	cast_aim_anchor = _casting_anchor()
 	cast_swing_axis = origin.global_basis.inverse() * _cast_direction()
 	cast_motion = preload("res://scripts/cast_motion.gd").new()
 	casting = true
@@ -490,25 +562,29 @@ func _begin_cast() -> void:
 func _projected_cast_target() -> Vector3:
 	# Trigger-down freezes both the visible marker and the release destination.
 	if casting: return cast_aim_target
+	var ray_origin := head.global_position
 	var ray := -head.global_basis.z
 	if not xr:
 		# Desktop right-drag controls yaw and downward aim independently of the
 		# animated backswing. The initial rod pose aims about twelve metres out.
 		var pitch := clampf(rod.rotation.x - .23, .045, 1.2)
 		ray = Basis(Vector3.UP, rod.global_rotation.y) * Vector3(0, -sin(pitch), -cos(pitch))
-	var hit = Plane(Vector3.UP, water_level + .05).intersects_ray(head.global_position, ray)
+	var hit = Plane(Vector3.UP, water_level + .05).intersects_ray(ray_origin, ray)
 	if hit == null: return Vector3(INF, INF, INF)
-	var anchor := Vector3(rod.global_position.x, water_level + .05, rod.global_position.z)
+	var anchor := _casting_anchor()
 	var offset: Vector3 = hit - anchor
 	if offset.length_squared() < .001: return Vector3(INF, INF, INF)
 	return anchor + offset.normalized() * clampf(offset.length(), 5.0, 24.0)
 
 func _cast_target_valid(target: Vector3) -> bool:
-	if not target.is_finite() or target.z > 1.5: return false
-	if game.is_fly_fishing() and (target.z > -4.0 or target.z < -19.0): return false
+	# Target only the water surface. The larger underwater fish envelope must
+	# not hide valid aiming space or impose arbitrary world-axis cutoffs.
+	if not target.is_finite() or cast_water_boundary.blocked(target, .05): return false
 	var space := get_world_3d().direct_space_state
 	# A visible target must be in open water, not inside a deck, rock or bank.
-	return space.intersect_ray(PhysicsRayQueryParameters3D.create(head.global_position, target, 1)).is_empty() and space.intersect_ray(PhysicsRayQueryParameters3D.create(target + Vector3.UP * 4.0, target, 1)).is_empty()
+	var sight := PhysicsRayQueryParameters3D.create(head.global_position,target,1,cast_barriers)
+	var surface := PhysicsRayQueryParameters3D.create(target+Vector3.UP*4.0,target,1,cast_barriers)
+	return space.intersect_ray(sight).is_empty() and space.intersect_ray(surface).is_empty()
 
 func _update_cast_aim() -> void:
 	if not is_instance_valid(aim_marker):
@@ -530,13 +606,12 @@ func _cast(_power: float) -> void:
 	if not _cast_target_valid(endpoint):
 		game.message = "Aim at open water until the casting marker appears."
 		return
-	cast_anchor = cast_aim_anchor if casting else Vector3(rod.global_position.x, water_level + .05, rod.global_position.z)
+	fish_safe_position = endpoint
+	boundary_landing_direction = Vector3(INF, INF, INF)
+	cast_anchor = cast_aim_anchor if casting else _casting_anchor()
 	var direction := (endpoint - cast_anchor).normalized()
 	var reach := cast_anchor.distance_to(endpoint)
 	var landing := _landing_distance(cast_anchor, direction, reach)
-	if reach < landing + .5:
-		game.message = "Aim farther into open water, or move closer to the edge."
-		return
 	game.landing_distance = landing
 	game.cast(reach, endpoint, cast_anchor)
 	cast_start = tip.global_position
@@ -545,7 +620,6 @@ func _cast(_power: float) -> void:
 	fishing_feedback.cast_swish()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if is_instance_valid(bbq) and bbq.handle_input(event): return
 	if not xr and event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_J and not menu_open:
 			rod_holster.set_stowed(not rod_holster.stowed)
@@ -674,13 +748,13 @@ func _process(delta: float) -> void:
 		velocity = origin.global_basis * ((origin.to_local(tip.global_position) - last_tip) / maxf(delta, 0.001))
 		if casting:
 			_sample_cast_swing(delta)
-		var tracked_rod: Transform3D = right.transform * rod_holster.HELD_POSE
-		var reel_pos := tracked_rod.affine_inverse() * left.position - crank.position
+		var tracked_rod: Transform3D = controller_local_pose(1) * rod_holster.HELD_POSE
+		var reel_pos := tracked_rod.affine_inverse() * controller_local_pose(0).origin - crank.position
 		if reel_tracker.engaged:
 			reel = reel_tracker.sample(reel_pos + reel_tracking_offset, _reel_grab_pressed(), delta, game.is_fly_fishing())
 		else:
 			# Acquire the visible handle, then measure raw relative tracking only.
-			var visible_reel_pos := rod.to_local(left.global_position) - crank.position
+			var visible_reel_pos := rod.to_local(controller_pose(0).origin) - crank.position
 			reel = reel_tracker.sample(visible_reel_pos, _reel_grab_pressed(), delta, game.is_fly_fishing())
 			if reel_tracker.engaged: reel_tracking_offset = visible_reel_pos - reel_pos
 		if game.is_fly_fishing():
@@ -689,7 +763,7 @@ func _process(delta: float) -> void:
 			var strip_rate:float=_sample_fly_strip(delta)
 			# The handle and loose line are separate grips; only one owns the hand.
 			if not reel_tracker.engaged: reel=strip_rate
-			var raw_tip:Vector3=(right.transform*preload("res://scripts/rod_holster.gd").HELD_POSE)*Vector3(0,0,-1.68)
+			var raw_tip:Vector3=(controller_local_pose(1)*preload("res://scripts/rod_holster.gd").HELD_POSE)*Vector3(0,0,-1.68)
 			var mend:int=game.fly.sample_mend(raw_tip,origin.global_basis,delta,game.state==Session.State.WAITING)
 			if mend!=0:_mend_fly(mend)
 		if game.state == Session.State.BITE and velocity.y > 0.9:
@@ -731,6 +805,7 @@ func _process(delta: float) -> void:
 	var prior_takeovers: int=game.takeover_count
 	if game.is_fly_fishing() and game.state==Session.State.FIGHT:
 		game.fly.current_speed=Session.Fly.current(bobber.global_position,game.location_id).length()
+	_constrain_fish_to_water()
 	var was_jumping: bool=game.jump_time>0
 	if game.state in [Session.State.WAITING,Session.State.BITE,Session.State.FIGHT]:
 		game.landing_distance=_landing_distance(cast_anchor,(cast_target-cast_anchor).normalized(),game.distance)
@@ -748,6 +823,7 @@ func _process(delta: float) -> void:
 	if game.is_fly_fishing() and last_state==Session.State.BITE and game.state==Session.State.FIGHT:
 		cast_target=game.fly.start+game.fly.offset
 		game.distance=cast_anchor.distance_to(cast_target)
+	_constrain_fish_to_water()
 	if game.state != last_state:
 		if game.state == Session.State.BITE:
 			_tone(880, 0.18)
@@ -794,13 +870,36 @@ func _update_catch(delta: float) -> void:
 	if catch_in_hand:
 		var orientation := Basis(catch_rotation) * Basis(Vector3.BACK, PI / 2)
 		# Grip the string, leaving a short vertical drop to the mouth.
-		var mouth := left.global_position - Vector3.UP * 0.08
+		var mouth := controller_pose(0).origin - Vector3.UP * 0.08
 		fish_display.global_transform = Transform3D(orientation, mouth - orientation * _catch_mouth())
 	else:
 		# +X is the mouth: keep it attached while the body hangs below the tip.
 		var orientation := Basis(catch_rotation) * Basis(Vector3.BACK, PI / 2)
 		var hook := tip.global_position - Vector3.UP * 0.28
 		fish_display.global_transform = Transform3D(orientation, hook - orientation * _catch_mouth())
+
+func _fish_clearance() -> float:
+	# Generous body envelope includes deep-bodied bream, twitch and dive travel.
+	var length_: float = float(Session.SPECIES[game.fish_index].length) * .01
+	var depth := maxf(.18, length_*.36) + length_*.30 + .36 if game.state == Session.State.FIGHT else .45
+	fish_boundary.set_minimum_height(water_level-depth)
+	return maxf(.20, length_*.60 + .10) if game.state == Session.State.FIGHT else .25
+
+func _constrain_fish_to_water() -> void:
+	if game.state != Session.State.FIGHT:
+		game.at_ground_boundary = false
+		return
+	var direction := (cast_target-cast_anchor).normalized()
+	var desired: Vector3 = cast_anchor + direction * game.distance + escape_offset
+	var radius := _fish_clearance()
+	if not fish_safe_position.is_finite(): fish_safe_position = desired
+	fish_safe_position = fish_boundary.recover(fish_safe_position, desired-cast_anchor, radius)
+	var safe := fish_boundary.clip_motion(fish_safe_position, desired, radius)
+	if not safe.is_equal_approx(desired):
+		cast_target = safe; escape_offset = Vector3.ZERO
+		game.distance = cast_anchor.distance_to(safe)
+	fish_safe_position = safe
+	game.set_ground_boundary(fish_boundary.blocked(safe, radius+.20))
 
 func _constrain_river_fish(delta:float)->void:
 	if not game.is_fly_fishing() or game.state!=Session.State.FIGHT or game.jump_time>0:return
@@ -838,13 +937,13 @@ func _sample_fly_strip(delta: float) -> float:
 	var outlet := origin.to_local(rod.to_global(Session.Fly.LINE_OUTLET))
 	var guide := origin.to_local(rod.to_global(Session.Fly.LINE_GUIDE))
 	var available: bool = not shoulder_radio.held and not reel_tracker.engaged and game.state in [Session.State.READY, Session.State.CASTING, Session.State.WAITING, Session.State.BITE, Session.State.FIGHT]
-	return game.fly.strip(origin.to_local(left.global_position), left.get_float("grip"), delta, outlet, guide, available)
+	return game.fly.strip(controller_local_pose(0).origin, left.get_float("grip"), delta, outlet, guide, available)
 
 func _fly_hand_position() -> Vector3:
 	if is_instance_valid(avatar):
 		var grip = avatar.hand_grip_pose(true)
 		if grip is Transform3D: return grip.origin
-	return left.global_position
+	return controller_pose(0).origin
 
 func _append_fly_grip_line() -> void:
 	if not game.is_fly_fishing():return
@@ -871,7 +970,7 @@ func _update_line() -> void:
 	if xr and game.state == Session.State.LANDED and fish_display.visible:
 		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
 		line_mesh.surface_add_vertex(tip.global_position)
-		if catch_in_hand: line_mesh.surface_add_vertex(left.global_position)
+		if catch_in_hand: line_mesh.surface_add_vertex(controller_pose(0).origin)
 		line_mesh.surface_add_vertex(fish_display.to_global(_catch_mouth()))
 		line_mesh.surface_end()
 		return
@@ -1040,6 +1139,8 @@ func _build_avatar_menu() -> void:
 	avatar_menu.snap_turn_angle.value=motor.snap_turn_angle
 	avatar_menu.smooth_turn_speed.value_changed.connect(func(value:float):motor.smooth_turn_speed=value;_save_player_preferences())
 	avatar_menu.snap_turn_angle.value_changed.connect(func(value:float):motor.snap_turn_angle=value;_save_player_preferences())
+	avatar_menu.bind_controller_calibration(controller_calibration)
+	avatar_menu.controller_calibration_changed.connect(func(): _apply_controller_calibration(); _save_player_preferences())
 	avatar_menu.location_selected.connect(func(id: String):
 		if _select_location(id) and menu_open: _toggle_avatar_menu())
 
@@ -1087,6 +1188,15 @@ func _select_location(id: String, persist := true) -> bool:
 	water_material.set_shader_parameter("water_roughness", entry.roughness)
 	water_material.set_shader_parameter("ripple_strength", entry.ripples)
 	water_level=entry.get("water_level",-.35)
+	# Player-only anti-wading/rail proxies must not obstruct the casting ray.
+	cast_barriers.clear()
+	for body in foreground.find_children("*","StaticBody3D",true,false):
+		if body.get_meta("role","")=="barrier": cast_barriers.append(body.get_rid())
+	cast_water_boundary.rebuild(foreground, water_level+.01)
+	fish_boundary.rebuild(foreground, water_level-.45)
+	_configure_fishing_grid(id)
+	fish_safe_position = Vector3(INF, INF, INF)
+	boundary_landing_direction = Vector3(INF, INF, INF)
 	# Cover the submerged ends of the tapered mainland too. A short plane
 	# exposes those distant triangles as a second floating strip at the horizon.
 	water_surface.mesh.size=Vector2(512,512)
@@ -1099,6 +1209,7 @@ func _select_location(id: String, persist := true) -> bool:
 	water_material.set_shader_parameter("coastal_foreground",id=="simons_town_rocks")
 	water_material.set_shader_parameter("beach_sides",entry.get("beach_sides",false))
 	water_material.set_shader_parameter("coastal_shallows",entry.get("coastal_shallows",false))
+	water_material.set_shader_parameter("sheltered_cove",id=="secluded_beach")
 	water_material.set_shader_parameter("panorama_water_region",entry.get("panorama_water_region",Vector4(0,1,0,1)))
 	if id == "lake_pier": Shore.blend_harbour_ground(foreground, water_material, Vector4(0,1.5,2.5,3))
 	elif entry.has("ground_bounds"): Shore.blend_harbour_ground(foreground, water_material, entry.ground_bounds, true, entry.get("ground_transition",Vector2(6,6)))
@@ -1226,7 +1337,7 @@ func _update_reel_hand() -> void:
 func _update_avatar(delta: float) -> void:
 	if xr and not _reel_grab_pressed(): reel_tracker.engaged = false
 	if xr and not is_instance_valid(avatar) and not rod_holster.stowed:
-		rod.global_transform = right.global_transform * rod_holster.HELD_POSE
+		rod.global_transform = controller_pose(1) * rod_holster.HELD_POSE
 	if not xr:
 		var reel_angle := crank.rotation.x
 		desktop_left.global_transform = rod.global_transform
@@ -1235,11 +1346,8 @@ func _update_avatar(delta: float) -> void:
 		avatar.grounded = motor.is_on_floor()
 		avatar.tracked_leg_animation = tracking_manager.tracked_leg_animation if is_instance_valid(tracking_manager) else false
 		avatar.apply_tracking(motor.global_transform, tracking_manager.body if is_instance_valid(tracking_manager) else {}, tracking_manager.face if is_instance_valid(tracking_manager) else {})
-		var right_hand:Node3D=right if xr else rod
-		if not xr and is_instance_valid(bbq):
-			if bbq.holds(0):desktop_left.global_transform=bbq.hand_pose(0)
-			if bbq.holds(1):right_hand=bbq.desktop_right
-		avatar.update_targets(head, left if xr else desktop_left, right_hand, motor.global_position.y, motor.last_motion, delta)
+		var right_hand:Node3D=calibrated_hands[1] if xr else rod
+		avatar.update_targets(head, calibrated_hands[0] if xr else desktop_left, right_hand, motor.global_position.y, motor.last_motion, delta)
 		avatar.left_curl = left.get_float("grip") * 0.8 if xr else 0.7
 		avatar_menu.update_preview(avatar)
 

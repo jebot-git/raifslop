@@ -18,7 +18,8 @@ func jump_position(progress: float) -> Vector3:
  var t:=clampf(progress,0.0,1.0)
  return leap_start.lerp(leap_end,t)+Vector3.UP*(4.0*leap_height*t*(1.0-t))
 func jump_tangent(progress: float) -> Vector3:
- return (leap_end-leap_start+Vector3.UP*(4.0*leap_height*(1.0-2.0*clampf(progress,0.0,1.0)))).normalized()
+ var tangent:=leap_end-leap_start+Vector3.UP*(4.0*leap_height*(1.0-2.0*clampf(progress,0.0,1.0)))
+ return tangent.normalized() if tangent.length_squared()>.000001 else Vector3.RIGHT
 func mouth_position() -> Vector3:
  return to_global(model.position+Vector3(measured.end.x,measured.get_center().y,measured.get_center().z))
 func begin_jump(at: Vector3, direction: Vector3, depth: float) -> void:
@@ -33,6 +34,7 @@ func begin_jump(at: Vector3, direction: Vector3, depth: float) -> void:
    direction.z=-direction.z;leap_end=leap_start+direction*2.16
   leap_end.z=clampf(leap_end.z,-18.3,-4.0)
   leap_end.x=clampf(leap_end.x,-110,110)
+ leap_end=owner_game.fish_boundary.clip_motion(leap_start,leap_end,owner_game._fish_clearance())
  leap_height=.65+measured.size.x*.5
 func setup(game_root:Node):owner_game=game_root
 func update(delta:float):
@@ -72,8 +74,13 @@ func update(delta:float):
    var approach:float=1.0-(g.jump_time-S.JUMP_AIR)/S.JUMP_WARNING
    var swimming:Vector3=(leap_end-leap_start).normalized()
    direction=swimming.slerp(direction,smoothstep(0.0,1.0,approach))
+ # Guard the entire airborne path as well as its landing point.
+ at=owner_game.fish_boundary.clip_motion(owner_game.fish_safe_position,at,owner_game._fish_clearance()) if owner_game.fish_safe_position.is_finite() else at
  global_position=at
- var side:=direction.cross(Vector3.UP).normalized()
+ # A boundary-clipped leap can be vertical; keep its body basis nonsingular.
+ var side:=direction.cross(Vector3.UP)
+ if side.length_squared()<.000001:side=Vector3.FORWARD
+ side=side.normalized()
  global_basis=Basis(direction,side.cross(direction).normalized(),side)
  owner_game.water_material.set_shader_parameter("hooked_position",global_position)
  owner_game.water_material.set_shader_parameter("hooked_radius",maxf(.55,measured.size.x*.8))

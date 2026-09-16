@@ -119,6 +119,7 @@ var fish_index := 0
 var tension := 0.35
 var distance := 12.0
 var landing_distance := 1.6
+var at_ground_boundary := false
 var retrieve_origin := Vector3.ZERO
 var stamina := 1.0
 var timer := 0.0
@@ -197,6 +198,7 @@ func bait_hint(index: int) -> String:
 func cast(power: float, target := Vector3(INF, INF, INF), anchor := Vector3(INF, INF, INF)) -> void:
 	if state != State.READY:
 		return
+	at_ground_boundary = false
 	fly.reset()
 	cast_distance = clampf(power, 5.0, 24.0)
 	cast_position = target if target.is_finite() else Vector3(0, 0, -cast_distance)
@@ -248,6 +250,19 @@ func gesture(direction: int) -> bool:
 func counter_seconds() -> float:
 	var base := (3.0 if is_predator() else 2.0) + float(SPECIES[fish_index].get("power",1.0)) * .6
 	return base if is_predator() else base*float(FightProfiles.profile(fish_index).hold)
+
+func set_ground_boundary(touching: bool) -> void:
+	at_ground_boundary = touching
+	if not touching or state != State.FIGHT: return
+	if jump_time > 0.0:
+		jump_time = 0.0; jump_resolved = false; jump_tug = false
+	if cue in [0, 1]:
+		cue = 2; cue_time = maxf(cue_time, COUNTER_WINDOW)
+		counter_active = false; counter_direction = -1
+		message = "Fish turning toward open water — lift to counter."
+	if submerge == Submerge.SLACK:
+		submerge = Submerge.PULL; submerge_time = SUBMERGE_WARNING + SUBMERGE_DURATION
+		message = reel_instruction()
 
 func _counter_tick(delta: float) -> void:
 	counter_active = cue >= 0 and counter_direction == cue
@@ -314,7 +329,7 @@ func _submerge_tick(delta: float) -> void:
 	next_submerge-=delta
 	# Do not overlap directional holds/runs, or start at already unsafe tension.
 	if next_submerge<=0.0 and cue<0 and counter_rest<=0.0 and not is_running() and tension>=.25 and tension<=.75:
-		submerge=next_submerge_kind
+		submerge=Submerge.PULL if at_ground_boundary else next_submerge_kind
 		dive_step+=1
 		var dives: Array=FightProfiles.profile(fish_index).dives
 		next_submerge_kind=dives[dive_step%dives.size()]
@@ -322,6 +337,7 @@ func _submerge_tick(delta: float) -> void:
 		message=reel_instruction()
 
 func _try_jump() -> bool:
+	if at_ground_boundary: return false
 	if not jumps_enabled or fish_index not in [10,11] or stamina<.55 or jump_attempts>=2 or next_jump>0.0:return false
 	if cue>=0 or submerge!=Submerge.NONE or is_running() or counter_rest>0.0 or distance<landing_distance+2 or tension<.25 or tension>.75:return false
 	next_jump=18.0; jump_attempts+=1
@@ -391,6 +407,7 @@ func _predator_sequence_tick(delta: float) -> void:
 	if next_cue>0.0:return
 	var sequence: Array=PREDATOR_SEQUENCES[fish_index]
 	var action: int=sequence[predator_step%sequence.size()]
+	if at_ground_boundary and action in [0,1,4]: action = 5 if action < 3 else 3
 	# Recovery is never cut short by a dive at unsafe tension.
 	if action>=3 and (tension<.25 or tension>.75):return
 	predator_step+=1
@@ -419,7 +436,7 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> 
 			timer -= delta
 			if timer <= 0.0:
 				state = State.WAITING
-				var sector := Population.sector_at(cast_position)
+				var sector := population.sector_for(location_id,cast_position)
 				var preferred := species_for_bait(bait, location_id)
 				timer = population.bite_delay(location_id, preferred, sector, rng, is_fly_fishing())
 				fish_index = population.choose(location_id, preferred, sector, SPECIES, rng)
@@ -436,7 +453,7 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> 
 				timer -= delta
 			if timer <= 0.0:
 				var at: Vector3 = fly.start + fly.offset if is_fly_fishing() else cast_position
-				fish_index = population.choose(location_id, species_for_bait(bait, location_id), Population.sector_at(at), SPECIES, rng)
+				fish_index = population.choose(location_id, species_for_bait(bait, location_id), population.sector_for(location_id,at), SPECIES, rng)
 				state = State.BITE
 				timer = (1.25 if bait==0 else 1.6) if is_fly_fishing() else 1.8
 				message = "TAKE! Lift the rod now!" if is_fly_fishing() else "BITE! Lift the rod now!"
@@ -514,6 +531,7 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> 
 				var directions: Array=FightProfiles.profile(fish_index).directions
 				cue = directions[fight_step%directions.size()]
 				if mirror_fight and cue<2: cue=1-cue
+				if at_ground_boundary: cue=2
 				fight_step+=1
 				cue_time = COUNTER_WINDOW
 				resistance = 1.0

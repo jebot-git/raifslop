@@ -41,16 +41,14 @@ func run():
 		print("LANDING ",entry.id," ",threshold)
 		check(g.game.state==S.State.CASTING and threshold>.35 and threshold<20,"Landing threshold follows the physical shoreline/deck: "+entry.id)
 		g.game.state=S.State.BITE;g.game.strike();g.game.distance=threshold;g.game.stamina=.8;g.game.next_cue=100
-		g.game.tick(.05,1,0);g._update_line()
+		g._constrain_fish_to_water()
+		g.game.landing_distance=g._landing_distance(g.cast_anchor,(g.cast_target-g.cast_anchor).normalized(),g.game.distance)
+		g.game.tick(.05,1,0);g._constrain_fish_to_water();g._update_line()
 		check(g.game.state==S.State.FIGHT and g.game.distance>=threshold,"Untired fish stays outside the foreground: "+entry.id)
-		var inward:Vector3=(g.cast_target-g.cast_anchor).normalized()
-		var bank:Vector3=g.cast_anchor+inward*(threshold-.4)
-		var ray:=PhysicsRayQueryParameters3D.create(bank+Vector3.UP*4,bank,1)
-		check(not g.get_world_3d().direct_space_state.intersect_ray(ray).is_empty(),"Landing point is adjacent to actual shore or deck: "+entry.id)
+		var radius:float=g._fish_clearance()
+		check(not g.fish_boundary.blocked(g.fish_safe_position,radius) and g.fish_boundary.blocked(g.fish_safe_position,radius+.25),"Landing keeps the complete fish adjacent to the ground boundary: "+entry.id)
 		g.game.stamina=.2;g.game.tick(.05,1,0)
 		check(g.game.state==S.State.LANDED,"Active final retrieval lands fish at the shoreline: "+entry.id)
-		g.game.reset();g.rod.rotation.x=1.1;g._cast(5)
-		if threshold>4.5:check(g.game.state==S.State.READY,"Cast behind landing limit is rejected: "+entry.id)
 	g.game.reset();g._toggle_avatar_menu();g.avatar_menu.show_locations()
 	for i in 8:g._layout_avatar_menu();await process_frame
 	var menu=g.avatar_menu

@@ -31,16 +31,16 @@ func update() -> void:
 	var voice=g.network.voice
 	var tracked: bool=g.left.get_has_tracking_data()
 	var grip: bool=tracked and g.left.get_float("grip")>(.35 if grip_was_down else .55)
-	var valid: bool=(not is_instance_valid(g.bbq) or not g.bbq.holds(0)) and voice.can_transmit() and voice.mode>0 and tracked and not g.menu_open and not g.fish_guide.held and g.game.state!=g.Session.State.LANDED
+	var valid: bool=voice.can_transmit() and voice.mode>0 and tracked and not g.menu_open and not g.fish_guide.held and g.game.state!=g.Session.State.LANDED
 	if not valid:reset();grip_was_down=grip;return
 	var mount:=shoulder()
-	var near: bool=g.left.global_position.distance_to(mount.origin)<.22
+	var near: bool=g.controller_pose(0).origin.distance_to(mount.origin)<.22
 	if not grip:held=false
 	elif near and not grip_was_down:held=true
 	grip_was_down=grip
 	active=held and (g.left.is_button_pressed("trigger_click") or g.left.get_float("trigger")>.55)
 	voice.set_radio(active)
-	model.show();model.global_transform=g.left.global_transform if held else mount
+	model.show();model.global_transform=g.controller_pose(0) if held else mount
 	# FPSloppa: the grip forward axis points toward the fingertips.
 	if held:model.rotate_object_local(Vector3.RIGHT,-PI/2)
 	label.visible=held or near

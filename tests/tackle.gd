@@ -12,6 +12,7 @@ func fight(index := 0, rod := 0):
 	var sim = S.new()
 	sim.predator_encounters_enabled=false
 	sim.fish_index = index
+	sim.rng.seed = 12345 + index # Compare identical fight randomness across rods.
 	sim.tackle.equipped = rod
 	sim.state = S.State.BITE
 	sim.distance = 24
@@ -87,6 +88,7 @@ func run() -> void:
 				sim.tick(1.0 / 90, rate, .2); elapsed += 1.0 / 90
 			check(sim.state == S.State.LANDED, "Land %s with rod %d" % [S.SPECIES[index].name, rod])
 			times.append(elapsed)
+		print("FIGHT_TIMES ",S.SPECIES[index].name," ",times)
 		check(times[1] < times[0], "Upgrade shortens full fight: " + S.SPECIES[index].name)
 	var game = load("res://scenes/main.tscn").instantiate(); root.add_child(game)
 	await create_timer(.3).timeout

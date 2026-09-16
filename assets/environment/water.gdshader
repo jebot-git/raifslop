@@ -20,6 +20,7 @@ uniform bool replace_near_jetty = false;
 uniform bool coastal_foreground = false;
 uniform bool beach_sides = false;
 uniform bool coastal_shallows = false;
+uniform bool sheltered_cove = false;
 // Authored in panorama UVs: only clear open water may receive animated reflections.
 // Outside this feathered region preserve the actual jetty, markers and shoreline.
 uniform vec4 panorama_water_region = vec4(0.0, 1.0, 0.0, 1.0);
@@ -52,6 +53,11 @@ void fragment() {
 	float distance_to_view = length(world_position.xz-CAMERA_POSITION_WORLD.xz);
 	near_water+=vec3(.045,.06,.05)*pow(max(0.0,sin(p.x*4.0+p.y*.7+sin(p.y*2.0))*sin(p.y*7.0+sin(p.x*.9))),8.0)*min(river_flow,.7);
 	float distant = smoothstep(blend_start,blend_end,distance_to_view);
+	// The cove's playable mouth is real water, including the feeding sectors.
+	// Anchor coverage to world geometry, not each eye's photographic ray.
+	float cove = sheltered_cove ? (1.0-smoothstep(22.0,34.0,distance_to_view))
+		*(1.0-smoothstep(9.0,17.0,abs(world_position.x)))
+		*(1.0-smoothstep(-5.0,-2.0,world_position.z)) : 0.0;
 	if (beach_sides) {
 		// Keep the central animated water; join photographed surf sooner along the sides.
 		distant=max(distant,smoothstep(3.5,9.0,abs(world_position.x))*smoothstep(4.0,14.0,distance_to_view));
@@ -77,13 +83,14 @@ void fragment() {
 		// under it, which otherwise make the 3D terrace appear suspended in air.
 		float coast = coastal_foreground ? (1.0-smoothstep(10.0,24.0,distance_to_view))
 			*(1.0-smoothstep(-1.0,4.0,world_position.z)) : 0.0;
-		float replacement = max(near_jetty,coast);
+		float replacement = max(max(near_jetty,coast),cove);
 		open_water=max(open_water,replacement);
 		distant = max(distant,1.0-open_water);
 		// Keep photographic exposure and wave scale at this close harbour.
 		// A restrained moving reflection avoids a bright patch at the mask edge.
 		near_water = mix(photograph,near_water,mix(.12,1.0,replacement));
 	}
+	distant *= 1.0-cove;
 	// At the mesh boundary, use the very same photographed water visible behind it.
 	ALBEDO = mix(near_water, photograph, distant);
 	float fish_window=1.0-smoothstep(hooked_radius*.4,hooked_radius,length(world_position.xz-hooked_position.xz));
@@ -95,10 +102,12 @@ void fragment() {
 	vec3 under_ndc=vec3(SCREEN_UV*2.0-1.0,scene_depth);
 	#endif
 	vec4 under_view=INV_PROJECTION_MATRIX*vec4(under_ndc,1.0);
-	vec3 under_world=(INV_VIEW_MATRIX*vec4(under_view.xyz/under_view.w,1.0)).xyz;
+	bool has_depth = scene_depth>0.000001 && abs(under_view.w)>0.000001;
+	vec3 under_world=world_position-vec3(0.0,1000.0,0.0);
+	if (has_depth) under_world=(INV_VIEW_MATRIX*vec4(under_view.xyz/under_view.w,1.0)).xyz;
 	fish_window*=1.0-smoothstep(hooked_radius*.4,hooked_radius*.6,length(under_world-hooked_position));
 	ALPHA=1.0-hooked_visibility*fish_window*.78*(1.0-fresnel);
-	if (coastal_shallows && distance_to_view<24.0) {
+	if (coastal_shallows && has_depth && under_world.y<world_position.y && distance_to_view<24.0) {
 		// Reveal the actual submerged sand at the contact edge. Depth comes from
 		// the authored slope, so the transition follows the irregular shoreline.
 		float depth=max(0.0,world_position.y-under_world.y);
