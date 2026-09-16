@@ -24,7 +24,8 @@ static func create(id: String) -> Node3D:
 	if id in ["lakeside", "gray_pier", "bell_park_pier"]:
 		slope_distant_land(visual)
 	if id=="simons_town_rocks":coastal_footings(visual)
-	if id=="lake_pier":ground_pier_cleat(visual)
+	if id in ["lake_pier","simons_town_rocks"]:ground_pier_cleat(visual,id)
+	repair_bench_supports(visual,id)
 	prepare_lighting(visual, id)
 	if preload("res://scripts/locations.gd").find_location(id).get("sand_shore",false):
 		# Cast/landing rays must see the curved sand slope, not only the flat
@@ -70,7 +71,8 @@ static func create(id: String) -> Node3D:
 	if details!=null:root.add_child(details)
 	return root
 
-static func ground_pier_cleat(root: Node3D) -> void:
+static func ground_pier_cleat(root: Node3D, id: String = "lake_pier") -> void:
+	var center:=Vector2(3.5,-2.5) if id=="simons_town_rocks" else Vector2(1.8,-.9)
 	# Older baked assets leave the small cleat's pedestal 6 cm above the quay.
 	# Extend just its bottom to deck level, retaining the bake and both UV sets.
 	for node in root.find_children("*", "MeshInstance3D", true, false):
@@ -83,7 +85,7 @@ static func ground_pier_cleat(root: Node3D) -> void:
 			var changed:=false
 			for i in vertices.size():
 				var p: Vector3=vertices[i]
-				if absf(p.x-1.8)<.091 and absf(p.z+.9)<.051 and absf(p.y-.06)<.001:
+				if absf(p.x-center.x)<.091 and absf(p.z-center.y)<.051 and absf(p.y-.06)<.001:
 					p.y=0;vertices[i]=p;changed=true
 			if not changed:continue
 			if repaired==null:repaired=node.mesh.duplicate()
@@ -95,6 +97,29 @@ static func ground_pier_cleat(root: Node3D) -> void:
 				rebuilt.surface_set_material(index,node.mesh.surface_get_material(index))
 			repaired=rebuilt
 		if repaired!=null:node.mesh=repaired
+
+static func repair_bench_supports(root: Node3D, id: String) -> void:
+	# Older baked benches put the rear uprights on the seating side of the back.
+	# Translate only those steel legs, retaining both UV sets and baked textures.
+	var centers:Dictionary={"lakeside":[Vector2(-4,7),Vector2(4,9)],"lake_pier":[Vector2(0,3)],"gray_pier":[Vector2(-2.9,8.5)],"simons_town_rocks":[Vector2(-2.5,5.5)],"secluded_beach":[Vector2(-3.5,8.4)]}
+	if not centers.has(id):return
+	for node in root.find_children("*","MeshInstance3D",true,false):
+		var rebuilt:=ArrayMesh.new()
+		var changed:=false
+		for surface in node.mesh.get_surface_count():
+			var arrays:Array=node.mesh.surface_get_arrays(surface)
+			var mat:Material=node.mesh.surface_get_material(surface)
+			if mat and mat.resource_name.begins_with("FG_steel"):
+				var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+				for i in vertices.size():
+					var p:Vector3=vertices[i]
+					for center in centers[id]:
+						if absf(absf(p.x-center.x)-.68)<.036 and absf(p.z-center.y-.23)<.036 and p.y>=-.001 and p.y<=1.071:
+							p.z+=.11;vertices[i]=p;changed=true;break
+				arrays[Mesh.ARRAY_VERTEX]=vertices
+			rebuilt.add_surface_from_arrays(node.mesh.surface_get_primitive_type(surface),arrays)
+			rebuilt.surface_set_material(surface,mat)
+		if changed:node.mesh=rebuilt
 
 static func slope_distant_land(node: Node, parent_transform := Transform3D.IDENTITY) -> void:
 	var transform := parent_transform

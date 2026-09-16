@@ -1,12 +1,12 @@
-# Real AI Fishing 0.1.9
+# Real AI Fishing 0.1.10
 
 Download the matching package from [Releases](https://github.com/jebot-git/raifslop/releases). This is an early prototype release.
 
-See [0.1.9 changes](RELEASE_NOTES_0.1.9.md). Packages omit documentation and screenshots, retaining asset credits and license notices. Version 0.1.9 retains the Android signing key used since 0.1.1. Android 0.1.1 uses a new signing key because the previous key was unavailable. Uninstall an older Quest/Pico APK before installing 0.1.1; uninstalling can erase local saves. Preserve accessible save data first.
+See [0.1.10 changes](RELEASE_NOTES_0.1.10.md). Packages omit documentation and screenshots, retaining asset credits and license notices. Version 0.1.10 retains the Android signing key used since 0.1.1. Android 0.1.1 uses a new signing key because the previous key was unavailable. Uninstall an older Quest/Pico APK before installing 0.1.1; uninstalling can erase local saves. Preserve accessible save data first.
 
 - **Linux x86_64:** extract the archive and run `Desktop.sh` or `VR.sh`. Keep the executable, PCK and shared libraries together. Requires Vulkan and, for VR, an active OpenXR runtime such as WiVRn/Monado or SteamVR.
 - **Windows x86_64:** extract the archive and run `Desktop.cmd` or `VR.cmd`. Keep the executable, PCK and DLLs together. PC VR uses the active OpenXR runtime.
-- **Quest / Pico ARM64:** install the matching APK using the headset's sideload workflow or `adb install -r RealAIFishing-0.1.9-Quest.apk` / `RealAIFishing-0.1.9-Pico.apk`. Enable developer mode first. Allow microphone permission for voice chat. The APKs use separate application IDs, optional vendor tracking features, and a local release signing key.
+- **Quest / Pico ARM64:** install the matching APK using the headset's sideload workflow or `adb install -r RealAIFishing-0.1.10-Quest.apk` / `RealAIFishing-0.1.10-Pico.apk`. Enable developer mode first. Allow microphone permission for voice chat. The APKs use separate application IDs, optional vendor tracking features, and a local release signing key.
 
 Desktop dedicated servers use `Server.sh` / `Server.cmd`, default UDP port 24567. Additional options include `--port 24567 --bind 0.0.0.0`. Eight slots are available, including the ad-hoc host. Hosting across the Internet requires reachable UDP; no matchmaking or NAT relay is bundled. Voice defaults to activation, and the Guide/progression remain local.
 
@@ -22,8 +22,8 @@ To publish a validated release, push the clean source commit and matching `v<ver
 
 ## Validation and limitations
 
-Version 0.1.9 excludes the BBQ prototype and retains multiplayer protocol 3. Live WiVRn verification captured both stereo eyes at 72 FPS with head and both controllers tracked. The test session is separate from standalone APK validation.
+Version 0.1.10 excludes the BBQ prototype and uses multiplayer protocol 4. Update all clients and the server together; protocol-3 releases cannot join. Publishing these packages does not upgrade an existing live server.
 
-Linux exported startup, real Vulkan rod/environment rendering, fish loading/sizing, and independent ENet ad-hoc/dedicated sessions with synthetic voice were tested locally. Quest and Pico APK signatures, 16 KiB alignment, ARM64 libraries and manifest permissions were checked. Connected WiVRn on Quest Pro exercised stereo rendering and catch/menu interactions, including scripted controller poses. The VR presentation and tracking regressions are documented in [tester feedback](TESTER_FEEDBACK.md).
+Sixty distinct regression suites passed across the full run and targeted reruns, including casting/aiming, fish boundaries, avatar recovery, scenery repairs and the hidden fight-recovery window. Dedicated and ad-hoc local multiplayer with synthetic Opus voice passed. Linux Vulkan render checks cover coastal scenery and immersive fight cues. The previous 0.1.9 WiVRn session is not a headset validation of this release.
 
 Standalone Quest/Pico APK execution and Windows execution have not been tested on the build host. Those builds therefore have packaging validation, not on-device play/performance certification. Panoramas are native 8K mono photographs; modeled objects provide stereo depth. Stereo-photo conversion and Gaussian splatting are assessed in [SCENERY_DETAIL](SCENERY_DETAIL.md) and are not enabled.

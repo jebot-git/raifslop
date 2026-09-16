@@ -100,6 +100,8 @@ var escape_offset := Vector3.ZERO
 var quitting := false
 
 func _ready() -> void:
+	var diagnostics=preload("res://scripts/client_diagnostics.gd").new()
+	diagnostics.game_root=self;add_child(diagnostics)
 	server_only = "--server" in OS.get_cmdline_user_args()
 	if server_only:
 		_start_network()
@@ -1148,6 +1150,7 @@ func _panorama_texture(entry: Dictionary) -> Texture2D:
 	return ResourceLoader.load(entry.panorama, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
 
 func _select_location(id: String, persist := true) -> bool:
+	var diagnostic_started:=Time.get_ticks_usec()
 	# Switching never silently discards a cast, fight, or unreleased catch.
 	if game.state != Session.State.READY or casting:
 		avatar_menu.location_status.text = "Finish this cast and release your catch before travelling."
@@ -1213,7 +1216,7 @@ func _select_location(id: String, persist := true) -> bool:
 	water_material.set_shader_parameter("panorama_water_region",entry.get("panorama_water_region",Vector4(0,1,0,1)))
 	if id == "lake_pier": Shore.blend_harbour_ground(foreground, water_material, Vector4(0,1.5,2.5,3))
 	elif entry.has("ground_bounds"): Shore.blend_harbour_ground(foreground, water_material, entry.ground_bounds, true, entry.get("ground_transition",Vector2(6,6)))
-	if id in ["lake_pier","simons_town_rocks"]:
+	if id in ["lake_pier","simons_town_rocks","fish_hoek_beach"]:
 		foreground.add_child(preload("res://scripts/rear_parallax.gd").create(id,foreground.get_meta("spawn")+Vector3.UP*1.63,water_material))
 	current_location = id
 	if is_instance_valid(ambience): ambience.select_location(id)
@@ -1230,6 +1233,7 @@ func _select_location(id: String, persist := true) -> bool:
 	avatar_menu.location_status.text = "Now fishing at " + str(entry.name) + "."
 	if persist and Locations.save_location(id) != OK:
 		avatar_menu.location_status.text += " Selection could not be saved."
+	preload("res://scripts/client_diagnostics.gd").stage("location",diagnostic_started,{"water":id})
 	return true
 
 func _toggle_avatar_menu() -> void:

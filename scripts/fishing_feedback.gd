@@ -23,6 +23,17 @@ var cast_player: AudioStreamPlayer3D
 var ripple_player: AudioStreamPlayer3D
 var submerge_previous := S.Submerge.NONE
 var was_paused := false
+var recovery_previous := 0
+var stamina_previous := 1.0
+var rest_previous := false
+var running_previous := false
+var fight_cue_player: AudioStreamPlayer3D
+var fight_cue_kind := ""
+var fight_cue_age := 2.0
+var fight_surface: MeshInstance3D
+var fight_water_fx: ShaderMaterial
+var fight_cues:Dictionary={}
+
 var splashes: Array[AudioStreamPlayer3D]=[]
 var splash_slot:=0
 var last_splash:=0
@@ -33,6 +44,9 @@ var events: Dictionary={"cast":0,"splash":0,"land":0,"ripple":0,"predator":0}
 func setup(root: Node) -> void:
  game_root=root
  cast_player=player("cast");reel_player=player("reel")
+ fight_cue_player=AudioStreamPlayer3D.new();add_child(fight_cue_player)
+ fight_cue_player.unit_size=8.0;fight_cue_player.max_distance=65
+ fight_cues={"tired":preload("res://assets/audio/fishing/ripple.wav"),"recovered":preload("res://assets/audio/fishing/splash_3.wav"),"action":preload("res://assets/audio/fishing/ripple.wav")}
  ripple_player=player("ripple");ripple_player.volume_db=-6;ripple_player.max_db=-8
  cast_player.unit_size=1.5;cast_player.volume_db=-8;cast_player.max_db=-8
  for file in ["splash","splash_2","splash_3"]:
@@ -48,6 +62,10 @@ func setup(root: Node) -> void:
  takeover_fx=water_fx.duplicate();takeover_surface.material_override=takeover_fx
  takeover_surface.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
  add_child(takeover_surface);takeover_surface.hide()
+ fight_surface=MeshInstance3D.new();fight_surface.mesh=plane
+ fight_water_fx=water_fx.duplicate();fight_surface.material_override=fight_water_fx
+ fight_surface.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+ add_child(fight_surface);fight_surface.hide()
 func update_feeding_ripples() -> void:
  var g = game_root.game
  if feeding_surfaces.is_empty():
@@ -85,6 +103,22 @@ func splash(at: Vector3, landing:=false, impact:=false) -> void:
  p.unit_size=2.0;p.volume_db=-8.0;p.max_db=-8.0
  p.global_position=at;p.pitch_scale=1.0 if landing or impact else randf_range(.98,1.02);p.play()
  events["land" if landing else "splash"]+=1
+func fight_notice(kind:String) -> void:
+ fight_cue_kind=kind;fight_cue_age=0.0
+ fight_cue_player.stream=fight_cues[kind]
+ fight_cue_player.volume_db=-6.0 if kind=="recovered" else -10.0
+ fight_cue_player.max_db=fight_cue_player.volume_db
+ fight_cue_player.pitch_scale=.85 if kind=="tired" else 1.05 if kind=="recovered" else 1.0
+ fight_cue_player.global_position=game_root.bobber.global_position;fight_cue_player.play()
+ fight_surface.global_position=game_root.bobber.global_position
+ fight_surface.global_position.y=game_root.water_level+.065
+ fight_water_fx.set_shader_parameter("burst",true)
+ fight_water_fx.set_shader_parameter("organic_burst",true)
+ fight_water_fx.set_shader_parameter("strength",.85 if kind=="recovered" else .28 if kind=="tired" else .5)
+ fight_water_fx.set_shader_parameter("burst_speed",2.3 if kind=="recovered" else .85 if kind=="tired" else 1.7)
+ fight_water_fx.set_shader_parameter("secondary_delay",.18 if kind=="recovered" else -1.0)
+ events[kind]=events.get(kind,0)+1
+
 func _process(delta: float) -> void:
  if not is_instance_valid(game_root):return
  var g=game_root.game
@@ -93,13 +127,24 @@ func _process(delta: float) -> void:
  update_feeding_ripples()
  var paused: bool=game_root.rod_holster.stowed or game_root.menu_open or game_root.fish_guide.held or game_root.avatar_loading or (game_root.xr and (not game_root.right.get_has_tracking_data() or not game_root.left.get_has_tracking_data() or not game_root.tracking_manager.focused))
  if paused:
-  reel_player.stop();ripple_player.stop();haptics.pause()
+  reel_player.stop();ripple_player.stop();fight_cue_player.stop();fight_surface.hide();haptics.pause()
   if not was_paused and game_root.xr:
    for hand in [game_root.right,game_root.left]:
     if hand.get_has_tracking_data(): hand.trigger_haptic_pulse("haptic",0.0,0.0,.01,0.0)
   was_paused=true
   return
  was_paused=false
+ fight_cue_age+=delta
+ if g.state==S.State.FIGHT and previous==S.State.FIGHT:
+  if g.recovery_count!=recovery_previous:
+   fight_notice("recovered")
+  elif (g.stamina<=.35 and stamina_previous>.35) or (g.counter_rest>0 and not rest_previous):
+   fight_notice("tired")
+  elif (g.is_running() and not running_previous) or (g.cue>=0 and g.cue!=cue_previous) or (g.submerge!=S.Submerge.NONE and g.submerge!=submerge_previous):
+   fight_notice("action")
+ fight_surface.visible=g.state==S.State.FIGHT and fight_cue_age<1.8
+ fight_water_fx.set_shader_parameter("clock",fight_cue_age)
+ recovery_previous=g.recovery_count;stamina_previous=g.stamina;rest_previous=g.counter_rest>0;running_previous=g.is_running()
  var pulse:Dictionary=haptics.sample(g,delta)
  if not pulse.is_empty() and game_root.xr:
   game_root.right.trigger_haptic_pulse("haptic",0.0,pulse.strength,pulse.duration,0.0)
@@ -156,7 +201,7 @@ func _process(delta: float) -> void:
   water_fx.set_shader_parameter("clock",clock)
   splash_wait-=delta
   if (g.cue>=0 and g.cue!=cue_previous) or (g.submerge!=S.Submerge.NONE and g.submerge!=submerge_previous):
-   ripple(surface.global_position);splash_wait=1.1
+   splash_wait=1.1
   elif splash_wait<=0 and g.submerge==S.Submerge.NONE:
    splash(surface.global_position);splash_wait=randf_range(1.0,1.5) if g.is_running() or g.cue>=0 else randf_range(2.0,2.8)
  elif burst_age<1.8:

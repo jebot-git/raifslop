@@ -2,7 +2,7 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 3 # Voice packets carry an explicit cross-water radio channel.
+const VERSION := 4 # Avatar selection ACK/cancel/retry RPCs require matching clients and server.
 const State = preload("res://scripts/network/state.gd")
 const Remote = preload("res://scripts/network/remote_angler.gd")
 var root_game: Node
@@ -31,6 +31,15 @@ var selected_path := ""
 var connect_deadline := 0.0
 var metrics_enabled := false
 var metrics_next := 0.0
+var state_arrivals:Dictionary={}
+func state_diagnostics() -> Dictionary:
+	var result:Dictionary={}
+	var now:=Time.get_ticks_usec()
+	for id in state_arrivals:
+		var row:Dictionary=state_arrivals[id]
+		result[id]={"age_ms":(now-row.last)/1000.0,"max_gap_ms":row.max_gap/1000.0,"accepted":row.count,"serial":row.serial}
+		row.max_gap=0
+	return result
 signal changed
 
 func setup(root: Node, server_only: bool = false) -> void:
@@ -105,7 +114,7 @@ func leave(reason: String = "Offline") -> void:
 	voice.reset()
 	if multiplayer.multiplayer_peer: multiplayer.multiplayer_peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
-	serial = 0; last_event.clear(); selected_path = ""; loading.items.clear()
+	serial = 0; last_event.clear(); selected_path = ""; loading.items.clear();loading.errors.clear();state_arrivals.clear()
 	status = reason
 	changed.emit()
 
@@ -156,6 +165,7 @@ func _roster(data: Dictionary) -> void:
 	changed.emit()
 
 func _peer_left(id: int) -> void:
+	state_arrivals.erase(id)
 	waiting.erase(id); players.erase(id); states.erase(id); guards.erase(id)
 	avatars.remove_peer(id); voice.remove_peer(id)
 	if fighters.has(id): fighters[id].queue_free(); fighters.erase(id)
@@ -171,7 +181,7 @@ func _process(delta: float) -> void:
 	if not active: return
 	if metrics_enabled and clock>=metrics_next:
 		metrics_next=clock+2.0
-		print("NETWORK_METRICS ",JSON.stringify({"seconds":clock,"players":players.size(),"states":states.size(),"voice_received":voice.received_packets,"voice_relayed":voice.relayed_packets,"voice_rejected":voice.rejected_packets,"transport":multiplayer.multiplayer_peer.diagnostics()}))
+		print("NETWORK_METRICS ",JSON.stringify({"ticks_usec":Time.get_ticks_usec(),"seconds":clock,"voice_detail":voice.diagnostics(),"remote_states":state_diagnostics(),"players":players.size(),"states":states.size(),"voice_received":voice.received_packets,"voice_relayed":voice.relayed_packets,"voice_rejected":voice.rejected_packets,"transport":multiplayer.multiplayer_peer.diagnostics()}))
 	if multiplayer.is_server():
 		for id in waiting.keys():
 			if clock>waiting[id]: waiting.erase(id); multiplayer.multiplayer_peer.disconnect_peer(id)
@@ -218,6 +228,11 @@ func _state_event(id: int, data: Dictionary) -> void: _apply(id,data)
 func _apply(id: int, data: Dictionary) -> void:
 	if not players.has(id) or not State.valid(data): return
 	if states.has(id) and data.serial<=states[id].serial: return
+	if metrics_enabled:
+		var now:=Time.get_ticks_usec()
+		var row:Dictionary=state_arrivals.get(id,{"last":now,"count":0,"max_gap":0,"serial":-1})
+		row.max_gap=maxi(row.max_gap,now-row.last);row.last=now;row.count+=1;row.serial=data.serial
+		state_arrivals[id]=row
 	states[id]=data.duplicate(true)
 	if fighters.has(id): fighters[id].receive_state(data)
 

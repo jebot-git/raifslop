@@ -71,5 +71,9 @@ func run()->void:
 				check(g._cast_target_valid(target),"Open water is not cut off at world z=1.5")
 				side_count+=1
 	check(side_count>0,"Tested actual side water beyond old world-axis aiming cutoff")
-	g.xr=false;g.queue_free();await process_frame;await create_timer(.2).timeout
+	g.xr=false;g.ambience.stop();g.fishing_feedback.set_process(false)
+	for type in ["AudioStreamPlayer","AudioStreamPlayer3D"]:
+		for player in g.find_children("*",type,true,false):player.stop()
+	await create_timer(.3).timeout
+	g.queue_free();await process_frame;await create_timer(.3).timeout
 	print("AIM_WATER_GRID_RESULT ",checks," checks: ",failures);quit(0 if failures.is_empty() else 1)

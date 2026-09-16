@@ -70,6 +70,7 @@ func run():
   var rotation:Vector3=entry.sun_rotation*PI/180
   check(Basis.from_euler(rotation).z.dot(direction)>.9999,"Godot sun agrees with HDR/Cycles axes: "+entry.id)
   check(entry.sun_energy>0 and is_finite(entry.sun_energy),"Finite measured sun energy")
- g.queue_free();await process_frame
+ g.ambience.stop();await create_timer(.3).timeout
+ g.queue_free();await process_frame;await create_timer(.3).timeout
  print("REAR_SCENERY_RESULT ",failures)
  quit(0 if failures.is_empty() else 1)

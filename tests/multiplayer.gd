@@ -103,5 +103,8 @@ func run() -> void:
 				check(not net.same_location(root.get_multiplayer().get_unique_id(),sender) or await wait_for(func(): return not net.same_location(root.get_multiplayer().get_unique_id(),sender),1),"Voice location filtering follows travel")
 				game.current_location="lakeside"
 	print("MULTIPLAYER_RESULT ",role," ",failures)
-	net.leave(); game.queue_free(); await process_frame; await process_frame
+	net.leave()
+	if is_instance_valid(game.ambience):game.ambience.stop()
+	await create_timer(.3).timeout
+	game.queue_free(); await process_frame; await create_timer(.3).timeout
 	quit(0 if failures.is_empty() else 1)

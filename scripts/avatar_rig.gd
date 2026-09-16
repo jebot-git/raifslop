@@ -56,6 +56,7 @@ static func find_skeleton(node: Node) -> Skeleton3D:
 	return null
 
 func configure(root: Node3D) -> bool:
+	var diagnostic_started:=Time.get_ticks_usec()
 	model = root
 	skeleton = find_skeleton(root)
 	if not skeleton: return false
@@ -97,6 +98,7 @@ func configure(root: Node3D) -> bool:
 	solver.modification_processed.connect(_capture_hand_attachments)
 	skeleton.add_child(eyes)
 	add_to_group("fishing_avatar_rigs")
+	preload("res://scripts/client_diagnostics.gd").stage("avatar_rig",diagnostic_started)
 	return true
 
 func strip_extras(node: Node) -> void:

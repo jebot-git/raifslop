@@ -25,7 +25,7 @@ FPSloppa's TwoVoIP integration supplies 48 kHz mono Opus, 20 ms frames, RNNoise 
 
 FPSloppa’s shoulder radio supplies a second channel to **all anglers on the server**, regardless of water or distance. Hold **B** on desktop. In VR, reach to the **left shoulder**, squeeze grip to take the radio, and hold the **left trigger** to transmit. Release trigger to stop talking; release grip to dock it. While the radio is held, voice activation cannot leak speech onto the nearby channel. The rod remains in the right hand. Radio playback uses FPSloppa’s narrow-band filtering and on/off click cues; existing player mute, Mute all, Listen only, and host voice policy apply. Opening the menu, losing focus or controller tracking releases the radio.
 
-Radio packets require **protocol 3**. Update the server and all clients together; protocol-2 builds cannot join this version.
+Version 0.1.10 requires **protocol 4** for avatar offer acknowledgements and transfer cancellation/recovery. Update the server and all clients together; released 0.1.9/protocol-3 builds cannot join version 0.1.10. The live 0.1.9 server is not upgraded automatically.
 
 Android microphone capture requests `android.permission.RECORD_AUDIO` when enabled. The Quest and Pico release APKs declare RECORD_AUDIO and INTERNET and include TwoVoIP's ARM64 native library. Optional avatar tracking now uses the shared Quest/Pico tracking permission queue; see [tracking setup](AVATAR_TRACKING.md). Eye tracking never affects cast aim. Synthetic tests use generated tones, never the microphone.
 
@@ -53,10 +53,18 @@ Native stereo/controller integration: `python3 tools/test_multiplayer_xr.py` run
 
 ### Transport threading
 
-`threaded_peer.gd` gives each ENet connection one socket-owning worker. Native ENet polling, acknowledgements and packet receipt continue through main-thread stalls. Bounded packet/event queues deliver to SceneMultiplayer on the main thread; game state, RPCs, avatar scene instantiation and voice dispatch stay there. This does not make gameplay simulation or microphone capture independent of frame stalls. Closing/leaving joins the worker. The seven existing channels remain compatible with stock ENet. Fishing’s application handshake is now protocol 3 because voice packets include the radio channel.
+`threaded_peer.gd` gives each ENet connection one socket-owning worker. Native ENet polling, acknowledgements and packet receipt continue through main-thread stalls. Bounded packet/event queues deliver to SceneMultiplayer on the main thread; game state, RPCs, avatar scene instantiation and voice dispatch stay there. This does not make gameplay simulation or microphone capture independent of frame stalls. Closing/leaving joins the worker. The seven existing channels remain compatible with stock ENet. Fishing’s application handshake is protocol 4; protocol 3 added radio, and protocol 4 adds explicit avatar offer/cancel/recovery messages.
 
 FPSloppa checkout `8898d03a33f42e6eec472506fccce6d68dad83d1` threads disk jobs rather than its ENet peer. Its immutable-job/main-thread-completion pattern is retained here; the socket worker is a local addition. Its decoded-VRM cache pattern is also applied so repeated remote models reuse a decoded PackedScene.
 
 Cross-water radio integration: `python3 tools/test_radio.py` launches a dedicated server with three clients, then an ad-hoc host with two clients. Synthetic Opus packets verify nearby → radio → nearby transitions, cross-water reach, no sender echo, actual decoding and host reception. `tests/radio.gd` covers VR grip/trigger controls, VAD isolation, mute/policy handling and reordered channel packets.
 
 For authorized remote test servers, pass `--remote SERVER_IP --port PORT` to `tools/test_radio.py`; `tools/test_remote_reconnect.py SERVER_IP --port PORT` checks silence/stall recovery and two same-process reconnect cycles. Launch builds with `-- --network-metrics` to log bounded counters and worker-side RTT/throttle snapshots without audio payloads.
+
+### Avatar recovery and diagnostics (0.1.10)
+
+Latest accepted avatar selection wins. Superseded transfers are cancelled; rejected/throttled offers receive a response. Model requests retry at most three times with 2/4/8-second backoff, a 10-second response timeout, a 90-second queue deadline, and a separate 30-second download-progress timeout. A disconnected owner can be replaced by another pending owner of the same hash. Reselecting an avatar starts a fresh offer. Per-asset errors clear on retry, success, cancellation or leaving the session; unrelated errors remain visible.
+
+`--client-metrics` enables per-frame monotonic wall-clock interval aggregates and stage durations for validation, glTF/image parsing, scene generation, rig configuration, location changes and remote fish construction. It also emits discrete fishing-state transitions. `--network-metrics` enables these plus accepted state arrival ages/gaps and detailed voice counters. Existing aggregate counters remain available. FEC counts are **attempts**, because the native decoder does not expose whether FEC or concealment produced that frame; `empty_playback_queue` counts observed transitions, not sample-accurate audio underruns. Neither counter proves audible quality. No microphone recordings or controller poses are saved by these diagnostics. Headset compositor/Virtual Desktop timings still require their own capture.
+
+`AVATAR_TRANSFER` records peer/hash, request ID, phase and timing at transfer transitions, and progress on timeout/completion. Import failures retain filename/hash/image-index context. Remote fish meshes are instantiated only for a visible landed catch; scene resources retain Godot's normal resource cache.

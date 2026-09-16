@@ -122,6 +122,15 @@ var landing_distance := 1.6
 var at_ground_boundary := false
 var retrieve_origin := Vector3.ZERO
 var stamina := 1.0
+const RECOVERY_REACTION := .65
+var recovery_time := 0.0
+var recovery_count := 0
+func recover_strength(amount: float = 0.0) -> void:
+	stamina=minf(1.0,stamina+amount)
+	# Never erase inherited line strain or extend an already active window.
+	if recovery_time<=0.0:
+		recovery_time=RECOVERY_REACTION;recovery_count+=1
+
 var timer := 0.0
 var phase := 0.0
 var cue := -1
@@ -291,6 +300,7 @@ func is_running() -> bool:
 	return state == State.FIGHT and submerge == Submerge.NONE and counter_rest <= 0.0 and fmod(phase, float(p.cycle)*tempo) > (float(p.cycle)-float(p.run))*tempo
 
 func _reset_submerge() -> void:
+	recovery_time=0.0
 	jump_time=0.0;jump_resolved=false;jump_tug=false
 	submerge=Submerge.NONE;submerge_time=0.0;next_submerge=9.0
 	next_submerge_kind=Submerge.PULL;reel_rate=0.0
@@ -363,7 +373,7 @@ func _jump_tick(delta: float) -> void:
 	jump_time=maxf(0.0,jump_time-delta)
 	if jump_time<=0.0:
 		if not jump_resolved:
-			stamina=minf(1.0,stamina+.25);message="Missed jump — fish recovered strength."
+			recover_strength(.25);message="Missed jump. Keep control of the fish."
 		cue=-1;counter_active=false;counter_rest=3.0;next_cue=3.0;phase=0.0
 		next_submerge=maxf(next_submerge,4.0)
 
@@ -463,6 +473,7 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> 
 			if timer <= 0.0:
 				lose("Missed the bite. Cast again.")
 		State.FIGHT:
+			recovery_time=maxf(0.0,recovery_time-delta)
 			reel_rate=clampf(reel,0.0,2.0)
 			fly_reel_penalty=is_fly_fishing() and winding_reel and reel_rate>.03 and not fly_reel_allowed()
 			if fly_reel_penalty:
@@ -481,7 +492,10 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> 
 			predator_opening_time=maxf(0.0,predator_opening_time-delta)
 			var previous_distance := distance
 			_counter_tick(delta)
-			if counter_rest > 0.0: counter_rest = maxf(0.0, counter_rest - delta)
+			if counter_rest > 0.0:
+				counter_rest = maxf(0.0, counter_rest - delta)
+				if counter_rest<=0.0:
+					recover_strength();message=reel_instruction()
 			if _try_jump():return
 			if is_predator(): _predator_sequence_tick(delta)
 			else: _submerge_tick(delta)
@@ -511,6 +525,9 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> 
 					change=delta*((.45-tension)*.4 if rate<=.1 else .18+rate*.18/sqrt(durability))
 				else:
 					change=delta*(rate*.22-.30)
+			if recovery_time>0.0 and rate<=.1 and not fly_reel_penalty:
+				# A deliberate release unloads the line smoothly during the warning.
+				change=minf(change,-delta*.14)
 			# Bound the load buildup so warning haptics give time to ease off.
 			var limit := MAX_SUBMERGE_CHANGE if submerge_active() else MAX_TENSION_RISE
 			if predator_opening_time>0.0: limit=1.5
@@ -542,7 +559,7 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> 
 					if failed_counters >= MAX_FAILED_COUNTERS:
 						lose("The fish broke free after three missed counters.")
 						return
-					stamina = minf(1.0, stamina + .18)
+					recover_strength(.18)
 					cue = -1
 					next_cue = 3.0
 					message = "Missed counter (%d/%d). Keep control of the fish." % [failed_counters, MAX_FAILED_COUNTERS]
@@ -593,7 +610,11 @@ func _check_line_failure(delta: float) -> bool:
 	var unsafe_side := 1 if tension >= STRAIN_LIMIT else -1 if tension <= SLACK_LIMIT else 0
 	if unsafe_side != danger_side: danger_time = 0.0
 	danger_side = unsafe_side
-	if unsafe_side != 0: danger_time += delta
+	if unsafe_side != 0:
+		if unsafe_side==1 and recovery_time>0.0 and not fly_reel_penalty and predator_opening_time<=0.0:
+			# Briefly pause new strain; never reset it. Only easing off relieves it.
+			if reel_rate<=.1:danger_time=maxf(0.0,danger_time-delta*.8)
+		else:danger_time += delta
 	else: danger_time = 0.0
 	var strain_grace := .45 if predator_opening_time>0.0 else STRAIN_GRACE
 	if danger_time > (strain_grace * sqrt(float(tackle.rod().durability)) if tension > .5 else 1.8):

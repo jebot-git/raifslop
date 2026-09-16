@@ -74,6 +74,7 @@ def audit(path):
                      'assets/environment/shore_details/fishing_plan_poster.svg',
                      'scripts/voice/shoulder_radio.gd','scripts/network/threaded_peer.gd',
                      'scripts/controller_calibration.gd','scripts/fish_water_boundary.gd',
+                     'scripts/client_diagnostics.gd','scripts/network/loading.gd',
                      'scripts/fly_fishing.gd','scripts/hooked_fish.gd','scripts/river_foreground.gd',
                      'scripts/ui/vr_item_list.gd','assets/models/rods/fly_handle.glb',
                      'assets/models/fish/wels_catfish.glb','assets/models/fish/bronze_whaler.glb',

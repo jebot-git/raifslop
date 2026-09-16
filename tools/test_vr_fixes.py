@@ -10,7 +10,7 @@ SUITES = sys.argv[1:] or ['run_tests', 'hand_tracking', 'tracking_orientation', 
 failures = []
 if len(sys.argv) == 1: SUITES.extend(['rod_attachment', 'radio', 'water_wildlife', 'fly_fishing', 'fish_jumps', 'coastal_locations', 'shore_transitions', 'gameplay_recording'])
 if len(sys.argv) == 1: SUITES.extend(['cast_tolerance', 'cast_direction', 'tracked_cast', 'fish_population', 'fishing_update', 'fly_controls', 'fly_reel_penalty', 'empty_retrieve', 'shore_retrieval', 'pier_cleat', 'hdr_bake_compression'])
-if len(sys.argv) == 1: SUITES.extend(['fishing_comfort', 'aim_water_grid', 'marine_species', 'fight_mechanics'])
+if len(sys.argv) == 1: SUITES.extend(['fishing_comfort', 'aim_water_grid', 'marine_species', 'fight_mechanics', 'avatar_image_failure', 'avatar_recovery', 'fight_recovery', 'scenery_repairs'])
 for suite in SUITES:
     data = OUT / suite
     data.mkdir(parents=True, exist_ok=True)

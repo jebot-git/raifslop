@@ -127,13 +127,21 @@ func register_file(path: String, copy_to_cache: bool = true) -> String:
 	return hash
 
 func create_avatar(hash: String) -> Node3D:
-	if not entries.has(hash): return null
+	last_error = ""
+	if not entries.has(hash):
+		last_error = "Avatar is not available in the local cache."
+		return null
 	if not scenes.has(hash):
-		var model: Node3D=preload("res://scripts/avatar_library.gd").new().load_model(entries[hash].path)
-		if not model:return null
+		var loader=preload("res://scripts/avatar_library.gd").new()
+		var model: Node3D=loader.load_model(entries[hash].path)
+		if not model:
+			last_error=loader.error
+			return null
 		var packed:=PackedScene.new()
 		var error:=packed.pack(model);model.free()
-		if error!=OK:return null
+		if error!=OK:
+			last_error="Could not prepare avatar: "+error_string(error)
+			return null
 		if scenes.size()>=4:scenes.erase(scenes.keys()[0])
 		scenes[hash]=packed
 	return scenes[hash].instantiate()

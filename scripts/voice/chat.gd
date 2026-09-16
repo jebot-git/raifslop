@@ -23,6 +23,11 @@ var mouth_poses: Dictionary={}
 var guard: Dictionary={}
 var received_packets:=0
 var decoded_packets:=0
+var diagnostic_counts:Dictionary={"normal":0,"fec_attempt":0,"duplicate_drop":0,"late_drop":0,"filtered_drop":0,"reordered":0,"empty_playback_queue":0}
+func diagnostics() -> Dictionary:
+	return diagnostic_counts.duplicate()
+func count_event(kind:String) -> void:
+	diagnostic_counts[kind]=diagnostic_counts.get(kind,0)+1
 var relayed_packets:=0
 var rejected_packets:=0
 var permission_wait:=false
@@ -134,6 +139,9 @@ func _process(delta: float) -> void:
 		if game.fighters.has(id) and state.player is AudioStreamPlayer3D:state.player.global_position=game.fighters[id].head.global_position
 		state.player.volume_db=linear_to_db(maxf(.0001,volume)) if not muted_all and not muted.has(id) else -80.0
 		if speaker.audio_stream_playback_opus:
+			var empty:bool=speaker.inopusstream and not speaker.playbackpausedonmark and speaker.audio_stream_playback_opus.queue_length_frames()==0
+			if empty and not state.get("empty_queue",false):count_event("empty_playback_queue")
+			state.empty_queue=empty
 			var peak: float=speaker.audio_stream_playback_opus.get_chunk_max()
 			if peak>.001:decoded_peak=maxf(decoded_peak,peak)
 			var audible: bool=speaker.inopusstream or speaker.audio_stream_playback_opus.queue_length_frames()>0
@@ -191,25 +199,28 @@ func create_stream(id: int,serial: int,radio: bool=false) -> void:
 	add_child(player)
 	var speaker=Speaker.new();speaker.audio_buffer_lag_time_target=.08;speaker.audio_buffer_lag_time_target_tolerance=.06;player.add_child(speaker)
 	speaker.packet_decoded.connect(func():decoded_packets+=1)
+	speaker.decode_event.connect(count_event)
 	var header:={"opussamplerate":48000,"opuschannels":1,"lenchunkprefix":2,"opusstreamcount":0,"opusframesize":960,"opusframecount":0,"talkingtimestart":0}
 	speaker.receive_audio_packet(JSON.stringify(header).to_ascii_buffer())
 	streams[id]={"radio":radio,"player":player,"speaker":speaker,"base":serial,"last":serial-1,"seen":{},"last_time":game.clock}
 
 @rpc("authority","call_remote","unreliable",6)
 func receive(id: int,serial: int,data: PackedByteArray,radio: bool=false) -> void:
-	if not game.voice_enabled or not game.players.has(id) or id==multiplayer.get_unique_id() or muted_all or muted.has(id) or not valid_packet(data):return
-	if serial<0 or serial>2147483647:return
+	if not game.voice_enabled or not game.players.has(id) or id==multiplayer.get_unique_id() or muted_all or muted.has(id) or not valid_packet(data):count_event("filtered_drop");return
+	if serial<0 or serial>2147483647:count_event("filtered_drop");return
 	# FPSloppa's monotonic channel history prevents delayed radio frames from
 	# switching playback back after a newer local-voice packet (and vice versa).
 	var channel: Dictionary=channel_serial.get(id,{"serial":-1,"radio":radio})
-	if serial<=channel.serial and radio!=channel.radio:return
+	if serial<=channel.serial and radio!=channel.radio:count_event("late_drop");return
 	if serial>channel.serial:channel_serial[id]={"serial":serial,"radio":radio}
 	if streams.has(id) and streams[id].radio!=radio:remove_stream(id)
-	if not radio and not game.same_location(multiplayer.get_unique_id(),id):return
-	if game.headless and not test_receive:return
+	if not radio and not game.same_location(multiplayer.get_unique_id(),id):count_event("filtered_drop");return
+	if game.headless and not test_receive:count_event("filtered_drop");return
 	if streams.has(id):
 		var old: Dictionary=streams[id]
-		if serial<old.base or serial<old.last-32 or old.seen.has(serial):return
+		if old.seen.has(serial):count_event("duplicate_drop");return
+		if serial<old.base or serial<old.last-32:count_event("late_drop");return
+		if serial<old.last:count_event("reordered")
 		if serial>old.last+50 or serial-old.base>=32000 or game.clock-old.last_time>.16:remove_stream(id)
 	if not streams.has(id):
 		create_stream(id,serial,radio)

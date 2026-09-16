@@ -110,7 +110,7 @@ def build(id):
   for dz in [-.19,0,.19]:box('timber',(x,.47,z+dz),(1.8,.055,.17))
   for yy in [.77,.98]:box('timber',(x,yy,z+.28),(1.8,.16,.055))
   for dx in [-.68,.68]:
-   beam('steel',(x+dx,0,z-.2),(x+dx,.45,z-.2),.035);beam('steel',(x+dx,0,z+.23),(x+dx,1.07,z+.23),.035)
+   beam('steel',(x+dx,0,z-.2),(x+dx,.45,z-.2),.035);beam('steel',(x+dx,0,z+.34),(x+dx,1.07,z+.34),.035)
   col((x,.48,z),(1.85,1.0,.7),'seat')
  def cleat(x,z,grounded=False):
   box('steel',(x,.09 if grounded else .12,z),(.18,.18 if grounded else .12,.10));beam('steel',(x-.2,.20,z),(x+.2,.20,z),.035)
@@ -224,7 +224,7 @@ def build(id):
   rail((-4.5,7),(4.5,7),'rope',.85)
   for x in [-3,-1.5,1.5,3]:
    size=rng.uniform(.7,1.1);rock(x,-3-size*1.25-.25,size)
-  bench(-2.5,5.5);coil(3,-2);cleat(3.5,-2.5)
+  bench(-2.5,5.5);coil(3,-2);cleat(3.5,-2.5,grounded=True)
   for side in [-1,1]:
    for j in range(16):plants(side*rng.uniform(5,9),rng.uniform(5,13),10)
  elif id=='blouberg_sunrise_2':

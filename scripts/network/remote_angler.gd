@@ -61,11 +61,9 @@ func receive_state(data: Dictionary) -> void:
 	var snap: bool=target.is_empty() or target.location!=data.location or target.feet.distance_to(data.feet)>3
 	target=data.duplicate(true)
 	if snap: rendered=target.duplicate(true)
-	if fish_key!=[data.species,data.length]:
-		fish_key=[data.species,data.length]
-		_build_fish(data.species,data.length)
 
 func _build_fish(index: int, length_cm: float) -> void:
+	var diagnostic_started:=Time.get_ticks_usec()
 	for child in caught.get_children(): caught.remove_child(child); child.queue_free()
 	var species: Dictionary=Fish.SPECIES[index]
 	var path: String=species.get("model","res://assets/models/european_perch.glb" if index==0 else "")
@@ -82,11 +80,15 @@ func _build_fish(index: int, length_cm: float) -> void:
 		game.mesh_node(tail,caught,Vector3(-.33,0,0),game.material(Color("787648")))
 
 	preload("res://scripts/fish_size.gd").fit(caught,length_cm)
+	preload("res://scripts/client_diagnostics.gd").stage("remote_fish",diagnostic_started,{"species":index})
 
 func _process(delta: float) -> void:
 	if target.is_empty(): return
 	visible=target.location==session.root_game.current_location
 	if not visible: return
+	if target.caught and fish_key!=[target.species,target.length]:
+		fish_key=[target.species,target.length]
+		_build_fish(target.species,target.length)
 	var blend:=1.0-exp(-delta*18.0)
 	for key in preload("res://scripts/network/state.gd").TRANSFORMS:
 		rendered[key]=rendered[key].interpolate_with(target[key],blend)

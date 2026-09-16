@@ -1,5 +1,6 @@
 extends Node
 signal packet_decoded
+signal decode_event(kind: String)
 
 var audioplayeropus = null
 var audiostreamopus : AudioStreamOpus = null
@@ -99,7 +100,7 @@ func receive_audio_packet(packet):
 				for queued in outoforderchunkqueue:
 					if queued != null:
 						audio_stream_playback_opus.push_opus_packet(queued, lenchunkprefix, 0)
-						packet_decoded.emit()
+						packet_decoded.emit();decode_event.emit("normal")
 				outoforderchunkqueue.fill(null);opusframequeuecount=0
 				audio_stream_playback_opus.mark_end_opus_stream(true)
 				audio_stream_playback_opus.mark_end_opus_stream(false)
@@ -124,14 +125,14 @@ func receive_audio_packet(packet):
 				opusframecount = opusframecountI
 				opusframecountR = 0
 			else:
-				pass # Upstream diagnostic suppressed.
+				decode_event.emit("late_drop")
 			
 		if opusframecountR >= 0:
 			while opusframecountR >= Noutoforderqueue:
 				pass # Upstream diagnostic suppressed.
 				if outoforderchunkqueue[0] != null:
 					audio_stream_playback_opus.push_opus_packet(outoforderchunkqueue[0], lenchunkprefix, 0)
-					packet_decoded.emit()
+					packet_decoded.emit();decode_event.emit("normal")
 					opusframequeuecount -= 1
 				else:
 					var nextvalidpacketforfec = packet
@@ -140,14 +141,15 @@ func receive_audio_packet(packet):
 							nextvalidpacketforfec = outoforderchunkqueue[i]
 							break
 					audio_stream_playback_opus.push_opus_packet(nextvalidpacketforfec, lenchunkprefix, 1)
-					packet_decoded.emit()
+					packet_decoded.emit();decode_event.emit("fec_attempt")
 				outoforderchunkqueue.pop_front()
 				outoforderchunkqueue.push_back(null)
 				opusframecountR -= 1
 				opusframecount += 1
 				assert (opusframequeuecount >= 0)
 
-			if outoforderchunkqueue[opusframecountR] != null:return
+			if outoforderchunkqueue[opusframecountR] != null:
+				decode_event.emit("duplicate_drop");return
 			outoforderchunkqueue[opusframecountR] = packet
 			opusframequeuecount += 1
 			while outoforderchunkqueue[0] != null and opusframecount + opusframequeuecount >= Npacketinitialbatching:
@@ -155,7 +157,7 @@ func receive_audio_packet(packet):
 					pass # Upstream diagnostic suppressed.
 					break
 				audio_stream_playback_opus.push_opus_packet(outoforderchunkqueue.pop_front(), lenchunkprefix, 0)
-				packet_decoded.emit()
+				packet_decoded.emit();decode_event.emit("normal")
 				outoforderchunkqueue.push_back(null)
 				opusframecount += 1
 				opusframequeuecount -= 1

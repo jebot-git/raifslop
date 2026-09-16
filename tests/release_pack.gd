@@ -19,6 +19,12 @@ func run() -> void:
 			var path := folder.path_join(child)
 			check(path not in ["res://docs", "res://source", "res://tests", "res://tools", "res://builds", "res://data", "res://.release-signing", "res://addons/godot_ai", "res://addons/fishing_export"], "Private/development folder leaked: " + path)
 			stack.append(path)
+	check(ProjectSettings.get_setting("application/config/version")=="0.1.10","Pack is version 0.1.10")
+	check(load("res://scripts/network/session.gd").VERSION==4,"Pack uses avatar recovery protocol 4")
+	check(ResourceLoader.exists("res://scripts/client_diagnostics.gd"),"Pack includes opt-in client diagnostics")
+	for name in ["coastal_dune_grass.png","coastal_wrack.png","fishing_plan_poster.svg"]:
+		var tex:Texture2D=load("res://assets/environment/shore_details/"+name)
+		check(tex!=null and tex.get_image().has_mipmaps(),"Pack preserves mipmaps: "+name)
 	var desktop := not OS.get_cmdline_user_args().has("--mobile-textures")
 	var metrics: Dictionary = {}
 	for entry in load("res://scripts/locations.gd").CATALOG:
@@ -54,7 +60,7 @@ func run() -> void:
 	check(game.Locations.measured_lighting.size()==8,"Pack contains every measured sun profile")
 	for entry in game.Locations.CATALOG:
 		check(game._select_location(entry.id, false),"Pack loads location "+entry.id)
-		if entry.id in ["lake_pier","simons_town_rocks"]:
+		if entry.id in ["lake_pier","simons_town_rocks","fish_hoek_beach"]:
 			check(game.foreground.has_node("RearParallax"),"Pack loads rear depth bands "+entry.id)
 		if entry.id=="lake_pier":
 			var poster_found:=false
@@ -65,6 +71,10 @@ func run() -> void:
 						check(mesh.get_active_material(surface).get_shader_parameter("albedo_tex")!=null,"Pack loads Korean poster artwork")
 			check(poster_found,"Pack contains authored billboard")
 		await process_frame
+	game.ambience.stop();game.fishing_feedback.set_process(false)
+	for type in ["AudioStreamPlayer","AudioStreamPlayer3D"]:
+		for player in game.find_children("*",type,true,false):player.stop()
+	await create_timer(.3).timeout
 	game.queue_free();await process_frame;await create_timer(.3).timeout
 	var total := 0
 	for size in entries.values(): total += size

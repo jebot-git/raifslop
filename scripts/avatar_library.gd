@@ -108,11 +108,13 @@ static func copy_import(path: String,directory: String) -> Dictionary:
 	return copied
 
 func load_model(path: String) -> Node3D:
+	var stage_start:=Time.get_ticks_usec()
 	error = ""
 	var info := inspect(path)
 	if info.has("error"):
 		error = info.error
 		return null
+	preload("res://scripts/client_diagnostics.gd").stage("avatar_validate",stage_start,{"path":path})
 	var extensions: Array = [preload("res://addons/vrm/vrm_extension.gd").new(), preload("res://addons/vrm/1.0/VRMC_node_constraint.gd").new(), preload("res://addons/vrm/1.0/VRMC_springBone.gd").new(), preload("res://addons/vrm/1.0/VRMC_materials_mtoon.gd").new(), preload("res://addons/vrm/1.0/VRMC_materials_hdr_emissiveMultiplier.gd").new(), preload("res://addons/vrm/1.0/VRMC_vrm.gd").new()]
 	for extension in extensions: GLTFDocument.register_gltf_document_extension(extension, true)
 	var gltf := GLTFDocument.new()
@@ -122,10 +124,27 @@ func load_model(path: String) -> Node3D:
 	state.set_additional_data("vrm/head_hiding_method", 3)
 	state.set_additional_data("vrm/first_person_layers", 2)
 	state.set_additional_data("vrm/third_person_layers", 4)
+	var context := {"path":path,"sha256":FileAccess.get_sha256(path)}
+	print("AVATAR_LOAD_BEGIN ",JSON.stringify(context))
+	stage_start=Time.get_ticks_usec()
 	var result := gltf.append_from_file(path, state, 8)
-	var model: Node3D = gltf.generate_scene(state) if result == OK else null
+	preload("res://scripts/client_diagnostics.gd").stage("avatar_parse_images",stage_start,context)
+	# glTF can return OK with null image placeholders after a decoder failure.
+	# Do not equip or cache a partially textured avatar as a successful import.
+	if result == OK:
+		var images := state.get_images()
+		for index in state.json.get("images",[]).size():
+			if index>=images.size() or images[index]==null:
+				error="Avatar %s: embedded image index %d could not be decoded. Re-export the avatar with valid PNG/JPEG textures." % [path.get_file(),index]
+				break
+	stage_start=Time.get_ticks_usec()
+	var model: Node3D = gltf.generate_scene(state) if result == OK and error.is_empty() else null
+	preload("res://scripts/client_diagnostics.gd").stage("avatar_scene",stage_start,context)
 	for extension in extensions: GLTFDocument.unregister_gltf_document_extension(extension)
-	if model == null: error = "The Godot VRM plugin could not load this avatar."
+	if model == null:
+		if error.is_empty(): error = "The Godot VRM plugin could not load avatar %s (%s)." % [path.get_file(),error_string(result) if result!=OK else "scene generation failed"]
+		context["error"]=error
+		printerr("AVATAR_LOAD_FAILED ",JSON.stringify(context))
 	else:
 		var bounds = preload("res://scripts/avatar_rest_bounds.gd")
 		model.set_meta(bounds.CACHE_KEY, bounds.measure(model))
