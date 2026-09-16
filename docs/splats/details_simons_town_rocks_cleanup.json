@@ -1,0 +1,17 @@
+{
+  "location": "simons_town_rocks",
+  "count": 15361,
+  "source_count": 500000,
+  "stages": {
+    "source": 500000,
+    "near_finite": 229834,
+    "above_water": 64340,
+    "open_water_cleared": 61070,
+    "reported_artifacts_removed": 55607,
+    "walkable_support_excluded": 15435
+  },
+  "scale": 2.621228183581125,
+  "min_support_clearance": 0.24872873812740526,
+  "walkable_overlaps": 0,
+  "ply_bytes": 860677
+}

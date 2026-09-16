@@ -1,0 +1,24 @@
+{
+	"adapter": "Intel(R) Graphics (ADL-N)",
+	"checks": {
+		"collision_proxies": 5,
+		"floor_hits": [
+			true
+		],
+		"rock_cards": 0,
+		"side_barrier_blocks": true
+	},
+	"frames": 600,
+	"gpu_median_ms": 3.51099991798401,
+	"gpu_p95_ms": 4.05999994277954,
+	"location": "lake_pier",
+	"points": 10566,
+	"render_memory": 124859520.0,
+	"resolution": [
+		1280,
+		720
+	],
+	"scope": "desktop mono; not a stereo headset benchmark",
+	"wall_median_ms": 4.343,
+	"wall_p95_ms": 6.606
+}

@@ -1,0 +1,9 @@
+{
+	"collision_proxies": 17,
+	"floor_hits": [
+		true
+	],
+	"rear_connection": false,
+	"rock_cards": 6,
+	"side_barrier_blocks": true
+}

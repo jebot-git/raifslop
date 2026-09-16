@@ -1,0 +1,27 @@
+{
+	"adapter": "Intel(R) Graphics (ADL-N)",
+	"checks": {
+		"collision_proxies": 17,
+		"floor_hits": [
+			true
+		],
+		"rear_connection": false,
+		"right_billboard": false,
+		"rock_cards": 9,
+		"side_barrier_blocks": true,
+		"water_rear": -2.15
+	},
+	"frames": 600,
+	"gpu_median_ms": 3.25,
+	"gpu_p95_ms": 3.62199997901917,
+	"location": "simons_town_rocks",
+	"points": 15361,
+	"render_memory": 146156512.0,
+	"resolution": [
+		1280,
+		720
+	],
+	"scope": "desktop mono; not a stereo headset benchmark",
+	"wall_median_ms": 3.977,
+	"wall_p95_ms": 6.355
+}

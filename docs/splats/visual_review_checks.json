@@ -1,0 +1,82 @@
+{
+  "scene": {
+    "captures": [
+      "review_1789553370834.png",
+      "review_1789553375580.png",
+      "review_1789553380101.png",
+      "review_1789553387480.png",
+      "review_1789553392171.png",
+      "review_1789553397548.png",
+      "review_1789553455932.png"
+    ],
+    "floor_hits": [
+      {
+        "at": "(0.0, 0.0, 0.0)",
+        "hit": true,
+        "y": -1.62999999523163
+      },
+      {
+        "at": "(0.0, 0.0, -5.0)",
+        "hit": true,
+        "y": -1.62999999523163
+      },
+      {
+        "at": "(0.0, 0.0, 7.0)",
+        "hit": true,
+        "y": -1.62999999523163
+      }
+    ],
+    "ground_cover_patches": 4,
+    "points": 53204,
+    "protected_terrain_vertices_changed": 0,
+    "proxies": 15,
+    "reed_instances": 12,
+    "side_barrier_blocks": true,
+    "side_distance": 0.6015625,
+    "terrain_vertices_adjusted": 1656
+  },
+  "filter": {
+    "points": 53204,
+    "walkable_support_overlaps": 0,
+    "minimum_support_clearance_metres": 0.18599902029988158,
+    "support_sigma_multiplier": 4.25,
+    "safety_margin_metres": 0.15,
+    "water_corridor_points": 0,
+    "footprints": [
+      {
+        "center_xz": [
+          0.0,
+          0.35
+        ],
+        "half_size_xz": [
+          0.9,
+          5.0
+        ],
+        "yaw": 0
+      },
+      {
+        "center_xz": [
+          0.0,
+          -5.15
+        ],
+        "half_size_xz": [
+          2.4,
+          1.5
+        ],
+        "yaw": 0
+      },
+      {
+        "center_xz": [
+          0.0,
+          7.35
+        ],
+        "half_size_xz": [
+          4.5,
+          2.0
+        ],
+        "yaw": 0
+      }
+    ],
+    "all_finite": true
+  }
+}

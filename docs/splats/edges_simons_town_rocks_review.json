@@ -1,0 +1,11 @@
+{
+	"collision_proxies": 17,
+	"floor_hits": [
+		true
+	],
+	"rear_connection": false,
+	"right_billboard": false,
+	"rock_cards": 8,
+	"side_barrier_blocks": true,
+	"water_rear": -2.15
+}

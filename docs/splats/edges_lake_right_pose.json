@@ -1,0 +1,16 @@
+{
+	"camera_position": [
+		1.05378139019012,
+		0.000833272933959961,
+		2.81558394432068
+	],
+	"camera_rotation": [
+		-0.315000027418137,
+		4.63200044631958,
+		0.0
+	],
+	"lighting_original": false,
+	"location": "lake_pier",
+	"splats_visible": true,
+	"water_visible": true
+}

@@ -1,0 +1,31 @@
+Hybrid Splat Viewer 0.1.0-splat.1 — testing prerelease
+
+Two environment areas: Lake Pier and Simons Rocks.
+This is a scenery viewer, with no fishing gameplay, multiplayer or voice chat.
+
+Linux / Windows:
+  Desktop launcher: keyboard and mouse.
+  VR launcher: start your OpenXR runtime and connect your headset first.
+  Linux WiVRn launcher: select the installed WiVRn runtime for this process.
+  1 / 2: Lake Pier / Simons Rocks
+  WASD: walk; hold right mouse and drag: look
+  B: splats on/off; L: Simons old/new lighting
+  R: reset position; P: save screenshot and camera pose; Escape: quit
+
+VR / Quest / Pico (Touch-style button names):
+  Left stick: walk; right stick: 30-degree snap turn
+  Right A: switch location; right B: splats on/off
+  Headset tracking supplies your view; the collision capsule follows room movement.
+  Exit using the headset's application menu.
+
+Settings, captures and diagnostic reports are separate from the fishing game.
+Linux: ~/.local/share/RealAIFishing-SplatTesting/
+Windows: %APPDATA%\RealAIFishing-SplatTesting\
+Android: private app data for org.jebot.raifslop.splattesting.quest or .pico
+Saved settings: last area, splat visibility and Simons lighting choice.
+Screenshots and reports: captures/ inside that directory.
+No saves are imported from or written to the main game.
+
+Known limits: remaining shoreline reconstruction artifacts; two-area prototype.
+Linux desktop runtime tested. Windows and Android builds are export/pack audited.
+New headset and standalone-device visual/performance validation is still pending.

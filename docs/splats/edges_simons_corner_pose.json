@@ -1,0 +1,16 @@
+{
+	"camera_position": [
+		3.72856831550598,
+		0.000805139541625977,
+		5.70794916152954
+	],
+	"camera_rotation": [
+		-0.414000004529953,
+		4.00500202178955,
+		0.0
+	],
+	"lighting_original": false,
+	"location": "simons_town_rocks",
+	"splats_visible": true,
+	"water_visible": true
+}

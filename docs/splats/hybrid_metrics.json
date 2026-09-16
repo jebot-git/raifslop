@@ -1,0 +1,129 @@
+{
+  "full": {
+    "adapter": "Intel(R) Graphics (ADL-N)",
+    "collision_proxies": 0,
+    "engine_delta_ms_median": 31.25,
+    "frames": 600,
+    "gpu_ms_median": 26.80299949646,
+    "gpu_ms_p95": 27.3500003814697,
+    "load_ms": 162,
+    "mode": "full",
+    "points": 500000,
+    "render_memory": 171521856.0,
+    "resolution": [
+      1280,
+      720
+    ],
+    "scope": "desktop mono, matching camera path, vsync disabled, no capture stalls during samples",
+    "static_memory": 185002796,
+    "wall_frame_ms_median": 31.356,
+    "wall_frame_ms_p95": 33.8
+  },
+  "hybrid": {
+    "adapter": "Intel(R) Graphics (ADL-N)",
+    "collision_proxies": 15,
+    "engine_delta_ms_median": 8.33333333333333,
+    "frames": 600,
+    "gpu_ms_median": 6.67199993133545,
+    "gpu_ms_p95": 7.48999977111816,
+    "load_ms": 526,
+    "mode": "hybrid",
+    "points": 64189,
+    "render_memory": 138535792.0,
+    "resolution": [
+      1280,
+      720
+    ],
+    "scope": "desktop mono, matching camera path, vsync disabled, no capture stalls during samples",
+    "static_memory": 69285145,
+    "wall_frame_ms_median": 8.201,
+    "wall_frame_ms_p95": 10.569
+  },
+  "panorama": {
+    "adapter": "Intel(R) Graphics (ADL-N)",
+    "collision_proxies": 15,
+    "engine_delta_ms_median": 4.54545454545454,
+    "frames": 600,
+    "gpu_ms_median": 3.36199998855591,
+    "gpu_ms_p95": 3.69099998474121,
+    "load_ms": 504,
+    "mode": "panorama",
+    "points": 0,
+    "render_memory": 128302192.0,
+    "resolution": [
+      1280,
+      720
+    ],
+    "scope": "desktop mono, matching camera path, vsync disabled, no capture stalls during samples",
+    "static_memory": 49554584,
+    "wall_frame_ms_median": 4.118,
+    "wall_frame_ms_p95": 6.271
+  },
+  "hybrid_cleanup": {
+    "source_count": 500000,
+    "kept_count": 64189,
+    "removed_percent": 87.1622,
+    "stages": {
+      "finite_and_nontransparent": {
+        "removed": 172937,
+        "remaining": 327063
+      },
+      "near_scenery_only": {
+        "removed": 99432,
+        "remaining": 227631
+      },
+      "remove_water_and_reflections": {
+        "removed": 91980,
+        "remaining": 135651
+      },
+      "remove_large_sky_floaters": {
+        "removed": 2636,
+        "remaining": 133015
+      },
+      "clear_authored_walkway": {
+        "removed": 33167,
+        "remaining": 99848
+      },
+      "clear_central_open_water": {
+        "removed": 33690,
+        "remaining": 66158
+      }
+    },
+    "scale_to_eye_height": 2.2351856863698347,
+    "near_radius_metres": 26.822228236438015,
+    "source_water_cutoff_y": -0.62,
+    "ply_bytes": 3595041
+  },
+  "hybrid_filter_checks": {
+    "points": 64189,
+    "finite": true,
+    "radius_min": 2.436037076978754,
+    "radius_max": 11.822571613581287,
+    "min_y": -0.619873046875,
+    "max_axis": 0.20961138606071472,
+    "minimum_alpha": 0.010011164471507072,
+    "central_open_water_points": 0
+  },
+  "hybrid_collision_checks": {
+    "floor_hits": [
+      {
+        "at": "(0.0, 0.0, 0.0)",
+        "hit": true,
+        "y": -1.62999999523163
+      },
+      {
+        "at": "(0.0, 0.0, -5.0)",
+        "hit": true,
+        "y": -1.62999999523163
+      },
+      {
+        "at": "(0.0, 0.0, 7.0)",
+        "hit": true,
+        "y": -1.62999999523163
+      }
+    ],
+    "proxies": 15,
+    "side_barrier_blocks": true,
+    "side_distance": 0.6015625
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "description": "Final two-area hybrid assets generated with World Labs Marble and locally cleaned; no API access needed at runtime. Authored source panoramas and meshes credited in ASSET_CREDITS.md.",
+  "files": {
+    "lake_pier_near.ply": "5728add1ebd07a7c0b7784591d8fb684b6a7528c7e3b153964ed29f420eb3849",
+    "simons_town_rocks_near.ply": "2551e7a9676b465da308bde97be0240a4739337e2a345c5aae504cf84bd4fa06",
+    "lake_pier_pano.png": "d9fcd8c64c26df915a5325ee5488867ac97e1100e6b6d0d63324a112043937fc",
+    "simons_town_rocks_pano.png": "c2be03365a9719790ee85a74b73f54184f5acfda543dcde5051bdf7d3b31295c",
+    "simons_panorama_irradiance.exr": "08fe46f45fb308c72c139e2b021bd4c679acdc0a491a47a432004ccc10ac184b",
+    "location_profiles.json": "114901b78fcbf887971ab302aa7200083051c896964518ee6adcc975cf079cae",
+    "placement.json": "2842c68333bda677caa2f760af546fcbf6337c8d805bdcccf1d0b6104d783fb2"
+  },
+  "cleanup": {
+    "lake_pier": {
+      "location": "lake_pier",
+      "count": 8795,
+      "source_count": 500000,
+      "stages": {
+        "source": 500000,
+        "near_finite": 199509,
+        "above_water": 70176,
+        "open_water_cleared": 59054,
+        "billboard_support_cleared": 18041,
+        "reported_artifacts_removed": 18041,
+        "walkable_support_excluded": 8869
+      },
+      "scale": 1.8355764365739067,
+      "min_support_clearance": 0.24740821890056353,
+      "walkable_overlaps": 0,
+      "ply_bytes": 492980
+    },
+    "simons_town_rocks": {
+      "location": "simons_town_rocks",
+      "count": 15361,
+      "source_count": 500000,
+      "stages": {
+        "source": 500000,
+        "near_finite": 229834,
+        "above_water": 64340,
+        "open_water_cleared": 61070,
+        "reported_artifacts_removed": 55607,
+        "walkable_support_excluded": 15435
+      },
+      "scale": 2.621228183581125,
+      "min_support_clearance": 0.24872873812740526,
+      "walkable_overlaps": 0,
+      "ply_bytes": 860677
+    }
+  }
+}

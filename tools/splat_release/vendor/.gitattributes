@@ -1,0 +1,2 @@
+# Preserve the tested third-party renderer snapshot verbatim.
+gdgs/** -whitespace

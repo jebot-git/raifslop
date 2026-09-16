@@ -1,0 +1,17 @@
+{
+  "location": "lake_pier",
+  "count": 9486,
+  "source_count": 500000,
+  "stages": {
+    "source": 500000,
+    "near_finite": 199509,
+    "above_water": 70176,
+    "open_water_cleared": 59054,
+    "reported_artifacts_removed": 19557,
+    "walkable_support_excluded": 9633
+  },
+  "scale": 1.8355764365739067,
+  "min_support_clearance": 0.24740821890056353,
+  "walkable_overlaps": 0,
+  "ply_bytes": 531676
+}

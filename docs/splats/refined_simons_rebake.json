@@ -1,0 +1,12 @@
+{
+  "source": "simons_town_rocks_8k.hdr",
+  "samples": 48,
+  "resolution": 1024,
+  "uv": "existing BakedUV",
+  "environment_rotation_degrees": -90,
+  "mean_rgb": [
+    0.4659472405910492,
+    0.43096134066581726,
+    0.3474867343902588
+  ]
+}

@@ -1,0 +1,96 @@
+{
+	"checks": {
+		"collision_proxies": 17,
+		"floor_hits": [
+			true
+		],
+		"rear_connection": false,
+		"rock_cards": 6,
+		"side_barrier_blocks": true
+	},
+	"location": "simons_town_rocks",
+	"passed": true,
+	"rear_pixels_recovered": 736,
+	"rows": [
+		{
+			"legacy": true,
+			"pose": 0,
+			"splat_pixels": 220
+		},
+		{
+			"legacy": true,
+			"pose": 1,
+			"splat_pixels": 341
+		},
+		{
+			"legacy": true,
+			"pose": 2,
+			"splat_pixels": 317
+		},
+		{
+			"legacy": true,
+			"pose": 3,
+			"splat_pixels": 44
+		},
+		{
+			"legacy": true,
+			"pose": 4,
+			"splat_pixels": 108
+		},
+		{
+			"legacy": true,
+			"pose": 5,
+			"splat_pixels": 1440
+		},
+		{
+			"legacy": true,
+			"pose": 6,
+			"splat_pixels": 1835
+		},
+		{
+			"legacy": true,
+			"pose": 7,
+			"splat_pixels": 440
+		},
+		{
+			"legacy": false,
+			"pose": 0,
+			"splat_pixels": 219
+		},
+		{
+			"legacy": false,
+			"pose": 1,
+			"splat_pixels": 1116
+		},
+		{
+			"legacy": false,
+			"pose": 2,
+			"splat_pixels": 1053
+		},
+		{
+			"legacy": false,
+			"pose": 3,
+			"splat_pixels": 297
+		},
+		{
+			"legacy": false,
+			"pose": 4,
+			"splat_pixels": 106
+		},
+		{
+			"legacy": false,
+			"pose": 5,
+			"splat_pixels": 1441
+		},
+		{
+			"legacy": false,
+			"pose": 6,
+			"splat_pixels": 1835
+		},
+		{
+			"legacy": false,
+			"pose": 7,
+			"splat_pixels": 432
+		}
+	]
+}

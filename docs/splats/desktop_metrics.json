@@ -1,0 +1,32 @@
+[
+  {
+    "adapter": "Intel(R) Graphics (ADL-N)",
+    "asset": "gray_pier_100k.ply",
+    "frame_ms_median": 16.6666666666667,
+    "frame_ms_p95": 19.074,
+    "frames": 600,
+    "load_ms": 76,
+    "render_memory": 311762256.0,
+    "resolution": [
+      1280,
+      720
+    ],
+    "scope": "desktop mono; no headset or complete game; vsync disabled",
+    "static_memory": 96612238
+  },
+  {
+    "adapter": "Intel(R) Graphics (ADL-N)",
+    "asset": "gray_pier_500k.ply",
+    "frame_ms_median": 30.0,
+    "frame_ms_p95": 31.25,
+    "frames": 600,
+    "load_ms": 178,
+    "render_memory": 373262944.0,
+    "resolution": [
+      1280,
+      720
+    ],
+    "scope": "desktop mono; no headset or complete game; vsync disabled",
+    "static_memory": 303993472
+  }
+]
