@@ -10,7 +10,7 @@ if subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True).st
 if OUT.exists():shutil.rmtree(OUT)
 OUT.mkdir(parents=True)
 godot=os.environ.get('GODOT_BIN','godot')
-env=dict(os.environ,XDG_CONFIG_HOME=str(ROOT/'builds/config'),XDG_DATA_HOME='/tmp/raif-bbq-build')
+env=dict(os.environ,XDG_CONFIG_HOME=str(ROOT/'builds/config'))
 for label,args in [('import',['--editor','--import','--quit']),('export',['--export-release','Linux',str(OUT/'RealAIFishing.x86_64')])]:
  log=ROOT/'builds'/('bbq-'+label+'.log')
  with log.open('w') as f:r=subprocess.run([godot,'--headless','--path',str(ROOT),'--xr-mode','off',*args],env=env,stdout=f,stderr=subprocess.STDOUT)
