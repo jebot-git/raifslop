@@ -16,6 +16,9 @@ func update_holster() -> void:
 		hip=hips.origin;facing=Basis(Vector3.UP,atan2(hips.basis.z.x,hips.basis.z.z))
 	belt_pose=Transform3D(facing*Basis(Vector3.RIGHT,-PI/2),hip+facing*Vector3(.29,0,-.02))
 	if stowed: g.rod.global_transform=belt_pose
+	if is_instance_valid(g.bbq) and g.bbq.holds(1):
+		grip_was_down=true
+		return
 	if not g.xr: return
 	if not g.right.get_has_tracking_data():
 		grip_was_down=true
@@ -59,6 +62,6 @@ func set_stowed(value: bool) -> bool:
 static func remote_stowed(data: Dictionary) -> bool:
 	# A solved hand can stop short of its controller. Only the belt's exact
 	# downward orientation and hip region identify a folded rod in protocol 2.
-	if not data.xr or not data.state in [S.State.READY,S.State.LOST]: return false
+	if not data.state in [S.State.READY,S.State.LOST]: return false
 	var from_head: Vector3=data.rod.origin-data.head.origin
 	return data.rod.basis.z.distance_to(Vector3.UP)<.001 and Vector2(from_head.x,from_head.z).length()<.65 and from_head.y<-.30 and data.rod.origin.y>=data.feet.y+.50

@@ -12,6 +12,7 @@ const Locations = preload("res://scripts/locations.gd")
 var tracking_manager: Node
 var ambience: Node
 var shoulder_radio: Node3D
+var bbq: Node3D
 var network: Node
 var rod_status: Node3D
 var server_only := false
@@ -126,6 +127,7 @@ func _ready() -> void:
 	shadow_policy=preload("res://scripts/shadow_policy.gd").new()
 	add_child(shadow_policy);shadow_policy.setup(self)
 	_start_network()
+	bbq=preload("res://scripts/bbq/activity.gd").new();add_child(bbq);bbq.setup(self)
 	print("Real AI Fishing ready | ", "OpenXR" if xr else "Desktop", " | panorama + location foreground loaded")
 
 func material(color: Color, metal := 0.0) -> StandardMaterial3D:
@@ -350,6 +352,9 @@ func _select_bait(index: int) -> void:
 	hud.queue_redraw()
 
 func _left_button(button: String) -> void:
+	if is_instance_valid(bbq) and bbq.holds(0):
+		if button == "ax_button":bbq.use(0,bbq.hovered,true)
+		return
 	if is_instance_valid(shoulder_radio) and shoulder_radio.held:return
 	if fish_guide.held:
 		if button == "trigger_click": fish_guide.photo_camera.toggle(); return
@@ -372,6 +377,9 @@ func _right_pressed(button: String) -> void:
 		return
 	if menu_open:
 		if button == "trigger_click": _menu_click(true)
+		return
+	if is_instance_valid(bbq) and bbq.holds(1):
+		if button == "ax_button":bbq.use(1,bbq.hovered,true)
 		return
 	if button == "trigger_click" and game.state in [Session.State.READY, Session.State.LOST] and not rod_holster.stowed:
 		if game.state == Session.State.LOST: game.reset()
@@ -537,6 +545,7 @@ func _cast(_power: float) -> void:
 	fishing_feedback.cast_swish()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(bbq) and bbq.handle_input(event): return
 	if not xr and event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_J and not menu_open:
 			rod_holster.set_stowed(not rod_holster.stowed)
@@ -1226,7 +1235,11 @@ func _update_avatar(delta: float) -> void:
 		avatar.grounded = motor.is_on_floor()
 		avatar.tracked_leg_animation = tracking_manager.tracked_leg_animation if is_instance_valid(tracking_manager) else false
 		avatar.apply_tracking(motor.global_transform, tracking_manager.body if is_instance_valid(tracking_manager) else {}, tracking_manager.face if is_instance_valid(tracking_manager) else {})
-		avatar.update_targets(head, left if xr else desktop_left, right if xr else rod, motor.global_position.y, motor.last_motion, delta)
+		var right_hand:Node3D=right if xr else rod
+		if not xr and is_instance_valid(bbq):
+			if bbq.holds(0):desktop_left.global_transform=bbq.hand_pose(0)
+			if bbq.holds(1):right_hand=bbq.desktop_right
+		avatar.update_targets(head, left if xr else desktop_left, right_hand, motor.global_position.y, motor.last_motion, delta)
 		avatar.left_curl = left.get_float("grip") * 0.8 if xr else 0.7
 		avatar_menu.update_preview(avatar)
 

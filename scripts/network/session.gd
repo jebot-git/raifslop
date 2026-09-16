@@ -2,9 +2,10 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 3 # Voice packets carry an explicit cross-water radio channel.
+const VERSION := 4 # Shared BBQ state and ownership RPCs; update prototype peers together.
 const State = preload("res://scripts/network/state.gd")
 const Remote = preload("res://scripts/network/remote_angler.gd")
+var bbq: Node
 var root_game: Node
 var active := false
 var dedicated := false
@@ -40,6 +41,8 @@ func setup(root: Node, server_only: bool = false) -> void:
 	headless = DisplayServer.get_name()=="headless"
 	if not dedicated: load_preferences()
 	name = "Network"
+	bbq=preload("res://scripts/bbq/network.gd").new()
+	bbq.name="BBQ";add_child(bbq);bbq.setup(self)
 	add_child(permissions)
 	add_child(avatars); avatars.setup(self)
 	voice.name = "Voice"; add_child(voice); voice.setup(self)
@@ -96,6 +99,7 @@ func join(address: String, port: int = 24567) -> Error:
 	return OK
 
 func leave(reason: String = "Offline") -> void:
+	if is_instance_valid(bbq):bbq.reset()
 	active = false
 	connect_deadline = 0
 	voice.stop_capture()
@@ -156,6 +160,7 @@ func _roster(data: Dictionary) -> void:
 	changed.emit()
 
 func _peer_left(id: int) -> void:
+	if is_instance_valid(bbq):bbq.model.release_peer(id);bbq.limits.erase(id)
 	waiting.erase(id); players.erase(id); states.erase(id); guards.erase(id)
 	avatars.remove_peer(id); voice.remove_peer(id)
 	if fighters.has(id): fighters[id].queue_free(); fighters.erase(id)

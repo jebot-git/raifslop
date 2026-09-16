@@ -83,7 +83,7 @@ The perch uses an attributed third-party model; carp and pike currently use simp
 
 ## Scope of this first version
 
-- Eight native 8K waterside panoramas with animated water and walkable foregrounds, including a rocky coast and walkable sunrise beach. [Coastal locations](docs/COASTAL_LOCATIONS.md) have distinct marine rosters with eight [marine species](docs/MARINE_FISH.md) and saltwater baits.
+- Eight native 8K waterside panoramas with animated water and walkable foregrounds, including a rocky coast and walkable sunrise beach. [Coastal locations](docs/COASTAL_LOCATIONS.md) have distinct marine rosters with twelve [marine species](docs/MARINE_EXPANSION.md) and saltwater baits.
 - Room-scale tracked head and controller poses; rod follows the right hand. Off-hand reeling is measured in rod-local coordinates so moving the rod does not itself turn the crank. Tracking loss pauses the simulation; re-grabs and tracking jumps reset the reel sample.
 - Bite timing, directional responses, fish runs, stamina, line tension, win/loss/retry and local catch persistence. Audio and controller vibration mark bites and successful counters.
 - A world-space VR menu, handheld guide status, a separate desktop interface, collision-based free locomotion, and selectable runtime VRM avatars with visible hands.
@@ -163,3 +163,7 @@ granite boulders; Tidal Strand has a broad pale-sand shore, misty hills and drif
 Both use native 8K Poly Haven photographs, authored walkable shores, measured baked
 lighting, generated dune grass and kelp details, recorded surf and distinct marine
 rosters. [Sources, rebuild instructions and captures](docs/COASTAL_EXPANSION.md).
+
+## Shore BBQ prototype branch
+
+`prototype/shore-bbq` includes Secluded Cove and Tidal Strand and a shared leisure BBQ at all ten waters. Open **V / right B → BBQ → Start BBQ & visit**, or press **H** on desktop. Finish the current cast before visiting; your rod is stowed and bait stays ready. Use either pair of tongs to grill, turn and serve free food. Everyone at the location can watch or join. See [prototype controls, scope and validation](docs/BBQ_PROTOTYPE.md). This branch uses multiplayer protocol **4**; run matching prototype clients and servers. Published 0.1.8 remains separate.

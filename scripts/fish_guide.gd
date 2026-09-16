@@ -227,6 +227,7 @@ func touch_position() -> Variant:
 	return _touch_from("none", null)
 
 func can_grab() -> bool:
+	if is_instance_valid(game_root.bbq) and game_root.bbq.holds(0):return false
 	return game_root.game.state not in [game_root.Session.State.BITE, game_root.Session.State.FIGHT]
 
 func update_device() -> void:

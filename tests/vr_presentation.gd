@@ -16,7 +16,7 @@ func run():
 			var query:=PhysicsPointQueryParameters3D.new();query.position=g.Shore.vector(proxy.position);query.collision_mask=1
 			check(g.get_world_3d().direct_space_state.intersect_point(query).is_empty(),"Seat does not obstruct player: "+id+str(proxy.position))
 		check(g.foreground.get_children().any(func(n):return n is StaticBody3D and n.get_meta("role","")=="floor"),"Walkable floor remains: "+id)
-	check(seats==7,"All five benches and both boat seats covered")
+	check(seats==8,"All six benches including Secluded Cove and both boat seats covered")
 	var previous_water:String=g.current_location
 	g._toggle_avatar_menu();g.avatar_menu.show_locations();g.game.state=g.Session.State.FIGHT
 	g.avatar_menu.location_selected.emit("lakeside")

@@ -145,3 +145,17 @@ rebuild: `tools/build_fishing_poster.py`.
   jasinski/qubodup CC0 recordings above. Surf beds are new seeded 128-second mixes,
   not recordings of these particular places. Foreground geometry is authored in
   `tools/build_coastal_expansion.py` and `tools/build_foregrounds.py`.
+
+## Additional maritime species — 16 September 2026
+
+Dusky kob, white stumpnose, zebra seabream and Cape horse mackerel: original
+built-in OpenAI imagegen reference illustrations, reviewed anatomical landmarks,
+Blender reconstruction and baked normal maps. No third-party artwork copied.
+[Institutional references, model gallery and rebuild notes](docs/MARINE_EXPANSION.md),
+[exact prompts](docs/marine_expansion_prompts.json),
+[asset checksums](docs/marine_expansion_assets.json).
+Packed source: `source/marine_expansion.blend`.
+
+## Shore BBQ prototype
+
+The grill, cooler, tongs, serving plates, sausage, corn, mushroom and drink meshes were authored in Blender through Blender MCP with `tools/build_bbq.py`; editable source is `source/bbq.blend`. Metal surfaces use [Metal Plate](https://polyhaven.com/a/metal_plate) by Rob Tuytel, acquired through the Blender MCP Poly Haven integration at 1K, under [CC0](https://polyhaven.com/license). The mooring picnic deck reuses the already credited weathered timber texture. `assets/audio/bbq_sizzle.wav` is a procedurally synthesized original sound. Asset counts and provenance are recorded in `docs/bbq_assets.json`.

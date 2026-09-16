@@ -15,8 +15,8 @@ static func capture(root: Node, serial: int) -> Dictionary:
 	# The existing in_hand flag describes the catch when landed, or the fly line
 	# otherwise. Older peers can still decode this fixed 28-field packet.
 	return {"body":body,"face":root.tracking_manager.face if is_instance_valid(root.tracking_manager) else {},"visemes":root.network.voice.mouth_pose(root.multiplayer.get_unique_id()),"serial":serial,"location":root.current_location,"head":root.head.global_transform,
-		"left":root.left.global_transform if root.xr and not root.reel_tracker.engaged else root.desktop_left.global_transform,
-		"right":root.right.global_transform if root.xr else root.rod.global_transform,
+		"left":root.bbq.hand_pose(0) if is_instance_valid(root.bbq) and root.bbq.holds(0) else (root.left.global_transform if root.xr and not root.reel_tracker.engaged else root.desktop_left.global_transform),
+		"right":root.bbq.hand_pose(1) if is_instance_valid(root.bbq) and root.bbq.holds(1) else (root.right.global_transform if root.xr else root.rod.global_transform),
 		"rod_tier":root.game.tackle.equipped,"reel_angle":fposmod(root.crank.rotation.x,TAU),"rod":root.rod.global_transform,"fish":root.fish_display.global_transform,
 		"feet":root.motor.global_position,"motion":root.motor.last_motion,"tip":root.tip.global_position,
 		"bobber":root.bobber.global_position,"mouth":root.fish_display.to_global(root._catch_mouth()),

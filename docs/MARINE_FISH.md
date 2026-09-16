@@ -1,6 +1,6 @@
 # Marine fish
 
-Coastal Rocks, Sunrise Beach, Secluded Cove and Tidal Strand have marine-only rosters. The original freshwater species and their journal indices remain unchanged; eight marine species are appended at indices 18–25. These are authored southern African coastal game rosters, not a survey of the photographed sites.
+Coastal Rocks, Sunrise Beach, Secluded Cove and Tidal Strand have marine-only rosters. The original freshwater species and their journal indices remain unchanged; the original eight marine species occupy indices 18–25, with four additional species at 28–31. Rare predator indices 26–27 remain unchanged. See the [expanded catalogue, current rosters and model gallery](MARINE_EXPANSION.md). These are authored southern African coastal game rosters, not a survey of the photographed sites.
 
 | Species | Typical game catch | Coastal Rocks | Sunrise Beach |
 | --- | --- | --- | --- |
@@ -13,7 +13,7 @@ Coastal Rocks, Sunrise Beach, Secluded Cove and Tidal Strand have marine-only ro
 | Cape yellowtail — *Seriola lalandi* | 85 cm / 5.5 kg | Yes | Yes |
 | Harder mullet — *Chelon richardsonii* | 32 cm / 0.4 kg | | Yes |
 
-Secluded Cove includes blacktail, galjoen, hottentot, red roman, elf and harder mullet. Tidal Strand includes blacktail, hottentot, white steenbras, elf, Cape yellowtail and harder mullet. All four rosters are distinct and support every saltwater bait slot.
+The table above records the original eight species. Each coastal roster now contains nine regular targets, drawn from twelve marine species. All four rosters are distinct and support every saltwater bait slot; [current rosters](MARINE_EXPANSION.md#coastal-selection) include the four additions.
 
 Sizes are gameplay baselines with the existing ±15% length variation and cubic weight scaling. They are not species maxima. Fighting uses the shared directional counters, submerging mechanics and tackle progression. Catch models retain metre-based scaling and the existing subtle twitch.
 
@@ -35,8 +35,8 @@ Species identities and distinguishing characteristics were checked against [SAAM
 
 Bodies are volumetric with mirrored side textures, inset corneas, paired pectoral fins and attached, thin external fin surfaces. This retains the established VR asset approach; generated anatomy and markings are artistic approximations. Freshwater reconstruction now has a main guard so the marine builder can reuse its functions without rebuilding existing fish.
 
-## Validation
+## Original eight-species validation
 
-`tests/location_species.gd` verifies habitat separation, every local species reachable by actual casts, every bait nonempty and distinct location rosters. `tests/marine_species.gd` exercises coastal/inland travel, bait names and model switching, and optionally renders the gallery. Existing species, guide, fight and catch-twitch suites cover all 26 species. `tools/validate_fish_fins.py` includes all eight marine exports in the attachment and dorsal-silhouette audit.
+`tests/location_species.gd` verifies habitat separation, every local species reachable by actual casts, every bait nonempty and distinct location rosters. `tests/marine_species.gd` exercises coastal/inland travel, bait names and model switching, and optionally renders the gallery. At this stage, species, guide, fight and catch-twitch suites covered all 26 species. `tools/validate_fish_fins.py` includes all eight marine exports in the attachment and dorsal-silhouette audit.
 
-Final checks passed: simulation 230, location/bait 173, imported model integration 179, field guide 41, and tackle 105 assertions; network guards, coastal travel, marine bait switching and catch-twitch suites reported no failures. Blender validated all 23 reconstructed fish (including eight marine fish) for attached fin roots, dorsal silhouettes and bounds. The corrected runtime gallery was visually inspected. Logs and gallery are under `test-results/marine-fish/`. Physical headset appearance and feel were not retested. The gallery normalizes fish lengths for comparison; caught fish use the journal's actual metre scale.
+Original checks passed (see [current expansion checks](MARINE_EXPANSION.md#runtime-previews-and-validation)): simulation 230, location/bait 173, imported model integration 179, field guide 41, and tackle 105 assertions; network guards, coastal travel, marine bait switching and catch-twitch suites reported no failures. Blender validated all 23 reconstructed fish (including eight marine fish) for attached fin roots, dorsal silhouettes and bounds. The corrected runtime gallery was visually inspected. Logs and gallery are under `test-results/marine-fish/`. Physical headset appearance and feel were not retested. The gallery normalizes fish lengths for comparison; caught fish use the journal's actual metre scale.

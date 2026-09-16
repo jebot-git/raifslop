@@ -75,6 +75,8 @@ def audit(path):
                      'scripts/fly_fishing.gd','scripts/hooked_fish.gd','scripts/river_foreground.gd',
                      'scripts/ui/vr_item_list.gd','assets/models/rods/fly_handle.glb',
                      'assets/models/fish/wels_catfish.glb','assets/models/fish/bronze_whaler.glb',
+                     'assets/models/fish/dusky_kob.glb','assets/models/fish/white_stumpnose.glb',
+                     'assets/models/fish/zebra_seabream.glb','assets/models/fish/cape_horse_mackerel.glb',
                      'assets/environment/rivers/river_shrubs.png','assets/environment/rivers/river_alder.png',
                      'assets/environment/rivers/river_bank.png',
                      'assets/environment/shore_details/lakeshore_reeds.png',

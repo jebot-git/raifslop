@@ -31,7 +31,7 @@ func update() -> void:
 	var voice=g.network.voice
 	var tracked: bool=g.left.get_has_tracking_data()
 	var grip: bool=tracked and g.left.get_float("grip")>(.35 if grip_was_down else .55)
-	var valid: bool=voice.can_transmit() and voice.mode>0 and tracked and not g.menu_open and not g.fish_guide.held and g.game.state!=g.Session.State.LANDED
+	var valid: bool=(not is_instance_valid(g.bbq) or not g.bbq.holds(0)) and voice.can_transmit() and voice.mode>0 and tracked and not g.menu_open and not g.fish_guide.held and g.game.state!=g.Session.State.LANDED
 	if not valid:reset();grip_was_down=grip;return
 	var mount:=shoulder()
 	var near: bool=g.left.global_position.distance_to(mount.origin)<.22
