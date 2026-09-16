@@ -120,3 +120,11 @@ Meadow Bend and Boulder Run use original procedural terrain and layered vegetati
 Original built-in OpenAI imagegen transparent reed/sedge cutout for Gray Pier. Lakeside reuses the original river shrub and ground-cover textures. Crossed vegetation geometry and soft ground patches are original code-authored assets. [Implementation, exact prompt and saved asset provenance](docs/SHORE_TRANSITIONS.md).
 
 Simon's Town rear granite cutout: original built-in OpenAI imagegen artwork on code-authored shallow curved geometry. [Exact prompt, source checksum and placement notes](docs/SHORE_TRANSITIONS.md#simons-town-rear-rock-trial).
+
+### Lake Pier fishing-plan poster
+
+Original vector fishing-plan parody with Korean slogans. Lettering is outlined
+from Noto Sans CJK KR Bold (Google/Adobe, SIL Open Font License 1.1), installed
+from the system Noto CJK package. The game contains the resulting SVG artwork,
+not the font software. Source artwork: `source/posters/fishing_plan_base.svg`;
+rebuild: `tools/build_fishing_poster.py`.

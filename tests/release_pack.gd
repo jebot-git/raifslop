@@ -48,8 +48,19 @@ func run() -> void:
 			game.rod_visual.equip(tier,fly)
 			check(game.rod_visual.model!=null and game.rod_visual.folded_model!=null,"Pack contains rod tier %d fly=%s"%[tier,str(fly)])
 	check(game.avatar_menu.list.get_script()==load("res://scripts/ui/vr_item_list.gd"),"VRM list uses packed drag-scrolling script")
+	check(game.Locations.measured_lighting.size()==6,"Pack contains every measured sun profile")
 	for entry in game.Locations.CATALOG:
-		game._select_location(entry.id, false)
+		check(game._select_location(entry.id, false),"Pack loads location "+entry.id)
+		if entry.id in ["lake_pier","simons_town_rocks"]:
+			check(game.foreground.has_node("RearParallax"),"Pack loads rear depth bands "+entry.id)
+		if entry.id=="lake_pier":
+			var poster_found:=false
+			for mesh in game.foreground.find_children("*BakedForeground*","MeshInstance3D",true,false):
+				for surface in mesh.mesh.get_surface_count():
+					if mesh.mesh.surface_get_material(surface).resource_name.begins_with("FG_billboard_print"):
+						poster_found=true
+						check(mesh.get_active_material(surface).get_shader_parameter("albedo_tex")!=null,"Pack loads Korean poster artwork")
+			check(poster_found,"Pack contains authored billboard")
 		await process_frame
 	game.queue_free();await process_frame;await create_timer(.3).timeout
 	var total := 0

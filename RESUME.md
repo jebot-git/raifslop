@@ -1,11 +1,13 @@
 # Resume development
 
-Current milestone: Real AI Fishing 0.1.0, Godot 4.7.2, Mobile/Vulkan.
+Current milestone: Real AI Fishing 0.1.7, Godot 4.7.2, Mobile/Vulkan.
 
-The game has eighteen fish species, fourteen per location, four baked foregrounds,
-four native 4K panoramas, six baits, rod progression, a handheld Guide with photos,
-VRM avatars and tracking, eight-player ENet multiplayer and positional voice.
-See [README](README.md) for controls and feature documentation.
+The main game has six photographic environments and two procedural river maps,
+native 8K panoramas, measured HDR lighting, authored foregrounds, fly/spinning
+fishing, VRM avatars and tracking, eight-player ENet multiplayer and positional
+voice. Lake Pier includes a baked bridge and Korean billboard; Lake Pier and
+Coastal Rocks use rear depth bands. See [README](README.md) for controls and
+[PANORAMA_LIGHTING](docs/PANORAMA_LIGHTING.md) for the current scenery pipeline.
 
 Run `./run.sh --desktop` for desktop practice, `./run.sh` with an active OpenXR
 runtime for PC VR, or `./run.sh --server` for a dedicated server. Set `GODOT_BIN`
@@ -15,7 +17,7 @@ to the Godot executable if the local fallback is unavailable.
 
 See [cleanup notes](docs/CLEANUP.md) and [release instructions](docs/RELEASE.md).
 Current editable Blender sources, original textures, recordings and license
-records are retained under `source/`, excluded from Godot import. Native 4K HDR
+records are retained under `source/`, excluded from Godot import. Native 8K HDR
 originals have one canonical copy under `assets/environment/locations/`.
 Docs images are also excluded from import. Generated raw XR captures belong in
 ignored `test-results/xr/`. Superseded procedural fish and unlit runtime scenery

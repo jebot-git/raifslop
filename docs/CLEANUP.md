@@ -30,3 +30,16 @@ Public source and release archives exclude `.release-signing/`, player data,
 build output and development caches. Third-party addon libraries and their
 licenses are retained together. Current validation and build provenance are
 recorded in [VALIDATION.md](VALIDATION.md) and the release build manifest.
+
+## 0.1.7 release preparation — 16 September 2026
+
+The authored Lake Pier additions share its existing GLB and bake atlases. Korean
+lettering is retained as SVG outlines, avoiding a bundled CJK font and separate
+runtime labels. Rebuild artwork and compact Blender lighting scenes remain under
+`source/`; original 8K HDRs stay canonical. Review captures remain under `docs/`.
+
+Exports include the measured lighting JSON and exclude source scenes, authoring
+tools, tests, screenshots and caches. The release builder replaces each target's
+old output directory, deduplicates final texture payloads, compresses desktop HDR
+with BC6H, preserves Android HDR, and recompresses packages at level 9. Pack audits
+check the new billboard, rear mesh shader and all six lighting profiles.

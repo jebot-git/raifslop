@@ -10,6 +10,8 @@ func run():
  g.set_process(false);g.motor.set_physics_process(false)
  for entry in g.Locations.CATALOG:
   g._select_location(entry.id,false)
+  check(is_equal_approx(g.location_sun.light_energy,entry.sun_energy) and g.location_sun.shadow_enabled==(g.shadow_policy.mode=="dynamic"),"Measured sun follows shadow preference: "+entry.id)
+  if entry.id in ["meadow_bend","boulder_run"]:continue # Procedural banks use the shared measured sun.
   var meshes=g.foreground.find_children("*BakedForeground*","MeshInstance3D",true,false)
   check(meshes.size()==1,"Location loads its baked foreground: "+entry.id)
   if meshes.is_empty():continue
@@ -33,7 +35,6 @@ func run():
    for x in range(0,ao.get_width(),8):
     var v=ao.get_pixel(x,y).r;lo=minf(lo,v);hi=maxf(hi,v)
   check(lo<.8 and hi>.95,"Bake contains contact occlusion and open sky: "+entry.id)
-  check(g.location_sun.light_energy<=.551 and g.location_sun.shadow_enabled==(g.shadow_policy.mode=="dynamic"),"Subdued sun follows shadow preference: "+entry.id)
  var prepared:=0
  for mesh in g.avatar.find_children("*","MeshInstance3D",true,false):
   for i in range(mesh.mesh.get_surface_count()):

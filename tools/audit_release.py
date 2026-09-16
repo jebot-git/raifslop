@@ -68,6 +68,9 @@ def audit(path):
             hashes[digest] = name
     assert set(hashes.values()) <= set(remaps.values()), 'Orphan texture payload'
     for required in ['ASSET_CREDITS.md','assets/models/locations/manifest.json',
+                     'assets/textures/lighting/panorama_lighting.json',
+                     'scripts/rear_parallax.gd','assets/environment/rear_parallax.gdshader',
+                     'assets/environment/shore_details/fishing_plan_poster.svg',
                      'scripts/voice/shoulder_radio.gd','scripts/network/threaded_peer.gd',
                      'scripts/fly_fishing.gd','scripts/hooked_fish.gd','scripts/river_foreground.gd',
                      'scripts/ui/vr_item_list.gd','assets/models/rods/fly_handle.glb',
@@ -79,6 +82,8 @@ def audit(path):
                      'assets/audio/ambience/meadow_bend.ogg','assets/audio/ambience/boulder_run.ogg',
                      'assets/avatars/vita.vrm','assets/avatars/victoria.vrm','assets/avatars/sharkperson.vrm']:
         assert required in names or required in remaps, ('Missing runtime file', required)
+    lighting = json.loads(pack.read('assets/textures/lighting/panorama_lighting.json'))
+    assert len(lighting) == 6 and all(record['sun_energy'] > 0 for record in lighting.values()), 'Missing measured lighting'
     for tier in ['willow', 'reed', 'heron', 'kingfisher']:
         for mode in ['', '_fly']:
             for state in ['', '_folded']:

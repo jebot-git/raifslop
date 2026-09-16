@@ -106,3 +106,10 @@ records[ID]['triangles']=sum(sum(len(p.vertices)-2 for p in obj.data.polygons) f
 records[ID]['bytes']=(OUT/(ID+'.glb')).stat().st_size
 manifest.write_text(json.dumps(records,indent=2)+'\n')
 print('LIGHTING_DONE',ID,flush=True)
+
+# Apply panorama-derived lighting after authoring/re-atlasing. This also restores
+# Lake Pier's maintained bridge and billboard when rebuilding from base geometry.
+import importlib.util
+spec=importlib.util.spec_from_file_location("panorama_lighting",ROOT/"tools/bake_panorama_lighting.py")
+calibration=importlib.util.module_from_spec(spec);spec.loader.exec_module(calibration)
+calibration.bake(ID)

@@ -133,6 +133,9 @@ static func prepare_lighting(node: Node, id: String) -> void:
 				mat.shader = preload("res://assets/environment/baked_foreground.gdshader")
 				mat.set_shader_parameter("base_color", source.albedo_color)
 				mat.set_shader_parameter("albedo_tex", source.albedo_texture)
+				if source.resource_name.begins_with("FG_billboard_print"):
+					mat.set_shader_parameter("albedo_tex",load("res://assets/environment/shore_details/fishing_plan_poster.svg"))
+					mat.set_shader_parameter("base_color",Color.WHITE)
 				mat.set_shader_parameter("normal_tex", source.normal_texture)
 				mat.set_shader_parameter("normal_depth", .28 if source.normal_enabled else 0.0)
 				if id=="blouberg_sunrise_2" and source.resource_name.begins_with("FG_sand"):
@@ -161,6 +164,7 @@ static func prepare_lighting(node: Node, id: String) -> void:
 static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := Vector4(0,3,5,6), terrain_only := false, transition_width := Vector2(6,6)) -> void:
 	var blend := ShaderMaterial.new()
 	blend.shader = preload("res://assets/environment/harbour_ground.gdshader")
+	blend.set_shader_parameter("authored_bridge",root.get_meta("location_id","")=="lake_pier")
 	blend.set_shader_parameter("ground_bounds", bounds)
 	blend.set_shader_parameter("transition_width", transition_width)
 	blend.set_shader_parameter("projection_origin", root.get_meta("spawn",Vector3(0,.02,.65))+Vector3.UP*1.63)
@@ -174,4 +178,8 @@ static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := 
 			# footprint; only terrain joins the distant photographic ground.
 			if terrain_only and source and not source.resource_name.begins_with("FG_gravel") and not source.resource_name.begins_with("FG_sand") and not source.resource_name.begins_with("FG_grass"):
 				continue
+			# Printed signs and the bridge retain authored materials beyond the quay.
+			if not source: continue
+			if str(node.name).contains("BakedForeground") and root.get_meta("location_id","")=="lake_pier":
+				if not source.resource_name.begins_with("FG_concrete"):continue
 			if mat: mat.next_pass = blend

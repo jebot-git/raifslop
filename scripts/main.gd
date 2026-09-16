@@ -955,6 +955,7 @@ func _select_location(id: String, persist := true) -> bool:
 	location_sun.rotation_degrees = entry.sun_rotation
 	location_sun.light_color = entry.sun_color
 	location_sun.light_energy = entry.sun_energy
+	location_sun.light_angular_distance = entry.get("sun_angular_distance",.53)
 	water_material.set_shader_parameter("panorama",texture)
 	for setting in ["detail_strength","vibrance","shadow_lift"]:
 		water_material.set_shader_parameter(setting,panorama_material.get_shader_parameter(setting))
@@ -978,6 +979,8 @@ func _select_location(id: String, persist := true) -> bool:
 	water_material.set_shader_parameter("panorama_water_region",entry.get("panorama_water_region",Vector4(0,1,0,1)))
 	if id == "lake_pier": Shore.blend_harbour_ground(foreground, water_material, Vector4(0,1.5,2.5,3))
 	elif entry.has("ground_bounds"): Shore.blend_harbour_ground(foreground, water_material, entry.ground_bounds, true, entry.get("ground_transition",Vector2(6,6)))
+	if id in ["lake_pier","simons_town_rocks"]:
+		foreground.add_child(preload("res://scripts/rear_parallax.gd").create(id,foreground.get_meta("spawn")+Vector3.UP*1.63,water_material))
 	current_location = id
 	if is_instance_valid(shadow_policy): shadow_policy.apply_materials(foreground)
 	if is_instance_valid(ambience): ambience.select_location(id)

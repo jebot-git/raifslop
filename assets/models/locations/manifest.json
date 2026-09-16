@@ -710,10 +710,10 @@
         "role": "seat"
       }
     ],
-    "triangles": 3148,
+    "triangles": 3330,
     "shore_connected": true,
     "material_batches": 5,
-    "bytes": 3960660
+    "bytes": 3996384
   },
   "gray_pier": {
     "model": "res://assets/models/locations/lit/gray_pier.glb",
