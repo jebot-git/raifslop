@@ -40,6 +40,19 @@ func run() -> void:
 	check((hip-g.head.global_position).dot(yaw.x) < -.2, "Guide follows physical body heading, including room-scale turns")
 	var grip := Transform3D(Basis.from_euler(Vector3(.3,.7,-.2)),g.origin.to_local(hip))
 	trackers[0].set_pose("grip",grip,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	for state in [g.Session.State.BITE, g.Session.State.FIGHT]:
+		g.game.state=state
+		trackers[0].set_input("grip",0.0);await settle();guide.update_device()
+		trackers[0].set_input("grip",1.0);await settle();guide.update_device()
+		check(not guide.held,"Hooked fish blocks hip guide grab in state " + str(state))
+		g.xr=false
+		var key:=InputEventKey.new();key.keycode=KEY_G;key.pressed=true
+		g._unhandled_input(key)
+		check(not guide.held,"Hooked fish blocks desktop guide key in state " + str(state))
+		g.xr=true
+	g.game.state=g.Session.State.READY
+	guide.update_device()
+	check(not guide.held,"Guide requires a fresh grip after the fight")
 	trackers[0].set_input("grip",0.0)
 	await settle(); guide.update_device()
 	trackers[0].set_input("grip",1.0)
@@ -153,7 +166,8 @@ func run() -> void:
 	for i in 2:
 		trackers[i].set_pose("grip",Transform3D(Basis.IDENTITY,g.head.position+Vector3(-.6 if i==0 else .6,-.25,0)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
 	await settle()
-	for frame in 120: manager.sample(1.0/90.0)
+	# Includes the initial quarter-second startup recenter before the T-pose hold.
+	for frame in 150: manager.sample(1.0/90.0)
 	check(manager.tracking.calibrated and manager.t_pose_detector.latched,"Physical controller T-pose reaches body calibration through the game adapter")
 	check(manager.calibration_notice.begins_with("Body calibrated"),"Gesture calibration gives visible completion feedback")
 	XRServer.remove_tracker(body_tracker)

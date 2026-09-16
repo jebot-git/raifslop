@@ -22,12 +22,12 @@ Catches now earn **shekels** based on species rarity and specimen size. Open **F
 | Look around | Headset tracking | Middle mouse drag |
 | Avatar, locations & movement menu | Right B; point right controller and press trigger | V or click Avatar & Locations |
 | Choose bait | Left X cycles while ready | 1–6 or click a bait |
-| Cast | Look toward open water; hold right trigger, swing rod forward, release | Space or Cast Line |
+| Cast | Aim at the water marker; hold right trigger, sweep back then forward, release | Right-drag to aim; hold Space for the backswing, then release |
 | Set hook | Lift rod sharply during the 1.8-second bite window | Space |
-| Reel | Hold left grip near the reel; circle left hand in the crank plane | Hold R or left mouse; add Shift to wind faster |
+| Reel | Hold left grip or trigger near the reel; hand snaps to the handle; circle to wind | Hold R or left mouse; add Shift to wind faster |
 | Counter a fish | Sweep rod left/right or lift as prompted | Left / Right / Up arrow |
 | Aim | Move/rotate the right controller, full 6DoF | Right mouse drag |
-| Field Guide | Left grip near lower handle at left hip; release to dock | G to open/close |
+| Field Guide | Left grip near lower handle at left hip; release to dock; unavailable during bites/fights | G to open/close; unavailable during bites/fights |
 | Guide camera / shutter / selfie | While held: left trigger / right trigger / right A | While open: C / Space / F |
 | Browse Field Guide | Physically press ‹ / ›, left X/Y, or either joystick while holding | Left/right arrows |
 | Inspect caught fish | Hold left grip to bring fish to left hand; release grip to hang it from rod | Automatic display |
@@ -36,13 +36,15 @@ Catches now earn **shekels** based on species rarity and specimen size. Open **F
 | Read tutorial | Right B → Tutorial | V → Tutorial |
 | Quit | Right B → Quit game | Escape or menu Quit game |
 
-VR casting aims along the horizontal direction at the **center of the headset view**, with no eye tracking. Forward rod-tip motion sets casting power; both translating and rotating the controller can produce a cast. Looking toward the shore rejects the cast.
+VR casting projects the **center of the headset view** onto the water, with no eye tracking. The water marker is the landing destination, within a 5–24 metre reach. Hold the trigger, sweep the rod back then forward, and release. Desktop uses a held Space backswing and release, with right-drag controlling the marker. Looking toward the shore rejects the cast.
 
 In VR, landed fish hang head-up below the rod tip on the line. Hold left grip to grasp the string 8 cm above the fish’s mouth; lift your hand to inspect the fish hanging beneath it; releasing grip returns it to the rod. The fish stays vertical and head-up in both positions, regardless of hand tilt. Either joystick axis spins it around the vertical axis at up to about 103°/s, with a deadzone; stick walking and turning are suppressed while a catch is displayed. Physical room-scale movement remains available. Right A releases the catch and restores stick locomotion.
 
-Use the line colour and haptic feedback to judge tension. Stop reeling during runs; resume before the line becomes completely slack. Directional counters reduce stamina and tension. A tired fish lands before foreground geometry can hide the bobber. Prolonged extreme tension snaps the line; slack lets the hook slip. Catch records persist in Godot's `user://journal.json`.
+Use the line colour and haptic feedback to judge tension. Stop reeling during runs; resume before the line becomes completely slack. Directional counters reduce stamina and tension. Retrieve tired fish all the way to the shoreline or pier edge to land them; exhaustion alone never awards a catch. In fly fishing, winding the reel outside an inward rush or final retrieval adds a steep tension penalty; strip line during the fight. Prolonged extreme tension snaps the line; slack lets the hook slip. Catch records persist in Godot's `user://journal.json`.
 
-Strong repeated rod-hand pulses mean your counter is working; releasing or pulling the wrong way stops them. The left hand feels crank detents while reeling. A quiet water ripple announces the hooked fish and escape attempts. During submerging moves, follow the prompt: **stop reeling** against a deep pull, or **reel faster** when the fish rushes inward and creates slack. Each move gives a brief warning before tension changes rapidly.
+Strong repeated rod-hand pulses mean your counter is working; releasing or pulling the wrong way stops them. The left hand feels crank detents while reeling. A quiet water ripple announces the hooked fish and escape attempts. During submerging moves, follow the prompt: **stop reeling** against a deep pull, or **reel faster** when the fish rushes inward and creates slack. Dives sink the float; inward rushes leave a surface wake toward the angler. Each move gives a brief warning before tension changes rapidly.
+
+Fish occupy a 3×3 grid of nine sectors. Different species start in separate quadrants and migrate independently between neighboring sectors every 25–55 seconds. Subtle feeding ripples mark sectors holding fish attracted to your bait. There is a 15% chance of an incidental off-bait species when one exists in the location. Repeated catches rapidly deplete that species; populations recover over about four minutes and survive recasts and travel during the session. Ordinary bite waits vary from 4–32 seconds, with quiet or depleted sectors taking longer. River takes keep a shorter 4–14 second base window, modified by drift quality. [Tuning and validation](docs/FISHING_DISTRIBUTION.md).
 
 Open **V → Locations** (VR: **right B → Locations**) to choose Lakeside, Lake Pier, Gray Pier or Bell Park Pier. Select **Fish here** while ready to cast. Each spot has its own lighting and water preset; selection persists, and catches record their location. Walk a gravel cove at Lakeside, a concrete harbour quay at Lake Pier, a weathered reed boardwalk at Gray Pier, or a moored fishing boat at Bell Park Pier. Travel places you at a safe arrival point on the new model.
 
@@ -130,7 +132,7 @@ Casting swishes, crank-speed reel sounds and positional fight/landing splashes a
 
 ## Soft lighting and shadows
 
-All six foregrounds use baked sky/bounce lighting, static sun shadows and AO, with restrained normal maps and broad material highlights. FPSloppa-derived MToon lighting helps avatars fit those surroundings. **Avatar → Moving shadows** selects soft contact blobs or dynamic shadows; static scenery shadows remain baked in either mode. [Pipeline, previews and performance comparison](docs/ENVIRONMENT_LIGHTING.md).
+All six foregrounds use baked sky/bounce lighting, static sun shadows and AO, with restrained normal maps and broad material highlights. FPSloppa-derived MToon lighting helps avatars fit those surroundings. Moving players use soft contact shadows. Dynamic player shadows and their setting have been removed; static scenery shadows remain baked. [Pipeline, previews and performance comparison](docs/ENVIRONMENT_LIGHTING.md).
 
 ## Release downloads
 
@@ -143,7 +145,7 @@ VR interaction fixes: the Guide's handle docks at the left hip, its held pose fo
 
 Tester feedback update: counters drain hidden resistance through sustained pulls, with rumble for bites, fights and tension rises. Catch models match reported length. The Fish Guide now holds location, shekels and equipment status; tutorial instructions are available only through the menu’s Tutorial button. The menu footer has **Quit game**. Location ambience and panorama-matched water have been rebuilt. [Behavior and validation](docs/TESTER_FEEDBACK.md).
 
-Rod holster: bring the right hand to the right hip and squeeze grip to fold/stash the rod; release and squeeze again there to pick it up. Finish the cast or release the catch first. The hand remains free while the rod is stashed.
+Rod holster: bring the right hand to the right hip and squeeze grip to fold/stash the rod; release and squeeze again there to pick it up. Stashing cancels the current line and rearms the selected bait. Fully retrieving an empty line also readies the next cast. The hand remains free while the rod is stashed.
 
 Benches and boat seats are noncollidable. Successful travel closes the menu. VR has no floating status/tracking window; holding a catch in the left hand shows its name, length and weight as text above the fish.
 

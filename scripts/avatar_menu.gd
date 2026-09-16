@@ -308,11 +308,13 @@ func attach_help() -> void:
 	tutorial_button.custom_minimum_size = Vector2(130, 44)
 	for instruction in [
 		"FISHING · VR controls",
-		"Cast: face open water. Hold right trigger, swing, then release.
+		"Cast: aim at the water marker. Hold trigger, sweep back then forward, release.
 When the float dips, lift the rod quickly to set the hook.",
-		"Reel: hold left grip beside the crank and circle your hand.
+		"Reel: hold left grip or trigger beside the crank and circle your hand.
 Ease off during runs; keep line tension in the green band.",
 		"Fly fishing: hold left grip near the line above the handle and pull to strip.
+Extra back/forward strokes extend the locked cast. Grip/trigger at the reel
+winds it: only use this against inward rushes or for the final tired fish.
 Sweep the rod upstream, against the current, to mend. A pulse, line loop
 and rod message confirm it. Desktop: LEFT mends upstream; RIGHT adds drag.",
 		"Fight: pull in the indicated direction and HOLD.
@@ -325,7 +327,7 @@ right index finger. Right grip at your right hip folds/stashes the rod.",
 Move with the left stick, turn with the right stick. Right B: menu.",
 		"Radio: grab at left shoulder, hold left trigger to talk to all waters.
 Release grip to dock. Desktop radio: hold B. Nearby voice: T / left stick click.",
-		"Desktop: SPACE cast/strike/release; hold R to reel (Shift: faster); arrows to
+		"Desktop: hold/release SPACE to cast; tap to strike/release. R reels (Shift: faster); arrows to
 counter; G guide; J stash rod; V menu; WASD move; Q/E turn."
 	]:
 		var label := Label.new()
@@ -391,13 +393,6 @@ func close_overlays() -> void:
 	keyboard.hide()
 	vrm_browser.hide()
 	picker.hide()
-
-func attach_shadow_controls(policy: Node) -> void:
-	var choice=preload("res://scripts/ui/choice.gd").new()
-	avatar_page.add_child(choice)
-	choice.configure([{"id":"blob","title":"Moving shadows · Soft contact"},{"id":"dynamic","title":"Moving shadows · Dynamic"}],"Moving shadows")
-	choice.value=policy.mode;choice.update_label()
-	choice.selected.connect(func(value):policy.set_mode(str(value)))
 
 var tackle_game
 var tackle_balance: Label

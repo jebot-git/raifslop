@@ -68,7 +68,7 @@ func run() -> void:
 	for i in range(180): counter.tick(.05, .7 if counter.tension < .5 else 0, 0)
 	check(counter.cue >= 0 or counter.next_cue < 3.0, "Escape attempts resume after recovery")
 	var reward_sim = fight(); reward_sim.distance = 1; reward_sim.stamina = 0
-	reward_sim.tick(.01, 0, 0)
+	reward_sim.tick(.01, 1, 0)
 	var earned: int = reward_sim.tackle.shekels
 	reward_sim.tick(10, 1, 0); reward_sim.reset()
 	check(earned > 0 and reward_sim.tackle.shekels == earned and reward_sim.journal.size() == 1, "Landing pays once; holding and releasing never repeat reward")

@@ -28,10 +28,10 @@ func update_holster() -> void:
 func set_stowed(value: bool) -> bool:
 	if stowed==value: return true
 	var g=game_root
-	if value and (g.casting or not g.game.state in [S.State.READY,S.State.LOST]):
-		g.game.message="Finish this cast and release your catch before stashing the rod."
-		g.hud.queue_redraw()
-		return false
+	if value:
+		# Stowing cancels the current line and rearms the selected bait.
+		g.game.reset();g.fish_display.hide();g.catch_in_hand=false
+		g.motor.catch_controls=false;g.escape_offset=Vector3.ZERO
 	stowed=value
 	if stowed:
 		desktop_pose=g.rod.transform
@@ -50,7 +50,8 @@ func set_stowed(value: bool) -> bool:
 	g.reel_tracker.engaged=false;g.reel_tracker.angular_delta=0;g.fight_input.reset()
 	g.fishing_feedback.reel_rate=0
 	g.last_tip=g.origin.to_local(g.tip.global_position) if g.xr else g.tip.global_position
-	g.game.message="Rod stashed · right hip + grip to pick up." if stowed else "Rod ready · hold trigger, swing, release."
+	g.game.message="Rod stashed · right hip + grip to pick up." if stowed else "Rod ready · hold trigger, sweep back then forward, release."
+	g._update_line()
 	g.hud.queue_redraw()
 	if g.xr and g.right.get_has_tracking_data(): g.right.trigger_haptic_pulse("haptic",0,.3,.08,0)
 	return true

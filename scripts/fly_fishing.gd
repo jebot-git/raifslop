@@ -12,6 +12,11 @@ var charge_age:=0.0
 var backstroke:=false
 var back_age:=0.0
 var strokes:=0
+var repeat_strokes:=false
+const CAST_BACK_TRAVEL := .06
+const CAST_FORWARD_TRAVEL := .10
+var cast_back_travel := 0.0
+var cast_forward_travel := 0.0
 var strip_previous:=Vector3.ZERO
 var strip_engaged:=false
 var mend_age:=2.0
@@ -31,13 +36,24 @@ static func current(at:Vector3,id:String)->Vector3:
 func reset():
  offset=Vector3.ZERO;drag=0;age=0;mend_cooldown=0;quality=1;charging=false;charge_age=0;strokes=0;backstroke=false;strip_engaged=false;strip_grip_down=false;strip_blocked=false
  mend_age=2.0;mend_direction=0;reset_mend_gesture()
-func begin_cast():charging=true;charge_age=0;strokes=0;backstroke=false
+func begin_cast(allow_extension:=false):
+ charging=true;charge_age=0;strokes=0;backstroke=false;back_age=0
+ repeat_strokes=allow_extension
+ cast_back_travel=0;cast_forward_travel=0
 func stroke(delta:float,forward_speed:float):
  charge_age+=delta;back_age+=delta
- if forward_speed<-.35:backstroke=true;back_age=0.0
- if backstroke and forward_speed>.45:
-  if back_age<1.5:strokes+=1
-  backstroke=false
+ # Small deliberate travel, with no deadline or precise release instant.
+ # Once accepted, a follow-through or tracking spike cannot undo the cast.
+ if strokes>0 and not repeat_strokes:return
+ if forward_speed<-.08:
+  cast_back_travel=minf(CAST_BACK_TRAVEL,cast_back_travel-forward_speed*delta)
+  if cast_back_travel>=CAST_BACK_TRAVEL:backstroke=true
+  cast_forward_travel=0
+ elif backstroke and forward_speed>.08:
+  cast_forward_travel+=forward_speed*delta
+  if cast_forward_travel>=CAST_FORWARD_TRAVEL:
+   strokes+=1
+   backstroke=false;cast_back_travel=0;cast_forward_travel=0
 func cast_power()->float:return clampf(8.0+minf(charge_age,1.5)*4.0+strokes*2.0,8,20)
 func mend(direction:int)->bool:
  if mend_cooldown>0 or direction==0:return false
@@ -108,7 +124,6 @@ func drift(delta:float,rate:float,id:String,nymph:=false):
  if nymph:flow*=.85
  current_speed=flow.x
  offset+=flow*delta
- offset.z+=rate*delta*.8
  drag=clampf(drag+delta*(absf(flow.x-.22)*.10+rate*.12),0,1)
  var productive:bool=at.z< -5 and at.z> -19
  var holding:=1.0 if flow.x<.7 or absf(at.z+8)<1.5 else .65

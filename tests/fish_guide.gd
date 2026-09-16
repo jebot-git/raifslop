@@ -42,6 +42,7 @@ func run() -> void:
 	g.game.strike()
 	g.game.distance = 1.0
 	g.game.stamina = 0.2
+	g.game.tick(0.01, 1.0, 0.0) # A catch requires active final retrieval.
 	g._process(0.01)
 	check(g.game.state == Session.State.LANDED and g.fish_guide.entries.has("Sander lucioperca"), "Actual landing adds species to device")
 	var best: float = g.fish_guide.entries["Sander lucioperca"].length

@@ -14,7 +14,6 @@ func run():
 		g.ambience.volume=.3;g.ambience.muted=true
 		g.tracking_manager.seated=true;g.tracking_manager.expressions_enabled=false
 		g.tracking_manager.tracked_leg_animation=true;g.tracking_manager.tracking.enabled=false
-		g.shadow_policy.set_mode("dynamic",false)
 		g.network.display_name="Persistence Tester";g.network.host_address="192.0.2.17";g.network.preferred_port=25432
 		g.network.voice.mode=1;g.network.voice.muted_all=true;g.network.voice.threshold=.035;g.network.voice.input_device="Default"
 		g.avatars.selected_path=g.avatars.DEFAULTS[1]
@@ -32,7 +31,7 @@ func run():
 	check(is_equal_approx(g.ambience.volume,.3) and g.ambience.muted,"Ambience volume and mute restore")
 	var m=g.tracking_manager
 	check(m.seated and not m.expressions_enabled and m.tracked_leg_animation and not m.tracking.enabled,"All four body tracking preferences restore")
-	check(g.shadow_policy.mode=="dynamic","Shadow mode restores")
+	check(not g.location_sun.shadow_enabled,"Removed dynamic shadows cannot restore")
 	check(g.network.display_name=="Persistence Tester" and g.network.host_address=="192.0.2.17" and g.network.preferred_port==25432,"Multiplayer name, address and port restore without reconnecting")
 	check(not g.network.active,"Saved connection does not automatically connect")
 	check(g.network.voice.mode==1 and g.network.voice.muted_all and is_equal_approx(g.network.voice.threshold,.035) and g.network.voice.input_device=="Default","Voice mode, mute, threshold and input restore")

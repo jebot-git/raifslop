@@ -92,13 +92,13 @@ func _draw() -> void:
 		draw_circle(Vector2(x + 16, y + 15), 4, mint if selected else muted)
 		text_at("%d  %s" % [i + 1, game.bait_name(i)], Vector2(x + 28, y + 20), 14, mint if selected else ink)
 		text_at(game.bait_hint(i), Vector2(x + 14, y + 39), 11, muted)
-	var action: String = ("QUICK FLY CAST" if game.is_fly_fishing() else "CAST LINE") if state == 0 else ("RELEASE & CONTINUE" if state == 5 else ("TRY AGAIN" if state == 6 else "SPACE / STRIKE"))
+	var action: String = "HOLD SPACE / RELEASE TO CAST" if state == 0 else ("RELEASE & CONTINUE" if state == 5 else ("TRY AGAIN" if state == 6 else "SPACE / STRIKE"))
 	card(Rect2(897, 747, 483, 89), Color("a5dcb9") if state in [0, 5, 6] else Color("254537"))
 	text_at(action, Vector2(937, 799), 20, Color("102e24") if state in [0, 5, 6] else ink)
 	if not vr_mode:
-		text_at("HOLD / RELEASE SPACE: fly cast · R: strip · LEFT: upstream mend · SPACE on take: strike" if game.is_fly_fishing() else "SPACE  cast / strike / release     •     R / left mouse reel · Shift faster     •     Arrow keys  counter     •     Right-drag  aim rod", Vector2(265, 889), 12, ink)
+		text_at("HOLD / RELEASE SPACE: fly cast · R: strip · LEFT: upstream mend · SPACE on take: strike" if game.is_fly_fishing() else "Hold/release SPACE: cast · SPACE: strike/release     •     R / left mouse reel · Shift faster     •     Arrow keys  counter     •     Right-drag  aim rod", Vector2(265, 889), 12, ink)
 	else:
-		text_at("TRIGGER: back / forward cast · LEFT GRIP + PULL: strip · SWEEP UPSTREAM: mend" if game.is_fly_fishing() else "Left X: bait   •   Right trigger: hold, swing, release   •   Left grip + circle: reel   •   Right A: release", Vector2(75, 889), 17, ink)
+		text_at("TRIGGER: back / forward cast · LEFT GRIP + PULL: strip · SWEEP UPSTREAM: mend" if game.is_fly_fishing() else "Left X: bait   •   Right trigger: swing + release   •   Left grip/trigger + circle: reel   •   Right A: release", Vector2(75, 889), 17, ink)
 	if tracking_lost:
 		card(Rect2(400, 330, 640, 170))
 		text_at("Tracking paused", Vector2(450, 395), 30, ink, true)

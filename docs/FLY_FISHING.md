@@ -7,19 +7,24 @@ Fly mode activates automatically at **Meadow Bend** and **Boulder Run**. It uses
 | Action | VR | Desktop |
 | --- | --- | --- |
 | Fly cast | Hold right trigger, sweep back then forward, release | Hold SPACE at least 0.2 seconds, then release |
-| Extend cast | Repeat the back/forward stroke before releasing | A longer hold adds distance, up to the basic cast limit |
+| Extend cast | Each additional back/forward stroke extends the locked target by 2 metres | Hold SPACE longer: extensions start at 1 second, then every 0.5 seconds |
+| Wind reel | Grip or left trigger near the small crank; circle the hand | R/left mouse remains hand-stripping |
 | Strip line | Hold left grip and pull the hand toward you; release to reach forward | R or left mouse button; Shift for faster retrieval |
 | Mend upstream | Sweep rod upstream, toward world left in the initial river view | Fresh LEFT arrow press |
 | Strike | Lift rod promptly when the fly/indicator signals a take | SPACE during the take |
 | Change fly | Left X | 1: dry fly; 2: nymph |
 
-The forward stroke must follow the backstroke within 1.5 seconds. Each completed stroke adds distance; casts remain within 8–20 metres. The HUD quick-cast button supplies an accessible single-click cast. Normal fishing controls return when travelling to a lake/coast. Menus, guide use, holstering and tracking loss pause fishing and cancel unfinished cast/strip input.
+There is no release deadline. The first completed stroke accepts the cast at the aim point locked on trigger press. Additional complete strokes deliberately move that marker farther along the same locked direction; head and rod movement do not steer it. Extension stops at the 24-metre reach limit or the river's open-water boundary. The fly lands at the displayed marker. Normal fishing keeps its single-stroke locked target. Menus, guide use, holstering and tracking loss pause fishing and cancel unfinished cast/strip input.
+
+The reel handle and loose line are separate grips: grab near the crank to wind, or farther up the visible line to strip. The offhand snaps to the smaller fly-crank handle while winding. Winding against an active fish adds a strict tension penalty (0.55 tension per second at one turn/second, before the ordinary load), on every rod tier. Reserve the fly reel for inward rushes or final retrieval once stamina is at or below 35%, with no active directional move, dive, jump or run. Hand-stripping keeps its existing tension behavior. The rod warns when winding incurs the penalty.
 
 ## Presentation and indicator
 
 Dry flies are visible at the surface without a conventional float. A take draws the fly under, makes a subtle ripple and gives a gentler bite pulse. Nymphs use a bead-headed fly beneath a small strike indicator, about one third of the original float's size. On a take the indicator pauses with the drift and dips. Strike windows are 1.25 seconds for dry flies and 1.6 seconds for nymphs.
 
 The line is rendered as a short sampled curve, with an animated loop during casting and an upstream bow when mended. It is an authored approximation rather than a full flexible-line physics simulation. Fly line remains above the surface while drifting. Stripping produces reel/line audio and left-hand haptic detents, and the existing reel input remains available during fights.
+
+Even a fully exhausted fish must be retrieved to the physical shoreline before it counts as caught. The landing point follows the current fish-to-bank direction, including downstream drift, and requires active retrieval. The river's near-bank constraint allows the fish to reach the sloped shoreline.
 
 ## Currents, fish and landing
 

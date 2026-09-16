@@ -124,6 +124,10 @@ func run() -> void:
 	controllers[1].set_input("trigger_click", false)
 	check(g.game.state == 0, "Stationary trigger release does not cast")
 	controllers[1].set_input("trigger_click", true)
+	for i in range(3):
+		right_pose.origin += g.head.basis.z * .08
+		set_controller_pose(controllers[1], right_pose)
+		g._process(.05)
 	for i in range(8):
 		right_pose.origin += -g.head.basis.z * 0.16
 		set_controller_pose(controllers[1], right_pose)
@@ -132,9 +136,10 @@ func run() -> void:
 	var aim: Vector3 = -g.head.global_basis.z
 	aim.y = 0
 	aim = aim.normalized()
+	var projected: Vector3 = g._projected_cast_target()
 	controllers[1].set_input("trigger_click", false)
 	check(g.game.state == 1, "Releasing trigger after physical swing casts")
-	check((g.cast_target - g.cast_anchor).normalized().dot(aim) > 0.999, "VR cast follows gaze rather than sideways rod orientation")
+	check(g.cast_target.is_equal_approx(projected), "VR cast lands at the head-projected water point")
 	check(g.game.cast_distance >= 5.0 and g.game.cast_distance <= 24.0, "Physical cast distance stays bounded")
 	g.game.reset()
 	controllers[1].set_input("trigger_click", true)
@@ -149,6 +154,10 @@ func run() -> void:
 	set_controller_pose(controllers[1], right_pose)
 	g._process(0.05)
 	controllers[1].set_input("trigger_click", true)
+	for i in range(4):
+		right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + .5) * Basis(Vector3.RIGHT, -1.2 - (i + 1) * .07)
+		set_controller_pose(controllers[1], right_pose)
+		g._process(.025)
 	for i in range(10):
 		right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + 0.5) * Basis(Vector3.RIGHT, -1.2 + (i + 1) * 0.09)
 		set_controller_pose(controllers[1], right_pose)

@@ -19,8 +19,8 @@ func _initialize() -> void:
 	s.select_bait(0)
 	check(s.bait == 2, "Bait cannot change after cast")
 	s.tick(1, 0, 0)
-	check(s.state == Session.State.WAITING and Session.SPECIES[s.fish_index].bait == 2, "Spinner must attract a compatible predator")
-	s.tick(10, 0, 0)
+	check(s.state == Session.State.WAITING and s.fish_index in Session.species_for_location(s.location_id, false), "Spinner must attract a local fish")
+	s.tick(40, 0, 0)
 	check(s.state == Session.State.BITE, "Waiting must produce bite")
 	s.tick(2, 0, 0)
 	check(s.state == Session.State.LOST, "Missed bite must escape")
@@ -32,7 +32,7 @@ func _initialize() -> void:
 	s.reset()
 	s.cast(12)
 	s.tick(1, 0, 0)
-	s.tick(10, 0, 0)
+	s.tick(40, 0, 0)
 	s.strike()
 	check(s.state == Session.State.FIGHT, "Timed strike must hook fish")
 	s.cue = 0
@@ -87,8 +87,8 @@ func _initialize() -> void:
 			s.cast(12)
 			s.tick(1, 0, 0)
 			seen[s.fish_index] = true
-			pools_valid = pools_valid and s.fish_index in Session.species_for_bait(bait_index, s.location_id)
-	check(pools_valid, "Every cast must choose a species compatible with its bait")
+			pools_valid = pools_valid and s.fish_index in Session.species_for_location(s.location_id, false)
+	check(pools_valid, "Every cast must choose a local species")
 	check(seen.size() == Session.species_for_location(s.location_id, false).size(), "All local species must be reachable through normal casting")
 	# Full fights verify that every power profile can be landed at maximum cast range.
 	for index in range(Session.SPECIES.size()):

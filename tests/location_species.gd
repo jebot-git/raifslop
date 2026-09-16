@@ -34,10 +34,10 @@ func run() -> void:
 				s.select_bait(bait)
 				s.cast(12)
 				s.tick(1, 0, 0)
-				valid = valid and s.fish_index in roster and s.fish_index in pool
+				valid = valid and s.fish_index in roster
 				seen[s.fish_index] = true
 				all_seen[s.fish_index] = true
-			check(valid, "Normal casting respects location and bait")
+			check(valid, "Normal casting respects location including incidental catches")
 		check(seen.size() == roster.size(), "Every local species reachable")
 	check(all_seen.size() == Session.SPECIES.filter(func(row): return not row.get("predator",false)).size(), "Every direct-bait species reachable")
 	check(layouts.size() == Session.LOCATION_SPECIES.size(), "Locations have distinct rosters")

@@ -93,10 +93,10 @@ def audit(path):
     for source, target in remaps.items():
         if not source.endswith(('.hdr','.exr')): continue
         data = pack.read(target)
-        if mobile:
+        if mobile or source.startswith('assets/textures/lighting/'):
             config = (ROOT / (source + '.import')).read_text()
             imported = re.search(r'^path="res://([^"]+)"', config, re.M)[1]
-            assert hashlib.sha256(data).digest() == hashlib.sha256((ROOT/imported).read_bytes()).digest(), ('Android HDR changed', source)
+            assert hashlib.sha256(data).digest() == hashlib.sha256((ROOT/imported).read_bytes()).digest(), ('Lossless HDR changed', source)
         else:
             assert target.endswith('.res'), ('Desktop HDR not compressed', source)
         if source.endswith('_8k.hdr'): panoramas[source] = len(data)

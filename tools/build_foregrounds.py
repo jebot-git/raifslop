@@ -112,8 +112,8 @@ def build(id):
   for dx in [-.68,.68]:
    beam('steel',(x+dx,0,z-.2),(x+dx,.45,z-.2),.035);beam('steel',(x+dx,0,z+.23),(x+dx,1.07,z+.23),.035)
   col((x,.48,z),(1.85,1.0,.7),'seat')
- def cleat(x,z):
-  box('steel',(x,.12,z),(.18,.12,.10));beam('steel',(x-.2,.20,z),(x+.2,.20,z),.035)
+ def cleat(x,z,grounded=False):
+  box('steel',(x,.09 if grounded else .12,z),(.18,.18 if grounded else .12,.10));beam('steel',(x-.2,.20,z),(x+.2,.20,z),.035)
  def coil(x,z):
   for k in range(3):
    r=.13+k*.022
@@ -162,7 +162,7 @@ def build(id):
   for x in [-1.8,1.8]:
    beam('steel',(x,0,-1.2),(x,.42,-1.2),.10,12);beam('steel',(x-.18,.35,-1.2),(x+.18,.35,-1.2),.045)
   bench(0,3)
-  coil(-1.8,-.7);cleat(1.8,-.9)
+  coil(-1.8,-.7);cleat(1.8,-.9,grounded=True)
   for x in [-1.8,0,1.8]:box('rubber',(x,-.3,-1.57),(.24,.5,.12))
  elif id=='gray_pier':
   land(lambda x:4.4+.5*math.sin(x*.2))

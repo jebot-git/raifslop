@@ -49,9 +49,10 @@ func run():
 	check(not g.reel_tracker.engaged and not g.tracking_was_valid and g.peak_speed==0,"Retrieval resets reel and casting motion samples")
 	for active in [g.Session.State.CASTING,g.Session.State.WAITING,g.Session.State.BITE,g.Session.State.FIGHT,g.Session.State.LANDED]:
 		g.game.state=active
-		check(not h.set_stowed(true) and not h.stowed,"Active cast/catch cannot be discarded by stashing: "+str(active))
+		check(h.set_stowed(true) and h.stowed and g.game.state==g.Session.State.READY and not g.fish_display.visible,"Stashing rearms bait from cast/catch state: "+str(active))
+		h.set_stowed(false)
 	g.game.reset();g.casting=true
-	check(not h.set_stowed(true),"Held casting gesture blocks stashing")
+	check(h.set_stowed(true) and not g.casting and not g.game.fly.charging,"Stashing cancels held casting gesture and rearms tackle")
 	g.casting=false;h.set_stowed(true)
 	g.motor.position+=Vector3(1,0,2);h.update_holster()
 	check(g.rod.global_transform.is_equal_approx(h.belt_pose),"Holstered rod follows locomotion")

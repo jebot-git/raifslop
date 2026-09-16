@@ -11,6 +11,7 @@ var submerge_time := 0.0
 var next_submerge := 9.0
 var next_submerge_kind: Submerge = Submerge.PULL
 var reel_rate := 0.0
+var fly_reel_penalty := false
 const BAITS = ["Earthworm", "Sweetcorn", "Spinner", "Maggots", "Bread", "Wet fly"]
 const SPECIES = [
 	{"model_yaw": PI / 2, "rarity": 1, "endurance": 85.0, "name": "European perch", "latin": "Perca fluviatilis", "bait": 0, "length": 32.0, "weight": 0.65},
@@ -89,6 +90,17 @@ var next_jump := 7.0
 var jumps_enabled := true
 const Fly = preload("res://scripts/fly_fishing.gd")
 var fly=Fly.new()
+const Population = preload("res://scripts/fish_population.gd")
+var population = Population.new()
+var cast_position := Vector3(0, 0, -12)
+
+func prepare_population() -> void:
+	population.ensure_location(location_id, species_for_location(location_id, false))
+
+func feeding_activity(sector: int) -> float:
+	prepare_population()
+	return population.activity(location_id, species_for_bait(bait, location_id), sector)
+
 func is_fly_fishing()->bool:return Fly.river(location_id)
 func bait_count()->int:return 2 if is_fly_fishing() else BAITS.size()
 const Tackle = preload("res://scripts/tackle.gd")
@@ -101,6 +113,7 @@ var fish_index := 0
 var tension := 0.35
 var distance := 12.0
 var landing_distance := 1.6
+var retrieve_origin := Vector3.ZERO
 var stamina := 1.0
 var timer := 0.0
 var phase := 0.0
@@ -175,12 +188,15 @@ func bait_hint(index: int) -> String:
 	var hints := ["Worm feeders", "Reef / surf fish", "Coastal predators", "Crustacean feeders", "Baitfish hunters", "Coastal fly fish"] if is_marine_location(location_id) else ["Worm feeders", "Coarse fish", "Predators", "Shoal fish", "Surface feeders", "Trout / chub"]
 	return "%d species · %s" % [pool.size(), hints[clampi(index, 0, bait_count() - 1)]]
 
-func cast(power: float) -> void:
+func cast(power: float, target := Vector3(INF, INF, INF), anchor := Vector3(INF, INF, INF)) -> void:
 	if state != State.READY:
 		return
 	fly.reset()
 	cast_distance = clampf(power, 5.0, 24.0)
-	fly.start=Vector3(0,0,-cast_distance)
+	cast_position = target if target.is_finite() else Vector3(0, 0, -cast_distance)
+	retrieve_origin=anchor if anchor.is_finite() else Vector3(0,cast_position.y,0)
+	fly.start = cast_position
+	prepare_population()
 	distance = cast_distance
 	state = State.CASTING
 	timer = 0.8
@@ -213,7 +229,7 @@ func strike() -> void:
 				var tempo := FightProfiles.tempo(fish_index)
 				phase=(float(profile.cycle)-float(profile.run))*tempo+.01
 				next_cue=float(profile.run)*tempo+.8
-		message = "Hook set! Reel steadily; ease off during a run."
+		message = "Hook set! Strip line; save the reel for a rush or tired fish." if is_fly_fishing() else "Hook set! Reel steadily; ease off during a run."
 	elif state == State.WAITING:
 		lose("Too early. Wait for the float to dip.")
 
@@ -243,7 +259,7 @@ func _counter_tick(delta: float) -> void:
 		if not is_predator() and FightProfiles.SPECIES[fish_index][0] in ["runner","cruiser"]:
 			# Leave room for a complete run between directional counters.
 			next_cue=counter_rest+float(FightProfiles.profile(fish_index).cycle)*FightProfiles.tempo(fish_index)+.4
-		message="Fish tired! Reel it closer."
+		message="Counter complete. Keep stripping and following the fish." if is_fly_fishing() and not fly_reel_allowed() else "Fish tired! Reel it closer."
 
 
 func is_running() -> bool:
@@ -274,7 +290,12 @@ func reel_instruction() -> String:
 	if jump_time>0.0:return "JUMP · STOP REELING · TUG " + ("LEFT" if cue==0 else "RIGHT")
 	if submerge==Submerge.PULL: return "FISH DIVING · STOP REELING"
 	if submerge==Submerge.SLACK: return "FISH RUSHING IN · REEL FASTER"
+	if is_fly_fishing():return "FISH TIRED · REEL IN" if fly_reel_allowed() else "STRIP LINE · FOLLOW THE FISH"
 	return "FISH RUNNING · STOP REELING" if is_running() else "REEL STEADILY"
+
+func fly_reel_allowed() -> bool:
+	if jump_time>0.0:return false
+	return submerge==Submerge.SLACK or (stamina<=.35 and submerge==Submerge.NONE and cue<0 and not is_running())
 
 func _submerge_tick(delta: float) -> void:
 	if submerge!=Submerge.NONE:
@@ -282,7 +303,7 @@ func _submerge_tick(delta: float) -> void:
 		if submerge_time<=0.0:
 			submerge=Submerge.NONE;next_submerge=float(FightProfiles.profile(fish_index).dive_gap)*FightProfiles.tempo(fish_index)*rng.randf_range(.9,1.1)
 			phase=0.0;next_cue=maxf(next_cue,2.0)
-			message="Fish resurfaced. Reel steadily."
+			message="Fish resurfaced. " + (reel_instruction() if is_fly_fishing() else "Reel steadily.")
 		return
 	next_submerge-=delta
 	# Do not overlap directional holds/runs, or start at already unsafe tension.
@@ -378,7 +399,9 @@ func _predator_sequence_tick(delta: float) -> void:
 		submerge_time=SUBMERGE_WARNING+SUBMERGE_DURATION
 		message=reel_instruction()
 
-func tick(delta: float, reel: float, rod_lift: float) -> void:
+func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> void:
+	fly_reel_penalty=false
+	population.tick(delta)
 	match state:
 		State.LOST:
 			timer -= delta
@@ -390,37 +413,43 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 			timer -= delta
 			if timer <= 0.0:
 				state = State.WAITING
-				timer = rng.randf_range(4.0, 8.0)
-				var candidates := species_for_bait(bait, location_id)
-				var total := 0.0
-				for index in candidates: total += 1.0 / float(SPECIES[index].rarity)
-				var roll := rng.randf() * total
-				fish_index = candidates.back()
-				for index in candidates:
-					roll -= 1.0 / float(SPECIES[index].rarity)
-					if roll <= 0.0:
-						fish_index = index
-						break
+				var sector := Population.sector_at(cast_position)
+				var preferred := species_for_bait(bait, location_id)
+				timer = population.bite_delay(location_id, preferred, sector, rng, is_fly_fishing())
+				fish_index = population.choose(location_id, preferred, sector, SPECIES, rng)
 				message = "Drift naturally. Sweep upstream against the current to mend." if is_fly_fishing() else "Watch the float. A quick lift sets the hook."
 		State.WAITING:
 			if is_fly_fishing():
 				fly.drift(delta,reel,location_id,bait==1)
+				if _retrieve_empty_line(delta,reel):return
 				if fly.age>32.0 or fly.start.z+fly.offset.z> -4.0:
 					reset();message="Drift finished. Cast upstream again.";return
 				timer-=delta*fly.quality
-			else:timer -= delta
+			else:
+				if _retrieve_empty_line(delta,reel):return
+				timer -= delta
 			if timer <= 0.0:
+				var at: Vector3 = fly.start + fly.offset if is_fly_fishing() else cast_position
+				fish_index = population.choose(location_id, species_for_bait(bait, location_id), Population.sector_at(at), SPECIES, rng)
 				state = State.BITE
 				timer = (1.25 if bait==0 else 1.6) if is_fly_fishing() else 1.8
 				message = "TAKE! Lift the rod now!" if is_fly_fishing() else "BITE! Lift the rod now!"
 		State.BITE:
+			if _retrieve_empty_line(delta,reel):return
 			timer -= delta
 			if timer <= 0.0:
 				lose("Missed the bite. Cast again.")
 		State.FIGHT:
 			reel_rate=clampf(reel,0.0,2.0)
+			fly_reel_penalty=is_fly_fishing() and winding_reel and reel_rate>.03 and not fly_reel_allowed()
+			if fly_reel_penalty:
+				# A fly reel loads a fighting fish sharply; stripping remains separate.
+				# Add this outside the ordinary load cap so rod upgrades cannot erase it.
+				tension=clampf(tension+delta*.55*reel_rate,0,1)
+				message="Too much strain! Strip line; reel only for a rush or tired fish."
 			if jump_time>0.0:
 				_jump_tick(delta)
+				if fly_reel_penalty:_check_line_failure(delta)
 				return
 			next_jump=maxf(0.0,next_jump-delta)
 			if _try_jump():return
@@ -466,21 +495,14 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 			if running:
 				distance += delta * (1.0 if is_predator() else float(FightProfiles.profile(fish_index).speed)) * stamina * power
 				if is_predator():distance=minf(distance,cast_distance+18.0)
+			elif submerge_active() and submerge == Submerge.SLACK:
+				# The fish closes distance even when the angler fails to take up slack.
+				distance -= delta * (1.4 + stamina * .6)
 			elif tension > 0.12:
 				distance -= delta * rate * (1.05 + (1.0 - stamina) * 0.9) / power
 			stamina = maxf(0.0, stamina - delta * rate * 0.8 * float(tackle.rod().fatigue) / float(SPECIES[fish_index].endurance))
 			tension = clampf(tension, 0.0, 1.0)
-			var unsafe_side := 1 if tension >= STRAIN_LIMIT else -1 if tension <= SLACK_LIMIT else 0
-			if unsafe_side != danger_side: danger_time = 0.0
-			danger_side = unsafe_side
-			if unsafe_side != 0:
-				danger_time += delta
-			else:
-				danger_time = 0.0
-			var strain_grace := .45 if predator_opening_time>0.0 else STRAIN_GRACE
-			if danger_time > (strain_grace * sqrt(durability) if tension > 0.5 else 1.8):
-				lose("Line snapped. Ease off the reel." if tension > 0.5 else "The hook slipped. Keep some tension.")
-				return
+			if _check_line_failure(delta):return
 			if not is_predator() and submerge==Submerge.NONE: next_cue -= delta
 			if not is_predator() and submerge==Submerge.NONE and cue < 0 and next_cue <= 0.0:
 				var directions: Array=FightProfiles.profile(fish_index).directions
@@ -502,10 +524,11 @@ func tick(delta: float, reel: float, rod_lift: float) -> void:
 					message = "Missed counter (%d/%d). Keep control of the fish." % [failed_counters, MAX_FAILED_COUNTERS]
 			_try_predator(delta,rate,previous_distance)
 			if predator_notice_time>0.0:return
-			if distance <= landing_distance and stamina <= (.15 if is_predator() else .35):
+			if distance <= landing_distance and stamina <= (.15 if is_predator() else .35) and rate>.03 and cue<0:
 				state = State.LANDED
 				_reset_submerge()
 				catches += 1
+				population.caught(location_id, fish_index)
 				var fish: Dictionary = SPECIES[fish_index].duplicate()
 				var size_factor := rng.randf_range(0.85, 1.15)
 				fish["length"] *= size_factor
@@ -530,7 +553,32 @@ func lose(reason: String) -> void:
 	counter_active = false
 	message = reason
 
+func _retrieve_empty_line(delta:float,rate:float) -> bool:
+	if rate<=.03:return false
+	var at:Vector3=fly.start+fly.offset if is_fly_fishing() else cast_position
+	var next:=at.move_toward(retrieve_origin,clampf(rate,0,2)*delta*2.2)
+	distance=retrieve_origin.distance_to(next)
+	if distance<=landing_distance:
+		reset();message="Line retrieved · bait ready for the next cast."
+		return true
+	if is_fly_fishing():fly.offset=next-fly.start
+	else:cast_position=next
+	return false
+
+func _check_line_failure(delta: float) -> bool:
+	var unsafe_side := 1 if tension >= STRAIN_LIMIT else -1 if tension <= SLACK_LIMIT else 0
+	if unsafe_side != danger_side: danger_time = 0.0
+	danger_side = unsafe_side
+	if unsafe_side != 0: danger_time += delta
+	else: danger_time = 0.0
+	var strain_grace := .45 if predator_opening_time>0.0 else STRAIN_GRACE
+	if danger_time > (strain_grace * sqrt(float(tackle.rod().durability)) if tension > .5 else 1.8):
+		lose("Line snapped. Ease off the reel." if tension > .5 else "The hook slipped. Keep some tension.")
+		return true
+	return false
+
 func reset() -> void:
+	fly_reel_penalty=false
 	fly.reset()
 	_reset_submerge()
 	state = State.READY

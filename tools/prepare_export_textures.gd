@@ -1,7 +1,8 @@
 extends SceneTree
 func _initialize() -> void:
 	var helper = load("res://addons/fishing_export/hdr.gd")
-	for folder in ["res://assets/environment/locations", "res://assets/textures/lighting"]:
+	# Lighting atlases stay lossless; only desktop panoramas need BC6H caches.
+	for folder in ["res://assets/environment/locations"]:
 		for name in DirAccess.get_files_at(folder):
 			if not name.ends_with(".hdr.import") and not name.ends_with(".exr.import"): continue
 			var config := ConfigFile.new()

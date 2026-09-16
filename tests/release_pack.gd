@@ -33,6 +33,9 @@ func run() -> void:
 		if entry.id in ["meadow_bend","boulder_run"]: continue # Procedural banks use shared river textures.
 		for name in ["irradiance", "sky", "ao"]:
 			check(load("res://assets/textures/lighting/" + entry.id + "_" + name + (".png" if name == "ao" else ".exr")) != null, "Missing lighting " + entry.id + " " + name)
+			if name != "ao":
+				var bake: Image = load("res://assets/textures/lighting/" + entry.id + "_" + name + ".exr").get_image()
+				check(bake.get_format() in [Image.FORMAT_RGBE9995, Image.FORMAT_RGBH, Image.FORMAT_RGBAH, Image.FORMAT_RGBF, Image.FORMAT_RGBAF] and bake.has_mipmaps(), "Lossless HDR bake preserved " + entry.id + " " + name)
 	# Exercise every dynamically addressed model and each packaged shore material.
 	for fish in load("res://scripts/fishing_session.gd").SPECIES:
 		var path: String = fish.get("model", "res://assets/models/european_perch.glb")

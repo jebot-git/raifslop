@@ -7,12 +7,12 @@ uniform sampler2D irradiance_tex : filter_linear_mipmap, repeat_disable;
 uniform sampler2D sky_tex : filter_linear_mipmap, repeat_disable;
 uniform sampler2D occlusion_tex : hint_default_white, filter_linear_mipmap, repeat_disable;
 uniform vec4 base_color : source_color = vec4(1.0);
+// A modest exposure reduction; keep the source HDR range and colour intact.
+uniform float bake_energy = .86;
 uniform float roughness_floor = .7;
 uniform float normal_depth = .28;
 uniform float metal = 0.0;
 uniform bool has_roughness = false;
-uniform bool dynamic_shadows = false;
-varying vec3 baked_sun;
 uniform vec4 rough_channel = vec4(1.0,0.0,0.0,0.0);
 void fragment() {
  vec3 base=texture(albedo_tex,UV).rgb*base_color.rgb;
@@ -23,14 +23,12 @@ void fragment() {
  SPECULAR=.28;
  NORMAL_MAP=texture(normal_tex,UV).rgb;
  NORMAL_MAP_DEPTH=normal_depth;
- // Static shadows remain baked in both modes. Dynamic mode adds actor occlusion.
+ // Full HDR irradiance contains sky fill and static sun occlusion.
  vec3 total=texture(irradiance_tex,UV2).rgb;
- vec3 sky_fill=texture(sky_tex,UV2).rgb;
- baked_sun=max(total-sky_fill,vec3(0.0))*ao;
- EMISSION=base*(dynamic_shadows ? sky_fill : total)*ao;
+ EMISSION=base*total*ao*bake_energy;
  AO=ao;
  AO_LIGHT_AFFECT=.1;
 }
 void light() {
- if(dynamic_shadows) DIFFUSE_LIGHT+=baked_sun*ATTENUATION;
+ // Foreground illumination is already baked, including direct sun.
 }

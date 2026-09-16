@@ -10,6 +10,8 @@ var right: XRController3D
 var focused := true
 # FPSloppa calibrates the physical player once, independently of avatar size.
 var calibration_pending := true
+var startup_pose_time := 0.0
+var startup_settle_frames := 0
 var seated := false
 var expressions_enabled := true
 var tracked_leg_animation := false
@@ -24,6 +26,7 @@ var message := "Tracking ready"
 func setup(root: Node) -> void:
 	root_game=root; game=root.network
 	origin=root.origin; head=root.head; left=root.left; right=root.right
+	if root.xr: root.motor.tracking_focused=false
 	add_child(tracking); tracking.setup(self)
 	add_child(eyes); eyes.setup(self)
 	var config:=ConfigFile.new()
@@ -53,11 +56,22 @@ func sample(delta: float) -> void:
 	var xr := XRServer.find_interface("OpenXR") as OpenXRInterface
 	if root_game.xr and xr and xr.is_initialized():
 		focused = xr.get_session_state() == OpenXRInterface.SESSION_STATE_FOCUSED
-	if calibration_pending and root_game.xr and focused and head_tracked() and head.position.y > .5:
-		recenter()
+	if root_game.xr and calibration_pending:
+		if focused and head_tracked() and head.position.y > .5:
+			startup_pose_time += minf(delta, .05)
+			if startup_pose_time >= .25:
+				root_game.motor.relocate(root_game.motor.safe_spawn)
+				if recenter(): startup_settle_frames=2
+		else: startup_pose_time=0.0
+	elif startup_settle_frames > 0 and focused and head_tracked():
+		# XR world scale reaches camera poses on the next tracking update.
+		var offset: Vector3=head.global_position-root_game.motor.global_position
+		offset.y=0
+		origin.global_position-=offset
+		startup_settle_frames-=1
 	calibration_notice_time=maxf(0,calibration_notice_time-delta)
 	if calibration_notice_time<=0: calibration_notice=""
-	root_game.motor.tracking_focused=focused
+	root_game.motor.tracking_focused=focused and (not root_game.xr or (not calibration_pending and startup_settle_frames==0))
 	if not root_game.xr or not focused or not head_tracked():
 		clear_samples(); return
 	body=preload("res://scripts/tracking/poses.gd").validate_body(tracking.sample())

@@ -9,7 +9,6 @@ func run():
  await create_timer(.4).timeout;g.set_process(false);g.motor.set_physics_process(false);g.hud.hide();g.avatar.hide();g.rod.hide();g.fish_guide.hide()
  var target:=Node3D.new();g.add_child(target);target.add_to_group("fishing_avatar_rigs");target.position=Vector3(0,0,1)
  g.head.global_position=Vector3(0,2,1);g.head.look_at(Vector3(0,0,1),Vector3.FORWARD)
- g.shadow_policy.set_mode("blob",false)
  for i in range(5):await physics_frame
  var with_blob=await frame()
  g.shadow_policy.set_physics_process(false)

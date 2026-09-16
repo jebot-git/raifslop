@@ -104,6 +104,7 @@ static func terrain(root:Node3D,far:bool,grass:Material,gravel:Material):
      st.set_uv(Vector2(points[index].x,points[index].z)*.25);st.add_vertex(points[index])
   st.generate_normals();var node:=MeshInstance3D.new();node.mesh=st.commit();node.material_override=gravel if strip==0 else grass
   root.add_child(node);node.create_trimesh_collision()
+  for body in node.find_children("*", "StaticBody3D", true, false):body.set_meta("role", "floor")
 
 static func card(root:Node3D,at:Vector3,size:Vector2,texture:Texture2D,yaw:float,shade:float,flip:bool):
  var mesh:=QuadMesh.new();mesh.size=size

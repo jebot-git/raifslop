@@ -79,6 +79,15 @@ func run():
 	var head_tracker:=XRPositionalTracker.new();head_tracker.type=XRServer.TRACKER_HEAD;head_tracker.name="head"
 	head_tracker.set_pose("default",game.head.transform,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH);XRServer.add_tracker(head_tracker)
 	game.xr=true; game.game.state=game.Session.State.READY
+	game.tracking_manager.calibration_pending=true
+	game.motor.position.x+=1.5;game.head.position.x+=.8;game.head.rotation.y=.7
+	for i in 12: game.tracking_manager.sample(.05)
+	var spawn: Vector3=game.motor.safe_spawn
+	check(not game.tracking_manager.calibration_pending and game.motor.tracking_focused and game.motor.global_position.is_equal_approx(spawn) and Vector2(game.head.global_position.x-spawn.x,game.head.global_position.z-spawn.z).length()<.001,"Startup automatically recenters offset room tracking at the safe spawn")
+	game.motor.position.x+=.4
+	var walked: Vector3=game.motor.position
+	for i in 12:game.tracking_manager.sample(.05)
+	check(game.motor.position.is_equal_approx(walked),"Startup recenter runs once and does not undo later movement")
 	game.head.rotation.y=.4
 	var anchor: Vector3=game.motor.global_position
 	check(game.tracking_manager.recenter(),"Standing recenter accepted while idle")

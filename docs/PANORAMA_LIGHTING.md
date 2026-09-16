@@ -38,7 +38,7 @@ when Lake Pier's atlas changes. Existing material colour and normal maps remain.
 
 `assets/textures/lighting/panorama_lighting.json` records the inferred world-space
 direction, linear colour, energy, cap size and source panorama. The game reads
-this same data for dynamic lighting/shadows. All export presets include it.
+this same data for lighting moving objects. All export presets include it.
 Energy is relative to the HDR's exposure, not a calibrated real-world lux reading.
 Overcast Gray Pier uses a weak, broad lobe rather than an invented sharp sun.
 
@@ -53,7 +53,7 @@ from base authoring geometry, so it restores the added Lake Pier details.
 ## Verification
 
 `tests/rear_scenery.gd` checks depth ordering, reduced near-horizon projection
-stretch, baked bridge/print geometry, UV2, shadow modes, and the agreement between
+stretch, baked bridge/print geometry, UV2, baked shadows, and the agreement between
 Godot's light basis and the HDR direction. Run with `-- --capture` for arrival,
 left/right rear, poster and front views; add `--compare` to capture both versions in one run, or `--before` to hide the
 depth mesh for an otherwise matching comparison. Images go to `test-results/rear-scenery/`.

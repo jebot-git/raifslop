@@ -13,20 +13,19 @@ func run():
   g._select_location(entry.id,false)
   g.avatar.global_position=g.motor.safe_spawn
   for i in range(4):await physics_frame
-  policy.set_mode("blob",false);await physics_frame;await physics_frame
+  await physics_frame;await physics_frame
   check(not g.location_sun.shadow_enabled,"Blob mode disables real-time shadow maps: "+entry.id)
   check(policy.blobs.has(g.avatar) and policy.blobs[g.avatar].visible,"Blob projects onto location floor: "+entry.id)
-  if policy.blobs.has(g.avatar):check(absf(policy.blobs[g.avatar].global_position.y-.012)<.03,"Blob sits on surface: "+entry.id)
-  policy.set_mode("dynamic",false);await physics_frame
-  check(g.location_sun.shadow_enabled and not policy.blobs[g.avatar].visible,"Dynamic option restores shadows and hides blob: "+entry.id)
- policy.set_mode("blob",false)
+  if policy.blobs.has(g.avatar) and policy.blobs[g.avatar].visible:
+   var at:Vector3=policy.blobs[g.avatar].global_position
+   var ground:Dictionary=g.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(at+Vector3.UP*.1,at-Vector3.UP*.1,1))
+   check(not ground.is_empty() and absf(at.y-ground.position.y-.012)<.01,"Blob sits on actual surface: "+entry.id)
  g.avatar.global_position=Vector3(0,0,-15)
  await physics_frame;await physics_frame
  check(not policy.blobs[g.avatar].visible,"No blob floats over open water")
  g.avatar.global_position=g.motor.safe_spawn;g.avatar.hide()
  await physics_frame;await physics_frame
  check(not policy.blobs[g.avatar].visible,"Hidden or remote-location avatars have no blob")
- policy.set_mode("dynamic");var config:=ConfigFile.new();config.load("user://graphics.cfg")
- check(config.get_value("shadows","mode","")=="dynamic","Shadow preference persists")
+ check(not policy.has_method("set_mode") and not g.avatar_menu.has_method("attach_shadow_controls"),"Dynamic shadow preference and menu control removed")
  g.queue_free();await process_frame;await process_frame
  print("BLOB_SHADOW_RESULT ",failures);quit(0 if failures.is_empty() else 1)

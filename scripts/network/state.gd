@@ -10,10 +10,12 @@ static func capture(root: Node, serial: int) -> Dictionary:
 	# receive the established five curls and use the same controller fallback.
 	var body: Dictionary = root.tracking_manager.body.duplicate() if is_instance_valid(root.tracking_manager) else {}
 	body.erase("left_finger_rotations"); body.erase("right_finger_rotations")
+	if root.xr and root.reel_tracker.engaged:
+		body.erase("left_hand");body.erase("left_curls")
 	# The existing in_hand flag describes the catch when landed, or the fly line
 	# otherwise. Older peers can still decode this fixed 28-field packet.
 	return {"body":body,"face":root.tracking_manager.face if is_instance_valid(root.tracking_manager) else {},"visemes":root.network.voice.mouth_pose(root.multiplayer.get_unique_id()),"serial":serial,"location":root.current_location,"head":root.head.global_transform,
-		"left":root.left.global_transform if root.xr else root.desktop_left.global_transform,
+		"left":root.left.global_transform if root.xr and not root.reel_tracker.engaged else root.desktop_left.global_transform,
 		"right":root.right.global_transform if root.xr else root.rod.global_transform,
 		"rod_tier":root.game.tackle.equipped,"reel_angle":fposmod(root.crank.rotation.x,TAU),"rod":root.rod.global_transform,"fish":root.fish_display.global_transform,
 		"feet":root.motor.global_position,"motion":root.motor.last_motion,"tip":root.tip.global_position,

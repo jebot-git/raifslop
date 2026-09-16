@@ -24,6 +24,7 @@ static func create(id: String) -> Node3D:
 	if id in ["lakeside", "gray_pier", "bell_park_pier"]:
 		slope_distant_land(visual)
 	if id=="simons_town_rocks":coastal_footings(visual)
+	if id=="lake_pier":ground_pier_cleat(visual)
 	prepare_lighting(visual, id)
 	if id=="blouberg_sunrise_2":
 		# Cast/landing rays must see the curved sand slope, not only the flat
@@ -33,7 +34,9 @@ static func create(id: String) -> Node3D:
 			for surface in node.mesh.get_surface_count():
 				var mat:Material=node.mesh.surface_get_material(surface)
 				sand=sand and mat!=null and mat.resource_name.begins_with("FG_sand")
-			if sand:node.create_trimesh_collision()
+			if sand:
+				node.create_trimesh_collision()
+				for body in node.find_children("*", "StaticBody3D", true, false): body.set_meta("role", "floor")
 	for proxy in record.colliders:
 		if proxy.get("role", "") == "seat" or not proxy.get("enabled", true): continue
 		var body := StaticBody3D.new()
@@ -61,6 +64,32 @@ static func create(id: String) -> Node3D:
 	var details=preload("res://scripts/shore_details.gd").create(id)
 	if details!=null:root.add_child(details)
 	return root
+
+static func ground_pier_cleat(root: Node3D) -> void:
+	# Older baked assets leave the small cleat's pedestal 6 cm above the quay.
+	# Extend just its bottom to deck level, retaining the bake and both UV sets.
+	for node in root.find_children("*", "MeshInstance3D", true, false):
+		var repaired: ArrayMesh
+		for surface in node.mesh.get_surface_count():
+			var material: Material=node.mesh.surface_get_material(surface)
+			if material==null or not material.resource_name.begins_with("FG_steel"):continue
+			var arrays: Array=node.mesh.surface_get_arrays(surface)
+			var vertices: PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+			var changed:=false
+			for i in vertices.size():
+				var p: Vector3=vertices[i]
+				if absf(p.x-1.8)<.091 and absf(p.z+.9)<.051 and absf(p.y-.06)<.001:
+					p.y=0;vertices[i]=p;changed=true
+			if not changed:continue
+			if repaired==null:repaired=node.mesh.duplicate()
+			arrays[Mesh.ARRAY_VERTEX]=vertices
+			# Rebuild in order so surface material/atlas assignments stay stable.
+			var rebuilt:=ArrayMesh.new()
+			for index in node.mesh.get_surface_count():
+				rebuilt.add_surface_from_arrays(node.mesh.surface_get_primitive_type(index),arrays if index==surface else repaired.surface_get_arrays(index))
+				rebuilt.surface_set_material(index,node.mesh.surface_get_material(index))
+			repaired=rebuilt
+		if repaired!=null:node.mesh=repaired
 
 static func slope_distant_land(node: Node, parent_transform := Transform3D.IDENTITY) -> void:
 	var transform := parent_transform
@@ -139,7 +168,6 @@ static func prepare_lighting(node: Node, id: String) -> void:
 				mat.set_shader_parameter("normal_tex", source.normal_texture)
 				mat.set_shader_parameter("normal_depth", .28 if source.normal_enabled else 0.0)
 				if id=="blouberg_sunrise_2" and source.resource_name.begins_with("FG_sand"):
-					mat.set_shader_parameter("base_color",source.albedo_color*1.6)
 					mat.set_shader_parameter("normal_depth",.1)
 				mat.set_shader_parameter("rough_tex", source.roughness_texture)
 				mat.set_shader_parameter("has_roughness", source.roughness_texture != null)

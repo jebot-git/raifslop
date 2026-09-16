@@ -1,6 +1,12 @@
 @tool
 extends RefCounted
-## Desktop-only BC6H cache. Android keeps the original RGBE HDR textures.
+## Desktop panoramas use BC6H. Lighting atlases keep their lossless HDR import.
+static func export_path(source: String, imported: String, desktop: bool) -> String:
+	# Block compression perturbs small bright atlas texels and shadow edges.
+	# Preserve both total irradiance and sky fill exactly on every platform.
+	if not desktop or source.begins_with("res://assets/textures/lighting/"): return imported
+	return prepare(imported)
+
 static func prepare(imported_path: String) -> String:
 	var key := (FileAccess.get_sha256(imported_path) + str(Engine.get_version_info().hex) + "bc6h-v1").sha256_text()
 	var dest := "res://.godot/fishing_export/" + key + ".res"

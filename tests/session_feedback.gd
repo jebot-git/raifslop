@@ -49,7 +49,8 @@ func run():
 	tracker.set_pose("default",Transform3D.IDENTITY,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
 	for height in [1.2,1.65,2.1]:
 		XRServer.world_scale=1;g.head.position.y=height;g.tracking_manager.seated=false;g.tracking_manager.focused=true;g.tracking_manager.calibration_pending=true
-		g.tracking_manager.sample(.02)
+		g.tracking_manager.startup_pose_time=0
+		for frame in 16:g.tracking_manager.sample(.02)
 		check(not g.tracking_manager.calibration_pending and absf(XRServer.world_scale*height-1.65)<.001,"FPSloppa startup height calibration for "+str(height)+" m player")
 		var scale: float=XRServer.world_scale;g.head.position.y=.8;g.tracking_manager.sample(.02)
 		check(XRServer.world_scale==scale,"Crouching does not recalibrate avatar/player scale")

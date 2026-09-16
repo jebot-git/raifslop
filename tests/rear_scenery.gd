@@ -47,13 +47,7 @@ func run():
        check(p.x>2.6 and p.x<3.1 and p.z<3.3,"Billboard moved forward while staying outside the fence")
       if p.z>7 and p.z<12.3 and p.x>=-2.2 and p.x<=.2 and absf(p.y)<.02:bridge_vertices+=1
    check(poster and bridge_vertices>0,"Baked bridge and printed face exist in game model")
-  for mode in ["dynamic","blob"]:
-   g.shadow_policy.set_mode(mode,false)
-   for node in g.foreground.find_children("*BakedForeground*","MeshInstance3D",true,false):
-    for surface in node.mesh.get_surface_count():
-     var mat:Material=node.get_active_material(surface)
-     if mat is ShaderMaterial:
-      check(mat.get_shader_parameter("dynamic_shadows")== (mode=="dynamic"),"New bakes support both shadow modes")
+  check(not g.location_sun.shadow_enabled,"Scenery retains static lighting without dynamic shadow maps")
   if "--capture" in OS.get_cmdline_user_args():
    for view in [["rear",Vector3(0,1.65,.65),Vector3(-.15,PI,0)], ["rear_left",Vector3(-1.8,1.65,2.5),Vector3(-.15,PI+.3,0)], ["rear_right",Vector3(1.8,1.65,2.5),Vector3(-.15,PI-.3,0)], ["poster",Vector3(0,1.65,1.6),Vector3(0,-PI/2,0)], ["front",Vector3(0,1.65,.65),Vector3(-.15,0,0)]]:
     g.head.global_position=view[1];g.head.rotation=view[2]

@@ -2,6 +2,7 @@ extends Node3D
 ## Bounded, positional fishing effects. Driven by actual accepted input and state.
 const S=preload("res://scripts/fishing_session.gd")
 var game_root: Node
+var feeding_surfaces: Array[MeshInstance3D] = []
 var reel_rate:=0.0
 var haptics=preload("res://scripts/line_haptics.gd").new()
 var previous:=S.State.READY
@@ -10,6 +11,7 @@ var takeover_previous:=0
 var jump_previous:=0
 var jump_was_active:=false
 var clock:=0.0
+var feeding_clock:=0.0
 var splash_wait:=0.0
 var burst_age:=2.0
 var takeover_burst_age:=2.0
@@ -46,6 +48,27 @@ func setup(root: Node) -> void:
  takeover_fx=water_fx.duplicate();takeover_surface.material_override=takeover_fx
  takeover_surface.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
  add_child(takeover_surface);takeover_surface.hide()
+func update_feeding_ripples() -> void:
+ var g = game_root.game
+ if feeding_surfaces.is_empty():
+  for sector in S.Population.SECTOR_COUNT:
+   var mesh := MeshInstance3D.new()
+   var plane := PlaneMesh.new(); plane.size = Vector2(6.4, 6.4); mesh.mesh = plane
+   var mat := ShaderMaterial.new(); mat.shader = water_fx.shader
+   mesh.material_override = mat
+   mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+   add_child(mesh); feeding_surfaces.append(mesh)
+ for sector in feeding_surfaces.size():
+  var mesh := feeding_surfaces[sector]
+  var activity: float = g.feeding_activity(sector)
+  mesh.visible = activity > .02 and g.state in [S.State.READY, S.State.CASTING, S.State.WAITING]
+  mesh.global_position = S.Population.sector_center(sector, game_root.water_level + .025)
+  var mat: ShaderMaterial = mesh.material_override
+  # Small periodic rings, no icons or species labels, fading as stocks deplete.
+  mat.set_shader_parameter("clock", fmod(feeding_clock + sector * 1.7, 4.5))
+  mat.set_shader_parameter("burst", true)
+  mat.set_shader_parameter("strength", activity * .22)
+
 func player(kind: String) -> AudioStreamPlayer3D:
  var p:=AudioStreamPlayer3D.new();p.stream=load("res://assets/audio/fishing/"+kind+".wav");p.unit_size=5;p.max_distance=65;p.volume_db=-3;add_child(p);return p
 func cast_swish() -> void:
@@ -65,6 +88,9 @@ func splash(at: Vector3, landing:=false, impact:=false) -> void:
 func _process(delta: float) -> void:
  if not is_instance_valid(game_root):return
  var g=game_root.game
+ # Ambient water life keeps moving while the Guide pauses fishing controls.
+ feeding_clock+=delta
+ update_feeding_ripples()
  var paused: bool=game_root.rod_holster.stowed or game_root.menu_open or game_root.fish_guide.held or game_root.avatar_loading or (game_root.xr and (not game_root.right.get_has_tracking_data() or not game_root.left.get_has_tracking_data() or not game_root.tracking_manager.focused))
  if paused:
   reel_player.stop();ripple_player.stop();haptics.pause()
@@ -119,10 +145,14 @@ func _process(delta: float) -> void:
  if g.state==S.State.FIGHT:
   surface.show();surface.global_position=game_root.bobber.global_position;surface.global_position.y=game_root.water_level+.045
   escape=game_root.fish_escape_direction()
+  if g.submerge == S.Submerge.SLACK:
+   escape = game_root.cast_anchor - game_root.bobber.global_position
+   escape.y = 0.0
+   escape = escape.normalized()
   water_fx.set_shader_parameter("heading",Vector2(escape.x,escape.z))
-  water_fx.set_shader_parameter("directional",g.cue>=0)
+  water_fx.set_shader_parameter("directional",g.cue>=0 or g.submerge==S.Submerge.SLACK)
   water_fx.set_shader_parameter("burst",false)
-  water_fx.set_shader_parameter("strength",.2 if g.submerge!=S.Submerge.NONE else 1.0 if g.cue>=0 or g.is_running() else .4)
+  water_fx.set_shader_parameter("strength",.9 if g.submerge==S.Submerge.SLACK else .15 if g.submerge==S.Submerge.PULL else 1.0 if g.cue>=0 or g.is_running() else .4)
   water_fx.set_shader_parameter("clock",clock)
   splash_wait-=delta
   if (g.cue>=0 and g.cue!=cue_previous) or (g.submerge!=S.Submerge.NONE and g.submerge!=submerge_previous):

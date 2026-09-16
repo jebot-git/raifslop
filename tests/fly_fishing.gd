@@ -42,7 +42,7 @@ func run():
  var input=F.new();input.begin_cast();input.stroke(.5,-1);input.stroke(.4,1)
  check(input.strokes==1 and input.cast_power()>8,"Back/forward stroke adds cast distance")
  input.begin_cast();input.stroke(.2,-1);input.stroke(2,0);input.stroke(.1,1)
- check(input.strokes==0,"Overlong backcast misses the forward timing window")
+ check(input.strokes==1,"Paused backcast still accepts a deliberate forward swing")
  check(input.strip(Vector3.ZERO,1,.02,Vector3.ZERO,Vector3(0,0,-.3))==0 and input.strip(Vector3(0,0,.1),1,.05,Vector3.ZERO,Vector3(0,0,-.3))>0,"Left-hand pull strips line")
  for id in ["meadow_bend","boulder_run"]:
   for bait in 2:

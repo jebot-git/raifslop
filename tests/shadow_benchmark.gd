@@ -32,8 +32,7 @@ func run():
    a.head.global_position=p+Vector3.UP*1.65
    a.left.global_position=p+Vector3(-.25,1.15,-.35);a.right.global_position=p+Vector3(.25,1.2,-.4)
    a.rig.update_targets(a.head,a.left,a.right,0,Vector3.ZERO,.016)
-  for mode in ["dynamic","blob","blob","dynamic"]:
-   g.shadow_policy.set_mode(mode,false)
+  for mode in ["blob"]:
    for i in range(90):await process_frame
    var gpu: Array=[];var cpu: Array=[];var frame: Array=[];var draws: Array=[]
    var last=Time.get_ticks_usec()

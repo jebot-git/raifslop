@@ -222,7 +222,11 @@ func touch_position() -> Variant:
 		if point is Vector3 and point.is_finite(): return _touch_from("avatar", point)
 	return _touch_from("none", null)
 
+func can_grab() -> bool:
+	return game_root.game.state not in [game_root.Session.State.BITE, game_root.Session.State.FIGHT]
+
 func update_device() -> void:
+	if held and not can_grab(): dock()
 	if held: screen.queue_redraw()
 	var g = game_root
 	var facing := Basis(Vector3.UP, atan2(g.head.global_basis.z.x, g.head.global_basis.z.z))
@@ -239,7 +243,7 @@ func update_device() -> void:
 		var tracked: bool = g.left.get_has_tracking_data()
 		var down: bool = tracked and g.left.get_float("grip") > 0.55
 		if held and not down: dock()
-		if not held and down and not grip_was_down and not g.menu_open and not (is_instance_valid(g.shoulder_radio) and g.shoulder_radio.held) and g.left.global_position.distance_to(dock_grip_position()) < 0.22:
+		if not held and can_grab() and down and not grip_was_down and not g.menu_open and not (is_instance_valid(g.shoulder_radio) and g.shoulder_radio.held) and g.left.global_position.distance_to(dock_grip_position()) < 0.22:
 			held = true
 			screen.queue_redraw()
 		grip_was_down = down

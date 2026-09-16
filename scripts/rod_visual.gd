@@ -32,6 +32,9 @@ func equip(index: int, fly := false) -> void:
 	tier = index
 	set_folded(folded)
 
+func crank_grip_position() -> Vector3:
+	return Vector3(.0385, .039, 0) if fly_mode else Vector3(-.035, .08, 0)
+
 func set_folded(value: bool) -> void:
 	folded=value
 	if is_instance_valid(model): model.visible=not folded
