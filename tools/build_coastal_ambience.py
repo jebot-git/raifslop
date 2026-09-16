@@ -7,7 +7,7 @@ import numpy as np
 
 ROOT=Path(__file__).resolve().parents[1]
 SR=44100
-def build():
+def build(only=None):
     waves=[]
     for index in ['01','04']:
         raw=subprocess.check_output(['ffmpeg','-v','error','-i',str(ROOT/f'source/audio/coastal_wave_{index}.flac'),
@@ -17,7 +17,8 @@ def build():
         samples[:fade]*=np.linspace(0,1,fade)[:,None]
         samples[-fade:]*=np.linspace(1,0,fade)[:,None]
         waves.append(samples)
-    for name,seed,gain,spacing in [('simons_town_rocks',741,.035,(2.3,4.2)),('blouberg_sunrise_2',931,.045,(3.5,5.5))]:
+    for name,seed,gain,spacing in [('simons_town_rocks',741,.035,(2.3,4.2)),('blouberg_sunrise_2',931,.045,(3.5,5.5)),('secluded_beach',1217,.027,(4.0,6.5)),('fish_hoek_beach',1619,.04,(3.0,5.0))]:
+        if only and name not in only:continue
         rng=random.Random(seed);out=np.zeros((SR*128,2),dtype=np.float32)
         # Wrap each recorded wave through the buffer boundary for a continuous loop.
         cursor=0.0
@@ -33,4 +34,6 @@ def build():
     records=[{'file':str(p.relative_to(ROOT)),'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size}
              for p in sorted((ROOT/'assets/audio/ambience').glob('*.ogg'))]
     (ROOT/'docs/ambience_assets.json').write_text(json.dumps(records,indent=2)+'\n')
-if __name__=='__main__':build()
+if __name__=='__main__':
+    import sys
+    build(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else None)

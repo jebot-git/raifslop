@@ -11,7 +11,7 @@ scene.render.image_settings.file_format = 'JPEG'
 scene.render.image_settings.quality = 88
 scene.view_settings.view_transform = 'AgX'
 records = []
-for name in ['lakeside', 'lake_pier', 'gray_pier', 'bell_park_pier', 'simons_town_rocks', 'blouberg_sunrise_2']:
+for name in ['lakeside', 'lake_pier', 'gray_pier', 'bell_park_pier', 'simons_town_rocks', 'blouberg_sunrise_2', 'secluded_beach', 'fish_hoek_beach']:
     source = LOCATION_DIR / (name + '_8k.hdr')
     image = bpy.data.images.load(str(source), check_existing=False)
     assert tuple(image.size) == (8192, 4096), name

@@ -6,7 +6,9 @@ const PROFILES = {
 	"gray_pier":{"bird":"swift","birds":5,"insect":"midge","insects":3,"plumage":Color("3d403b"),"insect_color":Color("837a60"),"span":.7,"tail":.24,"height":3.0,"radius":13.0,"speed":.30,"flap":17.0,"glide":.2},
 	"simons_town_rocks":{"bird":"gull","birds":6,"insect":"none","insects":0,"plumage":Color("e2e2d9"),"insect_color":Color.WHITE,"span":1.35,"tail":.22,"height":12.0,"radius":30.0,"speed":.09,"flap":3.8,"glide":.85},
 	"blouberg_sunrise_2":{"bird":"tern","birds":5,"insect":"none","insects":0,"plumage":Color("d0d5dc"),"insect_color":Color.WHITE,"span":.9,"tail":.4,"height":8.0,"radius":27.0,"speed":.16,"flap":6.5,"glide":.65},
-	"bell_park_pier":{"bird":"tern","birds":3,"insect":"dragonfly","insects":2,"plumage":Color("bdc6cb"),"insect_color":Color("43a9ac"),"span":.95,"tail":.38,"height":7.0,"radius":23.0,"speed":.13,"flap":6.5,"glide":.6}
+	"bell_park_pier":{"bird":"tern","birds":3,"insect":"dragonfly","insects":2,"plumage":Color("bdc6cb"),"insect_color":Color("43a9ac"),"span":.95,"tail":.38,"height":7.0,"radius":23.0,"speed":.13,"flap":6.5,"glide":.6},
+	"secluded_beach":{"bird":"gull","birds":4,"insect":"none","insects":0,"plumage":Color("dfddd2"),"insect_color":Color.WHITE,"span":1.2,"tail":.22,"height":11.0,"radius":25.0,"speed":.08,"flap":3.6,"glide":.88},
+	"fish_hoek_beach":{"bird":"tern","birds":7,"insect":"none","insects":0,"plumage":Color("d5dbe0"),"insect_color":Color.WHITE,"span":.85,"tail":.4,"height":8.5,"radius":32.0,"speed":.14,"flap":6.2,"glide":.7},
 }
 var birds := MultiMeshInstance3D.new()
 var insects := MultiMeshInstance3D.new()

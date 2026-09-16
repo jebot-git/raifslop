@@ -1,6 +1,6 @@
-# Coastal scenery trials
+# Coastal scenery
 
-Two additional selectable locations use the established photographed-panorama pipeline:
+The first two coastal locations use the established photographed-panorama pipeline:
 
 | Location | Foreground | Atmosphere |
 | --- | --- | --- |
@@ -36,3 +36,9 @@ The coastal builder merges its manifest entries and retains its own `source/coas
 `tests/coastal_locations.gd` checks travel, supported casting positions, submerged foundations and beach margin, panorama masks, surf loading and every bait. Run with `-- --capture` in the Mobile renderer for standing, seated, rear, edge and foundation images under `test-results/coastal-locations/`. Existing location, foreground, lighting, wildlife and bait suites also include both additions. Physical headset inspection remains necessary for final comfort and visual approval.
 
 `tools/validate_coastal_geometry.py` verifies every rock component clears every barrier envelope and that Sunrise contains a continuous dry sand area and submerged margin, with only sand and grass geometry.
+
+## Further additions
+
+[Secluded Cove and Tidal Strand](COASTAL_EXPANSION.md) add two more coastal waters,
+with separate 8K photographs, authored shores, baked lighting, generated details
+and distinct marine rosters. The catalogue now has four coastal locations.

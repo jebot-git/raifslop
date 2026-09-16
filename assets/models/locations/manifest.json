@@ -1548,5 +1548,187 @@
     "shore_connected": true,
     "material_batches": 2,
     "bytes": 4485712
+  },
+  "secluded_beach": {
+    "model": "res://assets/models/locations/lit/secluded_beach.glb",
+    "spawn": [
+      0,
+      0.02,
+      0.65
+    ],
+    "colliders": [
+      {
+        "position": [
+          0,
+          -0.6,
+          3.5
+        ],
+        "size": [
+          12,
+          1.2,
+          13
+        ],
+        "yaw": 0,
+        "role": "floor"
+      },
+      {
+        "position": [
+          0,
+          0.5,
+          -3.15
+        ],
+        "size": [
+          12,
+          1.1,
+          0.2
+        ],
+        "yaw": 0,
+        "role": "barrier"
+      },
+      {
+        "position": [
+          0.0,
+          0.32499998807907104,
+          10.0
+        ],
+        "size": [
+          0.11,
+          0.75,
+          12.08
+        ],
+        "yaw": 1.5707963267948966,
+        "role": "barrier"
+      },
+      {
+        "position": [
+          -6.0,
+          0.32499998807907104,
+          3.5
+        ],
+        "size": [
+          0.11,
+          0.75,
+          13.08
+        ],
+        "yaw": 0.0,
+        "role": "barrier"
+      },
+      {
+        "position": [
+          6.0,
+          0.32499998807907104,
+          3.5
+        ],
+        "size": [
+          0.11,
+          0.75,
+          13.08
+        ],
+        "yaw": 0.0,
+        "role": "barrier"
+      },
+      {
+        "position": [
+          -3.5,
+          0.48,
+          8.4
+        ],
+        "size": [
+          1.85,
+          1.0,
+          0.7
+        ],
+        "yaw": 0,
+        "role": "seat"
+      }
+    ],
+    "triangles": 10412,
+    "shore_connected": true,
+    "material_batches": 6,
+    "bytes": 9916808
+  },
+  "fish_hoek_beach": {
+    "model": "res://assets/models/locations/lit/fish_hoek_beach.glb",
+    "spawn": [
+      0,
+      0.02,
+      0.65
+    ],
+    "colliders": [
+      {
+        "position": [
+          0,
+          -0.6,
+          3.5
+        ],
+        "size": [
+          20,
+          1.2,
+          13
+        ],
+        "yaw": 0,
+        "role": "floor"
+      },
+      {
+        "position": [
+          0,
+          0.5,
+          -3.15
+        ],
+        "size": [
+          20,
+          1.1,
+          0.2
+        ],
+        "yaw": 0,
+        "role": "barrier"
+      },
+      {
+        "position": [
+          0.0,
+          0.32499998807907104,
+          10.0
+        ],
+        "size": [
+          0.11,
+          0.75,
+          20.08
+        ],
+        "yaw": 1.5707963267948966,
+        "role": "barrier"
+      },
+      {
+        "position": [
+          -10.0,
+          0.32499998807907104,
+          3.5
+        ],
+        "size": [
+          0.11,
+          0.75,
+          13.08
+        ],
+        "yaw": 0.0,
+        "role": "barrier"
+      },
+      {
+        "position": [
+          10.0,
+          0.32499998807907104,
+          3.5
+        ],
+        "size": [
+          0.11,
+          0.75,
+          13.08
+        ],
+        "yaw": 0.0,
+        "role": "barrier"
+      }
+    ],
+    "triangles": 10860,
+    "shore_connected": true,
+    "material_batches": 3,
+    "bytes": 6612640
   }
 }

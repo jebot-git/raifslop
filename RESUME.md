@@ -2,7 +2,7 @@
 
 Current milestone: Real AI Fishing 0.1.7, Godot 4.7.2, Mobile/Vulkan.
 
-The main game has six photographic environments and two procedural river maps,
+The main game has eight photographic environments and two procedural river maps,
 native 8K panoramas, measured HDR lighting, authored foregrounds, fly/spinning
 fishing, VRM avatars and tracking, eight-player ENet multiplayer and positional
 voice. Lake Pier includes a baked bridge and Korean billboard; Lake Pier and

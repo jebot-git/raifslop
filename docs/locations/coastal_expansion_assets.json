@@ -1,0 +1,162 @@
+[
+  {
+    "file": "assets/environment/locations/secluded_beach_8k.hdr",
+    "bytes": 99396041,
+    "sha256": "05fa5ea6369992fba1adb446ea2725fbf747681c92923ddb80996a790927b5a4"
+  },
+  {
+    "file": "assets/environment/locations/secluded_beach_preview.jpg",
+    "bytes": 71744,
+    "sha256": "5927f3740a78a3230a07cd80d85865624ebc89770dd089a8b03790a7889e6603"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach.glb",
+    "bytes": 9916808,
+    "sha256": "0479970eb31d476edc05b750ed6c35a8e8f82397e5b5b14720b74a146708826b"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_aerial_beach_01_Diffuse.jpg",
+    "bytes": 457152,
+    "sha256": "1803d7e2861b304bea6d2e124dcd4c657fcb93843b84c17bb2db98ce48a87e4e"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_aerial_beach_01_Rough.png",
+    "bytes": 3045933,
+    "sha256": "48b8e1ad74c465062af65a736e5004b888a12389196512886d3a5a09f668883b"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_aerial_beach_01_nor_gl.jpg",
+    "bytes": 863847,
+    "sha256": "0f35185b7225fe2027897bb7e4586c7deb048817524f1ed104fdae7ce80bdc06"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_brown_planks_03_Diffuse.jpg",
+    "bytes": 570668,
+    "sha256": "8dfae22286fa9bb0ed62ce7326e8bc14c284e567d38fd64b5a453838080ecf19"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_brown_planks_03_Rough.png",
+    "bytes": 725151,
+    "sha256": "5faaaade1f89ad03a68eb0b331c73b895c6c79b5dd4296f9d36298ebb9459072"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_brown_planks_03_nor_gl.jpg",
+    "bytes": 516860,
+    "sha256": "868c153165ecaa7dd7259cb58214f06f6f86c80ac71fc92a827dff07708be077"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_rock_boulder_dry_Diffuse.jpg",
+    "bytes": 859211,
+    "sha256": "20f653a42fb24f42aa40641663070d578678da49af18cc1049dbdd4ed8679f3c"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_rock_boulder_dry_Rough.png",
+    "bytes": 1061655,
+    "sha256": "7dc39ae7961b6b9b2a9eb6a4875a99e0c9c7e44050559bd772554224b8d8b735"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_rock_boulder_dry_nor_gl.jpg",
+    "bytes": 802497,
+    "sha256": "5915fea28a97357c78a04fb31c2516f1f7ed1b3a9cef4ae25aa93e4655e6c595"
+  },
+  {
+    "file": "assets/models/locations/lit/secluded_beach_weathered_timber_Diffuse.jpg",
+    "bytes": 315966,
+    "sha256": "c893dd9b32726395424fef408004d7a52cf053c717511ae81efe9149c4eb31c3"
+  },
+  {
+    "file": "assets/textures/lighting/secluded_beach_ao.png",
+    "bytes": 785716,
+    "sha256": "129220962829342367e47cfdb164838916d2aedac9f07e4930e63bb0ba724e1e"
+  },
+  {
+    "file": "assets/textures/lighting/secluded_beach_irradiance.exr",
+    "bytes": 3455853,
+    "sha256": "cf0feec5dfcddc3d293ed7aa584746f4a76b8fa9abf1bfae282a4917598ce36a"
+  },
+  {
+    "file": "assets/textures/lighting/secluded_beach_sky.exr",
+    "bytes": 3463121,
+    "sha256": "c767c55a978d6b9328141187db47aacef917a6b5f5b413fac8cf1560725a78f7"
+  },
+  {
+    "file": "assets/audio/ambience/secluded_beach.ogg",
+    "bytes": 1099080,
+    "sha256": "319b57a2a5d529f0d642ea191afb190a2dd342a218f47418dc06fec32cb0d0cc"
+  },
+  {
+    "file": "assets/environment/locations/fish_hoek_beach_8k.hdr",
+    "bytes": 89132766,
+    "sha256": "41413c43c5cced66a1f901092792cfa3b5a3394f1afe9b37c35e42ffd806923d"
+  },
+  {
+    "file": "assets/environment/locations/fish_hoek_beach_preview.jpg",
+    "bytes": 26729,
+    "sha256": "0e89bf5fc908e413c8855f64458cad632c68a2d423d62f8e9f2e27f08ddd1773"
+  },
+  {
+    "file": "assets/models/locations/lit/fish_hoek_beach.glb",
+    "bytes": 6612640,
+    "sha256": "2ad8e926970fb7446251d7546183ab4ba577cadf0a7ca08deb328e1f17927075"
+  },
+  {
+    "file": "assets/models/locations/lit/fish_hoek_beach_aerial_beach_01_Diffuse.jpg",
+    "bytes": 457152,
+    "sha256": "1803d7e2861b304bea6d2e124dcd4c657fcb93843b84c17bb2db98ce48a87e4e"
+  },
+  {
+    "file": "assets/models/locations/lit/fish_hoek_beach_aerial_beach_01_Rough.png",
+    "bytes": 3045933,
+    "sha256": "48b8e1ad74c465062af65a736e5004b888a12389196512886d3a5a09f668883b"
+  },
+  {
+    "file": "assets/models/locations/lit/fish_hoek_beach_aerial_beach_01_nor_gl.jpg",
+    "bytes": 863847,
+    "sha256": "0f35185b7225fe2027897bb7e4586c7deb048817524f1ed104fdae7ce80bdc06"
+  },
+  {
+    "file": "assets/models/locations/lit/fish_hoek_beach_brown_planks_03_Rough.png",
+    "bytes": 725151,
+    "sha256": "5faaaade1f89ad03a68eb0b331c73b895c6c79b5dd4296f9d36298ebb9459072"
+  },
+  {
+    "file": "assets/models/locations/lit/fish_hoek_beach_brown_planks_03_nor_gl.jpg",
+    "bytes": 516860,
+    "sha256": "868c153165ecaa7dd7259cb58214f06f6f86c80ac71fc92a827dff07708be077"
+  },
+  {
+    "file": "assets/models/locations/lit/fish_hoek_beach_weathered_timber_Diffuse.jpg",
+    "bytes": 315966,
+    "sha256": "c893dd9b32726395424fef408004d7a52cf053c717511ae81efe9149c4eb31c3"
+  },
+  {
+    "file": "assets/textures/lighting/fish_hoek_beach_ao.png",
+    "bytes": 462381,
+    "sha256": "a7e55c6abf1ac691e2aab45ea5c16fd505c05df406baa7d6908eb1d829c5e491"
+  },
+  {
+    "file": "assets/textures/lighting/fish_hoek_beach_irradiance.exr",
+    "bytes": 2899681,
+    "sha256": "a09b373f1ef85d92a1ae3e89da84c97751b3bc076a3b607b8f2b4e98ff41483d"
+  },
+  {
+    "file": "assets/textures/lighting/fish_hoek_beach_sky.exr",
+    "bytes": 2809376,
+    "sha256": "484372e336383f42ad81250a8a1752b9442127783aa95ab5d68fe7e43e35b265"
+  },
+  {
+    "file": "assets/audio/ambience/fish_hoek_beach.ogg",
+    "bytes": 1422842,
+    "sha256": "1e63e51591bae465b36a2bdaf097f126de5624f11aaaf5fb811770aa5b9b6ea4"
+  },
+  {
+    "file": "assets/environment/shore_details/coastal_dune_grass.png",
+    "bytes": 1286311,
+    "sha256": "b37aeedfe6e8d2d28d1476888e40f488b46155af3b93b41ef162f712f247fdf4"
+  },
+  {
+    "file": "assets/environment/shore_details/coastal_wrack.png",
+    "bytes": 492998,
+    "sha256": "7d1d0344693ee4a831ef4d929341eb8c0816976a3cc07e8791b2dcb9fcf40140"
+  }
+]

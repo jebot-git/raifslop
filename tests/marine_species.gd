@@ -8,7 +8,7 @@ func run() -> void:
 	var g=load("res://scenes/main.tscn").instantiate();root.add_child(g)
 	await create_timer(.4).timeout
 	g.set_process(false)
-	for id in ["simons_town_rocks","blouberg_sunrise_2","lakeside"]:
+	for id in ["simons_town_rocks","blouberg_sunrise_2","secluded_beach","fish_hoek_beach","lakeside"]:
 		g.game.reset();check(g._select_location(id,false),"Travel "+id)
 		var marine:=Session.is_marine_location(id)
 		for bait in 6:

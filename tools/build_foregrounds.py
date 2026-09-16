@@ -247,6 +247,47 @@ def build(id):
   for side in [-1,1]:
    for j in range(14):plants(side*rng.uniform(10,15),rng.uniform(13,22),8)
   scene['shore_connected']=True
+ elif id in ['secluded_beach','fish_hoek_beach']:
+  # Two continuous shores with a dry, level casting apron and submerged toe.
+  cove=id=='secluded_beach'; width=6 if cove else 10
+  xs=[-120,-60,-30,-18,-12,-10,-8,-6,-4,-2,0,2,4,6,8,10,12,18,30,60,120]
+  rows=[(-15,-1.6),(-9,-1.1),(-5,-.48),(-3,0),(0,0),(5,0),(10,0),(14,.08),(22,.22),(40,.25),(90,.1),(150,-.1)]
+  def shore_point(x,row):
+   z,y=row
+   if z<0:z+=min(1,-z/3)*(.4*math.sin(x*.43)+.18*math.sin(x*.91))
+   if z<-3:
+    z+=min(1,(-z-3)/6)*(.25*math.sin(x*.7)+(.10*x*x if cove and abs(x)<10 else 0))
+   if z>=14:y+=min(.45,max(0,abs(x)-width)*.025)*math.sin(z*.06)**2
+   return (x,y,z)
+  for i in range(len(xs)-1):
+   for j in range(len(rows)-1):
+    face('sand',[shore_point(xs[i],rows[j+1]),shore_point(xs[i+1],rows[j+1]),shore_point(xs[i+1],rows[j]),shore_point(xs[i],rows[j])])
+  col((0,-.6,3.5),(width*2,1.2,13),'floor')
+  col((0,.5,-3.15),(width*2,1.1,.2))
+  # Rear and side ropes give the protected walking bounds visible context.
+  rail((-width,10),(width,10),'rope',.65)
+  for side in [-1,1]:rail((side*width,-3),(side*width,10),'rope',.65)
+  if cove:
+   # Rounded granite shoulders remain outside the playable ropes. Bases are
+   # submerged; the fishing mouth stays open across the full central apron.
+   for side in [-1,1]:
+    for j in range(7):
+     x=side*(width+2.3+rng.uniform(0,.6));z=-5+j*2.7
+     size=rng.uniform(1.2,2.1);rings=[];steps=12
+     for y,r in [(-1.5,.65),(-.3,1),(.5,.92),(1.05,.55),(1.25,.08)]:
+      rings.append([(x+math.cos(i*math.tau/steps)*size*r*(1+.09*math.sin(i*3+j)),y*size,z+math.sin(i*math.tau/steps)*size*r*.85) for i in range(steps)])
+     for k in range(len(rings)-1):
+      for i in range(steps):
+       nxt=(i+1)%steps
+       face('stone',[rings[k+1][i],rings[k+1][nxt],rings[k][nxt],rings[k][i]])
+   bench(-3.5,8.4)
+  else:
+   # A pair of bleached driftwood trunks rests inland, outside the walking area.
+   for x,z,angle in [(-6,12,.28),(6,13,-.42)]:
+    a=Vector((x-1.8,.21,z));b=Vector((x+1.8,.24,z+angle))
+    beam('weathered',a,b,.24,12)
+    beam('weathered',a.lerp(b,.7),a.lerp(b,.7)+Vector((.3,.4,.65)),.09,8)
+  scene['shore_connected']=True
  else:raise ValueError(id)
  objects=[]
  for mat,(vertices,faces) in groups.items():

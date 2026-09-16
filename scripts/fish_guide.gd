@@ -13,6 +13,10 @@ var touch_source := ""
 var previous_touch := Vector3(INF, INF, INF)
 const Session = preload("res://scripts/fishing_session.gd")
 const DESCRIPTIONS = {
+ "Argyrosomus japonicus": "A large silver croaker with a bronze back, pearly lateral-line spots and a broad mouth. It hunts fish and crustaceans in coastal and estuarine waters.",
+ "Rhabdosargus globiceps": "A silver seabream with a blunt forehead, small mouth and forked tail. It searches shallow reefs and sandy coastal bottoms for invertebrates.",
+ "Diplodus hottentotus": "A deep-bodied seabream with bold dark vertical bands. It lives around rocky shores and reefs, feeding on worms and small crustaceans.",
+ "Trachurus capensis": "A slender schooling scad with a large eye and a curved lateral line ending in hard scutes. It feeds on small fish and invertebrates in coastal shelf waters.",
  "Thymallus thymallus": "A slender silver fish with a tall, colourful dorsal fin and a small adipose fin. It feeds mainly on aquatic invertebrates.",
  "Barbus barbus": "A bronze river fish with a low mouth and four barbels used to find food near the riverbed.",
  "Leuciscus leuciscus": "A slim silver shoaling fish with yellow eyes and concave dorsal and anal fin edges.",

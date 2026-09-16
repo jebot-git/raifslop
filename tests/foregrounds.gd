@@ -35,7 +35,8 @@ func run() -> void:
 			await physics_frame
 			stayed_above_water = stayed_above_water and g.motor.global_position.y > -.1
 		key(KEY_W, false)
-		check(stayed_above_water and g.motor.global_position.z < -1.5, "Can walk to protected water edge " + id)
+		var arrival: Vector3 = g.foreground.get_meta("spawn")
+		check(stayed_above_water and g.motor.global_position.z < arrival.z-1.0, "Can walk toward the protected water edge " + id)
 		var stopped: Vector3 = g.motor.global_position
 		key(KEY_W, true)
 		for i in range(40): await physics_frame

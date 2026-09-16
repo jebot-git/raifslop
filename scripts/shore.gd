@@ -26,17 +26,22 @@ static func create(id: String) -> Node3D:
 	if id=="simons_town_rocks":coastal_footings(visual)
 	if id=="lake_pier":ground_pier_cleat(visual)
 	prepare_lighting(visual, id)
-	if id=="blouberg_sunrise_2":
+	if preload("res://scripts/locations.gd").find_location(id).get("sand_shore",false):
 		# Cast/landing rays must see the curved sand slope, not only the flat
 		# walking-area proxy, or a retrieved float can disappear into the shore.
 		for node in visual.find_children("*","MeshInstance3D",true,false):
-			var sand:bool= node.mesh.get_surface_count()>0
+			var sand := ArrayMesh.new()
 			for surface in node.mesh.get_surface_count():
 				var mat:Material=node.mesh.surface_get_material(surface)
-				sand=sand and mat!=null and mat.resource_name.begins_with("FG_sand")
-			if sand:
-				node.create_trimesh_collision()
-				for body in node.find_children("*", "StaticBody3D", true, false): body.set_meta("role", "floor")
+				if mat!=null and mat.resource_name.begins_with("FG_sand"):
+					sand.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,node.mesh.surface_get_arrays(surface))
+			if sand.get_surface_count()>0:
+				var body := StaticBody3D.new()
+				body.set_meta("role", "floor")
+				var shape := CollisionShape3D.new()
+				shape.shape = sand.create_trimesh_shape()
+				body.add_child(shape)
+				node.add_child(body)
 	for proxy in record.colliders:
 		if proxy.get("role", "") == "seat" or not proxy.get("enabled", true): continue
 		var body := StaticBody3D.new()
@@ -167,7 +172,7 @@ static func prepare_lighting(node: Node, id: String) -> void:
 					mat.set_shader_parameter("base_color",Color.WHITE)
 				mat.set_shader_parameter("normal_tex", source.normal_texture)
 				mat.set_shader_parameter("normal_depth", .28 if source.normal_enabled else 0.0)
-				if id=="blouberg_sunrise_2" and source.resource_name.begins_with("FG_sand"):
+				if preload("res://scripts/locations.gd").find_location(id).get("sand_shore",false) and source.resource_name.begins_with("FG_sand"):
 					mat.set_shader_parameter("normal_depth",.1)
 				mat.set_shader_parameter("rough_tex", source.roughness_texture)
 				mat.set_shader_parameter("has_roughness", source.roughness_texture != null)

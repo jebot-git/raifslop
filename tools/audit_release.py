@@ -79,11 +79,17 @@ def audit(path):
                      'assets/environment/rivers/river_bank.png',
                      'assets/environment/shore_details/lakeshore_reeds.png',
                      'assets/environment/shore_details/simons_granite.png',
+                     'assets/environment/shore_details/coastal_dune_grass.png',
+                     'assets/environment/shore_details/coastal_wrack.png',
+                     'assets/models/locations/lit/secluded_beach.glb',
+                     'assets/models/locations/lit/fish_hoek_beach.glb',
+                     'assets/audio/ambience/secluded_beach.ogg','assets/audio/ambience/fish_hoek_beach.ogg',
                      'assets/audio/ambience/meadow_bend.ogg','assets/audio/ambience/boulder_run.ogg',
                      'assets/avatars/vita.vrm','assets/avatars/victoria.vrm','assets/avatars/sharkperson.vrm']:
         assert required in names or required in remaps, ('Missing runtime file', required)
     lighting = json.loads(pack.read('assets/textures/lighting/panorama_lighting.json'))
-    assert len(lighting) == 6 and all(record['sun_energy'] > 0 for record in lighting.values()), 'Missing measured lighting'
+    expected_lighting = {p.name.removesuffix('_8k.hdr') for p in (ROOT / 'assets/environment/locations').glob('*_8k.hdr')}
+    assert set(lighting) == expected_lighting and all(record['sun_energy'] > 0 for record in lighting.values()), 'Missing measured lighting'
     for tier in ['willow', 'reed', 'heron', 'kingfisher']:
         for mode in ['', '_fly']:
             for state in ['', '_folded']:
@@ -101,7 +107,7 @@ def audit(path):
             assert target.endswith('.res'), ('Desktop HDR not compressed', source)
         if source.endswith('_8k.hdr'): panoramas[source] = len(data)
     expected_panoramas = {str(p.relative_to(ROOT)) for p in (ROOT / "assets/environment/locations").glob("*_8k.hdr")}
-    assert set(panoramas) == expected_panoramas and len(panoramas) == 6, panoramas
+    assert set(panoramas) == expected_panoramas, panoramas
     result = {'artifact':str(path),'entries':len(names),'asset_bytes':sum(sizes.values()),
               'unique_texture_payloads':len(hashes),'texture_aliases':len([v for v in remaps.values() if v in hashes.values()]),
               'panoramas':panoramas,'largest':sorted(sizes.items(), key=lambda p:-p[1])[:20]}

@@ -1,0 +1,46 @@
+[
+  {
+    "id": "secluded_beach",
+    "source_url": "https://polyhaven.com/a/secluded_beach",
+    "authors": {
+      "Greg Zaal": "All",
+      "Rico Cilliers": "Backplates"
+    },
+    "license": "CC0",
+    "license_url": "https://polyhaven.com/license",
+    "acquired": "2026-09-16",
+    "download": {
+      "size": 99396041,
+      "md5": "1d4bc7a9b14a36e20c92f3db4ee2c288",
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/8k/secluded_beach_8k.hdr"
+    },
+    "sha256": "05fa5ea6369992fba1adb446ea2725fbf747681c92923ddb80996a790927b5a4",
+    "runtime": "res://assets/environment/locations/secluded_beach_8k.hdr",
+    "native_size": [
+      8192,
+      4096
+    ]
+  },
+  {
+    "id": "fish_hoek_beach",
+    "source_url": "https://polyhaven.com/a/fish_hoek_beach",
+    "authors": {
+      "Greg Zaal": "All",
+      "Rico Cilliers": "Backplates"
+    },
+    "license": "CC0",
+    "license_url": "https://polyhaven.com/license",
+    "acquired": "2026-09-16",
+    "download": {
+      "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/8k/fish_hoek_beach_8k.hdr",
+      "size": 89132766,
+      "md5": "e2c2ddccf599446dc5ae50bc3d89283e"
+    },
+    "sha256": "41413c43c5cced66a1f901092792cfa3b5a3394f1afe9b37c35e42ffd806923d",
+    "runtime": "res://assets/environment/locations/fish_hoek_beach_8k.hdr",
+    "native_size": [
+      8192,
+      4096
+    ]
+  }
+]

@@ -11,6 +11,7 @@ static func crossed_mesh(centered:bool=false,sections:int=3)->ArrayMesh:
    st.set_normal(Vector3.BACK.rotated(Vector3.UP,yaw));st.set_uv(uv[i]);st.add_vertex((points[i]-Vector3.UP*(.5 if centered else 0.0)).rotated(Vector3.UP,yaw))
  return st.commit()
 static func create(id:String)->Node3D:
+ if id in ["secluded_beach","fish_hoek_beach"]:return load("res://scripts/coastal_shore_details.gd").create(id)
  if id=="simons_town_rocks":return preload("res://scripts/simons_rear_details.gd").create()
  if id not in ["lakeside","gray_pier"]:return null
  var root:=Node3D.new();root.name="ShoreTransitionDetails"

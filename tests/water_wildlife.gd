@@ -44,6 +44,6 @@ func run() -> void:
 		g.game.state=g.Session.State.WAITING;g._update_line()
 		check(absf(g.bobber.position.y-g.water_level-.05)<.03,"Waiting float rests at selected water surface")
 	check(meshes.size()==preload("res://scripts/environment_life.gd").PROFILES.size() and meshes[0]!=meshes[1] and meshes[1]!=meshes[2] and meshes[2]!=meshes[3],"Bird species have distinct silhouettes")
-	check(insect_kinds==["fly","none","midge","dragonfly","none","none"] and flight_speeds[0]!=flight_speeds[1] and flight_speeds[2]!=flight_speeds[3],"Waters vary insect species and flight speeds")
+	check(insect_kinds==["fly","none","midge","dragonfly","none","none","none","none"] and flight_speeds[0]!=flight_speeds[1] and flight_speeds[2]!=flight_speeds[3],"Waters vary insect species and flight speeds")
 	g.queue_free();await process_frame;await create_timer(.3).timeout
 	print("WATER_WILDLIFE_RESULT ",failures);quit(0 if failures.is_empty() else 1)

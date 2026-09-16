@@ -13,6 +13,9 @@ PROFILES={'lakeside':(.55,.42,(-35,-40,0),(1,.95,.87)), 'lake_pier':(.3,.35,(-12
 bpy.ops.wm.read_factory_settings(use_empty=True)
 PROFILES.update({'simons_town_rocks':(.5,.4,(-38,-65,0),(1,.97,.9)), 'blouberg_sunrise_2':(.16,.4,(-8,95,0),(1,.85,.72))})
 library='coastal_foregrounds.blend' if ID in ['simons_town_rocks','blouberg_sunrise_2'] else 'foregrounds.blend'
+if ID in ['secluded_beach','fish_hoek_beach']:
+ library='coastal_expansion.blend'
+ PROFILES.update({'secluded_beach':(.5,.4,(-30,-30,0),(1,.96,.88)), 'fish_hoek_beach':(.1,.45,(-10,30,0),(.9,.94,1))})
 with bpy.data.libraries.load(str(ROOT/'source'/library)) as (src,dst):dst.scenes=[next(n for n in src.scenes if n.split('.')[0]=='Foreground_'+ID)]
 s=dst.scenes[0];bpy.context.window.scene=s
 # Separate far terrain, so bake texels concentrate on the reachable foreground.
@@ -65,6 +68,7 @@ for m in ob.data.materials:
  for n in list(m.node_tree.nodes):
   if n.type=='TEX_IMAGE':m.node_tree.links.new(uv.outputs['UV'],n.inputs['Vector'])
 s.render.engine='CYCLES';s.cycles.device='CPU';s.cycles.samples=48
+s.render.threads_mode='FIXED';s.render.threads=8
 s.cycles.use_denoising=True;s.render.bake.margin=8
 sun_energy,ambient,rot,color=PROFILES[ID]
 world=bpy.data.worlds.new('Soft overcast fill');world.use_nodes=True;world.node_tree.nodes['Background'].inputs['Color'].default_value=(.8,.86,.93,1);world.node_tree.nodes['Background'].inputs['Strength'].default_value=ambient;s.world=world

@@ -42,18 +42,24 @@ const SPECIES = [
 	{"name": "Harder mullet", "latin": "Chelon richardsonii", "length": 32.0, "weight": 0.4, "rarity": 1, "endurance": 75.0, "power": 0.8, "bait": 0, "habitat": "marine", "model": "res://assets/models/fish/harder.glb"},
 	{"name":"Wels catfish", "latin":"Silurus glanis", "length":180.0, "weight":45.0, "rarity":5, "endurance":400.0, "power":1.7, "bait":-1, "habitat":"freshwater", "predator":true, "model":"res://assets/models/fish/wels_catfish.glb"},
 	{"name":"Bronze whaler shark", "latin":"Carcharhinus brachyurus", "length":240.0, "weight":100.0, "rarity":5, "endurance":520.0, "power":2.1, "bait":-1, "habitat":"marine", "predator":true, "model":"res://assets/models/fish/bronze_whaler.glb"},
+	{"name": "Dusky kob", "latin": "Argyrosomus japonicus", "length": 70.0, "weight": 3.2, "rarity": 3, "endurance": 160.0, "power": 1.3, "bait": 4, "habitat": "marine", "model": "res://assets/models/fish/dusky_kob.glb"},
+	{"name": "White stumpnose", "latin": "Rhabdosargus globiceps", "length": 38.0, "weight": 0.95, "rarity": 2, "endurance": 105.0, "power": 1.0, "bait": 3, "habitat": "marine", "model": "res://assets/models/fish/white_stumpnose.glb"},
+	{"name": "Zebra seabream", "latin": "Diplodus hottentotus", "length": 35.0, "weight": 0.85, "rarity": 2, "endurance": 115.0, "power": 1.05, "bait": 0, "habitat": "marine", "model": "res://assets/models/fish/zebra_seabream.glb"},
+	{"name": "Cape horse mackerel", "latin": "Trachurus capensis", "length": 30.0, "weight": 0.28, "rarity": 1, "endurance": 65.0, "power": 0.78, "bait": 2, "habitat": "marine", "model": "res://assets/models/fish/cape_horse_mackerel.glb"},
 ]
 # Stable indices preserve existing catch records and model mapping.
 const MARINE_BAITS = ["Ragworm", "Squid", "Spinner", "Prawn", "Sardine", "Saltwater fly"]
-const MARINE_BAIT_SPECIES = {0:[18,19,20,22,25], 1:[18,20,21,22,23,24], 2:[23,24], 3:[18,19,20,21,22,25], 4:[18,21,23,24], 5:[18,23,24,25]}
+const MARINE_BAIT_SPECIES = {0:[18,19,20,22,25,29,30], 1:[18,20,21,22,23,24,28,29,30,31], 2:[23,24,28,31], 3:[18,19,20,21,22,25,29,30], 4:[18,21,23,24,28,31], 5:[18,23,24,25,28,31]}
 const EXTRA_BAIT_SPECIES = {3: [0,3,5,7,9,12,13,16], 4: [1,3,4,7,8,9,13,14,15], 5: [9,10,11,14,15,17]}
 const LOCATION_SPECIES = {
  "lakeside": [0,1,2,3,4,5,6,7,8,9,13,14,15,16],
  "lake_pier": [0,1,2,3,5,6,7,9,10,11,12,14,15,17],
  "gray_pier": [0,1,2,3,4,5,6,7,8,11,12,13,15,16],
  "bell_park_pier": [0,1,2,3,4,5,8,9,10,11,13,14,16,17],
- "simons_town_rocks": [18,19,20,21,23,24],
- "blouberg_sunrise_2": [18,19,22,23,24,25],
+ "simons_town_rocks": [18,19,20,21,23,24,28,30,31],
+ "blouberg_sunrise_2": [18,19,22,23,24,25,28,29,31],
+ "secluded_beach": [18,19,20,21,23,25,29,30,31],
+ "fish_hoek_beach": [18,20,22,23,24,25,28,29,31],
  "meadow_bend":[11,12,9,14],
  "boulder_run":[10,11,12]
 }
@@ -61,7 +67,7 @@ const LOCATION_SPECIES = {
 const PREDATOR_CHANCE := .02
 const WELS := 26
 const BRONZE_WHALER := 27
-const PREDATOR_PREY = {WELS:[0,3,7,14,15,16], BRONZE_WHALER:[18,23,25]}
+const PREDATOR_PREY = {WELS:[0,3,7,14,15,16], BRONZE_WHALER:[18,23,25,31]}
 # 0/1/2: directional hold; 3: deep pull; 4: slack rush; 5: long run.
 const PREDATOR_SEQUENCES = {WELS:[5,2,3,0,3,1,4], BRONZE_WHALER:[5,0,3,1,5,2,4]}
 var predator_encounters_enabled := true
@@ -162,7 +168,7 @@ func is_predator() -> bool:
 	return bool(SPECIES[fish_index].get("predator",false))
 
 static func is_marine_location(id: String) -> bool:
-	return id in ["simons_town_rocks", "blouberg_sunrise_2"]
+	return id in ["simons_town_rocks", "blouberg_sunrise_2", "secluded_beach", "fish_hoek_beach"]
 
 func bait_name(index: int) -> String:
 	if is_fly_fishing():return ["Dry fly","Nymph"][clampi(index,0,1)]

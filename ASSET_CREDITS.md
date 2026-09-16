@@ -128,3 +128,20 @@ from Noto Sans CJK KR Bold (Google/Adobe, SIL Open Font License 1.1), installed
 from the system Noto CJK package. The game contains the resulting SVG artwork,
 not the font software. Source artwork: `source/posters/fishing_plan_base.svg`;
 rebuild: `tools/build_fishing_poster.py`.
+
+## Additional coastal waters — 16 September 2026
+
+- [Secluded Beach](https://polyhaven.com/a/secluded_beach) and
+  [Fish Hoek Beach](https://polyhaven.com/a/fish_hoek_beach): photographs by Greg Zaal,
+  backplates credited to Rico Cilliers, [CC0](https://polyhaven.com/license). Native
+  8192 × 4096 HDR originals; [download URLs, MD5 and SHA-256](docs/locations/coastal_expansion_sources.json).
+- [Rock Boulder Dry](https://polyhaven.com/a/rock_boulder_dry): photography by
+  Dimitrios Savva, processing by Rico Cilliers, CC0. Tileable 1K albedo, roughness
+  and OpenGL normal maps; [source manifest](docs/locations/coastal_expansion_material.json).
+- Dune-grass and kelp/shell cutouts are original built-in OpenAI imagegen outputs,
+  saved under `assets/environment/shore_details/coastal_*.png`.
+  [Exact prompts](docs/locations/coastal_expansion_prompts.json).
+- The sand, timber and surf recordings reuse the credited foreground materials and
+  jasinski/qubodup CC0 recordings above. Surf beds are new seeded 128-second mixes,
+  not recordings of these particular places. Foreground geometry is authored in
+  `tools/build_coastal_expansion.py` and `tools/build_foregrounds.py`.

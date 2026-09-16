@@ -10,6 +10,16 @@
     "bytes": 1229167
   },
   {
+    "file": "assets/audio/ambience/boulder_run.ogg",
+    "sha256": "a95b8b223085628a54126e2774c9f28b76d79c7c2e6f73ca6e7915eb64bcc7e3",
+    "bytes": 174143
+  },
+  {
+    "file": "assets/audio/ambience/fish_hoek_beach.ogg",
+    "sha256": "1e63e51591bae465b36a2bdaf097f126de5624f11aaaf5fb811770aa5b9b6ea4",
+    "bytes": 1422842
+  },
+  {
     "file": "assets/audio/ambience/gray_pier.ogg",
     "sha256": "168011cf7b829a403bf4bf0d8ff4bb5bbd6b1e3bc3f20d71f01b775585854a3f",
     "bytes": 1659872
@@ -23,6 +33,16 @@
     "file": "assets/audio/ambience/lakeside.ogg",
     "sha256": "651b19166e9f6013e7d3cf892d2181513fef37c3987a5506b0c38f3e43a46927",
     "bytes": 1732904
+  },
+  {
+    "file": "assets/audio/ambience/meadow_bend.ogg",
+    "sha256": "dbe162153e1f5431b5a46c5aae00719f4ce47145d10e402bd041e973dbdc8f8b",
+    "bytes": 173290
+  },
+  {
+    "file": "assets/audio/ambience/secluded_beach.ogg",
+    "sha256": "319b57a2a5d529f0d642ea191afb190a2dd342a218f47418dc06fec32cb0d0cc",
+    "bytes": 1099080
   },
   {
     "file": "assets/audio/ambience/simons_town_rocks.ogg",

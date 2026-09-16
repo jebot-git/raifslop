@@ -18,7 +18,10 @@ const SPECIES = [
  ["agile",1.0], ["bottom",.90], ["dart",.84], ["dart",.80],
  ["bottom",.85], ["agile",.96], ["reef",.92], ["reef",1.0],
  ["reef",1.08], ["reef",.96], ["cruiser",1.0], ["agile",.88],
- ["runner",1.0], ["runner",.90]
+ ["runner",1.0], ["runner",.90],
+ # Reserved predator indices retain their former fallback; encounters use dedicated sequences.
+ ["runner",.90], ["runner",.90],
+ ["cruiser",1.02], ["bottom",1.02], ["reef",1.04], ["dart",.88]
 ]
 static func profile(index: int) -> Dictionary:
  var entry: Array=SPECIES[clampi(index,0,SPECIES.size()-1)]

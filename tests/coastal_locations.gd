@@ -9,12 +9,13 @@ func run() -> void:
 	await create_timer(.4).timeout
 	g.set_process(false);g.motor.set_physics_process(false)
 	for item in [g.hud,g.rod,g.avatar,g.fish_guide,g.rod_status,g.bobber]: item.hide()
-	for id in ["simons_town_rocks","blouberg_sunrise_2"]:
+	for id in ["simons_town_rocks","blouberg_sunrise_2","secluded_beach","fish_hoek_beach"]:
 		check(g._select_location(id,false),"Travel "+id)
 		await physics_frame
 		var entry: Dictionary=g.Locations.find_location(id)
 		check(g.water_material.get_shader_parameter("protect_panorama_foreground")==entry.get("protect_panorama_foreground",false),"Coastal water preset "+id)
 		check(g.water_material.get_shader_parameter("coastal_foreground")== (id=="simons_town_rocks"),"Foreground water coverage resets on travel")
+		check(g.water_material.get_shader_parameter("coastal_shallows")==entry.get("coastal_shallows",false),"Shallow sand transition resets on travel")
 		if id=="simons_town_rocks":
 			var rear=g.foreground.get_node("RearRockTransitions")
 			var rocks:MultiMesh=rear.get_node("CurvedRockCards").multimesh
@@ -23,6 +24,12 @@ func run() -> void:
 			var bases:Array=rear.get_meta("bases")
 			check(bases[4].z-bases[0].z>10,"Rear layers provide spatial depth")
 		check(g.foreground.get_node("EnvironmentalLife").insect_count==0,"Coastal birds without inland insect swarm")
+		if id in ["secluded_beach","fish_hoek_beach"]:
+			check(g.foreground.has_node("CoastalShoreDetails/DuneGrass"),"Generated shoreline details loaded "+id)
+			check(g.water_material.get_shader_parameter("beach_sides"),"Side surf joins the panorama "+id)
+			# Sand must intercept rays just inland of the waterline, beyond the dry floor proxy.
+			var slope=g.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(0,1,-4),Vector3(0,-2,-4),1))
+			check(not slope.is_empty() and slope.position.y<0 and slope.position.y>g.water_level,"Landing rays hit the sand slope "+id)
 		check(g.ambience.voices[id].player.stream.get_length()>120,"Long recorded surf bed "+id)
 		for point in [Vector3(0,.1,.65),Vector3(0,.1,-2.5),Vector3(2,.1,-2)]:
 			var hit=g.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(point,point-Vector3.UP,1))

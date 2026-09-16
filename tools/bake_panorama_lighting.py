@@ -17,7 +17,7 @@ from mathutils import Vector
 ROOT = Path(__file__).resolve().parents[1]
 BAKE = ROOT / 'assets/textures/lighting'
 REPORT = BAKE / 'panorama_lighting.json'
-IDS = ['lakeside', 'lake_pier', 'gray_pier', 'bell_park_pier', 'simons_town_rocks', 'blouberg_sunrise_2']
+IDS = ['lakeside', 'lake_pier', 'gray_pier', 'bell_park_pier', 'simons_town_rocks', 'blouberg_sunrise_2', 'secluded_beach', 'fish_hoek_beach']
 
 
 def profile(location):

@@ -1,0 +1,38 @@
+{
+  "source": "https://polyhaven.com/a/rock_boulder_dry",
+  "authors": {
+    "Dimitrios Savva": "Photography",
+    "Rico Cilliers": "Processing"
+  },
+  "license": "CC0",
+  "license_url": "https://polyhaven.com/license",
+  "files": [
+    {
+      "file": "source/textures/foreground/rock_boulder_dry_Diffuse.jpg",
+      "download": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_dry/rock_boulder_dry_diff_1k.jpg",
+        "size": 859211,
+        "md5": "da794cd9be3db91e3160cf081109f322"
+      },
+      "sha256": "20f653a42fb24f42aa40641663070d578678da49af18cc1049dbdd4ed8679f3c"
+    },
+    {
+      "file": "source/textures/foreground/rock_boulder_dry_Rough.jpg",
+      "download": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_dry/rock_boulder_dry_rough_1k.jpg",
+        "size": 668127,
+        "md5": "0c8b15df3e31c15256da5f8e1b0d0759"
+      },
+      "sha256": "cc5229dd6bbdc4e817cb647e60242224b8e4f0237473ac018861ea243f2e8130"
+    },
+    {
+      "file": "source/textures/foreground/rock_boulder_dry_nor_gl.jpg",
+      "download": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_dry/rock_boulder_dry_nor_gl_1k.jpg",
+        "size": 802497,
+        "md5": "6f1c575ceed560ae253f65518cf748e2"
+      },
+      "sha256": "5915fea28a97357c78a04fb31c2516f1f7ed1b3a9cef4ae25aa93e4655e6c595"
+    }
+  ]
+}

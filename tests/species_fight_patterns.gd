@@ -6,7 +6,8 @@ func check(ok:bool,label:String):
  if not ok:failures.append(label);push_error(label)
 func _initialize():
  var signatures:={}
- for index in 26:
+ for index in S.SPECIES.size():
+  if S.SPECIES[index].get("predator",false):continue
   var p=P.profile(index)
   var signature=JSON.stringify(p)+str(P.tempo(index))
   check(not signatures.has(signature),"Individual species has distinct cadence: "+str(index))

@@ -1,6 +1,6 @@
 # Marine fish
 
-Coastal Rocks and Sunrise Beach have marine-only rosters. The original freshwater species and their journal indices remain unchanged; eight marine species are appended at indices 18–25. These are authored southern African coastal game rosters, not a survey of the photographed sites.
+Coastal Rocks, Sunrise Beach, Secluded Cove and Tidal Strand have marine-only rosters. The original freshwater species and their journal indices remain unchanged; eight marine species are appended at indices 18–25. These are authored southern African coastal game rosters, not a survey of the photographed sites.
 
 | Species | Typical game catch | Coastal Rocks | Sunrise Beach |
 | --- | --- | --- | --- |
@@ -12,6 +12,8 @@ Coastal Rocks and Sunrise Beach have marine-only rosters. The original freshwate
 | Elf / bluefish — *Pomatomus saltatrix* | 45 cm / 1.1 kg | Yes | Yes |
 | Cape yellowtail — *Seriola lalandi* | 85 cm / 5.5 kg | Yes | Yes |
 | Harder mullet — *Chelon richardsonii* | 32 cm / 0.4 kg | | Yes |
+
+Secluded Cove includes blacktail, galjoen, hottentot, red roman, elf and harder mullet. Tidal Strand includes blacktail, hottentot, white steenbras, elf, Cape yellowtail and harder mullet. All four rosters are distinct and support every saltwater bait slot.
 
 Sizes are gameplay baselines with the existing ±15% length variation and cubic weight scaling. They are not species maxima. Fighting uses the shared directional counters, submerging mechanics and tackle progression. Catch models retain metre-based scaling and the existing subtle twitch.
 

@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Dusky kob",
+    "latin": "Argyrosomus japonicus",
+    "length": 70.0,
+    "weight": 3.2,
+    "rarity": 3,
+    "endurance": 160.0,
+    "power": 1.3,
+    "bait": 4,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/dusky_kob.glb"
+  },
+  {
+    "name": "White stumpnose",
+    "latin": "Rhabdosargus globiceps",
+    "length": 38.0,
+    "weight": 0.95,
+    "rarity": 2,
+    "endurance": 105.0,
+    "power": 1.0,
+    "bait": 3,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/white_stumpnose.glb"
+  },
+  {
+    "name": "Zebra seabream",
+    "latin": "Diplodus hottentotus",
+    "length": 35.0,
+    "weight": 0.85,
+    "rarity": 2,
+    "endurance": 115.0,
+    "power": 1.05,
+    "bait": 0,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/zebra_seabream.glb"
+  },
+  {
+    "name": "Cape horse mackerel",
+    "latin": "Trachurus capensis",
+    "length": 30.0,
+    "weight": 0.28,
+    "rarity": 1,
+    "endurance": 65.0,
+    "power": 0.78,
+    "bait": 2,
+    "habitat": "marine",
+    "model": "res://assets/models/fish/cape_horse_mackerel.glb"
+  }
+]

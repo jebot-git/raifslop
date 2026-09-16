@@ -1,0 +1,25 @@
+{
+  "mode": "built-in imagegen",
+  "assets": [
+    {
+      "id": "dusky_kob",
+      "file": "source/fish_references/marine_expansion/dusky_kob.png",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Perfectly pure white background without shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult dusky kob (Argyrosomus japonicus): elongated substantial silver body, bronze olive-grey back, pale silvery belly, gently arched lateral line carrying a row of pearly silver spots, large terminal oblique mouth, modest round eye, rounded to slightly squared caudal fin NOT a deeply forked tail. A short triangular spiny first dorsal followed after a deep notch by a long lower soft dorsal, short triangular anal fin, paired grey pectoral and pelvic fins. Distinctive powerful croaker proportions."
+    },
+    {
+      "id": "white_stumpnose",
+      "file": "source/fish_references/marine_expansion/white_stumpnose.png",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Perfectly pure white background without shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult white stumpnose seabream (Rhabdosargus globiceps): deep but moderately elongated oval silver body, steep rounded blunt forehead and small slightly downturned mouth, grey-green back, pearly silver scales, faint narrow golden horizontal lines along scale rows, pale belly, forked grey caudal fin, continuous spiny then soft dorsal fin with visible sharp rays, long pointed grey pectoral fin, pelvic and anal fins subtly yellow-grey. No bold vertical bars, no black tail band, no red coloration. Realistic marine bream proportions."
+    },
+    {
+      "id": "zebra_seabream",
+      "file": "source/fish_references/marine_expansion/zebra_seabream.png",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Perfectly pure white background without shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate an adult South African zebra seabream (Diplodus hottentotus): deep laterally compressed oval silver body with FIVE broad charcoal-black vertical bands across the body, pale interspaces, one dark band passing through the eye area, blunt rounded forehead, small terminal mouth, continuous spiny and soft dorsal fin, grey forked tail, dusky translucent fins. Clear bold zebra pattern, realistic individual scales, no horizontal stripes. Natural marine seabream anatomy."
+    },
+    {
+      "id": "cape_horse_mackerel",
+      "file": "source/fish_references/marine_expansion/cape_horse_mackerel.png",
+      "prompt": "Use case: scientific-educational. Asset type: realistic side reference for a textured 3D fishing-game model. Exact full side profile, HEAD TO THE RIGHT, tail to the left, straight horizontal fish. One fish only, all fins naturally spread and visible, whole silhouette fits with a small white margin. Perfectly pure white background without shadows. Wide landscape 1536x1024. Soft even diffuse illumination, lifelike detailed skin and fin rays, no labels, no text, no props, no water, no perspective foreshortening, no extra fins. Generate a Cape horse mackerel (Trachurus capensis), a slender streamlined silver scad with a blue-grey to green back, bright silver flanks and white belly, large round eye, small dark spot at the upper rear gill cover, conspicuous curved lateral line becoming a straight row of hard bony scutes toward the narrow tail stalk. Deeply forked grey yellowish tail, two separate dorsal fins: short triangular first spiny dorsal and long low second dorsal, long low anal fin, long pointed pectoral fin against side. No mackerel-like wavy back stripes, no tuna finlets, no yellowtail stripe. Realistic small schooling marine fish."
+    }
+  ]
+}

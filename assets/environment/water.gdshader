@@ -19,6 +19,7 @@ uniform bool protect_panorama_foreground = false;
 uniform bool replace_near_jetty = false;
 uniform bool coastal_foreground = false;
 uniform bool beach_sides = false;
+uniform bool coastal_shallows = false;
 // Authored in panorama UVs: only clear open water may receive animated reflections.
 // Outside this feathered region preserve the actual jetty, markers and shoreline.
 uniform vec4 panorama_water_region = vec4(0.0, 1.0, 0.0, 1.0);
@@ -97,4 +98,11 @@ void fragment() {
 	vec3 under_world=(INV_VIEW_MATRIX*vec4(under_view.xyz/under_view.w,1.0)).xyz;
 	fish_window*=1.0-smoothstep(hooked_radius*.4,hooked_radius*.6,length(under_world-hooked_position));
 	ALPHA=1.0-hooked_visibility*fish_window*.78*(1.0-fresnel);
+	if (coastal_shallows && distance_to_view<24.0) {
+		// Reveal the actual submerged sand at the contact edge. Depth comes from
+		// the authored slope, so the transition follows the irregular shoreline.
+		float depth=max(0.0,world_position.y-under_world.y);
+		float sand_edge=smoothstep(.015,.38,depth);
+		ALPHA*=mix(sand_edge,1.0,smoothstep(18.0,24.0,distance_to_view));
+	}
 }

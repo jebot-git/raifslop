@@ -41,3 +41,8 @@ Current foreground captures: [Lakeside](locations/lakeside_foreground.png), [Lak
 ## Coastal additions
 
 [Coastal Rocks and Sunrise Beach](COASTAL_LOCATIONS.md) extend the same native 8K / authored foreground / baked lighting pipeline. Their panoramas were downloaded from the public Poly Haven API; [source URLs, license and checksums](locations/coastal_sources.json) are retained separately.
+
+[Secluded Cove and Tidal Strand](COASTAL_EXPANSION.md) bring the photographed
+catalogue to eight locations, alongside the two procedural rivers. They retain
+the same native 8K skies, 768 × 384 previews, measured lighting and authored
+foreground pipeline, with new generated grass and wrack details.

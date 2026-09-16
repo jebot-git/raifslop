@@ -82,5 +82,33 @@
       384
     ],
     "preview_sha256": "45bfba62c8e27290289a1fbcfc61690527ac83a429fd924455fe00ab59ffe21a"
+  },
+  {
+    "id": "secluded_beach",
+    "runtime": "assets/environment/locations/secluded_beach_8k.hdr",
+    "source_sha256": "05fa5ea6369992fba1adb446ea2725fbf747681c92923ddb80996a790927b5a4",
+    "runtime_size": [
+      8192,
+      4096
+    ],
+    "preview_size": [
+      768,
+      384
+    ],
+    "preview_sha256": "5927f3740a78a3230a07cd80d85865624ebc89770dd089a8b03790a7889e6603"
+  },
+  {
+    "id": "fish_hoek_beach",
+    "runtime": "assets/environment/locations/fish_hoek_beach_8k.hdr",
+    "source_sha256": "41413c43c5cced66a1f901092792cfa3b5a3394f1afe9b37c35e42ffd806923d",
+    "runtime_size": [
+      8192,
+      4096
+    ],
+    "preview_size": [
+      768,
+      384
+    ],
+    "preview_sha256": "0e89bf5fc908e413c8855f64458cad632c68a2d423d62f8e9f2e27f08ddd1773"
   }
 ]

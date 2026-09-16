@@ -94,7 +94,11 @@ func run() -> void:
 	g.game.strike()
 	g.game.distance = 1.0
 	g.game.stamina = .2
-	g.game.tick(0, 0, 0)
+	g.game.cue = -1
+	g.game.tick(.01, .5, 0)
+	check(not g.game.journal.is_empty(), "Retrieving the exhausted fish records a catch")
+	if g.game.journal.is_empty():
+		g.queue_free();await process_frame;quit(1);return
 	check(g.game.journal.back().location_id == "lake_pier", "Catch journal records the fishing location")
 	g._save_journal()
 	g.game.journal.clear()

@@ -1,0 +1,14 @@
+{
+  "mode": "built-in image_gen",
+  "date": "2026-09-16",
+  "assets": [
+    {
+      "file": "assets/environment/shore_details/coastal_dune_grass.png",
+      "prompt": "Use case: photorealistic-natural. Asset type: game coastal vegetation cutout texture, a single isolated low clump of coastal dune grass for a photographic South African shore in a VR fishing game. Primary request: realistic sparse tuft of wiry sand-colored marram-like grass mixed with muted olive blades, a few dry straw blades bent in ocean wind. Full clump from base to tips, straight-on eye-level close photograph; the roots meet a flat baseline at the bottom. Entire subject centered with clear transparent padding on every side, 1024 square. Natural fine leaf detail, soft neutral overcast illumination, no strong cast shadows. Genuinely transparent background alpha, no soil slab, no ground plane, no pot, no text, no border, no checkerboard. Low compact silhouette, about twice as wide as tall, suited to crossed vegetation cards."
+    },
+    {
+      "file": "assets/environment/shore_details/coastal_wrack.png",
+      "prompt": "Use case: photorealistic-natural. Asset type: transparent ground-detail texture for a photographic coastal VR fishing game. A single sparse small crescent of naturally washed-up dark olive-brown kelp ribbons, three tiny bleached shell fragments and a few rounded dark pebbles, viewed exactly top down. Flat organic arrangement with irregular edges and plenty of gaps between objects, roughly twice as wide as deep. Damp leathery kelp with subtle texture, weathered shells, neutral diffuse daylight without strong baked shadows. Entire arrangement fully visible with generous transparent padding. Genuinely transparent alpha background, no sand rectangle, no ground plane, no scenery, no text, no borders, no checkerboard. Restrained realistic colors. Output a square 1024 image."
+    }
+  ]
+}

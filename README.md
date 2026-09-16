@@ -1,6 +1,6 @@
 # Real AI Fishing
 
-A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. 18 real fish species, 14 catchable at each location, six bait choices, six selectable photographed waterside settings, six distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
+A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. Freshwater and marine fish, six bait choices per habitat, eight photographed waterside settings plus two rivers, distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
 
 Open `project.godot` in Godot 4.7.2 and press F6/F5, or launch:
 
@@ -83,7 +83,7 @@ The perch uses an attributed third-party model; carp and pike currently use simp
 
 ## Scope of this first version
 
-- Six native 8K waterside panoramas with animated water and walkable foregrounds, including a rocky coast and walkable sunrise beach. [Coastal locations](docs/COASTAL_LOCATIONS.md) have distinct marine rosters with eight [marine species](docs/MARINE_FISH.md) and saltwater baits.
+- Eight native 8K waterside panoramas with animated water and walkable foregrounds, including a rocky coast and walkable sunrise beach. [Coastal locations](docs/COASTAL_LOCATIONS.md) have distinct marine rosters with eight [marine species](docs/MARINE_FISH.md) and saltwater baits.
 - Room-scale tracked head and controller poses; rod follows the right hand. Off-hand reeling is measured in rod-local coordinates so moving the rod does not itself turn the crank. Tracking loss pauses the simulation; re-grabs and tracking jumps reset the reel sample.
 - Bite timing, directional responses, fish runs, stamina, line tension, win/loss/retry and local catch persistence. Audio and controller vibration mark bites and successful counters.
 - A world-space VR menu, handheld guide status, a separate desktop interface, collision-based free locomotion, and selectable runtime VRM avatars with visible hands.
@@ -132,7 +132,7 @@ Casting swishes, crank-speed reel sounds and positional fight/landing splashes a
 
 ## Soft lighting and shadows
 
-All six foregrounds use baked sky/bounce lighting, static sun shadows and AO, with restrained normal maps and broad material highlights. FPSloppa-derived MToon lighting helps avatars fit those surroundings. Moving players use soft contact shadows. Dynamic player shadows and their setting have been removed; static scenery shadows remain baked. [Pipeline, previews and performance comparison](docs/ENVIRONMENT_LIGHTING.md).
+All eight photographed foregrounds use baked sky/bounce lighting, static sun shadows and AO, with restrained normal maps and broad material highlights. FPSloppa-derived MToon lighting helps avatars fit those surroundings. Moving players use soft contact shadows. Dynamic player shadows and their setting have been removed; static scenery shadows remain baked. [Pipeline, previews and performance comparison](docs/ENVIRONMENT_LIGHTING.md).
 
 ## Release downloads
 
@@ -154,3 +154,12 @@ All six locations ship native 8192 × 4096 HDR panoramas through one standard lo
 ### Fly-fishing rivers
 
 Meadow Bend and Boulder Run add fly casting, dry flies/nymphs, drifting, upstream mending and line stripping. Nymphs use a small strike indicator; dry flies signal surface takes. [Controls, river environments and validation](docs/FLY_FISHING.md).
+
+## Additional coastal waters
+
+**Secluded Cove** and **Tidal Strand** are available under **V → Waters → Fish here**
+(VR: right B → Waters). Secluded Cove has a sheltered sandy casting pocket framed by
+granite boulders; Tidal Strand has a broad pale-sand shore, misty hills and driftwood.
+Both use native 8K Poly Haven photographs, authored walkable shores, measured baked
+lighting, generated dune grass and kelp details, recorded surf and distinct marine
+rosters. [Sources, rebuild instructions and captures](docs/COASTAL_EXPANSION.md).
