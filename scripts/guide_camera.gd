@@ -70,6 +70,7 @@ func update_pose() -> void:
 		camera.attributes = game.head.attributes
 		return
 	var source: Transform3D = game.head.global_transform
+	camera.fov = 65
 	if selfie:
 		var target: Vector3 = game.head.global_position - Vector3.UP * 0.3
 		var desired := source.origin - source.basis.z * 1.5 + Vector3.UP * 0.15

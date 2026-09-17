@@ -54,7 +54,8 @@ for target in TARGETS:
     if record['commit'] != revision or record['target'] != target:
         raise SystemExit('Stale build for ' + target)
     folder = BUILD / target
-    actual = {str(p.relative_to(folder)): digest(p) for p in sorted(folder.rglob('*')) if p.is_file()}
+    exported = [folder/'RealAIFishingServer.x86_64'] if target == 'Server' else sorted(folder.rglob('*'))
+    actual = {str(p.relative_to(folder)): digest(p) for p in exported if p.is_file()}
     if actual != record['files']:
         raise SystemExit('Export files changed for ' + target)
     records.append(record)
@@ -81,6 +82,16 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
         name = f'RealAIFishing-{VERSION}-{target}'
         archive(folder, result / (name + '-x86_64.zip'), name)
         print('PACKAGED ' + target, flush=True)
+    server = stage / 'Server'
+    server.mkdir()
+    shutil.copy2(BUILD/'Server/RealAIFishingServer.x86_64', server/'RealAIFishingServer.x86_64')
+    copy_notices(server)
+    launcher = server/'Server.sh'
+    launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./RealAIFishingServer.x86_64 -- "$@"\n')
+    launcher.chmod(0o755)
+    name = f'RealAIFishing-{VERSION}-Server-Linux-x86_64'
+    archive(server, result/(name+'.zip'), name)
+    print('PACKAGED Server', flush=True)
     for target in ANDROID_TARGETS:
         shutil.copy2(BUILD / target / 'RealAIFishing.apk', result / f'RealAIFishing-{VERSION}-{target}.apk')
     notices = stage / 'Notices'

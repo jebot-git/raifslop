@@ -13,6 +13,8 @@ var touch_source := ""
 var previous_touch := Vector3(INF, INF, INF)
 const Session = preload("res://scripts/fishing_session.gd")
 const DESCRIPTIONS = {
+ "Hucho hucho":"A large copper-backed salmonid with scattered dark spots. It hunts smaller fish in cool, oxygen-rich rivers; hooked grayling, trout or dace may attract it.",
+ "Carcharias taurus":"A bulky coastal shark with rusty spots, two similar dorsal fins and slender exposed teeth. It eats fish and smaller sharks around reefs and sandy channels.",
  "Blicca bjoerkna": "A small, deep-bodied silver fish with a large eye and pinkish fin bases. It shoals in lakes and slow rivers, feeding on small invertebrates.",
  "Gymnocephalus cernua": "A small mottled perch relative with joined spiny and soft dorsal fins. It searches lake and slow-river bottoms for worms and insect larvae.",
  "Leuciscus idus": "A robust silver fish with orange-red lower fins. It feeds on insects, plants and small fish near lake margins and in slower river water.",
@@ -99,9 +101,11 @@ static func discovery_hint(index: int) -> Dictionary:
 	if index in [1,3,4,5,8,13,16]:
 		habitat="River bottom" if index in [13,16] else "Lake / slow water"
 		bait="Feeder · "+("Worm / maggots" if index in [3,13,16] else "Sweetcorn / worm")
-	if index>=32:
+	if index>=32 and index<38:
 		habitat=["Lake / slow water","Lake / river bottom","Lake / slow river","Lake / river channel","Coastal surf / estuary","Coastal open water"][index-32]
 		bait=["Worm / corn / maggots","Worm / maggots","Bread / flies / spinner","Spinner / minnow","Sardine / spoon / minnow","Squid / spoon / jig"][index-32]
+	if index==Session.HUCHEN:habitat="Cool river / deep channel"
+	if index==Session.RAGGEDTOOTH:habitat="Coastal reef / sandy channel"
 	var methods:Array[String]=[]
 	var waters:Array[String]=[]
 	const NAMES={"lakeside":"Lakeside","lake_pier":"Lake Pier","gray_pier":"Gray Pier","bell_park_pier":"Bell Park","meadow_bend":"Meadow Bend","boulder_run":"Boulder Run","simons_town_rocks":"Simon's Town","blouberg_sunrise_2":"Blouberg","secluded_beach":"Secluded Beach","fish_hoek_beach":"Fish Hoek"}

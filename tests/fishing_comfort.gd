@@ -44,7 +44,7 @@ func run() -> void:
 	check(g.fish_guide.selected == 0 and rows.size() == S.SPECIES.size(), "Empty journal can browse every undiscovered species")
 	for row in rows:
 		check(row.name == "?" and row.latin == "" and not row.discovered and row.length == 0, "Unknown species hides identity and silhouette key")
-		check(row.habitat in ["Lake","Sea","River"] and not row.bait.is_empty(), "Unknown species has habitat and bait hints")
+		check(not row.habitat.is_empty() and not row.bait.is_empty() and not row.methods.is_empty() and not row.waters.is_empty(), "Unknown species has habitat, bait, methods and actual waters")
 	g.fish_guide.ingest([S.SPECIES[28]])
 	rows = g.fish_guide.ordered_entries()
 	check(rows[28].discovered and rows[28].name == "Dusky kob" and rows[28].habitat == "Sea" and rows[28].bait == "Sardine", "Catch reveals only its original catalogue page")

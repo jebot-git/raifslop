@@ -24,10 +24,15 @@ func _draw() -> void:
 	var center := Vector2(320, 317)
 	if entry.discovered:
 		var silhouette := Icons.contour(entry.latin, center, 110.0)
+		# Keep tall dorsal/tail fins clear of both the Latin name and habitat.
+		var extent:=0.0
+		for point in silhouette:extent=maxf(extent,absf(point.y-center.y))
+		var icon_scale:=minf(1.0,43.0/maxf(1.0,extent))
+		for i in silhouette.size():silhouette[i]=center+(silhouette[i]-center)*icon_scale
 		draw_colored_polygon(silhouette, Color("a9dfb2"))
 		var edge := silhouette.duplicate(); edge.append(edge[0])
 		draw_polyline(edge, Color("d5f5ce"), 2.0, true)
-		draw_circle(center + Vector2(0.65, -0.04) * 110.0, 4, Color("112b28"))
+		draw_circle(center + Vector2(0.65, -0.04) * 110.0*icon_scale, 4, Color("112b28"))
 	else:
 		label("?", Vector2(287, 356), 108, Color("a9dfb2"))
 	label("HABITAT · " + entry.habitat, Vector2(36, 398), 25, Color("a9dfb2"))

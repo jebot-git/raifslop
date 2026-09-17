@@ -1,0 +1,16 @@
+[
+  {
+    "path": "assets/models/fish/huchen.glb",
+    "bytes": 2193512,
+    "sha256": "f46e4c58a0ad66c0128e09e3ce4b12eff8ef9e11b1694fcffbcf8419a34fb9ac",
+    "triangles": 16406,
+    "materials": 3
+  },
+  {
+    "path": "assets/models/fish/raggedtooth_shark.glb",
+    "bytes": 1799528,
+    "sha256": "d9ac3f09044dce028ce7bbe5a5f9b81fc0fe1cc016bab71f8e5f2273fcee1208",
+    "triangles": 14214,
+    "materials": 3
+  }
+]

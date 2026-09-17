@@ -88,7 +88,7 @@ The perch uses an attributed third-party model; carp and pike currently use simp
 - Bite timing, directional responses, fish runs, stamina, line tension, win/loss/retry and local catch persistence. Audio and controller vibration mark bites and successful counters.
 - A world-space VR menu, handheld guide status, a separate desktop interface, collision-based free locomotion, and selectable runtime VRM avatars with visible hands.
 
-The panorama has rotational scenery only: it does not acquire 6DoF parallax when the player moves. The cove, quay, boardwalk, boat, rod and water are actual 3D geometry. This is a hybrid scene, not a full reconstruction of a surveyed fishing spot. Gaussian splat rendering, skeletal fish animation, bendable rod physics, fish ecology and real-headset performance tuning are future work. Textured carp/pike models and standalone Quest exports are included. “AI” is the project name; fish behavior is local rule-based simulation, with no external AI service.
+The panorama has rotational scenery only: it does not acquire 6DoF parallax when the player moves. The cove, quay, boardwalk, boat, rod and water are actual 3D geometry. This is a hybrid scene, not a full reconstruction of a surveyed fishing spot. Gaussian splat rendering, skeletal fish animation, bendable rod physics, fish ecology and real-headset performance tuning are future work. Textured fish models are included. Quest exports are paused pending device testing. “AI” is the project name; fish behavior is local rule-based simulation, with no external AI service.
 
 The game takes inspiration from Real VR Fishing's broad bait/timing/tension/gesture loop. It does not include that game's code, branding or assets.
 
@@ -106,13 +106,13 @@ godot --headless --path . --xr-mode off --quit-after 30
 
 See [asset credits](ASSET_CREDITS.md) for licenses and [location pipeline](docs/LOCATION_PIPELINE.md) for sources, preparation and runtime captures. Native synthetic stereo/controller tests and eye captures are documented in [validation](docs/VALIDATION.md). The included Godot AI editor addon retains its own license and enables further MCP editing.
 
-For future exported builds, include the raw `assets/avatars/*.vrm` files in the export filter: runtime loading uses the original VRM bytes, not only Godot's imported scene cache. Quest sideload packages are included; native file browsing still depends on the platform.
+For future exported builds, include the raw `assets/avatars/*.vrm` files in the export filter: runtime loading uses the original VRM bytes, not only Godot's imported scene cache. Quest sideload releases are paused pending device testing; native file browsing still depends on the platform.
 
 Meta avatar option research: [Quest and PC feasibility](docs/META_AVATARS_FEASIBILITY.md). This is an integration assessment; current builds use VRM avatars.
 
 ## Multiplayer and voice
 
-Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-9 server and clients.
+Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-10 server and clients.
 
 Run `./run.sh --server --port 24567` for a headless dedicated server. LAN/Internet connections use direct UDP; Internet hosts need port forwarding or a reachable server. See [setup, controls and limitations](docs/MULTIPLAYER.md) and [FPSloppa code reuse](docs/FPSLOPPA_REUSE.md).
 
@@ -136,7 +136,7 @@ All eight photographed foregrounds use baked sky/bounce lighting, static sun sha
 
 ## Release downloads
 
-Future releases provide Windows, Linux and Quest packages on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). Desktop archives include VR, desktop and dedicated-server launchers. Quest APKs are signed ARM64 sideload builds. See [release and build instructions](docs/RELEASE.md).
+This release provides Windows, Linux and a separate Linux dedicated-server package on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). Desktop archives include VR, desktop and dedicated-server launchers. Quest APKs are excluded pending device testing. See [release and build instructions](docs/RELEASE.md).
 
 Pico standalone builds are retired from future releases following a reported startup crash on standard Pico 4 (black screen, then immediate exit). Pico OS 6 support is a future goal only, pending suitable hardware and direct testing; current Pico compatibility is not claimed. Historical release artifacts remain available.
 
@@ -193,4 +193,4 @@ Select **Lure** with right joystick press + up (desktop Tab + Up). Left X cycles
 
 ### Expanded fish roster
 
-The catalogue now has **38 species**, including new silver bream, ruffe, ide, asp, leervis and Atlantic chub mackerel. Distribution and bait preferences cover classic, fly, feeder and lure fishing; brook trout also appear in Boulder Run. Fish Guide pages show methods and named waters while preserving existing discoveries and personal bests. [Species, assets, sources and validation](docs/ROSTER_EXPANSION.md) · [complete location matrix](docs/LOCATION_SPECIES.md).
+The catalogue now has **40 species**, including huchen and ragged-tooth shark predators alongside silver bream, ruffe, ide, asp, leervis and Atlantic chub mackerel. Distribution and bait preferences cover classic, fly, feeder and lure fishing; brook trout also appear in Boulder Run. Fish Guide pages show methods and named waters while preserving existing discoveries and personal bests. [Species, assets, sources and validation](docs/ROSTER_EXPANSION.md) · [complete location matrix](docs/LOCATION_SPECIES.md).

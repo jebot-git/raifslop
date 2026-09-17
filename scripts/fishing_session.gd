@@ -52,6 +52,8 @@ const SPECIES = [
 	{"name": "Asp", "latin": "Leuciscus aspius", "length": 65.0, "weight": 2.6, "rarity": 3, "endurance": 150.0, "power": 1.25, "bait": 2, "model": "res://assets/models/fish/asp.glb"},
 	{"name": "Leervis", "latin": "Lichia amia", "length": 85.0, "weight": 5.0, "rarity": 3, "endurance": 165.0, "power": 1.3, "bait": 4, "habitat": "marine", "model": "res://assets/models/fish/leervis.glb"},
 	{"name": "Atlantic chub mackerel", "latin": "Scomber colias", "length": 35.0, "weight": 0.42, "rarity": 1, "endurance": 80.0, "power": 0.85, "bait": 2, "habitat": "marine", "model": "res://assets/models/fish/atlantic_chub_mackerel.glb"},
+	{"name":"Huchen", "latin":"Hucho hucho", "length":120.0, "weight":18.0, "rarity":5, "endurance":340.0, "power":1.6, "bait":-1, "habitat":"freshwater", "predator":true, "model":"res://assets/models/fish/huchen.glb"},
+	{"name":"Ragged-tooth shark", "latin":"Carcharias taurus", "length":220.0, "weight":90.0, "rarity":5, "endurance":480.0, "power":1.95, "bait":-1, "habitat":"marine", "predator":true, "model":"res://assets/models/fish/raggedtooth_shark.glb"}
 ]
 # Stable indices preserve existing catch records and model mapping.
 const MARINE_BAITS = ["Ragworm", "Squid", "Spinner", "Prawn", "Sardine", "Saltwater fly"]
@@ -70,12 +72,20 @@ const LOCATION_SPECIES = {
  "boulder_run":[10,11,12,17]
 }
 # A single chance per eligible retrieval, never a per-frame probability.
-const PREDATOR_CHANCE := .02
+const PREDATOR_CHANCE := .03
 const WELS := 26
 const BRONZE_WHALER := 27
-const PREDATOR_PREY = {WELS:[0,3,7,14,15,16], BRONZE_WHALER:[18,23,25,31]}
+const HUCHEN := 38
+const RAGGEDTOOTH := 39
+const PREDATOR_LOCATIONS = {
+ "lakeside":[WELS], "lake_pier":[WELS], "gray_pier":[WELS], "bell_park_pier":[WELS],
+ "meadow_bend":[HUCHEN], "boulder_run":[HUCHEN],
+ "simons_town_rocks":[BRONZE_WHALER,RAGGEDTOOTH], "blouberg_sunrise_2":[BRONZE_WHALER],
+ "secluded_beach":[BRONZE_WHALER,RAGGEDTOOTH], "fish_hoek_beach":[BRONZE_WHALER,RAGGEDTOOTH]
+}
+const PREDATOR_PREY = {WELS:[0,3,7,14,15,16,32,33], BRONZE_WHALER:[18,23,25,31,37], HUCHEN:[11,12,14,16,17,33], RAGGEDTOOTH:[18,20,21,23,25,30,31,37]}
 # 0/1/2: directional hold; 3: deep pull; 4: slack rush; 5: long run.
-const PREDATOR_SEQUENCES = {WELS:[5,2,3,0,3,1,4], BRONZE_WHALER:[5,0,3,1,5,2,4]}
+const PREDATOR_SEQUENCES = {WELS:[5,2,3,0,3,1,4], BRONZE_WHALER:[5,0,3,1,5,2,4], HUCHEN:[5,0,1,4,2,3,0], RAGGEDTOOTH:[5,2,3,1,3,0,4]}
 var predator_encounters_enabled := true
 var encounter_rng := RandomNumberGenerator.new()
 var predator_checked := false
@@ -192,13 +202,19 @@ func select_bait(index: int) -> void:
 
 static func species_for_location(id: String, include_predators: bool = true) -> Array:
 	var result: Array = LOCATION_SPECIES.get(id, LOCATION_SPECIES["lakeside"]).duplicate()
-	if include_predators and not Fly.river(id): result.append(BRONZE_WHALER if is_marine_location(id) else WELS)
+	if include_predators: result.append_array(PREDATOR_LOCATIONS.get(id,[]))
+	return result
+
+static func predators_for_prey(index: int, id: String) -> Array:
+	var result:Array=[]
+	if not LOCATION_SPECIES.has(id) or index not in LOCATION_SPECIES[id]:return result
+	for predator in PREDATOR_LOCATIONS.get(id,[]):
+		if index in PREDATOR_PREY[predator]:result.append(predator)
 	return result
 
 static func predator_for_prey(index: int, id: String) -> int:
-	if Fly.river(id) or not LOCATION_SPECIES.has(id) or index not in LOCATION_SPECIES[id]: return -1
-	var predator := BRONZE_WHALER if is_marine_location(id) else WELS
-	return predator if index in PREDATOR_PREY[predator] else -1
+	var choices:=predators_for_prey(index,id)
+	return -1 if choices.is_empty() else int(choices[0])
 
 func is_predator() -> bool:
 	return bool(SPECIES[fish_index].get("predator",false))
@@ -420,16 +436,18 @@ func _try_predator(delta: float, rate: float, previous_distance: float) -> void:
 	retrieval_time+=delta;retrieved_metres+=progress
 	if retrieval_time<6.0 or retrieved_metres<2.0 or distance<landing_distance+3.0:return
 	predator_checked=true
-	if encounter_rng.randf()<PREDATOR_CHANCE: _takeover(predator)
+	if encounter_rng.randf()<PREDATOR_CHANCE:
+		var choices:=predators_for_prey(fish_index,location_id)
+		_takeover(choices[encounter_rng.randi_range(0,choices.size()-1)] if choices.size()>1 else predator)
 
 func _takeover(predator: int) -> void:
-	if state!=State.FIGHT or is_predator() or predator_for_prey(fish_index,location_id)!=predator:return
+	if state!=State.FIGHT or is_predator() or predator not in predators_for_prey(fish_index,location_id):return
 	rebaited_from=fish_index;fish_index=predator;takeover_count+=1;predator_checked=true
 	stamina=1.0 # Preserve the prey fight’s tension and accumulated line strain.
 	cue=-1;cue_time=0.0;counter_direction=-1;counter_active=false;resistance=1.0
 	failed_counters=0;phase=0.0;counter_rest=0.0
 	_reset_submerge();predator_step=1;next_cue=0.0;predator_notice_time=.6
-	predator_opening_time=7.0 if predator==WELS else 9.0
+	predator_opening_time=7.0 if predator in [WELS,HUCHEN] else 9.0
 	predator_run_time=predator_opening_time
 	message="%s took your %s!\nSTOP REELING — powerful run!" % [SPECIES[predator].name,SPECIES[rebaited_from].name]
 
@@ -457,7 +475,7 @@ func _predator_sequence_tick(delta: float) -> void:
 		cue=action;cue_time=8.0;resistance=1.0
 		message="Large predator turning — hold the counter."
 	elif action==5:
-		predator_run_time=4.5 if fish_index==WELS else 6.0
+		predator_run_time=4.5 if fish_index in [WELS,HUCHEN] else 6.0
 		message="Powerful run! Stop reeling."
 	else:
 		submerge=Submerge.PULL if action==3 else Submerge.SLACK

@@ -10,7 +10,7 @@ func check(ok:bool,label:String):
 func _initialize():
  var old=["Perca fluviatilis","Cyprinus carpio","Esox lucius","Rutilus rutilus","Tinca tinca","Abramis brama","Sander lucioperca","Scardinius erythrophthalmus","Carassius carassius","Squalius cephalus","Oncorhynchus mykiss","Salmo trutta","Thymallus thymallus","Barbus barbus","Leuciscus leuciscus","Alburnus alburnus","Gobio gobio","Salvelinus fontinalis","Diplodus capensis","Dichistius capensis","Pachymetopon blochii","Chrysoblephus laticeps","Lithognathus lithognathus","Pomatomus saltatrix","Seriola lalandi","Chelon richardsonii","Silurus glanis","Carcharhinus brachyurus","Argyrosomus japonicus","Rhabdosargus globiceps","Diplodus hottentotus","Trachurus capensis"]
  for i in old.size():check(S.SPECIES[i].latin==old[i],"Existing catch ID preserved: "+str(i))
- check(S.SPECIES.size()==38,"Expanded roster has 38 species")
+ check(S.SPECIES.size()==40,"Expanded roster has 40 species")
  check(S.FightProfiles.SPECIES.size()==S.SPECIES.size(),"Every fish has explicit fight profile")
  var seen:Dictionary={};var g=S.new();g.rng.seed=61345
  for location in S.LOCATION_SPECIES:
@@ -43,7 +43,7 @@ func _initialize():
   var hints:Dictionary=Guide.discovery_hint(i)
   check(not hints.methods.is_empty() and not hints.waters.is_empty() and not hints.bait.is_empty(),"Guide provides methods, bait and actual waters")
  check(guide.entries[previous.latin].length==71.0,"Expanded guide retains earlier personal best")
- check(guide.ordered_entries().size()==38,"Guide paging includes undiscovered additions")
+ check(guide.ordered_entries().size()==40,"Guide paging includes undiscovered additions")
  guide.free()
  var board=Board.new();board.connect_player(2,"c".repeat(64),"Roster")
  for example in [[32,"lakeside",1,2,true],[33,"gray_pier",1,0,true],[34,"meadow_bend",0,1,true],[35,"meadow_bend",2,2,true],[36,"fish_hoek_beach",2,2,true],[37,"simons_town_rocks",0,2,true],[35,"meadow_bend",1,0,false],[33,"meadow_bend",0,1,false],[36,"lakeside",2,0,false]]:

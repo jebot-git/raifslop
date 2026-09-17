@@ -44,6 +44,25 @@ func run() -> void:
 	photo.selfie = true; photo.update_pose()
 	check(photo.camera.global_transform.is_equal_approx(guide.global_transform * Photo.lens_pose(true)), "VR selfie lens stays on guide front face")
 	check((-photo.camera.global_basis.z).dot(guide.global_basis.z) > .999, "Selfie lens looks outward from front screen")
+	# A front lens reverses its optical axis, never the tracked translation.
+	# Exercise combined yaw/pitch/roll, including near vertical orientations.
+	for angles in [Vector3.ZERO,Vector3(.4,.8,-.3),Vector3(1.55,-1.2,.7),Vector3(-1.55,2.4,-.9)]:
+		for front in [false,true]:
+			photo.selfie=front
+			var pose:=Transform3D(Basis.from_euler(angles),Vector3(2,3,-4))
+			guide.global_transform=pose;photo.update_pose()
+			var before:Transform3D=photo.camera.global_transform
+			check(before.basis.determinant()>.999,"Lens rotation is right-handed, never mirrored")
+			for axis in [Vector3.RIGHT,Vector3.UP,Vector3.BACK]:
+				guide.global_transform=pose.translated(axis*.2);photo.update_pose()
+				check((photo.camera.global_position-before.origin).is_equal_approx(axis*.2),"World-axis movement follows guide without inversion")
+				check(photo.camera.global_basis.is_equal_approx(before.basis),"Translation never rotates lens")
+			guide.global_transform=pose;photo.update_pose()
+			var lens:Transform3D=photo.camera.global_transform
+			var center:Vector2=photo.camera.unproject_position(lens*Vector3(0,0,-2))
+			check(photo.camera.unproject_position(lens*Vector3(.1,0,-2)).x>center.x,"Lens-right projects to image-right")
+			check(photo.camera.unproject_position(lens*Vector3(0,.1,-2)).y<center.y,"Lens-up projects to image-top")
+			check(photo.camera.unproject_position(lens*Vector3(0,0,-3)).distance_to(center)<.01,"Optical-axis movement stays centered")
 	photo.selfie = false
 	game._right_pressed("ax_button")
 	check(photo.selfie, "Right A toggles selfie while guide is held")
@@ -57,12 +76,12 @@ func run() -> void:
 		if not photo.last_path.is_empty():
 			var image := Image.load_from_file(photo.last_path)
 			check(image.get_size() == Photo.PHOTO_SIZE, "Photo is 1920 by 1080")
-			image.save_png("res://docs/guide_camera_forward.png")
+			image.save_png("res://test-results/guide_camera_forward.png")
 		var first_path: String = photo.last_path
 		photo.selfie = true
 		await photo.capture()
 		check(photo.last_path != first_path and FileAccess.file_exists(first_path), "Second shot preserves first photo")
-		if not photo.last_path.is_empty(): Image.load_from_file(photo.last_path).save_png("res://docs/guide_camera_selfie.png")
+		if not photo.last_path.is_empty(): Image.load_from_file(photo.last_path).save_png("res://test-results/guide_camera_selfie.png")
 		check(photo.view.size == Photo.PREVIEW_SIZE and not photo.busy, "Photo returns to low resolution preview after saving")
 		# Fill a foreground rectangle on the UI-only layer. It must never affect a saved image.
 		var quad := MeshInstance3D.new(); var mesh := QuadMesh.new(); mesh.size = Vector2(10,10); quad.mesh = mesh

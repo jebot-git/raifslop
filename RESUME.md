@@ -25,7 +25,7 @@ were retired; the location manifest points directly at the baked models.
 
 Release signing files live in ignored `.release-signing/` and must remain private.
 Build output, Gradle files, Godot caches and player saves are not source assets.
-Use `tools/build_release.py` and `tools/package_release.py` for Linux, Windows and Quest. Pico builds are retired; Pico OS 6 support is a future goal only.
+Use `tools/build_release.py` and `tools/package_release.py` for Linux, Windows and the separate Linux Server. Quest release builds are excluded pending testing. Pico builds are retired; Pico OS 6 support is a future goal only.
 
 ## Remaining work
 

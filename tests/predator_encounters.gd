@@ -17,7 +17,7 @@ func run():
   var s=eligible(seed_value);s.tick(.02,1,0)
   if s.is_predator():hits+=1;hit_seed=seed_value
   else:miss_seed=seed_value
- check(hits>=310 and hits<=490,"One-roll population stays close to 2 percent: "+str(hits))
+ check(hits>=480 and hits<=720,"One-roll population stays close to 3 percent: "+str(hits))
  check(hit_seed>=0 and miss_seed>=0,"Deterministic hit and miss seeds exist")
  for id in S.LOCATION_SPECIES:
   if S.Fly.river(id):continue

@@ -1,6 +1,6 @@
 # Handheld Field Guide
 
-The current catalogue has 38 species. Pages include habitat, preferred presentation, eligible methods and named waters. See [roster expansion](ROSTER_EXPANSION.md) for the six new entries and their assets.
+The current catalogue has 40 species. Pages include habitat, preferred presentation, eligible methods and named waters. See [roster expansion](ROSTER_EXPANSION.md) for the six new entries and their assets.
 
 An original orange-and-green fish catalogue device sits at the VR player's left hip. Reach to its **lower handle** and squeeze **left grip** within 22 cm to pick it up. Lift and rotate your hand to inspect the screen. The grip is 26.5 cm below the device body's centre, keeping the avatar's hand below the screen and navigation controls. Releasing grip or losing controller tracking returns it to the belt; no device can be dropped into the water.
 

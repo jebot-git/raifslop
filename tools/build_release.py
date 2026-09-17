@@ -1,6 +1,6 @@
 """Export maintained release targets; keep local signing credentials out of source control."""
 from pathlib import Path
-import argparse, hashlib, json, os, secrets, shutil, subprocess, zipfile
+import argparse, hashlib, json, os, secrets, shutil, subprocess, sys, zipfile
 from release_targets import TARGETS, ANDROID_TARGETS
 ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
@@ -37,6 +37,14 @@ for target in (TARGETS if a.target=='all' else [a.target]):
     manifest = build/('manifest-'+target+'.json')
     manifest.unlink(missing_ok=True)
     child_env = env.copy()
+    if target == 'Server':
+        run([sys.executable, str(ROOT/'tools/build_server.py'), '--godot', godot, '--output', str(out)], 'export-Server', child_env)
+        artifact = out/'RealAIFishingServer.x86_64'
+        manifest.write_text(json.dumps({'target':target, 'commit':revision,
+                            'godot':subprocess.check_output([godot,'--version'],text=True).strip(),
+                            'files':{artifact.name:digest(artifact)}},indent=2)+'\n')
+        print(f'BUILT Server: {artifact.stat().st_size} bytes',flush=True)
+        continue
     if target in ANDROID_TARGETS:
         child_env.update(JAVA_HOME=str(jdk), ANDROID_HOME=str(sdk), ANDROID_SDK_ROOT=str(sdk))
         child_env['PATH'] = str(jdk/'bin')+os.pathsep+child_env['PATH']

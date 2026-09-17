@@ -43,3 +43,14 @@ tools, tests, screenshots and caches. The release builder replaces each target's
 old output directory, deduplicates final texture payloads, compresses desktop HDR
 with BC6H, preserves Android HDR, and recompresses packages at level 9. Pack audits
 check the new billboard, rear mesh shader and all six lighting profiles.
+
+## 0.1.11 release preparation
+
+Retained editable fish scenes, original generated references and normal-map outputs
+under `source/`; these are excluded from imports and packages. Reviewed captures
+are in `docs/validation/release-0.1.11/`, also excluded. Per-target output is rebuilt
+from clean directories; packaging uses fresh staging and replaces stale release
+artifacts. Quest/Pico APKs are prohibited by the publisher. No saves or private
+signing files are deleted. The separate Linux server packages only its embedded
+script binary, launcher and attribution. Runtime HDR compression and imported
+texture deduplication remain enabled; ZIPs use level-9 deflate.

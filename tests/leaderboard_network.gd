@@ -18,7 +18,7 @@ func run():
  check(net.join("127.0.0.1",int(args[1]))==OK,"Connect")
  check(await wait_for(func():return net.active and not net.leaderboard_view.is_empty()),"Handshake and server standings")
  if role=="writer":
-  var d:Dictionary={"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"serial":0,"location":"lake_pier","rod_tier":0,"rig":2,"reel_angle":0.0,"state":0,"bait":2,"species":35,"length":Net.State.Fish.SPECIES[35].length*1.14,"caught":false,"in_hand":false,"xr":false,"left_valid":true,"right_valid":true,"bobber_visible":false,"bait_visible":true,"curl":0.0}
+  var d:Dictionary={"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"serial":0,"location":"fish_hoek_beach","rod_tier":0,"rig":2,"reel_angle":0.0,"state":0,"bait":2,"species":39,"length":Net.State.Fish.SPECIES[39].length*1.14,"caught":false,"in_hand":false,"xr":false,"left_valid":true,"right_valid":true,"bobber_visible":false,"bait_visible":true,"curl":0.0}
   for key in Net.State.TRANSFORMS:d[key]=Transform3D.IDENTITY
   for key in Net.State.VECTORS:d[key]=Vector3.ZERO
   check(Net.State.valid(d),"Wire fixture validates")
@@ -27,7 +27,7 @@ func run():
    net._submit_event.rpc_id(1,d);await create_timer(.12).timeout
  if role in ["writer","observer","return"]:
   check(await wait_for(func():return not net.leaderboard_view.is_empty() and net.leaderboard_view.categories.catches[0].catches==1),"Server retains exactly one catch")
-  check(net.leaderboard_view.categories.longest[0].longest_fish.species==35 and net.leaderboard_view.categories.longest[0].longest_fish.name=="Asp","Expanded species identity survives replication and restart")
+  check(net.leaderboard_view.categories.longest[0].longest_fish.species==39 and net.leaderboard_view.categories.longest[0].longest_fish.name=="Ragged-tooth shark","Expanded species identity survives replication and restart")
   check(net.leaderboard_view.categories.earned[0].earned>0,"Server supplies lifetime earnings")
   check(net.leaderboard_view.categories.exceptional[0].exceptional==1,"Exceptional record visible")
   check(not FileAccess.file_exists("user://server/leaderboard.json"),"Client has no saved leaderboard")

@@ -14,7 +14,7 @@ commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).st
 assert subprocess.check_output(['git','describe','--exact-match','--tags','HEAD'],cwd=root,text=True).strip()==version
 assert not subprocess.check_output(['git','status','--porcelain'],cwd=root), 'Working tree is not clean'
 assert json.loads((assets_dir/'build-manifest.json').read_text())['commit']==commit
-assert not any('pico' in p.name.lower() for p in assets_dir.iterdir()), 'Retired Pico artifact in release; repackage before publishing'
+assert not any(any(target in p.name.lower() for target in ['pico','quest']) or p.suffix.lower()=='.apk' for p in assets_dir.iterdir()), 'Excluded standalone artifact in release; repackage before publishing'
 expected_files={line.split('  ',1)[1] for line in (assets_dir/'SHA256SUMS').read_text().splitlines()}
 assert {p.name for p in assets_dir.iterdir()}==expected_files|{'SHA256SUMS'}
 for line in (assets_dir/'SHA256SUMS').read_text().splitlines():

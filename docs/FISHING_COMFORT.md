@@ -18,7 +18,7 @@ At the boundary, lateral counters become an outward pull, inward rushes become w
 
 ## Guide discovery pages
 
-All 38 species have stable browsable pages, even with an empty journal. Undiscovered pages show **?** for both name and icon, conceal the scientific name, description and size record, and display a Lake/Sea/River habitat plus preferred game bait, eligible methods and named waters. Rare predators list the hooked-fish encounter bait. These are gameplay discovery hints, not exhaustive ecological distributions or diet rankings. Catching the species reveals its identity, silhouette, description and personal best in the same page. Unknown pages do not increase the discovered count or create journal records.
+All 40 species have stable browsable pages, even with an empty journal. Undiscovered pages show **?** for both name and icon, conceal the scientific name, description and size record, and display a Lake/Sea/River habitat plus preferred game bait, eligible methods and named waters. Rare predators list the hooked-fish encounter bait. These are gameplay discovery hints, not exhaustive ecological distributions or diet rankings. Catching the species reveals its identity, silhouette, description and personal best in the same page. Unknown pages do not increase the discovered count or create journal records.
 
 ![Undiscovered fish](guide_undiscovered.png)
 

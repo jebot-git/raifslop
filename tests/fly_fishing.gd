@@ -54,7 +54,7 @@ func run():
     s.tick(.02,0,0)
    check(s.state==S.State.BITE,"Natural drift yields take "+id+str(bait))
    s.strike();check(s.state==S.State.FIGHT,"Indicator take can be struck")
-   check(S.predator_for_prey(s.fish_index,id)==-1,"No unrelated predator takeover in trout rivers")
+   check(S.predator_for_prey(s.fish_index,id) in [-1,S.HUCHEN],"Only river-appropriate huchen can take over")
  var g=load("res://scenes/main.tscn").instantiate();root.add_child(g)
  await create_timer(.4).timeout
  g.set_process(false);g.motor.set_physics_process(false)

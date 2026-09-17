@@ -1,6 +1,6 @@
 # Location species and fishing methods
 
-The catalogue contains **38 species**: 36 regular catches plus the existing wels catfish and bronze whaler takeover encounters. Existing species IDs 0–31 are preserved; additions occupy 32–37. Rosters describe authored gameplay habitats, not surveys or stocking claims for the photographed locations.
+The catalogue contains **40 species**: 36 regular catches plus four takeover predators. Existing species IDs 0–37 are preserved; huchen and ragged-tooth shark occupy 38–39. Rosters describe authored gameplay habitats, not surveys or stocking claims for the photographed locations.
 
 Casting intersects each location with the selected method and bait preferences. Population presence, depletion, rarity and incidental off-bait catches still apply. Feeder and lure incidental catches stay within their method pools; river fly selection stays within the selected fly’s pool.
 
@@ -62,3 +62,7 @@ Hold right joystick press, choose Classic/Fly (left), Feeder (right) or Lure (up
 - **Lure:** spinner/coastal spoon, paddle-tail jig and diving minnow at all ten waters. Ide/asp favour spinner and minnow; leervis and mackerel accept all three. [Full lure mechanics](LURE_FISHING.md).
 
 Fish Guide hints now show habitat, preferred presentation, all eligible methods and named waters. Records still use scientific identity, so moving between locations or styles does not duplicate a species. [Expansion assets, sources and validation](ROSTER_EXPANSION.md).
+
+## Predator distribution
+
+Wels catfish inhabit all four lake encounters. Huchen can take suitable hooked fish in Meadow Bend and Boulder Run. Bronze whaler encounters remain at all four coasts; ragged-tooth sharks also occur at Simon’s Town Rocks, Secluded Beach and Fish Hoek. All are takeover-only, excluded from direct bait pools. Each eligible retrieval has a single **3% total chance**, shared by eligible predators. See [prey, fights and models](PREDATOR_ENCOUNTERS.md).

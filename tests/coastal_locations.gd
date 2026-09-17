@@ -38,7 +38,12 @@ func run() -> void:
 			check(mesh.get_aabb().position.y<g.water_level-.5,"Foundation or sand slope extends beneath water "+id)
 			var preserved := false
 			for surface in mesh.mesh.get_surface_count():
-				var blend: Material=mesh.get_active_material(surface).next_pass
+				var material:Material=mesh.get_active_material(surface)
+				var blend: Material=material.next_pass
+				# Hoek's opaque baked shader now performs the projection itself.
+				if id=="fish_hoek_beach" and material is ShaderMaterial and mesh.mesh.surface_get_material(surface).resource_name.begins_with("FG_sand"):
+					check(material.get_shader_parameter("ground_projection")==true,"Hoek sand uses integrated projection")
+					blend=material
 				preserved = preserved or (blend != null and blend.get_shader_parameter("ground_bounds")==entry.ground_bounds)
 				if mesh.mesh.surface_get_material(surface).resource_name.begins_with("FG_stone"):
 					check(blend==null,"Boulders remain opaque at the photographic ground transition")

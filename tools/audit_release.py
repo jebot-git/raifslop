@@ -78,6 +78,10 @@ def audit(path):
                      'scripts/fly_fishing.gd','scripts/hooked_fish.gd','scripts/river_foreground.gd',
                      'scripts/ui/vr_item_list.gd','assets/models/rods/fly_handle.glb',
                      'assets/models/fish/wels_catfish.glb','assets/models/fish/bronze_whaler.glb',
+                     'assets/models/fish/huchen.glb','assets/models/fish/raggedtooth_shark.glb',
+                     'assets/models/fish/silver_bream.glb','assets/models/fish/ruffe.glb',
+                     'assets/models/fish/ide.glb','assets/models/fish/asp.glb',
+                     'assets/models/fish/leervis.glb','assets/models/fish/atlantic_chub_mackerel.glb',
                      'assets/models/fish/dusky_kob.glb','assets/models/fish/white_stumpnose.glb',
                      'assets/models/fish/zebra_seabream.glb','assets/models/fish/cape_horse_mackerel.glb',
                      'assets/environment/rivers/river_shrubs.png','assets/environment/rivers/river_alder.png',
@@ -96,7 +100,7 @@ def audit(path):
     expected_lighting = {p.name.removesuffix('_8k.hdr') for p in (ROOT / 'assets/environment/locations').glob('*_8k.hdr')}
     assert set(lighting) == expected_lighting and all(record['sun_energy'] > 0 for record in lighting.values()), 'Missing measured lighting'
     for tier in ['willow', 'reed', 'heron', 'kingfisher']:
-        for mode in ['', '_fly']:
+        for mode in ['', '_fly', '_feeder', '_lure']:
             for state in ['', '_folded']:
                 required = f'assets/models/rods/{tier}{mode}{state}.glb'
                 assert required in names or required in remaps, ('Missing tackle model', required)
