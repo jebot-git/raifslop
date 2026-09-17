@@ -57,12 +57,12 @@ func run():
 	menu.scroll_page(10000)
 	for i in 4:await process_frame
 	check(menu.get_global_rect().encloses(menu.visit_button.get_global_rect()),"Fish here remains available after scrolling")
-	menu.tutorial_button.pressed.emit()
+	menu.leaderboard_button.pressed.emit()
 	for i in 8:await process_frame
-	check(menu.active_page=="help" and menu.get_global_rect().encloses(menu.tutorial_button.get_global_rect()),"Fixed tutorial button opens menu instructions")
+	check(menu.active_page=="leaderboard" and menu.get_global_rect().encloses(menu.leaderboard_button.get_global_rect()),"Fixed leaderboard button opens server accomplishments")
 	if "--capture" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw
-		root.get_texture().get_image().save_png("res://test-results/vr-fixes/tutorial-menu.png")
+		root.get_texture().get_image().save_png("res://test-results/vr-fixes/leaderboard-menu.png")
 		menu.show_locations()
 		for i in 8:await process_frame
 		await RenderingServer.frame_post_draw

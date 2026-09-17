@@ -5,7 +5,7 @@ var held:=false
 var active:=false
 var grip_was_down:=false
 var model:=Node3D.new()
-var label:=Label3D.new()
+var indicator:=Sprite3D.new()
 func setup(value: Node3D) -> void:
 	game_root=value;add_child(model)
 	var shell=game_root.material(Color("303a30"),.65)
@@ -13,9 +13,9 @@ func setup(value: Node3D) -> void:
 	game_root.box(model,Vector3.ZERO,Vector3(.065,.10,.03),shell)
 	game_root.box(model,Vector3(-.02,.08,0),Vector3(.006,.09,.006),dark)
 	for y in 4:game_root.box(model,Vector3(0,.022-y*.012,-.017),Vector3(.045,.004,.003),dark)
-	label.font_size=24;label.pixel_size=.0012;label.position.y=.15
-	label.layers=preload("res://scripts/guide_camera.gd").UI_LAYER
-	label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;model.add_child(label);model.hide()
+	indicator.pixel_size=.00055;indicator.position.y=.13
+	indicator.layers=preload("res://scripts/guide_camera.gd").UI_LAYER
+	indicator.billboard=BaseMaterial3D.BILLBOARD_ENABLED;model.add_child(indicator);model.hide()
 func shoulder() -> Transform3D:
 	var head: Transform3D=game_root.head.global_transform
 	var yaw:=Basis(Vector3.UP,atan2(head.basis.z.x,head.basis.z.z))
@@ -43,6 +43,6 @@ func update() -> void:
 	model.show();model.global_transform=g.controller_pose(0) if held else mount
 	# FPSloppa: the grip forward axis points toward the fingertips.
 	if held:model.rotate_object_local(Vector3.RIGHT,-PI/2)
-	label.visible=held or near
-	label.text="ALL WATERS · RADIO" if active else "HOLD TRIGGER · TALK" if held else "GRAB RADIO"
-	label.modulate=Color("87e8ae") if active else Color("e5d5ad")
+	indicator.visible=preload("res://scripts/ui/pictograms.gd").enabled and (held or near)
+	indicator.texture=preload("res://scripts/ui/pictograms.gd").texture("transmit" if active else "radio" if held else "grip")
+	indicator.modulate=Color("87e8ae") if active else Color("e5d5ad")

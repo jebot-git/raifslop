@@ -119,8 +119,12 @@ func _process(delta: float) -> void:
 		avatar.left_curl=target.curl
 		avatar.update_targets(head,left,right,rendered.feet.y,rendered.motion,delta)
 	label.global_position=rendered.head.origin+Vector3.UP*.32
-	label.text=player_name
-	if target.caught: label.text+="\n%s · %.1f cm" % [Fish.SPECIES[target.species].name,target.length]
+	label.text="" if session.root_game.xr else player_name
+	label.visible=target.caught or not session.root_game.xr
+	if target.caught:
+		var species:Dictionary=Fish.SPECIES[target.species]
+		var weight:float=species.weight*pow(target.length/species.length,3)
+		label.text+=("" if label.text.is_empty() else "\n")+"%s · %.0f cm · %.2f kg"%[species.name,target.length,weight]
 	_draw_line()
 
 func _draw_line() -> void:

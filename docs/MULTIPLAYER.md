@@ -68,3 +68,7 @@ Latest accepted avatar selection wins. Superseded transfers are cancelled; rejec
 `--client-metrics` enables per-frame monotonic wall-clock interval aggregates and stage durations for validation, glTF/image parsing, scene generation, rig configuration, location changes and remote fish construction. It also emits discrete fishing-state transitions. `--network-metrics` enables these plus accepted state arrival ages/gaps and detailed voice counters. Existing aggregate counters remain available. FEC counts are **attempts**, because the native decoder does not expose whether FEC or concealment produced that frame; `empty_playback_queue` counts observed transitions, not sample-accurate audio underruns. Neither counter proves audible quality. No microphone recordings or controller poses are saved by these diagnostics. Headset compositor/Virtual Desktop timings still require their own capture.
 
 `AVATAR_TRANSFER` records peer/hash, request ID, phase and timing at transfer transitions, and progress on timeout/completion. Import failures retain filename/hash/image-index context. Remote fish meshes are instantiated only for a visible landed catch; scene resources retain Godot's normal resource cache.
+
+## Server accomplishments and separate binary
+
+Protocol 6 adds persistent player identities and host-owned accomplishment rankings. See [dedicated server and leaderboard details](DEDICATED_SERVER.md). The menu header now opens Leaderboard; controls are in the [HTML manual](MANUAL.html).

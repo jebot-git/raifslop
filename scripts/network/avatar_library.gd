@@ -14,7 +14,8 @@ const CACHE_BUDGET := 1_000_000_000
 func _ready() -> void:reload()
 func reload() -> void:
 	DirAccess.make_dir_recursive_absolute(CACHE)
-	for path in preload("res://scripts/avatar_library.gd").DEFAULTS:
+	if OS.has_feature("dedicated_server"):return
+	for path in load("res://scripts/avatar_library.gd").DEFAULTS:
 		register_file(path,false)
 
 static func valid_hash(value: String) -> bool:
@@ -132,7 +133,7 @@ func create_avatar(hash: String) -> Node3D:
 		last_error = "Avatar is not available in the local cache."
 		return null
 	if not scenes.has(hash):
-		var loader=preload("res://scripts/avatar_library.gd").new()
+		var loader=load("res://scripts/avatar_library.gd").new()
 		var model: Node3D=loader.load_model(entries[hash].path)
 		if not model:
 			last_error=loader.error

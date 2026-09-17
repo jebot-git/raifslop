@@ -19,7 +19,9 @@ def main():
                 env=dict(os.environ,XDG_DATA_HOME=str(base/(str(port)+role)),XDG_CONFIG_HOME=str(base/'config'))
                 path=base/(str(port)+'-'+role+'.log'); stream=path.open('w')
                 args=[GODOT,'--headless','--xr-mode','off','--path',str(ROOT),'--script','res://tests/multiplayer.gd','--',role,str(port),str(avatar),*extra,'--asset-root',str(base/(str(port)+role)/'data')]
-                if os.environ.get('TEST_VERBOSE'): args.insert(1,'--verbose')
+                if role=='server' and os.environ.get('FISHING_SERVER_BIN'):
+                    args=['stdbuf','-oL',os.environ['FISHING_SERVER_BIN'],'--verbose','--','--server','--port',str(port),'--asset-root',str(base/(str(port)+role)/'data'),'--leaderboard-path',str(base/'leaderboard.json')]
+                elif os.environ.get('TEST_VERBOSE'): args.insert(1,'--verbose')
                 process=subprocess.Popen(args,env=env,stdout=stream,stderr=subprocess.STDOUT)
                 jobs.append((role,process,stream,path))
             try:
@@ -32,6 +34,9 @@ def main():
                     time.sleep(5)
                     launch('late')
                 for role,process,stream,path in jobs:
+                    if role=='server' and os.environ.get('FISHING_SERVER_BIN'):
+                        if process.poll() is not None:failures.append((port,role,'server exited'))
+                        continue
                     try: process.wait(timeout=65)
                     except subprocess.TimeoutExpired: process.kill(); process.wait()
                     stream.close(); text=path.read_text()
@@ -41,6 +46,10 @@ def main():
                 for _,process,stream,_ in jobs:
                     if process.poll() is None: process.terminate(); process.wait(timeout=5)
                     stream.close()
+                for role,process,stream,path in jobs:
+                    if role=='server' and os.environ.get('FISHING_SERVER_BIN'):
+                        text=path.read_text();print('--- exported server ---\n'+text)
+                        if 'SCRIPT ERROR' in text or 'ERROR:' in text:failures.append((port,role,'runtime error'))
         if failures: raise SystemExit(f'FAILED {failures}')
         print('PASS dedicated and ad-hoc multiplayer integration')
 if __name__=='__main__': main()

@@ -2,9 +2,33 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 5 # Explicit float/lure visibility and bait position in owner snapshots.
+const VERSION := 6 # Persistent player identity and server-owned accomplishment boards.
 const State = preload("res://scripts/network/state.gd")
-const Remote = preload("res://scripts/network/remote_angler.gd")
+var leaderboard=preload("res://scripts/network/leaderboard.gd").new()
+var leaderboard_view:Dictionary={}
+var player_token:=""
+var board_due:=0.0
+signal leaderboard_changed
+func leaderboard_path()->String:
+	var args:=OS.get_cmdline_user_args();var at:=args.find("--leaderboard-path")
+	return ProjectSettings.globalize_path(args[at+1]) if at>=0 and at+1<args.size() else ProjectSettings.globalize_path("user://server/leaderboard.json")
+func publish_leaderboard()->void:
+	if not active or not multiplayer.is_server():return
+	leaderboard_view=leaderboard.snapshot();leaderboard_changed.emit()
+	for peer in players:
+		if peer>1:_leaderboard.rpc_id(peer,leaderboard_view)
+	var result:int=leaderboard.save()
+	if result!=OK:push_warning("Server leaderboard save failed: "+error_string(result))
+@rpc("authority","call_remote","reliable",0)
+func _leaderboard(data:Dictionary)->void:
+	if multiplayer.is_server():return
+	if not data.get("categories") is Dictionary or data.categories.size()!=5:return
+	for category in leaderboard.CATEGORIES:
+		if not data.categories.get(category) is Array or data.categories[category].size()>50:return
+		for row in data.categories[category]:
+			if not leaderboard.valid_row(row):return
+	leaderboard_view=data.duplicate(true);leaderboard_changed.emit()
+
 var root_game: Node
 var active := false
 var dedicated := false
@@ -60,6 +84,10 @@ func setup(root: Node, server_only: bool = false) -> void:
 
 func load_preferences() -> void:
 	var cfg := ConfigFile.new();cfg.load("user://multiplayer.cfg")
+	player_token=str(cfg.get_value("identity","token",""))
+	if not leaderboard.valid_token(player_token):
+		player_token=Crypto.new().generate_random_bytes(32).hex_encode()
+		cfg.set_value("identity","token",player_token);cfg.save("user://multiplayer.cfg")
 	var chosen_name = cfg.get_value("connection", "name", "Angler")
 	display_name = clean_name(chosen_name) if chosen_name is String else "Angler"
 	var address = cfg.get_value("connection", "address", "127.0.0.1")
@@ -70,6 +98,7 @@ func load_preferences() -> void:
 func save_preferences() -> void:
 	if dedicated: return
 	var cfg := ConfigFile.new()
+	cfg.set_value("identity","token",player_token)
 	cfg.set_value("connection", "name", display_name)
 	cfg.set_value("connection", "address", host_address)
 	cfg.set_value("connection", "port", preferred_port)
@@ -85,7 +114,11 @@ func host(port: int = 24567, bind_address: String = "*") -> Error:
 	if error!=OK: status="Cannot host: "+error_string(error); changed.emit(); return error
 	multiplayer.multiplayer_peer = peer
 	active = true
-	if not dedicated: players[1] = {"name":clean_name(display_name)}
+	leaderboard.start(leaderboard_path())
+	if not dedicated:
+		players[1] = {"name":clean_name(display_name)}
+		leaderboard.connect_player(1,player_token,clean_name(display_name))
+	publish_leaderboard()
 	status = "Hosting on UDP %d%s" % [port," (dedicated)" if dedicated else ""]
 	voice.set_mode(voice.mode)
 	changed.emit()
@@ -105,6 +138,9 @@ func join(address: String, port: int = 24567) -> Error:
 	return OK
 
 func leave(reason: String = "Offline") -> void:
+	if active and multiplayer.is_server():leaderboard.save()
+	leaderboard.peers.clear();leaderboard.attempts.clear();leaderboard_view.clear()
+	leaderboard_changed.emit()
 	active = false
 	connect_deadline = 0
 	voice.stop_capture()
@@ -127,17 +163,19 @@ static func clean_name(value: String) -> String:
 func _peer_connected(id: int) -> void:
 	if multiplayer.is_server(): waiting[id]=clock+10
 func _connected() -> void:
-	_hello.rpc_id(1,VERSION,clean_name(display_name))
+	_hello.rpc_id(1,VERSION,clean_name(display_name),player_token)
 @rpc("any_peer","call_remote","reliable",0)
-func _hello(version: int, player_name: String) -> void:
+func _hello(version: int, player_name: String, token: String) -> void:
 	if not multiplayer.is_server(): return
 	var id := multiplayer.get_remote_sender_id()
 	if not waiting.has(id): return
 	waiting.erase(id)
-	if version!=VERSION or players.size()>=SERVER_MAX_PLAYERS:
+	if version!=VERSION or players.size()>=SERVER_MAX_PLAYERS or not leaderboard.valid_token(token) or token.sha256_text() in leaderboard.peers.values():
 		multiplayer.multiplayer_peer.disconnect_peer(id)
 		return
 	players[id]={"name":clean_name(player_name)}
+	leaderboard.connect_player(id,token,clean_name(player_name))
+	publish_leaderboard()
 	_publish_roster()
 	for owner in states: _state_event.rpc_id(id,owner,states[owner])
 	avatars.sync_peer(id)
@@ -157,7 +195,7 @@ func _roster(data: Dictionary) -> void:
 	if not dedicated:
 		for id in players:
 			if id==multiplayer.get_unique_id() or fighters.has(id): continue
-			var actor := Remote.new()
+			var actor = load("res://scripts/network/remote_angler.gd").new()
 			actor.name="Angler_%d" % id
 			actor.session=self; actor.player_name=players[id].name
 			root_game.add_child(actor); fighters[id]=actor
@@ -165,6 +203,7 @@ func _roster(data: Dictionary) -> void:
 	changed.emit()
 
 func _peer_left(id: int) -> void:
+	leaderboard.disconnect_player(id)
 	state_arrivals.erase(id)
 	waiting.erase(id); players.erase(id); states.erase(id); guards.erase(id)
 	avatars.remove_peer(id); voice.remove_peer(id)
@@ -179,6 +218,8 @@ func _process(delta: float) -> void:
 	clock+=delta
 	if connect_deadline>0 and clock>connect_deadline: leave("Connection timed out")
 	if not active: return
+	if multiplayer.is_server() and leaderboard.dirty and clock>=board_due:
+		board_due=clock+2.0;publish_leaderboard()
 	if metrics_enabled and clock>=metrics_next:
 		metrics_next=clock+2.0
 		print("NETWORK_METRICS ",JSON.stringify({"ticks_usec":Time.get_ticks_usec(),"seconds":clock,"voice_detail":voice.diagnostics(),"remote_states":state_diagnostics(),"players":players.size(),"states":states.size(),"voice_received":voice.received_packets,"voice_relayed":voice.relayed_packets,"voice_rejected":voice.rejected_packets,"transport":multiplayer.multiplayer_peer.diagnostics()}))
@@ -216,6 +257,7 @@ func _accept(id: int, data: Dictionary, reliable: bool) -> void:
 	guard.tokens=minf(8,guard.tokens+maxf(0,clock-guard.time)*30); guard.time=clock; guards[id]=guard
 	if guard.tokens<1: return
 	guard.tokens-=1
+	leaderboard.observe(id,data)
 	_apply(id,data)
 	for peer in players:
 		if peer<=1 or peer==id: continue
@@ -253,6 +295,7 @@ func command_line() -> void:
 	if error!=OK and dedicated: push_error(status); get_tree().quit(1)
 
 func _exit_tree() -> void:
+	if active and multiplayer.is_server():leaderboard.save()
 	# Scene teardown must stop the socket worker even without an explicit Leave.
 	if multiplayer.multiplayer_peer is MultiplayerPeerExtension:
 		multiplayer.multiplayer_peer.close()

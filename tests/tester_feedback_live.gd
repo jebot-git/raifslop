@@ -28,9 +28,9 @@ func run():
 	g.set_process(false);g.motor.set_physics_process(false);g.fishing_feedback.set_process(false)
 	g.fish_guide.dock();g.menu_open=false;g.avatar_panel.hide();g.hud.tracking_lost=false;g.hud.calibration_message="";g.game.reset();g.hud.queue_redraw()
 	var compositor=Compositor.new();compositor.compositor_effects=[effect];g.head.compositor=compositor
-	g._toggle_avatar_menu();g.avatar_menu.tutorial_button.pressed.emit()
-	await capture(g,"tutorial-menu")
-	check(g.avatar_menu.active_page=="help","Tutorial lives inside the menu")
+	g._toggle_avatar_menu();g.avatar_menu.leaderboard_button.pressed.emit()
+	await capture(g,"leaderboard-menu")
+	check(g.avatar_menu.active_page=="leaderboard","Leaderboard lives inside the menu")
 	g._toggle_avatar_menu()
 	g.game.state=g.Session.State.BITE;g.game.message="BITE! Lift the rod to set the hook.";g.hud.queue_redraw()
 	g.fishing_feedback._process(.014)

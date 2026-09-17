@@ -36,6 +36,7 @@ func run() -> void:
 			net.display_name=role
 			net.join("127.0.0.1",int(args[1]))
 		if role in ["sender","host"]:
+			check(await wait_for(func():return not game.avatar_loading,20),"Initial avatar load settles before custom selection")
 			game.avatars.selected_path=args[2]
 		check(await wait_for(func(): return net.active and net.players.size()>=2),"Session handshake and roster")
 		var baseline: Array=game.game.journal.duplicate(true)
@@ -68,9 +69,10 @@ func run() -> void:
 				net.voice.send_packet(Fixture.packet(enc,frame*960))
 				await create_timer(.02).timeout
 			check(net.voice.received_packets==0,"Voice sender has no network echo")
-			await create_timer(2).timeout
+			# Keep the owner connected through upload, server verification and relay.
+			await create_timer(22 if OS.get_environment("FISHING_SERVER_BIN")!="" else 2).timeout
 		else:
-			var until:=Time.get_ticks_msec()+(7000 if role=="late" else 11000)
+			var until:=Time.get_ticks_msec()+(30000 if OS.get_environment("FISHING_SERVER_BIN")!="" else 7000 if role=="late" else 11000)
 			var sender:=0
 			var mute_tested:=false
 			while Time.get_ticks_msec()<until:

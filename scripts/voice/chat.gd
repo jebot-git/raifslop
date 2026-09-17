@@ -1,7 +1,5 @@
 ## Adapted from jebot-git/FPSloppa, commit 5105fb8cfa38c76aa1d5d172af3047fe2d12ae0d.
 extends Node
-const Speaker=preload("res://addons/twovoip/voiphelper/two_voip_speaker.gd")
-const Microphone=preload("res://scripts/voice/microphone.gd")
 const Visemes=preload("res://scripts/voice/visemes.gd")
 const Preferences=preload("res://scripts/voice/preferences.gd")
 var input_device:="Default"
@@ -42,7 +40,7 @@ func setup(arena: Node) -> void:
 	load_preferences()
 	if not game.headless:
 		apply_input_device()
-		radio_audio=preload("res://scripts/voice/radio_audio.gd").new();add_child(radio_audio);radio_audio.setup()
+		radio_audio=load("res://scripts/voice/radio_audio.gd").new();add_child(radio_audio);radio_audio.setup()
 	multiplayer.peer_disconnected.connect(remove_peer)
 	game.permissions.completed.connect(_permission_result)
 	if not game.headless: set_mode.call_deferred(mode)
@@ -89,7 +87,7 @@ func retry_access() -> void:
 
 func start_capture() -> void:
 	if mic or mode==0 or not game.active or game.headless or not game.voice_enabled or not game.permissions.granted(Permissions.MICROPHONE): return
-	mic=Microphone.new();add_child(mic)
+	mic=load("res://scripts/voice/microphone.gd").new();add_child(mic)
 	if not mic.configure(self):
 		mic.queue_free();mic=null;message="Microphone unavailable · select an input device and retry";return
 	mic.transmit_audio_packet.connect(send_packet)
@@ -197,7 +195,7 @@ func create_stream(id: int,serial: int,radio: bool=false) -> void:
 		player.unit_size=8;player.max_distance=60;player.attenuation_filter_cutoff_hz=18000
 	if radio and is_instance_valid(radio_audio):player.bus=radio_audio.bus
 	add_child(player)
-	var speaker=Speaker.new();speaker.audio_buffer_lag_time_target=.08;speaker.audio_buffer_lag_time_target_tolerance=.06;player.add_child(speaker)
+	var speaker=load("res://addons/twovoip/voiphelper/two_voip_speaker.gd").new();speaker.audio_buffer_lag_time_target=.08;speaker.audio_buffer_lag_time_target_tolerance=.06;player.add_child(speaker)
 	speaker.packet_decoded.connect(func():decoded_packets+=1)
 	speaker.decode_event.connect(count_event)
 	var header:={"opussamplerate":48000,"opuschannels":1,"lenchunkprefix":2,"opusstreamcount":0,"opusframesize":960,"opusframecount":0,"talkingtimestart":0}

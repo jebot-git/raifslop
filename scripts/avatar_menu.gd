@@ -4,7 +4,8 @@ signal import_requested(path: String)
 signal closed
 signal quit_requested
 var quit_button: Button
-var tutorial_button: Button
+var leaderboard_button: Button
+var pictograms_toggle: CheckButton
 var turn_mode: CheckButton
 var smooth_turn_speed: HSlider
 var snap_turn_angle: HSlider
@@ -131,6 +132,7 @@ func _build_turn_controls() -> void:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation",22)
 	_register_page("controls","Controls",page)
+	pictograms_toggle=CheckButton.new();pictograms_toggle.text="Show pictograms";page.add_child(pictograms_toggle)
 	var title := Label.new();title.text="Turning";title.add_theme_font_size_override("font_size",28);page.add_child(title)
 	turn_mode.reparent(page)
 	smooth_turn_speed=_turn_slider(page,"Smooth turn speed",30,360,15,75,"°/s")
@@ -320,44 +322,14 @@ func scroll_page(pixels: float) -> void:
 	if is_instance_valid(keyboard) and keyboard.visible: return
 	if pages.has(active_page): pages[active_page].view.scroll_vertical += roundi(pixels)
 
-func attach_help() -> void:
-	var page := VBoxContainer.new()
-	page.add_theme_constant_override("separation", 6)
-	_register_page("help", "Tutorial", page)
-	tutorial_button = pages.help.button
-	# Keep help in the fixed header without crowding the six section tabs.
-	tutorial_button.reparent(shell.get_child(0))
-	tutorial_button.size_flags_horizontal = SIZE_SHRINK_END
-	tutorial_button.custom_minimum_size = Vector2(130, 44)
-	for instruction in [
-		"FISHING · VR controls",
-		"Cast: look toward the water marker. Hold trigger, sweep back then forward, release.
-When the float dips, lift the rod quickly to set the hook.",
-		"Reel: hold left grip or trigger beside the crank and circle your hand.
-Ease off during runs; keep line tension in the green band.",
-		"Fly fishing: hold left grip near the line above the handle and pull to strip.
-Extra back/forward strokes extend the locked cast. Grip/trigger at the reel
-winds it: only use this against inward rushes or for the final tired fish.
-Sweep the rod upstream, against the current, to mend. A pulse, line loop
-and rod message confirm it. Desktop: LEFT mends upstream; RIGHT adds drag.",
-		"Fight: pull in the indicated direction and HOLD.
-Strong rod pulses mean your counter is working.
-Diving: stop reeling. Rushing inward: wind faster.
-Three missed counters, sustained slack or strain lose the fish.",
-		"Guide: left grip at your left hip. Press its buttons with your
-right index finger. Right grip at your right hip folds/stashes the rod.",
-		"Catch: left grip to hold; sticks to rotate; right A to release.
-Move with the left stick, turn with the right stick. Right B: menu.",
-		"Radio: grab at left shoulder, hold left trigger to talk to all waters.
-Release grip to dock. Desktop radio: hold B. Nearby voice: T / left stick click.",
-		"Desktop: hold/release SPACE to cast; tap to strike/release. R reels (Shift: faster); arrows to
-counter; G guide; J stash rod; V menu; WASD move; Q/E turn."
-	]:
-		var label := Label.new()
-		label.text = instruction
-		label.add_theme_font_size_override("font_size", 20)
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		page.add_child(label)
+func attach_leaderboard(session:Node) -> void:
+	var page=preload("res://scripts/network/leaderboard_menu.gd").new()
+	page.session=session
+	_register_page("leaderboard","Leaderboard",page)
+	leaderboard_button=pages.leaderboard.button
+	leaderboard_button.reparent(shell.get_child(0))
+	leaderboard_button.size_flags_horizontal=SIZE_SHRINK_END
+	leaderboard_button.custom_minimum_size=Vector2(160,44)
 	show_page(active_page)
 
 func _register_page(id: String, title: String, page: VBoxContainer) -> void:

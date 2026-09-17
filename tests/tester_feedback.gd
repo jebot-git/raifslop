@@ -47,8 +47,8 @@ func run():
 	check(guide.screen.status_rows()[3][1]==game.game.BAITS[3],"Guide status follows bait changes")
 	var menu=game.avatar_menu;menu.show();game._layout_avatar_menu();await process_frame
 	check(menu.quit_button.is_visible_in_tree() and menu.get_global_rect().encloses(menu.quit_button.get_global_rect()),"Quit button visible inside fixed menu footer")
-	menu.tutorial_button.pressed.emit();await process_frame
-	check(menu.active_page=="help" and menu.pages.help.view.visible,"Tutorial button opens instructions inside the menu")
-	check(menu.get_global_rect().encloses(menu.tutorial_button.get_global_rect()),"Tutorial button stays inside the fixed header")
+	menu.leaderboard_button.pressed.emit();await process_frame
+	check(menu.active_page=="leaderboard" and menu.pages.leaderboard.view.visible,"Leaderboard button opens server accomplishments")
+	check(menu.get_global_rect().encloses(menu.leaderboard_button.get_global_rect()),"Leaderboard button stays inside the fixed header")
 	game.queue_free();await process_frame;await create_timer(.3).timeout
 	print("TESTER_FEEDBACK_RESULT ",failures);quit(0 if failures.is_empty() else 1)

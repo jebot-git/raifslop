@@ -323,6 +323,8 @@ func _notification(what: int) -> void:
 func _load_player_preferences() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load("user://player.cfg")
+	var symbols = cfg.get_value("interface", "pictograms", true)
+	preload("res://scripts/ui/pictograms.gd").enabled = symbols if symbols is bool else true
 	controller_calibration.load_config(cfg)
 	_apply_controller_calibration()
 	var smooth = cfg.get_value("controls", "smooth_turn", false)
@@ -348,6 +350,7 @@ func _apply_controller_calibration() -> void:
 
 func _save_player_preferences() -> void:
 	var cfg := ConfigFile.new()
+	cfg.set_value("interface", "pictograms", preload("res://scripts/ui/pictograms.gd").enabled)
 	controller_calibration.save_config(cfg)
 	cfg.set_value("controls", "smooth_turn", motor.smooth_turn)
 	cfg.set_value("controls", "smooth_turn_speed", motor.smooth_turn_speed)
@@ -479,7 +482,7 @@ func _sample_cast_swing(delta: float) -> void:
 	game.fly.stroke(delta, speed)
 	if previous_strokes == 0 and game.fly.strokes > 0:
 		game.message = "Swing ready — release trigger to cast."
-		rod_status.show_notice("Release to cast")
+		rod_status.show_notice("cast")
 	elif game.fly.strokes > previous_strokes:
 		_extend_fly_cast()
 		cast_motion.retreat=0.0
@@ -489,11 +492,11 @@ func _extend_fly_cast() -> void:
 	var offset := cast_aim_target - cast_aim_anchor
 	var candidate := cast_aim_anchor + offset.normalized() * minf(24.0, offset.length() + 2.0)
 	if candidate.is_equal_approx(cast_aim_target) or not _cast_target_valid(candidate):
-		rod_status.show_notice("Cast at water limit")
+		rod_status.show_notice("stop")
 		return
 	cast_aim_target=candidate
 	game.message="Cast extended — release trigger to cast."
-	rod_status.show_notice("Cast extended · %.0f m" % cast_aim_anchor.distance_to(candidate))
+	rod_status.show_notice("extend")
 
 func _landing_distance(anchor: Vector3, direction: Vector3, reach := 24.0) -> float:
 	# Trace at water level from the fish back to the bank/pier. A railing or
@@ -829,7 +832,7 @@ func _process(delta: float) -> void:
 	if game.state in [Session.State.WAITING,Session.State.BITE,Session.State.FIGHT]:
 		game.landing_distance=_landing_distance(cast_anchor,(cast_target-cast_anchor).normalized(),game.distance)
 	game.tick(minf(delta, 0.05), reel, maxf(0.0, -rod.global_basis.z.y), xr and reel_tracker.engaged)
-	if game.fly_reel_penalty: rod_status.show_notice("Too much strain — strip line")
+	if game.fly_reel_penalty: rod_status.show_notice("warning")
 	if was_jumping and game.jump_time<=0 and game.state==Session.State.FIGHT:
 		var landing: Vector3=hooked_fish.landing_position()
 		cast_target=Vector3(landing.x,water_level+.05,landing.z)
@@ -1061,7 +1064,7 @@ func _mend_fly(direction:int) -> bool:
 	if not game.is_fly_fishing() or game.state!=Session.State.WAITING or game.fly.mend_cooldown>0 or direction==0:return false
 	var improved:bool=game.fly.mend(direction)
 	game.message="Upstream mend · Natural drift" if improved else "Downstream mend · More drag"
-	rod_status.show_notice(game.message)
+	rod_status.show_notice("mend" if improved else "warning")
 	if xr and right.get_has_tracking_data():right.trigger_haptic_pulse("haptic",0.0,.24 if improved else .12,.09 if improved else .045,0.0)
 	return true
 
@@ -1163,6 +1166,8 @@ func _build_avatar_menu() -> void:
 	avatar_menu.import_requested.connect(_import_avatar)
 	avatar_menu.closed.connect(_toggle_avatar_menu)
 	avatar_menu.quit_requested.connect(_quit_game)
+	avatar_menu.pictograms_toggle.button_pressed=preload("res://scripts/ui/pictograms.gd").enabled
+	avatar_menu.pictograms_toggle.toggled.connect(func(enabled:bool): preload("res://scripts/ui/pictograms.gd").enabled=enabled;hud.queue_redraw();_save_player_preferences())
 	avatar_menu.turn_mode.button_pressed = motor.smooth_turn
 	avatar_menu.turn_mode_changed.connect(func(enabled: bool): motor.smooth_turn = enabled; _save_player_preferences())
 	avatar_menu.smooth_turn_speed.value=motor.smooth_turn_speed
@@ -1453,5 +1458,5 @@ func _start_network() -> void:
 		add_child(tracking_manager); tracking_manager.setup(self)
 		avatar_menu.attach_tracking(tracking_manager)
 		avatar_menu.attach_sound(ambience)
-		avatar_menu.attach_help()
+		avatar_menu.attach_leaderboard(network)
 	network.command_line()

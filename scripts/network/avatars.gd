@@ -282,7 +282,10 @@ func queue_avatar(id: int) -> void:
 func _request(hash: String) -> void:
 	var peer := multiplayer.get_remote_sender_id()
 	if not Library.valid_hash(hash):return
-	if not game.players.has(peer):return
+	# Dedicated authority is not an angler in the roster.
+	if multiplayer.is_server():
+		if not game.players.has(peer):return
+	elif peer!=1:return
 	if not library.entries.has(hash):
 		send_avatar(peer,"_unavailable",[hash]);return
 	if multiplayer.is_server():

@@ -32,77 +32,33 @@ func card(rect: Rect2, color: Color = panel) -> void:
 	style.corner_radius_bottom_right = 14
 	draw_style_box(style, rect)
 
+func icon(key:String,rect:Rect2)->void:
+	if not preload("res://scripts/ui/pictograms.gd").enabled:return
+	draw_texture_rect(preload("res://scripts/ui/pictograms.gd").texture(key),rect,false)
 func _draw() -> void:
-	if game == null: return
+	if game==null:return
 	if vr_mode:
-		_draw_vr()
-		return
-	var design := Vector2(1440, 900)
-	scale_factor = size / design
-	draw_set_transform(Vector2.ZERO, 0, scale_factor)
-	card(Rect2(32, 28, 1376, 106))
-	text_at("R / F", Vector2(58, 75), 24, mint, true)
-	draw_line(Vector2(145, 50), Vector2(145, 112), Color("52645a"), 1)
-	text_at("Real AI Fishing", Vector2(171, 77), 32, ink, true)
-	text_at("G: field guide · Location, earnings and equipment", Vector2(173, 110), 12, muted)
-	draw_circle(Vector2(1045, 65), 4, mint)
-	text_at("OPENXR ACTIVE" if vr_mode else "DESKTOP PRACTICE", Vector2(1061, 70), 13, mint)
-
-	if not vr_mode:
-		card(Rect2(1030, 160, 378, 110))
-		text_at("AVATAR & LOCATIONS   [ V ]", Vector2(1052, 194), 15, mint)
-		text_at("WASD walk · Q/E turn · Middle-drag look", Vector2(1052, 225), 12, ink)
-		text_at("Avatar, location · G: field guide", Vector2(1052, 252), 12, muted)
-	var state: int = game.state
-	var state_name: String = ["READY TO CAST", "CASTING", "WAIT FOR A BITE", "SET THE HOOK", "FISH ON", "CATCH LANDED", "FISH LOST"][state]
-	card(Rect2(435, 560, 570, 112))
-	text_at(state_name, Vector2(459, 588), 12, mint)
-	var lines: PackedStringArray = game.message.split(" · +")[0].split("\n")
-	for i in range(lines.size()):
-		text_at(lines[i], Vector2(459, 619 + i * 25), 14, ink)
-	if state == 4:
-		card(Rect2(1040, 350, 368, 280))
-		text_at("THE FIGHT", Vector2(1064, 382), 12, mint)
-		text_at("%.1f m" % game.distance, Vector2(1064, 421), 30, ink, true)
-		text_at("LINE TENSION", Vector2(1064, 454), 11, muted)
-		draw_rect(Rect2(1064, 468, 320, 10), Color("243a34"))
-		draw_rect(Rect2(1064 + 320 * 0.15, 468, 320 * 0.60, 10), Color("3d6652"))
-		draw_circle(Vector2(1064 + 320 * game.tension, 473), 7, Color("ff916e") if game.tension > 0.8 else mint)
-		text_at(game.reel_instruction(), Vector2(1064, 571), 13, Color("ffba80") if game.is_running() else mint)
-		text_at("Keep the marker in the green band", Vector2(1064, 607), 12, muted)
-		if game.cue >= 0:
-			card(Rect2(485, 360, 470, 147), Color(0.07, 0.21, 0.16, 0.96))
-			text_at((["← QUICK TUG LEFT", "QUICK TUG RIGHT →"][game.cue] if game.jump_time>0 else ["←  PULL LEFT · HOLD", "PULL RIGHT · HOLD  →", "↑  LIFT ROD · HOLD"][game.cue]), Vector2(515, 414), 25, mint)
-			text_at(("JUMP · STOP REELING · QUICK SIDEWAYS TUG" if game.jump_time>0 else "Keep holding" if game.counter_active else "Pull farther, then hold"), Vector2(515, 457), 20, ink)
-	if state == 3:
-		card(Rect2(520, 350, 400, 130), Color("a55232"))
-		text_at("BITE!", Vector2(641, 402), 34, ink, true)
-		text_at("Lift now" if vr_mode else "Press SPACE to strike", Vector2(579, 443), 20)
-	if game.is_fly_fishing():
-		text_at("HOLD SPACE / RELEASE: fly cast · R: strip · ←: mend upstream" if not vr_mode else "BACK / FORWARD: cast · LEFT GRIP + PULL: strip · SWEEP LEFT: mend",Vector2(40,670),18,mint)
-		if game.state==2:text_at("DRIFT QUALITY  %d%%" % int(game.fly.quality*100),Vector2(560,410),24,mint)
-	card(Rect2(32, 698, 1376, 170))
-	text_at("YOUR TACKLE", Vector2(56, 728), 11, muted)
-	for i in range(game.bait_count()):
-		var tile := bait_rect(i)
-		var x := tile.position.x
-		var y := tile.position.y
-		var selected: bool = game.bait == i
-		card(tile, Color("365747") if selected else Color("142b25"))
-		draw_circle(Vector2(x + 16, y + 15), 4, mint if selected else muted)
-		text_at("%d  %s" % [i + 1, game.bait_name(i)], Vector2(x + 28, y + 20), 14, mint if selected else ink)
-		text_at(game.bait_hint(i), Vector2(x + 14, y + 39), 11, muted)
-	var action: String = "HOLD SPACE / RELEASE TO CAST" if state == 0 else ("RELEASE & CONTINUE" if state == 5 else ("TRY AGAIN" if state == 6 else "SPACE / STRIKE"))
-	card(Rect2(897, 747, 483, 89), Color("a5dcb9") if state in [0, 5, 6] else Color("254537"))
-	text_at(action, Vector2(937, 799), 20, Color("102e24") if state in [0, 5, 6] else ink)
-	if not vr_mode:
-		text_at("HOLD / RELEASE SPACE: fly cast · R: strip · LEFT: upstream mend · SPACE on take: strike" if game.is_fly_fishing() else "Hold/release SPACE: cast · SPACE: strike/release     •     R / left mouse reel · Shift faster     •     Arrow keys  counter     •     Right-drag  aim rod", Vector2(265, 889), 12, ink)
-	else:
-		text_at("TRIGGER: back / forward cast · LEFT GRIP + PULL: strip · SWEEP UPSTREAM: mend" if game.is_fly_fishing() else "Left X: bait   •   Right trigger: swing + release   •   Left grip/trigger + circle: reel   •   Right A: release", Vector2(75, 889), 17, ink)
-	if tracking_lost:
-		card(Rect2(400, 330, 640, 170))
-		text_at("Tracking paused", Vector2(450, 395), 30, ink, true)
-		text_at("Bring both controllers into view to resume.", Vector2(450, 444), 18, muted)
+		_draw_vr();return
+	scale_factor=size/Vector2(1440,900)
+	draw_set_transform(Vector2.ZERO,0,scale_factor)
+	icon("menu",Rect2(1320,175,56,56))
+	var state:int=game.state
+	var symbol:String=["cast","cast","fish","up","reel","fish","lost"][state]
+	if state==4 and game.cue>=0:symbol=["left","right","up"][game.cue]
+	elif state==4 and game.is_running():symbol="stop"
+	icon("tracking" if tracking_lost else symbol,Rect2(682,550,76,76))
+	if state==4:
+		draw_rect(Rect2(560,637,320,8),Color("243a34"))
+		draw_rect(Rect2(608,637,192,8),Color("3d6652"))
+		draw_circle(Vector2(560+320*game.tension,641),6,Color("ff916e") if game.tension>.8 else mint)
+	if state==5 and not game.journal.is_empty():
+		var fish:Dictionary=game.journal.back()
+		text_at("%s · %.0f cm · %.2f kg"%[fish.name,fish.length,fish.weight],Vector2(520,668),20)
+	for i in game.bait_count():
+		var tile:=bait_rect(i)
+		card(tile,Color("365747") if game.bait==i else panel)
+		text_at(game.bait_name(i),tile.position+Vector2(18,31),16,mint if game.bait==i else ink)
+	icon("fish" if state==5 else "cast",Rect2(1070,760,68,68))
 
 static func bait_rect(index: int) -> Rect2:
 	return Rect2(56 + (index % 3) * 267, 742 + (index / 3) * 56, 251, 50)
@@ -122,36 +78,7 @@ func _gui_input(event: InputEvent) -> void:
 			accept_event()
 
 func _draw_vr() -> void:
-	draw_set_transform(Vector2.ZERO, 0, size / Vector2(1000, 640))
-	card(Rect2(0, 0, 1000, 640), Color(panel.r, panel.g, panel.b, 1.0))
-	text_at("Real AI Fishing", Vector2(40, 64), 42, ink, true)
-	text_at("ON THE LINE", Vector2(42, 109), 24, mint)
-	draw_line(Vector2(40, 137), Vector2(960, 137), muted, 1)
-	if not calibration_message.is_empty():
-		text_at("BODY CALIBRATION", Vector2(40, 225), 36, mint)
-		text_at(calibration_message, Vector2(40, 300), 25, ink)
-		return
-	if tracking_lost:
-		text_at("Tracking paused", Vector2(40, 225), 36, ink)
-		text_at("Bring both controllers into view.", Vector2(40, 280), 28, muted)
-		return
-
-	var lines: PackedStringArray = game.message.split(" · +")[0].split("\n")
-	for i in range(lines.size()):
-		text_at(lines[i], Vector2(40, 239 + i * 39), 24, ink)
-	if game.state == 4:
-		text_at("%.1f m   /   LINE TENSION" % game.distance, Vector2(40, 329), 30, ink)
-		draw_rect(Rect2(40, 365, 920, 20), Color("233b31"))
-		draw_rect(Rect2(178, 365, 552, 20), Color("3d7253"))
-		draw_circle(Vector2(40 + game.tension * 920, 375), 15, Color("ff916e") if game.tension > 0.8 else mint)
-		text_at(game.reel_instruction(), Vector2(40, 437), 30, mint)
-		if game.cue >= 0:
-			text_at((["← QUICK TUG LEFT", "QUICK TUG RIGHT →"][game.cue] if game.jump_time>0 else ["← PULL LEFT · HOLD", "PULL RIGHT · HOLD →", "↑ LIFT ROD · HOLD"][game.cue]), Vector2(40, 490), 32, ink)
-			text_at(("JUMP · STOP REELING · QUICK SIDEWAYS TUG" if game.jump_time>0 else "Keep holding" if game.counter_active else "Pull farther, then hold"),Vector2(40,557),27,ink)
-	elif game.state == 5:
-		text_at("Hold LEFT GRIP: inspect fish in your hand.", Vector2(40, 366), 27, ink)
-		text_at("Release grip: hang fish from the rod.", Vector2(40, 416), 27, ink)
-		text_at("Either stick: rotate fish. RIGHT A: release.", Vector2(40, 466), 27, ink)
-	if game.is_fly_fishing() and game.state==2:text_at("MEND LEFT · Natural drift %d%%" % int(game.fly.quality*100),Vector2(40,490),27,mint)
-	if game.state != 4: text_at("STICKS: rotate catch   B: menu" if game.state == 5 else "LEFT STICK: walk   RIGHT STICK: turn   B: menu", Vector2(40, 554), 24, muted)
-	text_at("LEFT X: bait   RIGHT A: release   LEFT HIP + GRIP: guide", Vector2(40, 603), 22, muted)
+	# VR uses the rod-mounted pictogram and catch/bait labels. Never render
+	# legacy instructional panels, even if a caller makes this Control visible.
+	draw_set_transform(Vector2.ZERO,0,size/Vector2(1000,640))
+	if tracking_lost:icon("tracking",Rect2(468,288,64,64))

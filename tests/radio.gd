@@ -48,6 +48,10 @@ func run() -> void:
 	tracker.set_input("grip",1.0);tracker.set_input("trigger_click",true);await process_frame;radio.update()
 	check(radio.held and voice.radio_channel() and voice.wants_transmit(),"Fresh shoulder grab and trigger activate cross-water radio in voice-activation mode")
 	check(not g.rod_holster.stowed,"Using radio keeps rod available")
+	preload("res://scripts/ui/pictograms.gd").enabled=false;radio.update()
+	check(not radio.indicator.visible and voice.wants_transmit(),"Pictogram toggle hides radio symbol without interrupting transmission")
+	preload("res://scripts/ui/pictograms.gd").enabled=true;radio.update()
+	check(radio.indicator.visible,"Re-enabling pictograms restores radio symbol")
 	for orientation in [Basis.IDENTITY, Basis.from_euler(Vector3(.4,.8,-.6))]:
 		tracker.set_pose("grip",Transform3D(orientation,g.origin.to_local(mount.origin)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
 		await process_frame;radio.update();radio.update()

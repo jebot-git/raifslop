@@ -73,7 +73,7 @@ func run():
   check(g.bobber.visible and g.bobber.scale.x<.4,"Nymph uses small strike indicator")
   check(g.rod_status.bait_visual.find_child("NymphBead",true,false)!=null,"Nymph model equipped")
   var prior_state:int=g.game.state;g.game.state=S.State.WAITING;g.game.fly.drag=.8
-  check(g._mend_fly(-1) and g.rod_status.remaining>0 and g.rod_status.label.text.contains("Upstream"),"Mending confirms success above the rod")
+  check(g._mend_fly(-1) and g.rod_status.notice_remaining>0 and g.rod_status.notice_icon=="mend","Mending confirms success with a rod pictogram")
   check(not g._mend_fly(-1),"Rejected mend does not retrigger feedback")
   g.game.state=prior_state
   if "--capture" in OS.get_cmdline_user_args():

@@ -33,7 +33,7 @@ Catches now earn **shekels** based on species rarity and specimen size. Open **F
 | Inspect caught fish | Hold left grip to bring fish to left hand; release grip to hang it from rod | Automatic display |
 | Rotate caught fish | Either joystick: spin around vertical axis | Automatic rotation |
 | Release / retry | Left trigger while holding fish with grip; Right A / left Y also work | Space or button |
-| Read tutorial | Right B → Tutorial | V → Tutorial |
+| Server leaderboard | Right B → Leaderboard | V → Leaderboard |
 | Quit | Right B → Quit game | Escape or menu Quit game |
 
 VR casting projects the **center of the headset view** onto the water; eye gaze does not steer it. The water marker is the landing destination, within a 5–24 metre reach. Hold the trigger, sweep the rod back then forward, and release. Desktop uses a held Space backswing and release, with right-drag controlling the marker. Aiming at real ground rejects the cast; invisible player barriers and underwater fish clearance do not block water-surface aiming. Under **Controls → Controller alignment**, adjust and save each controller’s position and rotation offsets. [Casting comfort, fish boundaries and guide discovery](docs/FISHING_COMFORT.md).
@@ -112,7 +112,7 @@ Meta avatar option research: [Quest and PC feasibility](docs/META_AVATARS_FEASIB
 
 ## Multiplayer and voice
 
-Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Radio requires the updated protocol-3 server and clients.
+Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-6 server and clients.
 
 Run `./run.sh --server --port 24567` for a headless dedicated server. LAN/Internet connections use direct UDP; Internet hosts need port forwarding or a reachable server. See [setup, controls and limitations](docs/MULTIPLAYER.md) and [FPSloppa code reuse](docs/FPSLOPPA_REUSE.md).
 
@@ -122,7 +122,7 @@ The **Tracking** tab enables FPSloppa-derived body tracking (native XR, Vive rol
 
 ## Field station menu and ambience
 
-Open the menu with **V** on desktop or **right B** in VR. Six tabs—**Avatar**, **Waters**, **Tackle**, **Together**, **Tracking**, and **Sound**—share a pine-green, cream and brass field-station theme. FPSloppa-derived selectors and drag scrolling work inside the VR panel; focusing a connection text field opens a controller-operated keyboard.
+Open the menu with **V** on desktop or **right B** in VR. Seven tabs—**Avatar**, **Waters**, **Tackle**, **Together**, **Tracking**, **Sound**, and **Controls**—share a pine-green, cream and brass field-station theme. FPSloppa-derived selectors and drag scrolling work inside the VR panel; focusing a connection text field opens a controller-operated keyboard.
 
 Each location has a distinct 128-second water, bird and wind soundscape. Travel crossfades the surroundings over two seconds; occasional timber creaks have a position in the pier or boat scene. **Sound** controls environment volume and mute independently of voice chat. Preferences persist locally. See [sources, preparation and checks](docs/PRESENTATION.md).
 
@@ -141,9 +141,9 @@ Windows, Linux, Quest and Pico packages are published on the [GitHub releases pa
 The latest visual pass adds [thirteen reconstructed fish](docs/PHOTOGRAPHIC_FISH.md), [realistic spinning tackle, native 8K panoramas and animated wildlife](docs/SCENERY_DETAIL.md). The original four additional fish retain their existing appearance.
 
 
-VR interaction fixes: the Guide's handle docks at the left hip, its held pose follows the controller's thumb/palm axes, and its two buttons accept right-index fingertip presses, using native hand tracking or the visible avatar finger with controllers. In camera mode, ‹ toggles selfie and › takes a photo. Reel animation follows both directions of physical winding. Menu pages support right-stick scrolling, visible scrollbars, trigger dragging, and fixed ↑/↓ buttons. The fixed menu header has a Tutorial button; instructions appear inside the menu, with no automatic popup. [Tracking refresh and tests](docs/AVATAR_TRACKING.md#september-2026-tracking-refresh).
+VR interaction fixes: the Guide's handle docks at the left hip, its held pose follows the controller's thumb/palm axes, and its two buttons accept right-index fingertip presses, using native hand tracking or the visible avatar finger with controllers. In camera mode, ‹ toggles selfie and › takes a photo. Reel animation follows both directions of physical winding. Menu pages support right-stick scrolling, visible scrollbars, trigger dragging, and fixed ↑/↓ buttons. The fixed menu header has a Leaderboard button. Instructions are available in the repository’s [HTML manual](docs/MANUAL.html). [Tracking refresh and tests](docs/AVATAR_TRACKING.md#september-2026-tracking-refresh).
 
-Tester feedback update: counters drain hidden resistance through sustained pulls, with rumble for bites, fights and tension rises. Catch models match reported length. The Fish Guide now holds location, shekels and equipment status; tutorial instructions are available only through the menu’s Tutorial button. The menu footer has **Quit game**. Location ambience and panorama-matched water have been rebuilt. [Behavior and validation](docs/TESTER_FEEDBACK.md).
+Tester feedback update: counters drain hidden resistance through sustained pulls, with rumble for bites, fights and tension rises. Catch models match reported length. The Fish Guide now holds location, shekels and equipment status; instructions are in the repository’s [HTML manual](docs/MANUAL.html), and brief rod cues use pictograms. **Controls → Show pictograms** toggles rod, radio and HUD symbols and saves the choice; bait and catch text remain available. The menu footer has **Quit game**. Location ambience and panorama-matched water have been rebuilt. [Behavior and validation](docs/TESTER_FEEDBACK.md).
 
 Rod holster: bring the right hand to the right hip and squeeze grip to fold/stash the rod; release and squeeze again there to pick it up. Stashing cancels the current line and rearms the selected bait. Fully retrieving an empty line also readies the next cast. The hand remains free while the rod is stashed.
 
@@ -163,3 +163,20 @@ granite boulders; Tidal Strand has a broad pale-sand shore, misty hills and drif
 Both use native 8K Poly Haven photographs, authored walkable shores, measured baked
 lighting, generated dune grass and kelp details, recorded surf and distinct marine
 rosters. [Sources, rebuild instructions and captures](docs/COASTAL_EXPANSION.md).
+
+## Quiet interface, manual and server records
+
+The [HTML manual](docs/MANUAL.html) covers VR/desktop controls, pictograms, fly
+fishing, the Field Guide and multiplayer. Outside menus and the Guide, VR text
+is limited to selected bait and catch name/length/weight. Small rod-mounted
+symbols, line colour, sound and haptics carry casting and fight feedback.
+
+The menu's **Leaderboard** button shows server-owned records for connected and
+past anglers: fish caught, cumulative shekels earned, heaviest/longest fish and
+exceptional specimens. Clients keep no leaderboard save. Build the independent,
+asset-free Linux server with `python3 tools/build_server.py`; see
+[deployment and record semantics](docs/DEDICATED_SERVER.md).
+
+[The tackle expansion study](docs/FISHING_EXPANSION.md) recommends bottom/feeder
+rigs and active lure retrieves first, then light rock, surf ledger and additional
+fly presentations. Proposed species remain gated by location and habitat.

@@ -168,3 +168,5 @@ Packed source: `source/marine_expansion.blend`.
 - Lily-pad geometry, veins, motion, contact shadows and shallow coastal wash are
   authored procedurally in the project. Existing credited reed cutouts replace
   the older primitive Lakeside reeds.
+
+Original quiet-interface pictograms (`assets/ui/pictograms/*.svg`) were authored for this project on 17 September 2026. No external icon font or image assets are used.
