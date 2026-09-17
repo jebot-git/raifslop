@@ -16,7 +16,23 @@ static func create(id:String)->Node3D:
  var bank:=ShaderMaterial.new();bank.shader=load("res://assets/environment/rivers/bank.gdshader")
  bank.set_shader_parameter("cover",load("res://assets/environment/rivers/river_bank.png"))
  bank.set_shader_parameter("gravel",gravel.albedo_texture)
- var rockmat=material("gray_pier_gravelly_sand_Diffuse.jpg",Color("757e76"))
+ bank.set_shader_parameter("grass_normal",load("res://assets/models/locations/lit/lakeside_aerial_grass_rock_nor_gl.jpg"))
+ bank.set_shader_parameter("gravel_normal",gravel.normal_texture)
+ bank.set_shader_parameter("grass_roughness",load("res://assets/models/locations/lit/lakeside_aerial_grass_rock_Rough.png"))
+ bank.set_shader_parameter("grass",load("res://assets/models/locations/lit/lakeside_aerial_grass_rock_Diffuse.jpg"))
+ var bake_path:String="res://assets/textures/lighting/"+id+"_irradiance.exr"
+ if ResourceLoader.exists(bake_path):
+  bank.set_shader_parameter("irradiance",load(bake_path))
+  bank.set_shader_parameter("bank_ao",load("res://assets/textures/lighting/"+id+"_ao.png"))
+  bank.set_shader_parameter("has_bake",true)
+ var prototype:Node3D=load("res://assets/environment/rivers/river_boulder.glb").instantiate()
+ var rock_node:MeshInstance3D=prototype.find_children("*","MeshInstance3D",true,false)[0]
+ var rock_mesh:Mesh=rock_node.mesh
+ var rockmat:=ShaderMaterial.new();rockmat.shader=load("res://assets/environment/rivers/rock.gdshader")
+ rockmat.set_shader_parameter("albedo_tex",rock_node.get_active_material(0).albedo_texture)
+ rockmat.set_shader_parameter("occlusion_tex",load("res://assets/environment/rivers/rock_ao.png"))
+ rockmat.set_shader_parameter("normal_tex",gravel.normal_texture)
+ prototype.free()
  terrain(root,false,bank,bank)
  box(root,Vector3(0,-1.8,-11),Vector3(180,1,18),gravel,false)
  terrain(root,true,bank,bank)
@@ -24,13 +40,17 @@ static func create(id:String)->Node3D:
  var body:=StaticBody3D.new();root.add_child(body);body.position=Vector3(0,0,-3.1)
  var shape:=CollisionShape3D.new();var bounds:=BoxShape3D.new();bounds.size=Vector3(180,.6,.15);shape.shape=bounds;body.add_child(shape)
  var rng:=RandomNumberGenerator.new();rng.seed=711 if id=="meadow_bend" else 919
- for i in (30 if id=="meadow_bend" else 65):
-  var n:=MeshInstance3D.new();var sphere:=SphereMesh.new();sphere.radial_segments=9;sphere.rings=5;n.mesh=sphere;n.material_override=rockmat
+ var stones:=MultiMesh.new();stones.transform_format=MultiMesh.TRANSFORM_3D;stones.mesh=rock_mesh
+ stones.instance_count=30 if id=="meadow_bend" else 65
+ for i in stones.instance_count:
+  var n:=MeshInstance3D.new();n.mesh=rock_mesh;n.material_override=rockmat
   var x:=rng.randf_range(-65,65);var z:=rng.randf_range(-2.8,-1.8) if i%2==0 else rng.randf_range(-20,-18)
-  n.position=Vector3(x,-.35,z);n.scale=Vector3(rng.randf_range(.4,1.2),.7,rng.randf_range(.4,1.0));root.add_child(n)
+  n.position=Vector3(x,-.25,z);n.rotation.y=rng.randf_range(-PI,PI);n.scale=Vector3(rng.randf_range(.4,1.2),.7,rng.randf_range(.4,1.0))
+  stones.set_instance_transform(i,n.transform);n.free()
+ var stone_visual:=MultiMeshInstance3D.new();stone_visual.name="InstancedRiverStones";stone_visual.multimesh=stones;stone_visual.material_override=rockmat;root.add_child(stone_visual)
  if id=="boulder_run":
   for at in [Vector3(-7,-.6,-10),Vector3(5,-.6,-13),Vector3(15,-.6,-8)]:
-   var n:=MeshInstance3D.new();var mesh:=SphereMesh.new();mesh.radial_segments=10;mesh.rings=6;n.mesh=mesh;n.material_override=rockmat;n.set_meta("fish_ground",true);n.position=at;n.scale=Vector3(2.1,2.4,1.8);root.add_child(n);n.create_trimesh_collision()
+   var n:=MeshInstance3D.new();n.mesh=rock_mesh;n.material_override=rockmat;n.position=at;n.scale=Vector3(3.2,3.0,2.7);root.add_child(n);n.create_trimesh_collision();n.set_meta("fish_ground",true)
  # Crossed cutouts in separated depth groups retain silhouettes from oblique views.
  var shrub_texture=load("res://assets/environment/rivers/river_shrubs.png")
  var tree_texture=load("res://assets/environment/rivers/river_alder.png")
@@ -58,6 +78,16 @@ static func create(id:String)->Node3D:
   var height:=rng.randf_range(6.0,9.0)
   card(trees,Vector3(x,bank_height(x,t,true)-.12,z),Vector2(height*.67,height),tree_texture,rng.randf_range(-.2,.2),rng.randf_range(.9,1.08),rng.randf()<.5)
 
+ # A second, smaller tree band breaks up the bare modeled ridge and masks
+ # the source panorama's stretched lower horizon when viewed from the side.
+ var backdrop_rng:=RandomNumberGenerator.new();backdrop_rng.seed=1701 if id=="meadow_bend" else 1702
+ for i in (18 if id=="meadow_bend" else 26):
+  var x:float=-82.0+i*(164.0/(17.0 if id=="meadow_bend" else 25.0))+backdrop_rng.randf_range(-2,2)
+  var t:float=backdrop_rng.randf_range(.48,.72)
+  var z:float=-19-t*45+sin(x*.07)*.65+sin(x*.19)*.2
+  var height:float=backdrop_rng.randf_range(3.8,6.2)
+  card(trees,Vector3(x,footprint_height(Vector3(x,0,z),height*.3,true)-.15,z),Vector2(height*backdrop_rng.randf_range(.58,.82),height),tree_texture,backdrop_rng.randf_range(-.5,.5),backdrop_rng.randf_range(.83,1.0),backdrop_rng.randf()<.5)
+ add_margin_reeds(root,rng)
  batch_cards(shrubs,shrub_texture,3)
  batch_cards(trees,tree_texture,2)
  return root
@@ -102,7 +132,7 @@ static func terrain(root:Node3D,far:bool,grass:Material,gravel:Material):
      points.append(Vector3(uv.x,bank_height(uv.x,uv.y,far),z))
     for index in ([0,2,1,1,2,3] if far else [0,1,2,1,3,2]):
      st.set_uv(Vector2(points[index].x,points[index].z)*.25);st.add_vertex(points[index])
-  st.generate_normals();var node:=MeshInstance3D.new();node.mesh=st.commit();node.material_override=gravel if strip==0 else grass;node.set_meta("fish_ground",true)
+  st.generate_normals();st.generate_tangents();var node:=MeshInstance3D.new();node.mesh=st.commit();node.material_override=gravel if strip==0 else grass;node.set_meta("fish_ground",true)
   root.add_child(node);node.create_trimesh_collision()
   for body in node.find_children("*", "StaticBody3D", true, false):body.set_meta("role", "floor")
 
@@ -136,3 +166,17 @@ static func batch_cards(group:Node3D,texture:Texture2D,sections:int):
  group.set_meta("plant_footprints",bases)
  group.set_meta("instances",multi.instance_count)
  group.set_meta("cross_sections",sections)
+
+static func add_margin_reeds(root:Node3D,rng:RandomNumberGenerator):
+ # Real crossed geometry, anchored to the bank. Never rotate a card per eye.
+ var group:=Node3D.new();group.name="RiverMarginReeds";root.add_child(group)
+ var texture=load("res://assets/environment/shore_details/lakeshore_reeds.png")
+ for i in 64:
+  var far:bool=i%2==0
+  var x:float=rng.randf_range(-48,48)
+  if not far and absf(x)<3.8:continue
+  var t:float=rng.randf_range(.018,.035) if far else rng.randf_range(.025,.045)
+  var z:float=(-19-t*45 if far else -3.6+t*38)+sin(x*.07)*.65+sin(x*.19)*.2
+  var size:=Vector2(rng.randf_range(.55,.95),rng.randf_range(.65,1.25))
+  card(group,Vector3(x,footprint_height(Vector3(x,0,z),size.x*.5,far)-.05,z),size,texture,rng.randf_range(-PI,PI),rng.randf_range(.85,1.0),false)
+ batch_cards(group,texture,3)

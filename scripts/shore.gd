@@ -190,6 +190,8 @@ static func prepare_lighting(node: Node, id: String) -> void:
 			if baked:
 				var mat := ShaderMaterial.new()
 				mat.shader = preload("res://assets/environment/baked_foreground.gdshader")
+				var lighting:Dictionary=preload("res://scripts/locations.gd").find_location(id)
+				mat.set_shader_parameter("sun_direction",Basis.from_euler(lighting.sun_rotation*PI/180.0).z)
 				mat.set_shader_parameter("base_color", source.albedo_color)
 				mat.set_shader_parameter("albedo_tex", source.albedo_texture)
 				if source.resource_name.begins_with("FG_billboard_print"):

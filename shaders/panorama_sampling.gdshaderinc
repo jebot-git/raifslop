@@ -32,7 +32,13 @@ vec3 panorama_sample(vec3 direction, bool sharpen) {
 		vec3 surround = (panorama_texel(uv+vec2(texel.x,0.0))+panorama_texel(uv-vec2(texel.x,0.0))
 			+panorama_texel(uv+vec2(0.0,texel.y))+panorama_texel(uv-vec2(0.0,texel.y))) * .25;
 		float luma = panorama_luma(center);
-		float detail = (luma-panorama_luma(surround))*detail_strength*smoothstep(.008,.045,luma);
+		// Sharpen only resolved detail. Magnifying subpixel panorama grain produces
+		// different ringing in each eye, especially along projected ground bands.
+		vec2 grad_x=dFdx(uv);grad_x.x-=round(grad_x.x);
+		vec2 grad_y=dFdy(uv);grad_y.x-=round(grad_y.x);
+		float footprint=max(length(grad_x/texel),length(grad_y/texel));
+		float resolved=1.0-smoothstep(1.0,2.5,footprint);
+		float detail = (luma-panorama_luma(surround))*detail_strength*resolved*smoothstep(.008,.045,luma);
 		// Bound overshoot to six percent; do not sharpen chroma or amplify dark noise.
 		center *= 1.0 + clamp(detail/max(luma,.001),-.06,.06);
 	}

@@ -42,9 +42,9 @@ this same data for lighting moving objects. All export presets include it.
 Energy is relative to the HDR's exposure, not a calibrated real-world lux reading.
 Overcast Gray Pier uses a weak, broad lobe rather than an invented sharp sun.
 
-Six photographic foregrounds are rebaked. The procedural river maps share the
-measured sun of their source panoramas (Lakeside and Bell Park Pier), and retain
-their runtime terrain lighting. Retained Blender scenes pack a compact diffuse
+Six photographic foregrounds are rebaked. The river maps share the measured sun
+of their source panoramas (Lakeside and Bell Park Pier), with a separate
+[HDR bank and vegetation-shadow bake](LOCATION_IMMERSION.md). Retained Blender scenes pack a compact diffuse
 sky; solar measurement always uses the original HDR on a fresh rebuild.
 
 `tools/bake_foregrounds.py` also calls the panorama bake after rebuilding an atlas

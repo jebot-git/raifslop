@@ -200,6 +200,19 @@ func _build_environment() -> void:
 	var wm := ShaderMaterial.new()
 	water_material = wm
 	wm.shader = load("res://assets/environment/water.gdshader")
+	var ripple_noise := FastNoiseLite.new()
+	ripple_noise.seed = 731
+	ripple_noise.frequency = .045
+	var ripple_texture := NoiseTexture2D.new()
+	ripple_texture.width = 256
+	ripple_texture.height = 256
+	ripple_texture.seamless = true
+	ripple_texture.as_normal_map = true
+	ripple_texture.bump_strength = 2.0
+	ripple_texture.noise = ripple_noise
+	wm.set_shader_parameter("ripple_normal",ripple_texture)
+	wm.set_shader_parameter("river_bed",load("res://assets/models/locations/lit/gray_pier_gravelly_sand_Diffuse.jpg"))
+	wm.set_shader_parameter("bank_cover",load("res://assets/models/locations/lit/lakeside_aerial_grass_rock_Diffuse.jpg"))
 	water_surface=mesh_node(water, self, Vector3(0, water_level, -40), wm)
 	water_surface.name="WaterSurface"
 	var sphere := SphereMesh.new()
@@ -1205,6 +1218,7 @@ func _select_location(id: String, persist := true) -> bool:
 	water_surface.mesh.size=Vector2(512,512)
 	water_surface.position.y=water_level
 	water_material.set_shader_parameter("river_flow",.6 if id=="meadow_bend" else 1.1 if id=="boulder_run" else 0.0)
+	water_material.set_shader_parameter("boulder_pockets",id=="boulder_run")
 	water_material.set_shader_parameter("blend_start",1000.0 if Session.Fly.river(id) else 14.0)
 	water_material.set_shader_parameter("blend_end",1100.0 if Session.Fly.river(id) else 45.0)
 	water_material.set_shader_parameter("protect_panorama_foreground",entry.get("protect_panorama_foreground",false))

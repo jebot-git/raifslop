@@ -12,7 +12,9 @@ void vertex(){
 }
 void fragment(){
  vec4 leaf=texture(foliage,UV);
- ALBEDO=leaf.rgb*instance_shade*exposure;
+ // Ground contact and canopy self-occlusion survive Mobile and stereo rendering.
+ float root_shade=mix(.58,1.0,smoothstep(.0,.48,1.0-UV.y));
+ ALBEDO=leaf.rgb*instance_shade*exposure*root_shade;
 
  ALPHA=leaf.a;ALPHA_SCISSOR_THRESHOLD=.42;
 
