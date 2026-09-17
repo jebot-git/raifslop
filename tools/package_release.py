@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'builds'
 OUT = BUILD / 'release'
 VERSION = re.search(r'^config/version="([^"]+)"', (ROOT / 'project.godot').read_text(), re.M)[1]
-TARGETS = ['Linux', 'Windows', 'Quest', 'Pico']
+from release_targets import TARGETS, ANDROID_TARGETS
 
 def digest(path):
     with path.open('rb') as stream:
@@ -81,7 +81,7 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
         name = f'RealAIFishing-{VERSION}-{target}'
         archive(folder, result / (name + '-x86_64.zip'), name)
         print('PACKAGED ' + target, flush=True)
-    for target in ['Quest', 'Pico']:
+    for target in ANDROID_TARGETS:
         shutil.copy2(BUILD / target / 'RealAIFishing.apk', result / f'RealAIFishing-{VERSION}-{target}.apk')
     notices = stage / 'Notices'
     notices.mkdir()

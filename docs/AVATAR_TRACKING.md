@@ -24,7 +24,7 @@ Body and expression toggles plus seated preference persist in `user://tracking.c
 
 The project enables Godot's OpenXR hand, eye-gaze, Meta body and Meta face extension requests, and adds FPSloppa's dedicated eye/tracker actions and finger-touch bindings. A runtime must actually provide the requested trackers. Quest through WiVRn/SteamVR/other bridges depends on the bridge's tracking support and headset sensors; enabling an extension cannot create missing hardware data.
 
-The reused permission queue requests available Quest body/hand/eye/face or Pico eye permissions on corresponding Android build features. Use **Request tracking permissions** to retry denied access. Future standalone Android packaging must declare these permissions and the appropriate `quest_xr`/`pico_xr` feature; an Android export is not supplied by this change. PC streaming relies on the headset/bridge's own permission settings.
+The reused permission queue requests available Quest body/hand/eye/face or Pico eye permissions on corresponding Android build features. Use **Request tracking permissions** to retry denied access. Maintained Quest packaging declares the appropriate permissions and `quest_xr` feature. Pico builds are retired; the retained `pico_xr` compatibility code is not a support claim. Pico OS 6 support is a future goal requiring direct device validation. PC streaming relies on the headset/bridge's own permission settings.
 
 ## Multiplayer
 

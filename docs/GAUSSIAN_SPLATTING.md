@@ -44,7 +44,7 @@ These are experiment targets, not achieved results. Start with an authored overl
 | Hybrid scene | Fish, line, rod, avatars and opaque water occlude correctly at near/far intersections; no persistent halos, stereo shimmer or duplicated water. |
 | Movement | Inspect crouching, room-scale motion, locomotion and selfie reach throughout the approved capture envelope; no exposed holes at allowed positions. |
 | Performance | Compare matched mesh-only and splat runs at fixed render resolution, with Guide off/on, catches and eight anglers. Record CPU/GPU p50/p95/p99, missed frames, peak process/GPU memory, load hitches and ten-minute sustained behavior. |
-| Device/export | Linux and Windows PC VR, then physical Quest and Pico separately; verify assets and any native libraries in exports. Synthetic XR checks geometry and view handling, not device comfort or speed. |
+| Device/export | Linux and Windows PC VR, then physical Quest; Pico OS 6 is a future goal only, requiring separate device validation; verify assets and any native libraries in exports. Synthetic XR checks geometry and view handling, not device comfort or speed. |
 | Lifetime | Repeatedly switch locations and open/close Guide; memory should settle and sort jobs/resources must be released safely. |
 
 For planning, 72 Hz provides 13.89 ms per frame and 90 Hz provides 11.11 ms. Reserve roughly 20% headroom: target total application CPU and GPU times each below about 11.1 ms at 72 Hz or 8.9 ms at 90 Hz, then examine missed frames and tail latency separately. Do not mistake the 90 Hz physics setting for a measured headset refresh rate.

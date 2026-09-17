@@ -27,7 +27,7 @@ FPSloppa’s shoulder radio supplies a second channel to **all anglers on the se
 
 This development build uses **protocol 8**, including explicit terminal-tackle visibility/positions, server accomplishments and classic/feeder/lure rig selection. Update clients and server together; older clients cannot join. Avatar offer acknowledgements and transfer cancellation/recovery are retained.
 
-Android microphone capture requests `android.permission.RECORD_AUDIO` when enabled. The Quest and Pico release APKs declare RECORD_AUDIO and INTERNET and include TwoVoIP's ARM64 native library. Optional avatar tracking now uses the shared Quest/Pico tracking permission queue; see [tracking setup](AVATAR_TRACKING.md). Eye tracking never affects cast aim. Synthetic tests use generated tones, never the microphone.
+Android microphone capture requests `android.permission.RECORD_AUDIO` when enabled. The Quest release APK declares RECORD_AUDIO and INTERNET and includes TwoVoIP's ARM64 native library. Optional avatar tracking uses a shared vendor permission queue; retained Pico permission handling does not imply a maintained Pico build. Pico OS 6 support is a future goal only; see [tracking setup](AVATAR_TRACKING.md). Eye tracking never affects cast aim. Synthetic tests use generated tones, never the microphone.
 
 ## Replication and reuse
 

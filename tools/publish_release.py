@@ -2,14 +2,19 @@
 from pathlib import Path
 import hashlib, http.client, json, os, shutil, subprocess, urllib.parse
 
+from release_targets import TARGETS
+
 root=Path(__file__).resolve().parents[1]
-version='v'+json.loads((root/'builds/release/build-manifest.json').read_text())['version']
+manifest=json.loads((root/'builds/release/build-manifest.json').read_text())
+assert sorted(item['target'] for item in manifest['targets'])==sorted(TARGETS), 'Release contains missing or retired targets; rebuild and repackage'
+version='v'+manifest['version']
 repo='jebot-git/raifslop'
 assets_dir=root/'builds/release'
 commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
 assert subprocess.check_output(['git','describe','--exact-match','--tags','HEAD'],cwd=root,text=True).strip()==version
 assert not subprocess.check_output(['git','status','--porcelain'],cwd=root), 'Working tree is not clean'
 assert json.loads((assets_dir/'build-manifest.json').read_text())['commit']==commit
+assert not any('pico' in p.name.lower() for p in assets_dir.iterdir()), 'Retired Pico artifact in release; repackage before publishing'
 expected_files={line.split('  ',1)[1] for line in (assets_dir/'SHA256SUMS').read_text().splitlines()}
 assert {p.name for p in assets_dir.iterdir()}==expected_files|{'SHA256SUMS'}
 for line in (assets_dir/'SHA256SUMS').read_text().splitlines():

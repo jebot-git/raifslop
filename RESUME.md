@@ -25,11 +25,11 @@ were retired; the location manifest points directly at the baked models.
 
 Release signing files live in ignored `.release-signing/` and must remain private.
 Build output, Gradle files, Godot caches and player saves are not source assets.
-Use `tools/build_release.py` and `tools/package_release.py` for all four targets.
+Use `tools/build_release.py` and `tools/package_release.py` for Linux, Windows and Quest. Pico builds are retired; Pico OS 6 support is a future goal only.
 
 ## Remaining work
 
-- Physical Quest/Pico and Windows runtime acceptance, microphone and tracker
+- Physical Quest and Windows runtime acceptance, microphone and tracker
   hardware validation, comfort and sustained performance measurements.
 - Existing Godot/OpenXR teardown diagnostics are recorded in
   [validation notes](docs/VALIDATION.md); synthetic passes do not establish

@@ -11,7 +11,7 @@ Godot 4.7.2 stable, Linux, Intel ADL-N / Mesa. Godot MCP and Blender MCP both co
 - Initial Compatibility/OpenGL stereo shaders failed on this GPU (`gl_ViewID_OVR`). Mobile/Vulkan startup cleared those errors. The project defaults to Mobile.
 - Perch's redundant UV channels were verified identical and merged in Blender. Textures reduced from 4K to 2K. Blender source saved with packed textures outside Godot's import path.
 
-Known prototype limits are listed in the README. Quest/Pico packages are now built; no Gaussian splat renderer is integrated.
+Known prototype limits are listed in the README. Quest packages are built; Pico builds are retired from future releases (see [release policy](RELEASE.md)); no Gaussian splat renderer is integrated.
 
 ## Locomotion and avatars update
 

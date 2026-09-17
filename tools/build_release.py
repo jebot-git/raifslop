@@ -1,9 +1,10 @@
-"""Export four release targets; keep local signing credentials out of source control."""
+"""Export maintained release targets; keep local signing credentials out of source control."""
 from pathlib import Path
 import argparse, hashlib, json, os, secrets, shutil, subprocess, zipfile
+from release_targets import TARGETS, ANDROID_TARGETS
 ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
-p.add_argument('--target', choices=['all','Linux','Windows','Quest','Pico'], default='all')
+p.add_argument('--target', choices=['all', *TARGETS], default='all')
 a = p.parse_args()
 if subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip():
     raise SystemExit('Commit the source changes before building a release.')
@@ -29,14 +30,14 @@ def digest(path):
     with path.open('rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 run([godot,'--headless','--path',str(ROOT),'--xr-mode','off','--editor','--import','--quit'], 'import')
-for target in (['Linux','Windows','Quest','Pico'] if a.target=='all' else [a.target]):
+for target in (TARGETS if a.target=='all' else [a.target]):
     out = build/target
     if out.exists(): shutil.rmtree(out)
     out.mkdir()
     manifest = build/('manifest-'+target+'.json')
     manifest.unlink(missing_ok=True)
     child_env = env.copy()
-    if target in ['Quest','Pico']:
+    if target in ANDROID_TARGETS:
         child_env.update(JAVA_HOME=str(jdk), ANDROID_HOME=str(sdk), ANDROID_SDK_ROOT=str(sdk))
         child_env['PATH'] = str(jdk/'bin')+os.pathsep+child_env['PATH']
         signing=ROOT/'.release-signing'; signing.mkdir(exist_ok=True, mode=0o700)
@@ -55,7 +56,7 @@ for target in (['Linux','Windows','Quest','Pico'] if a.target=='all' else [a.tar
             with zipfile.ZipFile(Path.home()/'.local/share/godot/export_templates/4.7.2.stable/android_source.zip') as z: z.extractall(android)
             (ROOT/'android/.build_version').write_text('4.7.2.stable')
             (ROOT/'android/.gdignore').touch();(android/'gradlew').chmod(0o755)
-    ext={'Linux':'x86_64','Windows':'exe','Quest':'apk','Pico':'apk'}[target]
+    ext={'Linux':'x86_64','Windows':'exe','Quest':'apk'}[target]
     artifact=out/('RealAIFishing.'+ext)
     run([godot,'--headless','--path',str(ROOT),'--xr-mode','off','--export-release',target,str(artifact)],'export-'+target,child_env)
     if not artifact.exists(): raise SystemExit('Missing '+str(artifact))
