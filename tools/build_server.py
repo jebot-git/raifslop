@@ -50,7 +50,11 @@ texture_format/s3tc_bptc=true
 texture_format/etc2_astc=false
 ''')
     env=dict(os.environ,XDG_CONFIG_HOME=str(out/'config'),XDG_DATA_HOME=str(out/'build-data'))
-    version=subprocess.check_output([args.godot,'--version'],text=True).strip().split('.official')[0]
+    # Distribution builds append their own vendor/hash suffix, just like official builds.
+    engine_version=subprocess.check_output([args.godot,'--version'],text=True).strip()
+    match=re.match(r'^(\d+\.\d+(?:\.\d+)?\.(?:stable|dev\d*|alpha\d*|beta\d*|rc\d*))',engine_version)
+    if not match:raise SystemExit('Cannot resolve export template version: '+engine_version)
+    version=match[1]
     template=pathlib.Path.home()/'.local/share/godot/export_templates'/version/'linux_release.x86_64'
     if template.exists():
         with (stage/'export_presets.cfg').open('a') as f:f.write('custom_template/debug='+json.dumps(str(template))+'\ncustom_template/release='+json.dumps(str(template))+'\n')
