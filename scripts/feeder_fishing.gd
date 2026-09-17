@@ -1,5 +1,5 @@
 extends RefCounted
-## Cage feeder: bottom presentation, a short hooklink, and one feed deposit per cast.
+## Cage feeder: bait packed inside the basket and one bottom feed deposit per cast.
 ## Location pools are authored gameplay habitats, not surveys of photographed waters.
 const BAIT_NAMES=["Earthworm","Sweetcorn","Maggots","Bread"]
 const BAIT_MODELS=[0,1,3,4]

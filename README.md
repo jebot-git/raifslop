@@ -31,6 +31,7 @@ Catches now earn **shekels** based on species rarity and specimen size. Open **F
 | Aim | Move/rotate the right controller, full 6DoF | Right mouse drag |
 | Field Guide | Left grip near lower handle at left hip; release to dock; unavailable during bites/fights | G to open/close; unavailable during bites/fights |
 | Guide camera / shutter / selfie | While held: left trigger / right trigger / right A | While open: C / Space / F |
+| Extend / retract selfie camera | Right stick up / down while selfie camera is active | Up / Down arrows |
 | Browse Field Guide | Physically press ‹ / ›, left X/Y, or either joystick while holding | Left/right arrows |
 | Inspect caught fish | Hold left grip to bring fish to left hand; release grip to hang it from rod | Automatic display |
 | Rotate caught fish | Either joystick: spin around vertical axis | Automatic rotation |
@@ -90,7 +91,7 @@ The perch uses an attributed third-party model; carp and pike currently use simp
 - Bite timing, directional responses, fish runs, stamina, line tension, win/loss/retry and local catch persistence. Audio and controller vibration mark bites and successful counters.
 - A world-space VR menu, handheld guide status, a separate desktop interface, collision-based free locomotion, and selectable runtime VRM avatars with visible hands.
 
-The panorama has rotational scenery only: it does not acquire 6DoF parallax when the player moves. The cove, quay, boardwalk, boat, rod and water are actual 3D geometry. This is a hybrid scene, not a full reconstruction of a surveyed fishing spot. Gaussian splat rendering, skeletal fish animation, bendable rod physics, fish ecology and real-headset performance tuning are future work. Textured fish models are included. Quest exports are paused pending device testing. “AI” is the project name; fish behavior is local rule-based simulation, with no external AI service.
+The panorama has rotational scenery only: it does not acquire 6DoF parallax when the player moves. The cove, quay, boardwalk, boat, rod and water are actual 3D geometry. This is a hybrid scene, not a full reconstruction of a surveyed fishing spot. Gaussian splat rendering, skeletal fish animation, bendable rod physics, fish ecology and real-headset performance tuning are future work. Textured fish models are included. Quest 3 standalone performance has passed physical device testing. “AI” is the project name; fish behavior is local rule-based simulation, with no external AI service.
 
 The game takes inspiration from Real VR Fishing's broad bait/timing/tension/gesture loop. It does not include that game's code, branding or assets.
 
@@ -108,7 +109,7 @@ godot --headless --path . --xr-mode off --quit-after 30
 
 See [asset credits](ASSET_CREDITS.md) for licenses and [location pipeline](docs/LOCATION_PIPELINE.md) for sources, preparation and runtime captures. Native synthetic stereo/controller tests and eye captures are documented in [validation](docs/VALIDATION.md). The included Godot AI editor addon retains its own license and enables further MCP editing.
 
-For future exported builds, include the raw `assets/avatars/*.vrm` files in the export filter: runtime loading uses the original VRM bytes, not only Godot's imported scene cache. Quest sideload releases are paused pending device testing; native file browsing still depends on the platform.
+For future exported builds, include the raw `assets/avatars/*.vrm` files in the export filter: runtime loading uses the original VRM bytes, not only Godot's imported scene cache. Quest sideload releases include a signed APK validated on Quest 3; native file browsing still depends on the platform.
 
 Meta avatar option research: [Quest and PC feasibility](docs/META_AVATARS_FEASIBILITY.md). This is an integration assessment; current builds use VRM avatars.
 
@@ -138,7 +139,7 @@ All eight photographed foregrounds use baked sky/bounce lighting, static sun sha
 
 ## Release downloads
 
-This release provides Windows, Linux and a separate Linux dedicated-server package on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). Desktop archives include VR, desktop and dedicated-server launchers. Quest APKs are excluded pending device testing. See [release and build instructions](docs/RELEASE.md).
+This release provides Windows, Linux, Quest standalone and a separate Linux dedicated-server package on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). Desktop archives include VR, desktop and dedicated-server launchers. Quest 3 standalone performance passed device testing; hand-tracking controls remain in planning. See [release and build instructions](docs/RELEASE.md).
 
 Pico standalone builds are retired from future releases following a reported startup crash on standard Pico 4 (black screen, then immediate exit). Pico OS 6 support is a future goal only, pending suitable hardware and direct testing; current Pico compatibility is not claimed. Historical release artifacts remain available.
 
@@ -187,11 +188,11 @@ fly presentations. Proposed species remain gated by location and habitat.
 
 ### Cage feeder rig
 
-Hold **right joystick press**, point left/right/up and release to select classic tackle, feeder or lure while ready to cast. The feeder uses a sinking cage, a short baited leader and a flexible quiver tip. Earthworm, sweetcorn, maggots and bread target local coarse species across four lakes and Meadow Bend. Desktop: hold **Tab** with Left/Right/Up. [Methods, habitat distribution, assets and validation](docs/FEEDER_FISHING.md).
+Hold **right joystick press**, point left/right/up and release to select classic tackle, feeder or lure while ready to cast. The feeder uses a sinking cage filled with the selected bait and a flexible quiver tip. Earthworm, sweetcorn, maggots and bread target local coarse species across four lakes and Meadow Bend. Desktop: hold **Tab** with Left/Right/Up. [Methods, habitat distribution, assets and validation](docs/FEEDER_FISHING.md).
 
 ### Lure rig and tackle tiers
 
-Select **Lure** with right joystick press + up (desktop Tab + Up). Left X cycles an inline spinner (casting spoon at sea), paddle-tail jig and diving minnow. Retrieve actively and lift on a strike. All ten locations use suitable subsets of their fish rosters. Each of the four tackle tiers has matching classic, fly, feeder and casting models, folded models and reel handles; purchases and fight bonuses apply across styles. [Lure methods, progression, assets and validation](docs/LURE_FISHING.md).
+Select **Lure** with right joystick press + up (desktop Tab + Up). Left X cycles an inline spinner (casting spoon at sea), paddle-tail jig and diving minnow. Twitch the rod left/right or reel slowly to attract fish; leaving the lure still reduces attraction. Lift on a strike. All ten locations use suitable subsets of their fish rosters. Each of the four tackle tiers has matching classic, fly, feeder and casting models, folded models and reel handles; purchases and fight bonuses apply across styles. [Lure methods, progression, assets and validation](docs/LURE_FISHING.md).
 
 ### Expanded fish roster
 

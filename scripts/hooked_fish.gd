@@ -12,6 +12,8 @@ var leap_id := -1
 var leap_start := Vector3.ZERO
 var leap_end := Vector3.ZERO
 var leap_height := 1.0
+var previous_position:=Vector3.ZERO
+var movement_sampled:=false
 func landing_position() -> Vector3:
  return leap_end if leap_id==owner_game.game.jump_count else owner_game.bobber.global_position
 func jump_position(progress: float) -> Vector3:
@@ -43,8 +45,11 @@ func update(delta:float):
  visible=show_fish
  owner_game.water_material.set_shader_parameter("hooked_visibility",0.0)
  if g.jump_time<=0:leap_id=-1
- if not show_fish:return
+ if not show_fish:
+  movement_sampled=false
+  return
  if index!=g.fish_index:
+  movement_sampled=false
   if is_instance_valid(model):remove_child(model);model.queue_free()
   index=g.fish_index
   var species:Dictionary=S.SPECIES[index]
@@ -76,6 +81,11 @@ func update(delta:float):
    direction=swimming.slerp(direction,smoothstep(0.0,1.0,approach))
  # Guard the entire airborne path as well as its landing point.
  at=owner_game.fish_boundary.clip_motion(owner_game.fish_safe_position,at,owner_game._fish_clearance()) if owner_game.fish_safe_position.is_finite() else at
+ if g.jump_time<=0 and movement_sampled:
+  var movement:=at-previous_position;movement.y=0
+  direction=movement.normalized() if movement.length_squared()>.00000001 else global_basis.x
+ previous_position=at
+ movement_sampled=true
  global_position=at
  # A boundary-clipped leap can be vertical; keep its body basis nonsingular.
  var side:=direction.cross(Vector3.UP)

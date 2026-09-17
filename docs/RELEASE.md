@@ -1,20 +1,20 @@
 # Releases and build policy
 
-Release **0.1.11** targets Linux x86_64, Windows x86_64 and a separate asset-free
-Linux dedicated server. **Quest builds are excluded pending device testing.**
-The Quest development preset and signing credentials workflow remain available
-for future validation, but automated release tools do not export/package Quest
-and the publisher rejects APKs or stale Quest artifacts.
+Release **0.1.12** targets Linux x86_64, Windows x86_64, Quest standalone and a
+separate asset-free Linux dedicated server. Quest 3 performance passed physical
+device testing and was accepted by the user. The signed Quest APK is included in
+build, packaging and publishing validation. Hand-tracking controls remain in planning.
 Pico standalone builds remain retired after the reported Pico 4 startup failure;
 **Pico OS 6 support is a future goal only**, requiring hardware testing.
 Historical releases remain available without a claim of current device support.
 
 Download from [GitHub Releases](https://github.com/jebot-git/raifslop/releases).
-See [0.1.11 changes and validation](RELEASE_NOTES_0.1.11.md).
+See [0.1.12 changes and validation](RELEASE_NOTES_0.1.12.md).
 
 - Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime or
   `Desktop.sh`. Keep the executable, PCK and shared libraries together.
 - Windows: extract the ZIP and run `VR.cmd` or `Desktop.cmd`; retain the PCK/DLLs.
+- Quest 3: sideload the signed APK with `adb install -r RealAIFishing-0.1.12-Quest.apk`; launch Real AI Fishing from the headset app library. Controllers remain the supported gameplay input.
 - Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional
   arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`.
   This binary embeds shared server scripts but no visual/audio assets or extensions.
@@ -27,13 +27,13 @@ are saved only by the server. Keep bundled asset credits and notices when sharin
 
 ## Rebuilding and publishing
 
-Godot 4.7.2 with matching Linux/Windows export templates and Python 3.11+ are
-required for this release. Commit source first; release tools require a clean
-checkout. `python3 tools/build_release.py` exports all three targets, or use
-`--target Linux`, `Windows` or `Server`. Set `GODOT_BIN` if needed.
+Godot 4.7.2 with matching Linux/Windows/Android export templates, Java 17, the
+Android SDK and Python 3.11+ are required for this release. Commit source first; release tools require a clean
+checkout. `python3 tools/build_release.py` exports all four targets, or use
+`--target Linux`, `Windows`, `Server` or `Quest`. Set `GODOT_BIN` if needed.
 `python3 tools/package_release.py` verifies commit/hash manifests, builds fresh
 staging directories, writes ZIPs with maximum deflate compression, then verifies
-archive integrity and creates `SHA256SUMS` and `build-manifest.json`.
+archive integrity, copies the compressed signed Quest APK, and creates `SHA256SUMS` and `build-manifest.json`.
 
 The export plugin deduplicates byte-identical imported texture payloads, uses
 BC6H compression for desktop HDR panoramas and retains lossless lighting atlases.
@@ -51,5 +51,5 @@ missing/excluded targets and refuses to modify an already published release.
 
 Simulated Monado/OpenXR and Linux Vulkan checks do not establish physical-headset
 comfort or frame rates. Windows runtime testing is unavailable on this Linux host.
-Quest is withheld pending testing; Pico is retired. Panoramas remain native 8K
+Quest 3 standalone and WiVRn headset behavior were tested; other Quest models remain untested. Pico is retired. Panoramas remain native 8K
 mono photographs with authored stereo foreground geometry.

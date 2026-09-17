@@ -41,6 +41,31 @@ func _initialize():
   check(lure.work(2,0,0,bait,false)==0,"Pause cannot become unattended bait fishing")
  lure.reset();lure.work(10,.5,0,1,false);var deep:float=lure.depth
  lure.reset();lure.work(10,.5,0,1,true);check(lure.depth<deep,"River retrieve keeps lure shallower")
+ for bait in 3:
+  for side in [-1.0,1.0]:
+   lure.reset()
+   check(lure.work(.05,0,0,bait,false,side)>0.8,"Either sideways twitch attracts every lure species")
+   var worked:float=lure.action
+   check(lure.work(.05,0,0,bait,false)<worked,"Stationary lure loses attraction")
+   check(lure.work(2,0,0,bait,false)==0,"Stationary lure eventually stops attracting")
+  lure.reset()
+  check(lure.work(.05,.06,0,bait,false)>0,"Slow reeling attracts fish")
+  lure.reset();var gentle:float=lure.work(.05,0,0,bait,false,.1)
+  check(lure.work(.05,0,0,bait,false)<gentle,"Stopping a gentle twitch cannot increase attraction")
+  g.reset();g.location_id="lakeside";g.select_rig(2);g.select_bait(bait)
+  g.cast(20,Vector3(0,0,-20),Vector3.ZERO);g.tick(.81,0,0)
+  var before:float=g.timer
+  g.tick(.05,0,0,false,-1)
+  check(g.cast_position.x<0 and g.timer<before,"Left twitch moves lure left and advances bite timer")
+  g.tick(.05,0,0,false,1)
+  check(absf(g.cast_position.x)<.001,"Right twitch moves lure back right")
+ lure.reset()
+ check(lure.sample_motion(Vector3.ZERO,Basis.IDENTITY,.02)==0,"First tracking sample cannot twitch")
+ check(lure.sample_motion(Vector3(.04,0,0),Basis.IDENTITY,.02)>1,"Physical sideways rod motion is sampled")
+ check(lure.sample_motion(Vector3(.04,0,0),Basis(Vector3.UP,.7),.02)==0,"Turning view alone cannot twitch")
+ check(lure.sample_motion(Vector3(3,0,0),Basis.IDENTITY,.02)==0,"Tracking teleport cannot twitch")
+ lure.reset_motion()
+ check(lure.sample_motion(Vector3(-1,0,0),Basis.IDENTITY,.02)==0,"Resume starts a fresh motion baseline")
  g.reset();g.location_id="lakeside";g.select_rig(2);g.cast(5);g.tick(.81,0,0);g.tick(5,1,0)
  check(g.state==S.State.READY and g.rig==2,"Empty retrieve rearms lure")
  var b=Board.new();b.connect_player(2,"b".repeat(64),"Lure")

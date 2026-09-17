@@ -75,6 +75,20 @@ func run():
  g.game.reset();g._select_location("lakeside",false);g._select_rig(2)
  trackers[1].set_input("primary",Vector2.ZERO)
  for i in 5:await process_frame;g._process(.02)
+ g.game.cast(20,Vector3(0,g.water_level,-20),Vector3(0,g.water_level,0));g.game.tick(.81,0,0)
+ check(g._sample_lure_motion(.02)==0,"First raw controller sample establishes lure baseline")
+ var rod_pose:Transform3D=g.controller_local_pose(1)
+ rod_pose.origin.x+=.06
+ trackers[1].set_pose("grip",rod_pose,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+ await process_frame
+ check(g._sample_lure_motion(.02)>1,"Raw lateral controller motion reaches lure input")
+ var original_origin:Transform3D=g.origin.transform
+ g.origin.position+=Vector3(.3,0,.2);g.origin.rotate_y(.4)
+ check(absf(g._sample_lure_motion(.02))<.001,"Locomotion and turning cannot work a stationary lure")
+ g.origin.transform=original_origin
+ g.rod.position.x+=.1
+ check(absf(g._sample_lure_motion(.02))<.001,"Rendered IK rod movement cannot feed back into lure input")
+ g.game.reset()
  for input in ["grip","trigger"]:
   g.game.reset();g.game.state=g.Session.State.BITE;g.game.fish_index=2;g.game.strike()
   g.game.jumps_enabled=false;g.game.next_cue=100;g.game.next_submerge=100;g.game.distance=20

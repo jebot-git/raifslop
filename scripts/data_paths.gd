@@ -7,7 +7,8 @@ static func root() -> String:
 	if OS.has_feature("android"):
 		if Engine.has_singleton("AndroidRuntime"):
 			var context=Engine.get_singleton("AndroidRuntime").getApplicationContext()
-			var external=context.getExternalFilesDir(null)
+			# Godot's Java bridge requires a String; an empty type selects files/.
+			var external=context.getExternalFilesDir("")
 			if external!=null:return str(external.getAbsolutePath()).path_join("data")
 		var package:="org.jebot.raifslop.pico" if OS.has_feature("pico_xr") else "org.jebot.raifslop.quest"
 		return "/sdcard/Android/data/"+package+"/files/data"

@@ -7,6 +7,10 @@ static var PHOTO_DIR: String:
 	get: return preload("res://scripts/data_paths.gd").photos()
 const REAR_LENS := Vector3(0.055, 0.13, -0.024)
 const FRONT_LENS := Vector3(0.055, 0.139, 0.024)
+const MAX_SELFIE_EXTENSION := 3.0
+const SELFIE_SPEED := 1.0
+const STICK_DEADZONE := .18
+const LENS_CLEARANCE := .08
 signal saved(path: String)
 var guide
 var view: SubViewport
@@ -17,6 +21,9 @@ var busy := false
 var status := ""
 var last_path := ""
 var refresh_time := 0.0
+var selfie_extension := 0.0
+var effective_extension := 0.0
+var clearance_shape := SphereShape3D.new()
 var disk = preload("res://scripts/network/disk_worker.gd").new()
 
 func setup(owner_guide) -> void:
@@ -33,6 +40,7 @@ func setup(owner_guide) -> void:
 	camera.current = true
 	camera.near = 0.05
 	camera.fov = 65
+	clearance_shape.radius = LENS_CLEARANCE
 	# Layers 1/2 are the main scene/body, layer 4 includes the complete avatar.
 	camera.cull_mask = 3
 	mark_ui(guide.device)
@@ -64,6 +72,10 @@ func update_pose() -> void:
 	# handle, so using the controller pose puts the lens on the device's edge.
 	if game.xr:
 		camera.global_transform = guide.global_transform * lens_pose(selfie)
+		if selfie:
+			var base:=camera.global_position
+			camera.global_position=constrain_extension(base,base+camera.global_basis.z*selfie_extension)
+			effective_extension=base.distance_to(camera.global_position)
 		camera.cull_mask = 5 if selfie else 3
 		camera.fov = 90 if selfie else 65
 		camera.environment = game.head.environment
@@ -73,7 +85,7 @@ func update_pose() -> void:
 	camera.fov = 65
 	if selfie:
 		var target: Vector3 = game.head.global_position - Vector3.UP * 0.3
-		var desired := source.origin - source.basis.z * 1.5 + Vector3.UP * 0.15
+		var desired := source.origin - source.basis.z * (1.5+selfie_extension) + Vector3.UP * 0.15
 		# Keep the extended lens on this side of solid scenery.
 		var query := PhysicsRayQueryParameters3D.create(target, desired, 1)
 		if game.motor is CollisionObject3D: query.exclude = [game.motor.get_rid()]
@@ -90,11 +102,46 @@ func update_pose() -> void:
 	camera.environment = game.head.environment
 	camera.attributes = game.head.attributes
 
+func constrain_extension(base:Vector3,desired:Vector3)->Vector3:
+	if base.is_equal_approx(desired):return base
+	var game=guide.game_root
+	var query:=PhysicsShapeQueryParameters3D.new()
+	query.shape=clearance_shape
+	query.transform=Transform3D(Basis.IDENTITY,base)
+	query.motion=desired-base
+	query.collision_mask=1
+	if game.motor is CollisionObject3D:query.exclude=[game.motor.get_rid()]
+	var space:PhysicsDirectSpaceState3D=game.get_world_3d().direct_space_state
+	# Sweeps ignore initially overlapping shapes. Never extend out through a wall.
+	if not space.intersect_shape(query,1).is_empty():return base
+	var fractions:=space.cast_motion(query)
+	return base.lerp(desired,fractions[0]) if not fractions.is_empty() else base
+
+func adjust_selfie(axis:float,delta:float)->void:
+	if not active or not selfie or not guide.held or busy or guide.game_root.menu_open:return
+	if not is_finite(axis) or delta<=0 or absf(axis)<=STICK_DEADZONE:return
+	var rate:=signf(axis)*clampf((absf(axis)-STICK_DEADZONE)/(1.0-STICK_DEADZONE),0,1)
+	# Retracting responds immediately even when scenery shortened the extension.
+	if rate<0 and guide.game_root.xr:selfie_extension=minf(selfie_extension,effective_extension)
+	selfie_extension=clampf(selfie_extension+rate*SELFIE_SPEED*minf(delta,.1),0,MAX_SELFIE_EXTENSION)
+	update_pose()
+
+func sample_selfie_input(delta:float)->void:
+	var game=guide.game_root
+	var axis:=0.0
+	if game.xr:
+		if not game.tracking_manager.focused or not game.right.get_has_tracking_data() or not game.left.get_has_tracking_data():return
+		axis=game.right.get_vector2("primary").y
+	else:
+		axis=float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN))
+	adjust_selfie(axis,delta)
+
 static func lens_pose(front: bool) -> Transform3D:
 	return Transform3D(Basis(Vector3.UP, PI) if front else Basis.IDENTITY, FRONT_LENS if front else REAR_LENS)
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(guide) or not active or not guide.held or busy: return
+	sample_selfie_input(delta)
 	refresh_time -= delta
 	if refresh_time > 0: return
 	refresh_time = 0.1

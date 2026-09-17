@@ -19,7 +19,9 @@ func run() -> void:
 			var path := folder.path_join(child)
 			check(path not in ["res://docs", "res://source", "res://tests", "res://tools", "res://builds", "res://data", "res://.release-signing", "res://addons/godot_ai", "res://addons/fishing_export"], "Private/development folder leaked: " + path)
 			stack.append(path)
-	check(ProjectSettings.get_setting("application/config/version")=="0.1.11","Pack is version 0.1.11")
+	check(ProjectSettings.get_setting("application/config/version")=="0.1.12","Pack is version 0.1.12")
+	check(not ProjectSettings.get_setting("xr/openxr/extensions/hand_interaction_profile",false),"Hands-only controls remain in planning")
+	check(not ProjectSettings.has_setting("autoload/QuestHandProbe"),"Diagnostic hand overlay is excluded")
 	check(load("res://scripts/network/session.gd").VERSION==10,"Pack uses expanded predator protocol 10")
 	check(ResourceLoader.exists("res://scripts/client_diagnostics.gd"),"Pack includes opt-in client diagnostics")
 	for name in ["coastal_dune_grass.png","coastal_wrack.png","fishing_plan_poster.svg"]:

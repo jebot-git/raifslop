@@ -6,10 +6,13 @@ available. Neutral release cancels. Desktop uses Tab + Up/Left/Right. Left X cyc
 three lures; bait names remain the brief permitted textual popup. No additional
 world-space guide text is introduced. Gameplay pictograms remain optional.
 
-Cast normally, then turn the reel with the offhand. Steady retrieves work best;
-excessive speed reduces effectiveness. Jig and minnow presentations also respond
-to changes in rod lift and brief pauses after winding. An unattended lure never
-starts a bite clock. Lift on the existing bite haptic, then fight and land normally.
+Cast normally, then twitch the rod left/right or turn the reel slowly with the
+offhand. Sideways twitches move the lure and increase attraction for all three
+lures. Steady retrieves work best; excessive speed reduces effectiveness. Jig
+and minnow presentations also respond to rod lift during retrieval. Stopping
+reduces attraction; their brief pause window fades to zero. An unattended lure
+never starts a bite clock. Lift on the existing bite haptic, then fight and land
+normally.
 Retrieve the empty lure fully before changing method or bait. Lures sink to bounded
 presentation depths, shallower in rivers; this is an inexpensive gameplay model,
 not a fluid or underwater terrain simulation.
@@ -20,7 +23,7 @@ not a fluid or underwater terrain simulation.
 | Paddle-tail jig | Slower, deeper retrieve and short pauses; perch, pike, zander, trout, blacktail, roman and kob |
 | Diving minnow | Moderate retrieve, twitches and brief pauses; pike, zander, chub, rainbow/brown trout, elf, yellowtail and kob |
 
-Feeder fishing retains **four** distinct hook baits: earthworm, sweetcorn, maggots
+Feeder fishing retains **four** distinct cage fillings: earthworm, sweetcorn, maggots
 and bread. Its preferences and bottom-feeding mechanics remain separate. See
 [feeder details](FEEDER_FISHING.md).
 
@@ -33,13 +36,13 @@ The expanded roster adds ide, asp, leervis and Atlantic chub mackerel to appropr
 | Lakeside | Perch, pike, zander, chub |
 | Lake Pier | Perch, pike, zander, chub, rainbow trout, brown trout, brook trout |
 | Gray Pier | Perch, pike, zander, brown trout |
-| Bell Park Pier | Perch, pike, chub, rainbow trout, brown trout, brook trout |
+| Bell Park | Perch, pike, chub, rainbow trout, brown trout, brook trout |
 | Meadow Bend | Chub, brown trout |
 | Boulder Run | Rainbow trout, brown trout |
-| Simon's Town Rocks | Blacktail, roman, elf, yellowtail, kob, horse mackerel |
-| Blouberg Sunrise | Blacktail, elf, yellowtail, kob, horse mackerel |
+| Simon's Town | Blacktail, roman, elf, yellowtail, kob, horse mackerel |
+| Blouberg | Blacktail, elf, yellowtail, kob, horse mackerel |
 | Secluded Beach | Blacktail, roman, elf, horse mackerel |
-| Fish Hoek Beach | Blacktail, elf, yellowtail, kob, horse mackerel |
+| Fish Hoek | Blacktail, elf, yellowtail, kob, horse mackerel |
 
 Preferences intersect these pools; occasional off-bait strikes stay within the
 same pool. Population depletion, sector presence, rarity and existing predator

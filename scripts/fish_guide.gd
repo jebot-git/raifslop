@@ -108,10 +108,9 @@ static func discovery_hint(index: int) -> Dictionary:
 	if index==Session.RAGGEDTOOTH:habitat="Coastal reef / sandy channel"
 	var methods:Array[String]=[]
 	var waters:Array[String]=[]
-	const NAMES={"lakeside":"Lakeside","lake_pier":"Lake Pier","gray_pier":"Gray Pier","bell_park_pier":"Bell Park","meadow_bend":"Meadow Bend","boulder_run":"Boulder Run","simons_town_rocks":"Simon's Town","blouberg_sunrise_2":"Blouberg","secluded_beach":"Secluded Beach","fish_hoek_beach":"Fish Hoek"}
 	for location in Session.LOCATION_SPECIES:
 		if index not in Session.species_for_location(location):continue
-		waters.append(NAMES[location])
+		waters.append(preload("res://scripts/locations.gd").find_location(location).name)
 		if species.get("predator",false):continue
 		if not Session.Fly.river(location) and not "Bait" in methods:methods.append("Bait")
 		for method in [["Fly",Session.Fly.POOLS],["Feeder",Session.Feeder.POOLS],["Lure",Session.Lure.POOLS]]:
@@ -296,12 +295,14 @@ func update_device() -> void:
 			var touch = touch_position()
 			if touch is Vector3: press_buttons(touch)
 			else: reset_touch()
-			var axes: Vector2 = g.left.get_vector2("primary") + g.right.get_vector2("primary")
-			var axis: float = axes.x if absf(axes.x) >= absf(axes.y) else axes.y
-			if absf(axis) > 0.65 and not stick_latched:
-				page(1 if axis > 0 else -1)
-				stick_latched = true
-			if absf(axis) < 0.25: stick_latched = false
+			if not photo_camera.active:
+				var axes: Vector2 = g.left.get_vector2("primary") + g.right.get_vector2("primary")
+				var axis: float = axes.x if absf(axes.x) >= absf(axes.y) else axes.y
+				if absf(axis) > 0.65 and not stick_latched:
+					page(1 if axis > 0 else -1)
+					stick_latched = true
+				if absf(axis) < 0.25: stick_latched = false
+			else:stick_latched=false
 		else: global_transform = belt_transform
 	else:
 		global_transform = g.head.global_transform * Transform3D(Basis.IDENTITY, Vector3(0, -0.04, -0.48)) if held else belt_transform

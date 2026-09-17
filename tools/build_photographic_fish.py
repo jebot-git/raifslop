@@ -4,6 +4,7 @@ Run in Blender. Original roach/tench/bream/zander/perch assets are preserved.
 import bpy, math, json, sys, numpy as np
 from pathlib import Path
 from mathutils import Vector
+from mathutils.geometry import tessellate_polygon
 ROOT=Path(__file__).resolve().parents[1]; REF=ROOT/'source/fish_references'; OUT=ROOT/'assets/models/fish'; TEX=ROOT/'source/textures/fish'
 DATA=json.loads((REF/'anatomy.json').read_text()); scenes=[]
 sys.path.insert(0,str(ROOT/'tools'))
@@ -95,6 +96,15 @@ def build(name,d):
    if not all(mask[H-1-min(H-1,int(py)),min(W-1,int(px))] for px,py in corners):continue
    ff.append(tuple(vtx(px,py) for px,py in corners))
  finmat=mat.copy();finmat.name=name+' fin membranes';fp=next(n for n in finmat.node_tree.nodes if n.type=='BSDF_PRINCIPLED');fp.inputs['Roughness'].default_value=.57;fp.inputs['Coat Weight'].default_value=.1
+ if d.get('fin_outline_file'):
+  # Continuous contours replace the coarse square-cell fringe on reviewed fins.
+  fv=[];fc=[];ff=[]
+  for outline in json.loads((REF/d['fin_outline_file']).read_text()):
+   start=len(fv)
+   polygon=[Vector((x,y,0)) for x,y in outline]
+   indices={tuple(point):start+i for i,point in enumerate(polygon)}
+   fv.extend(pos(x,y) for x,y in outline);fc.extend(outline)
+   ff.extend(tuple(start+point if isinstance(point,int) else indices[tuple(point)] for point in triangle) for triangle in tessellate_polygon([polygon]))
  mesh(name+' traced fins',fv,ff,finmat,fc)
  # Paired pectoral fins lift away from the flank, retaining their reference markings.
  for side in [-1,1]:
@@ -169,7 +179,9 @@ def build(name,d):
  # Normalize all extremities to exactly one metre; journal sizing and mouth anchoring stay valid.
  lo=min(v.co.x for v in body.data.vertices);hi=max(v.co.x for v in body.data.vertices)
  for v in body.data.vertices:v.co.x=(v.co.x-(lo+hi)/2)/(hi-lo);v.co.y/=(hi-lo);v.co.z/=(hi-lo)
- repair_fins(body,photographic=True);body['fin_roots_repaired']=True
+ # Continuous contours already overlap the skin. Projecting their small rays
+ # onto the nearest body surface would fold the fin tips into square stubs.
+ repair_fins(body,photographic=True,anchor_roots=not d.get('fin_outline_file'));body['fin_roots_repaired']=True
  bpy.ops.export_scene.gltf(filepath=str(OUT/(name+'.glb')),export_format='GLB',use_active_scene=True,export_animations=False)
  print('PHOTOGRAPHIC_FISH_COMPLETE',name,flush=True)
 

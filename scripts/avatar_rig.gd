@@ -46,6 +46,8 @@ var preview_mode := -1
 var speed := 0.0
 var movement := Vector3.ZERO
 var phase := 0.0
+var viewpoint_offset:=Vector3.ZERO
+var body_yaw:=0.0
 
 
 static func find_skeleton(node: Node) -> Skeleton3D:
@@ -89,6 +91,7 @@ func configure(root: Node3D) -> bool:
 	# extension has changed the rest frames. IK only overwrites humanoid limbs;
 	# stale toes and skin helper offsets otherwise tear vertices out of the mesh.
 	skeleton.reset_bone_poses()
+	_setup_viewpoint()
 	solver = IK.new()
 	skeleton.add_child(solver)
 	solver.setup(self)
@@ -124,8 +127,10 @@ func update_targets(camera: Camera3D, left_hand: Node3D, right_hand: Node3D, fee
 	right_target = right_hand
 	# One frame owns skeleton placement and all tracked targets. Rebase body samples
 	# from the capsule frame before applying the player's heading (also remotely).
-	var yaw := atan2(head.global_basis.z.x, head.global_basis.z.z)
-	render_frame = Transform3D(Basis(Vector3.UP, yaw), Vector3(pose_frame.origin.x, feet_y, pose_frame.origin.z))
+	# Near vertical gaze has no reliable yaw; retain the last shoulder heading.
+	var forward:=Vector2(head.global_basis.z.x,head.global_basis.z.z)
+	if forward.length()>.2:body_yaw=atan2(forward.x,forward.y)
+	render_frame = Transform3D(Basis(Vector3.UP, body_yaw), Vector3(head.global_position.x, feet_y, head.global_position.z))
 	global_transform = render_frame
 	walk_speed = Vector2(motion.x, motion.z).length()
 	walk_phase += delta * walk_speed * 4.0
@@ -156,6 +161,24 @@ func fit_tracked_foot(side: String, pose: Transform3D) -> Transform3D:
 
 func mesh_bounds(node: Node3D, parent_transform: Transform3D) -> AABB:
 	return parent_transform * node.transform * RestBounds.measure(node)
+
+func _setup_viewpoint()->void:
+	var head_rest:=skeleton.get_bone_global_rest(skeleton.find_bone("Head"))
+	var left_eye:=skeleton.find_bone("LeftEye")
+	var right_eye:=skeleton.find_bone("RightEye")
+	if left_eye>=0 and right_eye>=0:
+		var midpoint:Vector3=(skeleton.get_bone_global_rest(left_eye).origin+skeleton.get_bone_global_rest(right_eye).origin)*.5
+		viewpoint_offset=head_rest.affine_inverse()*midpoint
+		return
+	var look:=model.find_child("LookOffset",true,false) as Node3D
+	if look:
+		viewpoint_offset=look.position
+	else:
+		# Missing eye bones/metadata: estimate eye level above and ahead of Head.
+		viewpoint_offset=head_rest.basis.inverse()*skeleton.global_basis.inverse()*global_basis*Vector3(0,.08,-.06)
+
+func viewpoint_position()->Vector3:
+	return skeleton.to_global(skeleton.get_bone_global_pose(skeleton.find_bone("Head"))*viewpoint_offset)
 
 func _setup_index_tip() -> void:
 	index_tip_bone = skeleton.find_bone("RightIndexDistal")

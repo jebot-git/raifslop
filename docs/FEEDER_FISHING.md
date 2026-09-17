@@ -1,7 +1,8 @@
 # Cage feeder fishing
 
-Feeder fishing is a selectable rig with bottom presentation, an authored cage,
-a short hooklink, and a flexible quiver tip. It reuses the existing species models,
+Feeder fishing is a selectable rig with bottom presentation, an authored cage
+filled with the selected bait, and a flexible quiver tip. It reuses the existing
+species models,
 fight profiles, landing, rewards and server leaderboard. Existing species IDs
 and saved catches remain unchanged.
 
@@ -26,10 +27,12 @@ A tip pulse and the existing bite haptics cue the strike. Lift to hook, then ree
 and counter the fish normally. Tip animation never moves the controller-input
 anchor, preventing automatic hook sets.
 
-Left X cycles four hook baits. The cage is replenished automatically for each
-cast; no inventory purchase or additional popup is required.
+Left X cycles four cage fillings. The selected food is mixed into the groundbait
+inside the cage; no external bait or baited leader is shown. The cage is
+replenished automatically for each cast; no inventory purchase or additional
+popup is required.
 
-| Hook bait | Preferred eligible species |
+| Cage bait | Preferred eligible species |
 | --- | --- |
 | Earthworm | Perch, roach, tench, bream, chub, barbel, gudgeon |
 | Sweetcorn | Carp, roach, tench, bream, crucian carp, barbel |
@@ -50,7 +53,7 @@ The roster expansion adds silver bream, ruffe and ide to eligible feeder waters;
 | Lakeside | Perch, carp, roach, tench, bream, crucian carp, gudgeon |
 | Lake Pier | Perch, carp, roach, bream |
 | Gray Pier | Perch, carp, roach, tench, bream, crucian carp, gudgeon |
-| Bell Park Pier | Perch, carp, roach, tench, bream, crucian carp, chub, gudgeon |
+| Bell Park | Perch, carp, roach, tench, bream, crucian carp, chub, gudgeon |
 | Meadow Bend | Roach, chub, barbel, dace, gudgeon |
 
 Meadow Bend adds roach, barbel and gudgeon to its overall roster. Its classic
@@ -80,7 +83,7 @@ crank and grip pivot now sit against the spool face. Both unfolded and folded
 fly models were regenerated, and controller reeling tests cover the new pivot.
 
 Protocol **9** carries the selected rig, including the new lure option. Other players see the same cage, rod and
-hook bait; floats and fly-line strips remain hidden for feeder mode. Server
+cage contents; floats and fly-line strips remain hidden for feeder mode. Server
 validation rejects unsupported rig/location/bait combinations, method changes
 inside a catch attempt, and impossible feeder species. The separate dedicated
 server is rebuilt without bundling these visual assets. Update clients and
@@ -88,9 +91,9 @@ server together.
 
 ## Verification
 
-- `tests/feeder_fishing.gd`: 3,870 checks of location/bait pools, settling, feed
+- `tests/feeder_fishing.gd`: 3,910 checks of location/bait pools, settling, feed
   deposits and decay, recasts, hook setting, rig locking and server eligibility.
-- `tests/feeder_interface.gd`: 209 headless checks / 214 with stereo capture validation, including tracked joystick press/selection/release, neutral
+- `tests/feeder_interface.gd`: 1,105 headless checks, including tracked joystick press/selection/release, neutral
   and focus cancellation, stable input anchors, remote cage/bait visibility,
   travel fallback, invalid wire states and stereo captures.
 - Existing fly controls, fly fishing, population, tackle replication, network

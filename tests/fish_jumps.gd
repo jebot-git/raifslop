@@ -59,6 +59,14 @@ func run():
  check(g.hooked_fish.visible and g.hooked_fish.global_position.y<g.water_level,"Close fish visible beneath actual water level")
  check(absf(g.hooked_fish.measured.size.x-.42)<.01,"Reused fish model has correct metre scale")
  check(absf(g.hooked_fish.global_basis.x.y)<.001,"Swimming fish stays horizontal")
+ for movement in [Vector3.LEFT,Vector3.RIGHT,Vector3.FORWARD,Vector3.BACK]:
+  var before:Vector3=g.hooked_fish.global_position
+  g.escape_offset+=movement*.12;g._update_line()
+  var actual:Vector3=g.hooked_fish.global_position-before
+  check(actual.length()>.01 and g.hooked_fish.global_basis.x.dot(actual.normalized())>.999,"Fish faces actual sideways/run/retrieve movement")
+  var facing:Basis=g.hooked_fish.global_basis
+  g._update_line()
+  check(g.hooked_fish.global_basis.is_equal_approx(facing),"Repeated render without movement keeps heading")
  g.hooked_fish.update(.035)
  check(g.hooked_fish.twitch.meshes.size()>0,"Swimming model uses twitch deformation")
  g.game.distance=12;g._update_line();check(not g.hooked_fish.visible,"Distant submerged fish hidden")

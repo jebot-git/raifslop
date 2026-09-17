@@ -61,7 +61,8 @@ func _draw_camera() -> void:
 	label("FIELD CAMERA", Vector2(34, 65), 42, Color("a9dfb2"))
 	label("SELFIE STICK" if photo.selfie else "LOOK THROUGH THE LENS", Vector2(36, 112), 26)
 	draw_texture_rect(photo.view.get_texture(), Rect2(20, 170, 600, 337.5), false)
-	label("1920 × 1080 · UI-free photo", Vector2(36, 555), 27)
+	var extension_hint:String="RIGHT STICK ↑/↓: EXTEND / RETRACT" if guide.game_root.xr else "↑ / ↓: EXTEND / RETRACT"
+	label(extension_hint if photo.selfie else "1920 × 1080 · UI-free photo", Vector2(36, 555), 23 if photo.selfie else 27)
 	var words: PackedStringArray = photo.status.split(" ")
 	var line := ""
 	var y := 605.0

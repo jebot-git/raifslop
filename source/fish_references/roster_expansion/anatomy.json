@@ -808,7 +808,8 @@
       ]
     ],
     "pectoral_spread": 0.025,
-    "pectoral_lift": 0.2
+    "pectoral_lift": 0.2,
+    "fin_outline_file": "leervis_fins.json"
   },
   "atlantic_chub_mackerel": {
     "extent": [

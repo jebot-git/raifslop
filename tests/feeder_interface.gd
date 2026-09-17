@@ -56,7 +56,7 @@ func run():
  check(g.tip.position==anchor,"Quiver animation cannot trigger a hook-setting gesture")
  g.game.reset()
  g._select_bait(2);g.rod_status.update_bait()
- check(g.rod_status.bait_visual.selected==3,"Maggots fitted to feeder leader")
+ check(g.rod_status.bait_visual.selected==3 and g.rod_status.bait_visual.feeder_mode,"Maggots packed inside feeder cage")
  var peer=preload("res://scripts/network/remote_angler.gd").new();peer.session=g.network;root.add_child(peer);peer.set_process(false)
  for location in ["lakeside","meadow_bend"]:
   g.game.reset();g._select_location(location,false);g._select_rig(1)
@@ -66,9 +66,15 @@ func run():
     g.game.state=phase;g._update_line()
     var d=Wire.capture(g,checks);check(Wire.valid(d),"Valid feeder state")
     peer.receive_state(d);peer._process(1)
+    check(g.rod_status.bait_visual.global_position.is_equal_approx(g.rod_status.feeder_visual.global_position),"Local feeder bait stays inside cage in every phase")
+    check(peer.bait_visual.global_position.is_equal_approx(peer.feeder_visual.global_position),"Remote feeder bait stays inside cage")
     check(peer.feeder_visual.visible==g.rod_status.feeder_visual.visible,"Remote feeder visibility")
     check(not peer.float_mesh.visible and not peer.rod_visual.fly_mode,"Remote feeder has no float or fly reel")
-    check(peer.bait_visual.selected==g.game.bait_model(),"Remote hook bait matches")
+    check(peer.bait_visual.selected==g.game.bait_model() and peer.bait_visual.feeder_mode,"Remote cage contents match selected bait")
+   for piece in g.rod_status.bait_visual.get_children():
+    check(not "Hook" in piece.name,"Cage contents have no external hook")
+    var bounds:AABB=piece.transform*piece.get_aabb()
+    check(bounds.position.y>=-.066 and bounds.end.y<=-.014 and maxf(absf(bounds.position.x),absf(bounds.end.x))<.022 and maxf(absf(bounds.position.z),absf(bounds.end.z))<.022,"Selected food fits inside cage")
    g.game.reset()
  var invalid=Wire.capture(g,checks);invalid.location="boulder_run";check(not Wire.valid(invalid),"Wire rejects rig at unsupported location")
  invalid=Wire.capture(g,checks);invalid.bait=5;check(not Wire.valid(invalid),"Wire rejects invalid feeder bait")
@@ -106,4 +112,6 @@ func run():
   await capture(g,"cage")
   cage.queue_free()
  g.head.compositor=null;g.xr=false;XRServer.remove_tracker(tracker);peer.queue_free();g.queue_free();await process_frame
+ # Let the audio server retire ambience playbacks before the test exits.
+ await create_timer(.3).timeout
  print("FEEDER_INTERFACE_RESULT ",checks," checks, ",failures);quit(0 if failures.is_empty() else 1)

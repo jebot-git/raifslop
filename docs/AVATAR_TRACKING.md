@@ -14,6 +14,8 @@ Open **Field station → Tracking** in desktop or VR. The fishing rig now reuses
 
 ## Calibration
 
+For the proposed controller-free interaction work, see [hand tracking controls: feasibility and implementation sequence](HAND_TRACKING_CONTROLS.md).
+
 For Vive or SlimeVR trackers, stand upright facing forward and select **Calibrate body — stand straight**. Alternatively, while idle with full-body tracking available, extend both arms in a steady T-pose for 1.1 seconds. It calibrates once, plays a short tone, and requires lowering the arms before another attempt. Native body joint orientations can also be calibrated; tracker-to-ankle offsets account for calf-mounted trackers.
 
 **Recenter viewpoint** aligns the head's floor projection with the player capsule and sets the current viewing direction forward. Standing calibration adjusts world scale toward a 1.65 m reference height, following FPSloppa's bounded scale calibration. **Seated height calibration** instead adds a height offset while preserving real-world reach scale. Recenter resets gesture/reel velocity history and clears body corrections; recalibrate external body trackers afterward. It is blocked during a cast, while holding the Fish Guide, or without focused head tracking.

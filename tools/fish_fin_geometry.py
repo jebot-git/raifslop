@@ -7,7 +7,7 @@ from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 
-def repair_fins(obj, photographic=False):
+def repair_fins(obj, photographic=False, anchor_roots=True):
     mesh = obj.data
     bm = bmesh.new()
     bm.from_mesh(mesh)
@@ -60,9 +60,10 @@ def repair_fins(obj, photographic=False):
             continue
         # Extend only the root band into skin; fin tips and their UVs stay put.
         band = min(gap + length * .014, length * .045)
-        for vertex, (point, normal, _, distance) in nearest.items():
-            if distance <= band:
-                vertex.co = point - normal * length * .0008
+        if anchor_roots:
+            for vertex, (point, normal, _, distance) in nearest.items():
+                if distance <= band:
+                    vertex.co = point - normal * length * .0008
         fin_faces.extend(faces)
         repaired += 1
     if fin_faces:

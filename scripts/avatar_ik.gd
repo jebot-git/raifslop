@@ -30,9 +30,11 @@ func _process_modification_with_delta(_delta: float) -> void:
 	if rest.is_empty():
 		for i in range(sk.get_bone_count()): rest[i] = sk.get_bone_global_rest(i)
 	# AnimationPlayer owns hip breathing / gait bob. Reset solved bones each frame.
-	for name in ["Hips","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot","LeftShoulder","RightShoulder","LeftUpperArm","LeftLowerArm","RightUpperArm","RightLowerArm","LeftHand","RightHand","Head","Chest"]:
+	for name in ["Hips","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot","LeftShoulder","RightShoulder","LeftUpperArm","LeftLowerArm","RightUpperArm","RightLowerArm","LeftHand","RightHand","Head","Chest","UpperChest"]:
 		var index := bone(sk,name)
-		if index>=0: sk.set_bone_pose_rotation(index,sk.get_bone_rest(index).basis.get_rotation_quaternion())
+		if index>=0:
+			sk.set_bone_pose_rotation(index,sk.get_bone_rest(index).basis.get_rotation_quaternion())
+			sk.set_bone_pose_position(index,sk.get_bone_rest(index).origin)
 	var body: Dictionary=rig.xr_pose.get("body",{}) if not rig.dead else {}
 	var hips:=bone(sk,"Hips")
 	var offset:=Vector3.ZERO
@@ -58,6 +60,20 @@ func _process_modification_with_delta(_delta: float) -> void:
 		orient(sk,hips,target.basis*reference_basis(sk,hips))
 	if body.has("chest"):
 		orient(sk,bone(sk,"Chest"),rig.tracking_transform().basis*body.chest.basis*reference_basis(sk,bone(sk,"Chest")))
+	if not rig.xr_pose.is_empty():
+		var head_index:=bone(sk,"Head")
+		var head_target:Transform3D=rig.tracking_transform()*rig.xr_pose.head
+		orient(sk,head_index,head_target.basis*reference_basis(sk,head_index))
+		# Anchor the eye midpoint, including the offset rotated by head pitch/roll.
+		# Moving the torso before limb IK also puts shoulder roots in this frame.
+		var anchor:=hips
+		if body.has("hips"):
+			anchor=bone(sk,"Chest")
+			if anchor<0:anchor=head_index
+		var correction:Vector3=sk.global_basis.inverse()*(head_target.origin-rig.viewpoint_position())
+		var anchor_parent:=sk.get_bone_parent(anchor)
+		if anchor_parent>=0:correction=sk.get_bone_global_pose(anchor_parent).basis.inverse()*correction
+		sk.set_bone_pose_position(anchor,sk.get_bone_pose_position(anchor)+correction)
 	for side in ["Left","Right"]:
 		var sign_x := -1.0 if side=="Left" else 1.0
 		var foot_idx := bone(sk,side+"Foot")
@@ -95,7 +111,8 @@ func _process_modification_with_delta(_delta: float) -> void:
 			var optical:=body.has(side.to_lower()+"_hand")
 			if optical: target=rig.tracking_transform()*body[side.to_lower()+"_hand"]
 			else: target.origin+=target.basis.y*.06 # Grip is at the palm, IK ends at the wrist.
-			var elbow: Vector3=rig.to_global(Vector3(sign_x*.65,.85,.05))
+			var shoulder:Vector3=sk.to_global(sk.get_bone_global_pose(bone(sk,side+"UpperArm")).origin)
+			var elbow: Vector3=shoulder+rig.global_basis*Vector3(sign_x*.35,-.45,.10)
 			if body.has(side.to_lower()+"_elbow"): elbow=(rig.tracking_transform()*body[side.to_lower()+"_elbow"]).origin
 			move_shoulder(sk, side, target.origin)
 			solve(sk,side+"UpperArm",side+"LowerArm",side+"Hand",target.origin,elbow)
@@ -115,7 +132,7 @@ func _process_modification_with_delta(_delta: float) -> void:
 			if rig.gait.prone_blend>.01:orient(sk,head,rig.global_basis*Basis(Vector3.RIGHT,rig.aim_pitch*.55)*reference_basis(sk,head))
 			else:sk.set_bone_pose_rotation(head,q*Quaternion(Vector3.RIGHT,rig.aim_pitch*.55))
 		else:
-			var target: Basis=rig.tracking_transform().basis*rig.xr_pose.head.basis*Basis(Vector3.UP,PI)
+			var target: Basis=rig.tracking_transform().basis*rig.xr_pose.head.basis*reference_basis(sk,head)
 			var parent:=sk.get_bone_parent(head)
 			sk.set_bone_pose_rotation(head,((sk.get_bone_global_pose(parent).basis.orthonormalized().inverse() if parent>=0 else Basis.IDENTITY)*sk.global_basis.orthonormalized().inverse()*target).get_rotation_quaternion())
 

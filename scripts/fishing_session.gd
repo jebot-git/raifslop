@@ -482,7 +482,7 @@ func _predator_sequence_tick(delta: float) -> void:
 		submerge_time=SUBMERGE_WARNING+SUBMERGE_DURATION
 		message=reel_instruction()
 
-func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> void:
+func tick(delta: float, reel: float, rod_lift: float, winding_reel := false, rod_side_speed:float=0.0) -> void:
 	fly_reel_penalty=false
 	population.tick(delta)
 	feeder.tick(delta)
@@ -506,7 +506,9 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> 
 		State.WAITING:
 			if is_lure_fishing():
 				if _retrieve_empty_line(delta,reel):return
-				timer-=delta*lure.work(delta,reel,rod_lift,bait,Fly.river(location_id))
+				cast_position=lure.move_sideways(cast_position,retrieve_origin,rod_side_speed,delta)
+				distance=retrieve_origin.distance_to(cast_position)
+				timer-=delta*lure.work(delta,reel,rod_lift,bait,Fly.river(location_id),rod_side_speed)
 			elif is_feeder_fishing():
 				if _retrieve_empty_line(delta,reel):return
 				if reel>.03:feeder.age=maxf(0,feeder.age-delta*2);return

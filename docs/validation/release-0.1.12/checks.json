@@ -1,0 +1,42 @@
+{
+  "version": "0.1.12",
+  "date": "2026-09-17",
+  "regression_suites": {
+    "run_tests": "passed",
+    "hand_tracking": "passed",
+    "avatar_viewpoint": "passed",
+    "avatar_scaling": "passed",
+    "avatar_tracking": "passed",
+    "avatar_locomotion": "passed",
+    "vr_ik": "passed",
+    "rod_attachment": "passed",
+    "feeder_fishing": "passed",
+    "feeder_interface": "passed",
+    "lure_fishing": "passed",
+    "lure_interface": "passed",
+    "fish_position": "passed",
+    "fish_jumps": "passed",
+    "fish_guide": "passed",
+    "guide_camera": "passed",
+    "selfie_extension": "passed",
+    "external_data": "passed",
+    "roster_assets": "passed",
+    "spectator_camera": "passed"
+  },
+  "quest_3": {
+    "native_openxr": "passed",
+    "user_performance_acceptance": "passed",
+    "short_sample_median_fps": 72,
+    "android_external_avatar_directory": "passed after Java argument fix",
+    "hand_controls": "planning only; diagnostic prototype removed"
+  },
+  "wivrn": {
+    "selfie_extension": "user confirmed works well",
+    "avatar_shoulders": "user confirmed stable"
+  },
+  "limitations": [
+    "Windows binary execution not tested on this Linux host",
+    "Other Quest models not tested",
+    "No complete hands-only fishing validation"
+  ]
+}

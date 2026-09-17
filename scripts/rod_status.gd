@@ -36,7 +36,7 @@ func update_bait() -> void:
 	previous_fly=fly
 	previous_marine=marine
 	previous_bait=game_root.game.bait
-	bait_visual.set_bait(game_root.game.bait_model(),marine,fly,previous_lure)
+	bait_visual.set_bait(game_root.game.bait_model(),marine,fly,previous_lure,previous_feeder)
 	label.text=game_root.game.bait_name(previous_bait)
 func show_bait() -> void:
 	update_bait();label.text=game_root.game.bait_name(game_root.game.bait)

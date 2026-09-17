@@ -50,6 +50,7 @@ def audit(path):
     mobile = path.suffix == '.apk'
     pack = APK(path) if mobile else Pack(path)
     names = set(pack.names()); remaps = {}; hashes = {}; sizes = {}
+    assert not any('hand_probe' in name for name in names), 'Hand-tracking diagnostic leaked into release'
     assert not any('bbq' in name.lower() for name in names), 'BBQ prototype included in release'
     for name in sorted(names):
         parts = PurePosixPath(name).parts

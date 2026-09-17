@@ -4,13 +4,16 @@ var selected := -1
 var marine := false
 var fly_mode := false
 var lure_mode:=false
-func set_bait(index: int, saltwater: bool = false, fly_fishing:bool=false,lure_fishing:bool=false) -> void:
-	if selected==index and marine==saltwater and fly_mode==fly_fishing and lure_mode==lure_fishing:return
-	marine=saltwater;fly_mode=fly_fishing;lure_mode=lure_fishing
+var feeder_mode:=false
+func set_bait(index: int, saltwater: bool = false, fly_fishing:bool=false,lure_fishing:bool=false,feeder_fishing:bool=false) -> void:
+	if selected==index and marine==saltwater and fly_mode==fly_fishing and lure_mode==lure_fishing and feeder_mode==feeder_fishing:return
+	marine=saltwater;fly_mode=fly_fishing;lure_mode=lure_fishing;feeder_mode=feeder_fishing
 	scale=Vector3.ONE;rotation=Vector3.ZERO
 	selected=index
 	for child in get_children():remove_child(child);child.queue_free()
-	if lure_mode:
+	if feeder_mode:
+		packed_feed(index)
+	elif lure_mode:
 		var asset:String="casting_spoon" if marine and index==0 else preload("res://scripts/lure_fishing.gd").MODELS[index]
 		add_child(load("res://assets/models/lures/"+asset+".glb").instantiate())
 		scale=Vector3.ONE*(1.3 if marine else 1.0)
@@ -35,6 +38,16 @@ func set_bait(index: int, saltwater: bool = false, fly_fishing:bool=false,lure_f
 			5: fly()
 	set_meta("bait_type",index)
 	set_meta("marine",marine)
+func packed_feed(index:int) -> void:
+	# Bait mixed into the groundbait, entirely inside the 22 mm cage radius.
+	var food:=mat({0:"b96b69",1:"f5bd31",3:"ede4ca",4:"efe1b9"}.get(index,"efe1b9"))
+	for row in 5:
+		for piece in 10:
+			var angle:=TAU*(piece+row*.37)/10.0
+			var at:=Vector3(cos(angle)*.017,-.020-row*.010,sin(angle)*.017)
+			var radii:=Vector3(.003,.004,.003) if index in [0,3] else Vector3(.0035,.0035,.0035)
+			var bit:=oval(at,radii,food,"CageBait")
+			bit.rotation.y=-angle
 func mat(color: String,metallic: float=0.0) -> StandardMaterial3D:
 	var m:=StandardMaterial3D.new();m.albedo_color=Color(color);m.metallic=metallic;m.roughness=.22 if metallic>0 else .82;return m
 func oval(at: Vector3,radii: Vector3,material: Material,node_name: String) -> MeshInstance3D:

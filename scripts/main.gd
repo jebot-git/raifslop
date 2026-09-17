@@ -743,6 +743,8 @@ func _update_tracking_warning(delta: float) -> void:
 func _process(delta: float) -> void:
 	if is_instance_valid(rod_visual): rod_visual.equip(game.tackle.equipped,game.is_fly_fishing(),game.is_feeder_fishing(),game.is_lure_fishing())
 	if server_only: return
+	if menu_open or fish_guide.held or rig_radial.opened or (xr and not tracking_was_valid) or game.state!=Session.State.WAITING:
+		game.lure.reset_motion()
 	rod_holster.update_holster()
 	fish_guide.update_device()
 	if is_instance_valid(tracking_manager): tracking_manager.sample(delta)
@@ -872,7 +874,8 @@ func _process(delta: float) -> void:
 	var was_jumping: bool=game.jump_time>0
 	if game.state in [Session.State.WAITING,Session.State.BITE,Session.State.FIGHT]:
 		game.landing_distance=_landing_distance(cast_anchor,(cast_target-cast_anchor).normalized(),game.distance)
-	game.tick(minf(delta, 0.05), reel, maxf(0.0, -rod.global_basis.z.y), xr and reel_tracker.engaged)
+	var lure_motion:=_sample_lure_motion(delta)
+	game.tick(minf(delta, 0.05), reel, maxf(0.0, -rod.global_basis.z.y), xr and reel_tracker.engaged,lure_motion)
 	if game.fly_reel_penalty: rod_status.show_notice("warning")
 	if was_jumping and game.jump_time<=0 and game.state==Session.State.FIGHT:
 		var landing: Vector3=hooked_fish.landing_position()
@@ -1007,6 +1010,14 @@ func _sample_fly_strip(delta: float) -> float:
 	var available: bool = not shoulder_radio.held and not reel_tracker.engaged and game.state in [Session.State.READY, Session.State.CASTING, Session.State.WAITING, Session.State.BITE, Session.State.FIGHT]
 	return game.fly.strip(controller_local_pose(0).origin, left.get_float("grip"), delta, outlet, guide, available)
 
+func _sample_lure_motion(delta:float)->float:
+	if not game.is_lure_fishing() or game.state!=Session.State.WAITING:
+		game.lure.reset_motion();return 0.0
+	# Raw controller input avoids a feedback loop through the solved avatar hand.
+	var input_tip:Vector3=(controller_local_pose(1)*rod_holster.HELD_POSE)*Vector3(0,0,-1.68) if xr else origin.to_local(tip.global_position)
+	var facing:=Basis(Vector3.UP,atan2(head.basis.z.x,head.basis.z.z))
+	return game.lure.sample_motion(input_tip-origin.to_local(head.global_position),facing,delta)
+
 func _fly_hand_position() -> Vector3:
 	if is_instance_valid(avatar):
 		var grip = avatar.hand_grip_pose(true)
@@ -1050,7 +1061,7 @@ func _update_line() -> void:
 	if ready:
 		bobber.global_position = line_tip + Vector3.DOWN * .30
 		rod_status.feeder_visual.global_position=bobber.global_position
-		rod_status.bait_visual.global_position = bobber.global_position + Vector3.DOWN * (.0 if game.is_lure_fishing() else .18)
+		rod_status.bait_visual.global_position = bobber.global_position + Vector3.DOWN * (.0 if game.is_lure_fishing() or game.is_feeder_fishing() else .18)
 		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
 		_append_fly_grip_line()
 		line_mesh.surface_add_vertex(line_tip)
@@ -1059,7 +1070,7 @@ func _update_line() -> void:
 				var t:=i/23.0
 				line_mesh.surface_add_vertex(line_tip+Vector3(sin(t*TAU)*.5,sin(t*PI)*1.1,cos(game.fly.charge_age*5)*sin(t*PI)*3.0))
 		line_mesh.surface_add_vertex(bobber.global_position)
-		line_mesh.surface_add_vertex(rod_status.bait_visual.global_position)
+		if not game.is_feeder_fishing():line_mesh.surface_add_vertex(rod_status.bait_visual.global_position)
 		line_mesh.surface_end()
 		return
 	if not active:
@@ -1088,7 +1099,7 @@ func _update_line() -> void:
 	elif game.is_feeder_fishing():
 		if game.state in [Session.State.WAITING,Session.State.BITE]:bobber.position.y=water_level-game.feeder.drop()
 		rod_status.feeder_visual.global_position=bobber.global_position
-		rod_status.bait_visual.global_position=bobber.global_position+Vector3(.16,-.055,0)
+		rod_status.bait_visual.global_position=bobber.global_position
 	elif game.is_fly_fishing():
 		rod_status.bait_visual.global_position=bobber.global_position+Vector3.DOWN*(.4 if game.bait==1 else 0.0)
 		if game.state==Session.State.BITE and game.bait==0:rod_status.bait_visual.position.y-=.04
@@ -1112,7 +1123,7 @@ func _update_line() -> void:
 		p.y -= sin(t * PI) * (lerpf(.65, .025, game.tension) if game.state == Session.State.FIGHT else 0.5)
 		if game.is_fly_fishing() and game.state==Session.State.WAITING:p.y=maxf(p.y,water_level+.01)
 		line_mesh.surface_add_vertex(p)
-	if rod_status.bait_visual.visible:
+	if rod_status.bait_visual.visible and not game.is_feeder_fishing():
 		line_mesh.surface_add_vertex(rod_status.bait_visual.global_position)
 	line_mesh.surface_end()
 

@@ -54,11 +54,14 @@ The guide now includes a live camera preview and saves **1920 × 1080 PNG photos
 |---|---|---|
 | Switch collection / camera | C | Left trigger |
 | Take photo | Space | Right trigger |
-| Toggle selfie extension | F | Right A |
+| Toggle selfie camera | F | Right A |
+| Extend / retract selfie camera | Up / Down arrows | Right stick up / down |
 | Aim forward camera | Middle-drag viewpoint | Move and rotate left hand |
 | Close / dock | G or Escape | Release left grip |
 
-Forward mode follows the desktop viewpoint or the tracked guide hand in VR. Selfie mode extends the lens 1.5 m forward, points it back at the angler and includes the full avatar. A scenery ray check shortens the extension near solid surfaces. This is a virtual camera extension; it does not add a physical stick mesh. Camera controls do not cast, release catches or change bait. Collection navigation remains available after leaving camera mode.
+Forward mode follows the desktop viewpoint or the guide’s rear lens in VR. VR selfie mode starts at the guide’s front lens and includes the full avatar. Push the right stick up to extend the capture point away from the group, or down to bring it closer. The extension follows the guide’s aiming direction, moves at up to 1 metre per second, and stops at 3 metres beyond the lens. A small spherical sweep keeps the extended lens clear of solid scenery. Releasing the stick holds the framing; a dead zone prevents drift. Adjustment pauses during tracking loss, menu use and photo capture.
+
+Desktop selfie mode starts 1.5 metres in front of the viewpoint and faces the angler; Up/Down adds or removes up to 3 metres of extension. Scenery limits the reach. The selected extension lasts for the session, and the rear camera keeps its normal position. Camera controls do not cast, release catches or change bait. Collection navigation remains available after leaving camera mode.
 
 Files are saved locally in your operating system’s Pictures folder, inside `Real AI Fishing` (for example `~/Pictures/Real AI Fishing` on Linux). Android saves new photos to the Pictures collection through MediaStore. `--photos-root PATH` overrides the destination for desktop tests. Each filename includes a timestamp and unique suffix. The guide confirms successful saves and reports failures. Photos are never uploaded or sent to other players. Forward/selfie choice lasts for the current session.
 
@@ -78,3 +81,19 @@ After a lost fish the tackle resets after 1.2 seconds, or immediately when start
 On initial VR tracking, the player is calibrated to the same 1.65 m head-height reference used by FPSloppa. All VRMs use the shared 1.70 m body normalization; crouching or changing avatar does not resize the rig. Seated mode uses a vertical offset instead. Recenter while standing if startup calibration was taken in another posture.
 
 When a counter ends, the fish keeps the position it reached. Reeling follows that new position toward the angler, and later escape movements build on it.
+
+### Selfie reach validation — 17 September 2026
+
+- `tests/selfie_extension.gd`: 25 checks pass for extension/retraction, the 3 m
+  limit, rotated guide poses, dead zone, wall clearance, starting inside scenery,
+  immediate retraction from an obstruction, tracking/focus loss and rear-camera
+  isolation.
+- `tests/guide_camera.gd`: 97 camera controls, projection and layer checks pass.
+  `tests/fish_guide.gd`: 55 collection and guide interaction checks pass.
+- Connected WiVRn testing used the physical headset and controllers. Right-stick
+  input extended and retracted the camera, reached the 3 m limit, and saved a
+  1920 × 1080 selfie using the right trigger. The photo was visually inspected.
+  The tester confirmed that framing and avatar shoulder alignment both work well.
+- `tests/live_wivrn.gd -- --selfie` preselects selfie mode for a two-minute live
+  test, logs real input/reach/photo state, and captures both native eyes. The
+  diagnostic now follows avatar changes instead of retaining old solver readings.

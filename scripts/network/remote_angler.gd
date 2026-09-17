@@ -110,8 +110,8 @@ func _process(delta: float) -> void:
 	float_mesh.visible=target.bobber_visible and not target.caught
 	float_mesh.scale=Vector3.ONE*(.32 if fly_mode else 1.0)
 	bait_visual.visible=target.bait_visible and not target.caught
-	bait_visual.set_bait(Fish.Feeder.BAIT_MODELS[target.bait] if target.rig==1 else clampi(target.bait,0,1) if fly_mode else target.bait,Fish.is_marine_location(target.location),fly_mode,target.rig==2)
-	bait_visual.global_position=rendered.bait_position
+	bait_visual.set_bait(Fish.Feeder.BAIT_MODELS[target.bait] if target.rig==1 else clampi(target.bait,0,1) if fly_mode else target.bait,Fish.is_marine_location(target.location),fly_mode,target.rig==2,target.rig==1)
+	bait_visual.global_position=rendered.bobber if target.rig==1 else rendered.bait_position
 	bait_visual.pose_lure(rendered.tip-rendered.bobber,target.state in [Fish.State.WAITING,Fish.State.BITE,Fish.State.FIGHT])
 	fallback.global_position=rendered.feet
 	if is_instance_valid(avatar):
@@ -151,5 +151,5 @@ func _draw_line() -> void:
 			for i in range(1,25):
 				var t:=i/24.0
 				line.surface_add_vertex(rendered.tip.lerp(rendered.bobber,t)-Vector3.UP*sin(t*PI)*.15)
-			if bait_visual.visible:line.surface_add_vertex(rendered.bait_position)
+			if bait_visual.visible and target.rig!=1:line.surface_add_vertex(rendered.bait_position)
 		line.surface_end()
