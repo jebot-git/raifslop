@@ -72,7 +72,7 @@ func run() -> void:
 	if not g.xr:
 		quit(1)
 		return
-	check(root.use_xr and interface.get_view_count() == 2, "Native stereo viewport has two views")
+	check(g.head.get_viewport().use_xr and interface.get_view_count() == 2, "Native stereo viewport has two views")
 	var left: Transform3D = interface.get_transform_for_view(0, Transform3D.IDENTITY)
 	var right: Transform3D = interface.get_transform_for_view(1, Transform3D.IDENTITY)
 	check(left.origin.distance_to(right.origin) > 0.01, "Runtime supplies separate eye poses")
@@ -157,7 +157,7 @@ func run() -> void:
 	await settle()
 	var photo = guide.photo_camera
 	check(photo.active, "Tracked left trigger opens guide camera")
-	check(photo.camera.global_transform.is_equal_approx(g.left.global_transform), "Native VR photo lens follows tracked hand")
+	check(photo.camera.global_transform.is_equal_approx(guide.global_transform * photo.lens_pose(false)), "Native VR photo lens follows guide rear face")
 	check(not photo.view.use_xr and photo.camera.cull_mask & 128 == 0, "VR photo uses mono view with UI excluded")
 	controllers[1].set_input("trigger_click", true)
 	await process_frame

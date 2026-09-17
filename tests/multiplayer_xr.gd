@@ -23,7 +23,7 @@ func run() -> void:
 	game._select_location("lakeside",false)
 	game.motor.global_position=Vector3.ZERO if xr_role else Vector3(-1.2,0,-2.4)
 	if xr_role:
-		check(game.xr and root.use_xr,"Native OpenXR stereo session")
+		check(game.xr and game.head.get_viewport().use_xr,"Native OpenXR stereo session")
 		if not game.xr: quit(1); return
 		for hand in ["left_hand","right_hand"]:
 			var tracker:=XRControllerTracker.new(); tracker.type=XRServer.TRACKER_CONTROLLER; tracker.name=hand; tracker.description="Synthetic multiplayer controller"

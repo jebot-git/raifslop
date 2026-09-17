@@ -1,6 +1,7 @@
 extends Node3D
 ## Bounded, positional fishing effects. Driven by actual accepted input and state.
 const S=preload("res://scripts/fishing_session.gd")
+const PLAYER_VIEW_LAYER := 2
 var game_root: Node
 var feeding_surfaces: Array[MeshInstance3D] = []
 var reel_rate:=0.0
@@ -71,6 +72,9 @@ func update_feeding_ripples() -> void:
  if feeding_surfaces.is_empty():
   for sector in S.Population.SECTOR_COUNT:
    var mesh := MeshInstance3D.new()
+   # Feeding hints belong to the angler's view, not spectator/photo cameras.
+   # Real fight wakes and impact splashes remain on the shared scenery layer.
+   mesh.layers = PLAYER_VIEW_LAYER
    var plane := PlaneMesh.new(); plane.size = Vector2(6.4, 6.4); mesh.mesh = plane
    var mat := ShaderMaterial.new(); mat.shader = water_fx.shader
    mesh.material_override = mat

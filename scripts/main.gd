@@ -46,6 +46,8 @@ var game = Session.new()
 var reel_tracker = ReelTracker.new()
 var reel_tracking_offset := Vector3.ZERO
 var xr := false
+var xr_view: SubViewport
+var spectator: Node3D
 var origin: XROrigin3D
 var head: Camera3D
 var left: XRController3D
@@ -138,6 +140,10 @@ func _ready() -> void:
 	add_child(fishing_feedback);fishing_feedback.setup(self)
 	shadow_policy=preload("res://scripts/shadow_policy.gd").new()
 	add_child(shadow_policy);shadow_policy.setup(self)
+	if xr_view:
+		spectator = preload("res://scripts/spectator_camera.gd").new()
+		add_child(spectator)
+		spectator.setup(self)
 	_start_network()
 	print("Real AI Fishing ready | ", "OpenXR" if xr else "Desktop", " | panorama + location foreground loaded")
 
@@ -230,15 +236,27 @@ func _build_environment() -> void:
 	fish_display.visible = false
 
 func _build_rig() -> void:
+	var interface := XRServer.find_interface("OpenXR")
+	xr = interface != null and interface.is_initialized()
+	# PC VR renders stereo into a dedicated viewport, leaving the window mono.
+	# Standalone headsets retain their single XR output without a spectator pass.
+	if xr and not OS.has_feature("android"):
+		xr_view = SubViewport.new()
+		xr_view.name = "HeadsetViewport"
+		xr_view.world_3d = get_world_3d()
+		xr_view.size = interface.get_render_target_size()
+		xr_view.use_xr = true
+		xr_view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		xr_view.audio_listener_enable_3d = true
+		get_viewport().audio_listener_enable_3d = false
+		add_child(xr_view)
 	motor = Motor.new()
-	add_child(motor)
+	(xr_view if xr_view else self).add_child(motor)
 	origin = XROrigin3D.new()
 	origin.name = "XROrigin3D"
 	motor.add_child(origin)
-	var interface := XRServer.find_interface("OpenXR")
-	xr = interface != null and interface.is_initialized()
 	if xr:
-		get_viewport().use_xr = true
+		get_viewport().use_xr = xr_view == null
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 		head = XRCamera3D.new()
 	else:

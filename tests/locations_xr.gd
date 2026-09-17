@@ -67,7 +67,7 @@ func run() -> void:
 	if not g.xr:
 		quit(1)
 		return
-	check(root.use_xr and interface.get_view_count() == 2, "Native stereo viewport has two views")
+	check(g.head.get_viewport().use_xr and interface.get_view_count() == 2, "Native stereo viewport has two views")
 	var left: Transform3D = interface.get_transform_for_view(0, Transform3D.IDENTITY)
 	var right: Transform3D = interface.get_transform_for_view(1, Transform3D.IDENTITY)
 	check(left.origin.distance_to(right.origin) > 0.01, "Runtime supplies separate eye poses")
