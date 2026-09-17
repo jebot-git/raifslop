@@ -215,10 +215,9 @@ func _build_environment() -> void:
 	wm.set_shader_parameter("bank_cover",load("res://assets/models/locations/lit/lakeside_aerial_grass_rock_Diffuse.jpg"))
 	water_surface=mesh_node(water, self, Vector3(0, water_level, -40), wm)
 	water_surface.name="WaterSurface"
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.045
-	sphere.height = 0.14
-	bobber = mesh_node(sphere, self, Vector3(0, 0, -3), material(Color("ff784e")))
+	bobber = preload("res://scripts/bobber_visual.gd").new()
+	add_child(bobber)
+	bobber.position = Vector3(0, 0, -3)
 	line_mesh = ImmediateMesh.new()
 	var lm := material(Color("d8f5e5"))
 	line_material = lm
@@ -400,7 +399,9 @@ func _left_button(button: String) -> void:
 		elif button == "by_button": fish_guide.page(-1)
 		return
 	if menu_open: return
-	if button == "ax_button":
+	if button == "trigger_click" and _catch_grip_active():
+		_primary_action()
+	elif button == "ax_button":
 		_select_bait((game.bait + 1) % game.bait_count())
 	elif button == "by_button":
 		_primary_action()
@@ -446,7 +447,9 @@ func _primary_action() -> void:
 		Session.State.LANDED, Session.State.LOST:
 			game.reset()
 			fish_display.visible = false
+			catch_in_hand = false
 			motor.catch_controls = false
+			_update_line()
 
 func _cast_direction() -> Vector3:
 	# Preserve the original head-relative casting gesture axis.
@@ -706,7 +709,8 @@ func _process(delta: float) -> void:
 	_update_tracking_warning(delta)
 	rod_visual.visible = true
 	rod.visible = rod_holster.stowed or not xr or right.get_has_tracking_data()
-	motor.catch_controls = fish_guide.held or (xr and game.state == Session.State.LANDED)
+	catch_in_hand = _catch_grip_active()
+	motor.catch_controls = fish_guide.held or catch_in_hand
 	if not xr: hud.visible = not menu_open and not fish_guide.held
 	time += delta
 	if not xr:
@@ -869,19 +873,24 @@ func _catch_mesh_bounds(node: Node3D, parent_transform := Transform3D.IDENTITY) 
 func _catch_mouth() -> Vector3:
 	return Vector3(catch_bounds.end.x, catch_bounds.get_center().y, catch_bounds.get_center().z)
 
+func _catch_grip_active() -> bool:
+	return xr and game.state == Session.State.LANDED and fish_display.visible and not fish_guide.held and not shoulder_radio.held and left.get_has_tracking_data() and left.get_float("grip") > .55 and tracking_manager.focused
+
 func _update_catch(delta: float) -> void:
+	catch_in_hand = _catch_grip_active()
+	motor.catch_controls = fish_guide.held or catch_in_hand
 	if not xr:
 		fish_display.global_position = head.global_position - head.global_basis.z * 1.1 - Vector3.UP * 0.08
 		fish_display.rotation = Vector3(0, time * 0.35, 0)
 		return
 	var stick := Vector2.ZERO
-	for controller in [left, right]:
-		if controller.get_has_tracking_data(): stick += motor.deadzone(controller.get_vector2("primary"))
+	if catch_in_hand:
+		for controller in [left, right]:
+			if controller.get_has_tracking_data(): stick += motor.deadzone(controller.get_vector2("primary"))
 	stick = stick.limit_length()
 	# Both stick axes spin around gravity-up; inspection never tips the fish sideways.
 	var spin := clampf(-stick.x + stick.y, -1.0, 1.0)
 	catch_rotation = (Quaternion(Vector3.UP, spin * delta * 1.8) * catch_rotation).normalized()
-	catch_in_hand = not fish_guide.held and left.get_has_tracking_data() and left.get_float("grip") > 0.55
 	if catch_in_hand:
 		var orientation := Basis(catch_rotation) * Basis(Vector3.BACK, PI / 2)
 		# Grip the string, leaving a short vertical drop to the mouth.
@@ -980,7 +989,7 @@ func _update_line() -> void:
 	bobber.visible = active or ready
 	bobber.scale=Vector3.ONE*(.32 if game.is_fly_fishing() else 1.0)
 	if game.is_fly_fishing() and game.bait==0:bobber.hide()
-	if is_instance_valid(rod_status): rod_status.bait_visual.visible = ready or (game.is_fly_fishing() and active)
+	if is_instance_valid(rod_status): rod_status.bait_visual.visible = ready or active
 	line_mesh.clear_surfaces()
 	if xr and game.state == Session.State.LANDED and fish_display.visible:
 		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
@@ -1025,8 +1034,12 @@ func _update_line() -> void:
 	if game.is_fly_fishing():
 		rod_status.bait_visual.global_position=bobber.global_position+Vector3.DOWN*(.4 if game.bait==1 else 0.0)
 		if game.state==Session.State.BITE and game.bait==0:rod_status.bait_visual.position.y-=.04
+	else:
+		rod_status.bait_visual.global_position=bobber.global_position+Vector3.DOWN*(.18 if game.state==Session.State.CASTING else .4)
 	hooked_fish.update(0)
-	if game.jump_time>0:bobber.hide()
+	if game.jump_time>0:
+		bobber.hide()
+		rod_status.bait_visual.hide()
 	var line_end:Vector3=bobber.position
 	if game.jump_time>0 and hooked_fish.visible:line_end=hooked_fish.mouth_position()
 	line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
@@ -1040,6 +1053,8 @@ func _update_line() -> void:
 		p.y -= sin(t * PI) * (lerpf(.65, .025, game.tension) if game.state == Session.State.FIGHT else 0.5)
 		if game.is_fly_fishing() and game.state==Session.State.WAITING:p.y=maxf(p.y,water_level+.01)
 		line_mesh.surface_add_vertex(p)
+	if rod_status.bait_visual.visible:
+		line_mesh.surface_add_vertex(rod_status.bait_visual.global_position)
 	line_mesh.surface_end()
 
 func _mend_fly(direction:int) -> bool:
@@ -1075,7 +1090,7 @@ func _show_fish() -> void:
 	catch_twitch.configure(fish_display,catch_bounds,game.fish_index*7919+game.catches)
 	catch_rotation = Quaternion.IDENTITY
 	catch_in_hand = false
-	motor.catch_controls = xr
+	motor.catch_controls = false
 	fish_display.visible = true
 
 func _tone(frequency: float, duration: float) -> void:

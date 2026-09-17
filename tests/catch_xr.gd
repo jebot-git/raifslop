@@ -55,7 +55,7 @@ func capture_stereo(label: String) -> void:
 		check(absf(upper.r - lower.r) + absf(upper.g - lower.g) + absf(upper.b - lower.b) > 0.01, "Eye contains scene detail")
 		frame.convert(Image.FORMAT_RGBA8)
 		frame.linear_to_srgb()
-		check(frame.save_png("res://docs/locations/" + label + "_eye%d.png" % eye) == OK, "Saved stereo eye")
+		check(frame.save_png("res://test-results/xr/" + label + "_eye%d.png" % eye) == OK, "Saved stereo eye")
 
 func run() -> void:
 	var g = load("res://scenes/main.tscn").instantiate()
@@ -115,6 +115,8 @@ func run() -> void:
 	# Drive real tracked controller poses and trigger signals through production casting.
 	g.set_process(false)
 	g.motor.set_physics_process(false)
+	# A horizontal synthetic HMD ray never intersects the water plane.
+	g.head.rotation.x = -.18
 	var right_pose: Transform3D = controllers[1].get_pose("grip").transform
 	right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + 0.5)
 	set_controller_pose(controllers[1], right_pose)
@@ -150,20 +152,20 @@ func run() -> void:
 	check(g.game.state == 0, "Locomotion alone cannot produce a physical cast")
 	g.origin.global_transform = origin_before
 	# Rotating the wrist/rod also generates forward tip speed without translating the hand.
-	right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + 0.5) * Basis(Vector3.RIGHT, -1.2)
+	right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + 0.5) * Basis(Vector3.RIGHT, .8)
 	set_controller_pose(controllers[1], right_pose)
 	g._process(0.05)
 	controllers[1].set_input("trigger_click", true)
 	for i in range(4):
-		right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + .5) * Basis(Vector3.RIGHT, -1.2 - (i + 1) * .07)
+		right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + .5) * Basis(Vector3.RIGHT, .8 + (i + 1) * .07)
 		set_controller_pose(controllers[1], right_pose)
 		g._process(.025)
 	for i in range(10):
-		right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + 0.5) * Basis(Vector3.RIGHT, -1.2 + (i + 1) * 0.09)
+		right_pose.basis = Basis(Vector3.UP, g.head.rotation.y + 0.5) * Basis(Vector3.RIGHT, 1.08 - (i + 1) * 0.09)
 		set_controller_pose(controllers[1], right_pose)
 		g._process(0.025)
 	controllers[1].set_input("trigger_click", false)
-	check(g.game.state == 1, "Angular rod swing alone produces a physical cast")
+	check(g.game.state == 1, "Angular rod swing alone produces a physical cast: " + g.game.message)
 	g.game.reset()
 	# Land a real catch and exercise the default attachment and inspection controls.
 	g.game.fish_index = 6
@@ -179,6 +181,17 @@ func run() -> void:
 	check(g.fish_display.to_global(g._catch_mouth()).distance_to(g.tip.global_position - Vector3.UP * 0.28) < 0.001, "Mouth is attached below rod tip")
 	check(g.fish_display.global_basis.x.dot(Vector3.UP) > 0.99, "Default hanging fish is head-up")
 	check(g.line_mesh.get_surface_count() == 1 and not g.bobber.visible, "Caught fish retains line to rod without bobber")
+	check(not g.motor.catch_controls, "Hanging catch leaves locomotion enabled")
+	var hanging_rotation: Quaternion = g.catch_rotation
+	controllers[0].set_input("primary", Vector2(0.0, -0.8))
+	g._process(.1)
+	g.motor._physics_process(.1)
+	check(g.motor.velocity.length() > .01, "Left stick moves player with hanging catch")
+	check(g.catch_rotation.is_equal_approx(hanging_rotation), "Hanging fish ignores inspection sticks")
+	controllers[0].set_input("primary", Vector2.ZERO)
+	controllers[0].set_input("trigger_click", true)
+	controllers[0].set_input("trigger_click", false)
+	check(g.game.state == 5, "Offhand trigger without grip retains catch")
 	await capture_stereo("catch_hanging")
 	controllers[0].set_input("grip", 1.0)
 	g._process(0.05)
@@ -220,6 +233,15 @@ func run() -> void:
 	controllers[1].set_input("ax_button", false)
 	g._process(0.05)
 	check(g.game.state == 0 and not g.fish_display.visible and not g.motor.catch_controls, "Right A releases catch and restores movement controls")
+	g.game.state = 5
+	g.last_state = 5
+	g._show_fish()
+	controllers[0].set_input("grip", 1.0)
+	g._process(.05)
+	check(g.catch_in_hand and g.motor.catch_controls, "Held catch reserves inspection sticks")
+	controllers[0].set_input("trigger_click", true)
+	controllers[0].set_input("trigger_click", false)
+	check(g.game.state == 0 and not g.fish_display.visible and not g.motor.catch_controls, "Offhand trigger while gripping releases catch immediately")
 	for tracker in controllers: XRServer.remove_tracker(tracker)
 	print("XR catch and casting tests: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

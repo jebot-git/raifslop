@@ -52,6 +52,11 @@ func run() -> void:
 	check(not schema.valid(invalid),"Invalid face tracking rejected")
 	invalid=schema.capture(game,20); invalid.visemes=PackedFloat32Array([2,0,0,0,0])
 	check(not schema.valid(invalid),"Out-of-range visemes rejected")
+	for key in ["bobber_visible", "bait_visible"]:
+		invalid=schema.capture(game,20); invalid[key]=1
+		check(not schema.valid(invalid), "Non-boolean tackle visibility rejected: "+key)
+	invalid=schema.capture(game,20); invalid.bait_position=Vector3(NAN,0,0)
+	check(not schema.valid(invalid), "Non-finite bait position rejected")
 	check(net.host(80)==ERR_INVALID_PARAMETER,"Invalid server port rejected")
 	check(net.join("",24567)==ERR_INVALID_PARAMETER,"Empty join address rejected")
 	print("NETWORK_GUARDS_RESULT ",failures)

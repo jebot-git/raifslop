@@ -32,13 +32,13 @@ Catches now earn **shekels** based on species rarity and specimen size. Open **F
 | Browse Field Guide | Physically press ‹ / ›, left X/Y, or either joystick while holding | Left/right arrows |
 | Inspect caught fish | Hold left grip to bring fish to left hand; release grip to hang it from rod | Automatic display |
 | Rotate caught fish | Either joystick: spin around vertical axis | Automatic rotation |
-| Release / retry | Right A (left Y also works) | Space or button |
+| Release / retry | Left trigger while holding fish with grip; Right A / left Y also work | Space or button |
 | Read tutorial | Right B → Tutorial | V → Tutorial |
 | Quit | Right B → Quit game | Escape or menu Quit game |
 
 VR casting projects the **center of the headset view** onto the water; eye gaze does not steer it. The water marker is the landing destination, within a 5–24 metre reach. Hold the trigger, sweep the rod back then forward, and release. Desktop uses a held Space backswing and release, with right-drag controlling the marker. Aiming at real ground rejects the cast; invisible player barriers and underwater fish clearance do not block water-surface aiming. Under **Controls → Controller alignment**, adjust and save each controller’s position and rotation offsets. [Casting comfort, fish boundaries and guide discovery](docs/FISHING_COMFORT.md).
 
-In VR, landed fish hang head-up below the rod tip on the line. Hold left grip to grasp the string 8 cm above the fish’s mouth; lift your hand to inspect the fish hanging beneath it; releasing grip returns it to the rod. The fish stays vertical and head-up in both positions, regardless of hand tilt. Either joystick axis spins it around the vertical axis at up to about 103°/s, with a deadzone; stick walking and turning are suppressed while a catch is displayed. Physical room-scale movement remains available. Right A releases the catch and restores stick locomotion.
+In VR, landed fish hang head-up below the rod tip on the line. Hold left grip to grasp the string 8 cm above the fish’s mouth; lift your hand to inspect the fish hanging beneath it; releasing grip returns it to the rod. The fish stays vertical and head-up in both positions, regardless of hand tilt. While holding the fish, either joystick spins it around the vertical axis at up to about 103°/s; stick walking and turning pause only during hand inspection. A fish hanging from the rod leaves locomotion available. Press left trigger while gripping the fish to release it, or use Right A / left Y. Physical room-scale movement remains available.
 
 Use the line colour and haptic feedback to judge tension. Stop reeling during runs; resume before the line becomes completely slack. Directional counters reduce stamina and tension. Retrieve tired fish all the way to the shoreline or pier edge to land them; exhaustion alone never awards a catch. In fly fishing, winding the reel outside an inward rush or final retrieval adds a steep tension penalty; strip line during the fight. Prolonged extreme tension snaps the line; slack lets the hook slip. Catch records persist in Godot's `user://journal.json`.
 

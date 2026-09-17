@@ -66,7 +66,8 @@ and avoid automatic VRAM compression for those lightmaps.
 ## Validation
 
 Run `tests/location_immersion.gd` with `-- --capture` for standing, seated and
-sideways views of both rivers, Lake Pier and Coastal Rocks. With an OpenXR
+sideways views of all ten environments, including both rivers and the release
+0.1.10 coastal locations. With an OpenXR
 runtime it checks and saves both native eye buffers; without XR it captures
 the display view. Output is under ignored `test-results/immersion/`.
 
@@ -80,7 +81,26 @@ location travel, environment lighting, lossless HDR export, shore retrieval
 and water wildlife. The older location-journal fixture was updated to supply
 the active retrieve and cleared counter required by the latest landing rules.
 
-Final native OpenXR validation: 183 checks passed, including twenty-four eye
-captures across twelve viewpoints. Final display-render validation: 171 checks passed, with all twelve viewpoints
-captured. Location travel: 1,232 checks passed. Lighting, HDR preservation,
-shore transitions/retrieval, fly fishing, fish jumps and wildlife suites passed.
+The integration is based directly on release 0.1.10. Its coastal shallow-depth
+coverage, ground metadata, avatar recovery and transfer fixes are retained.
+Location travel passes 1,250 checks; water aiming passes 742, and fishing comfort
+passes 1,733. Lighting, scenery repairs, shore retrieval, fly fishing, holstering,
+fishing updates and avatar recovery/image-failure suites pass. The GPU coastal
+water test confirms coverage even when opaque depth is absent.
+
+The shared float uses one cached lathed mesh and opaque material: ivory/orange
+lacquer, a brass collar and graphite keel. Local and remote anglers use the same
+geometry. Protocol 5 carries bobber/bait visibility and interpolated bait
+positions, including the selected freshwater, marine or fly model. Tackle tests
+pass 591 checks; real dedicated/ad-hoc ENet tests include visible tackle and late
+joiners. Servers and clients must update together.
+
+Native OpenXR catch/casting tests pass 57 checks. Hanging catches permit stick
+locomotion; only hand inspection reserves the sticks for fish rotation. Offhand
+trigger while gripping releases the catch, with the existing face buttons
+retained. Synthetic casting fixtures now aim down at water and perform the
+release's required overhead backswing. Catch captures go to `test-results/xr/`.
+
+All-ten-environment native stereo validation passes 213 checks, with sixty eye
+captures across thirty standing, seated and side viewpoints. Physical headset
+comfort and sustained standalone GPU performance still require device testing.

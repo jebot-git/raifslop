@@ -12,7 +12,7 @@ var rod := Node3D.new()
 var rod_visual: Node3D
 var caught := Node3D.new()
 var float_mesh: MeshInstance3D
-var fly_lure: Node3D
+var bait_visual: Node3D
 var label := Label3D.new()
 var line := ImmediateMesh.new()
 var target: Dictionary = {}
@@ -29,9 +29,8 @@ func _ready() -> void:
 	rod_visual=preload("res://scripts/rod_visual.gd").new()
 	rod.add_child(rod_visual)
 	rod_visual.equip(0)
-	var sphere := SphereMesh.new(); sphere.radius=.045; sphere.height=.14
-	float_mesh=game.mesh_node(sphere,self,Vector3.ZERO,game.material(Color("ff784e")))
-	fly_lure=preload("res://scripts/bait_visual.gd").new();add_child(fly_lure);fly_lure.hide()
+	float_mesh=preload("res://scripts/bobber_visual.gd").new();add_child(float_mesh);float_mesh.hide()
+	bait_visual=preload("res://scripts/bait_visual.gd").new();add_child(bait_visual);bait_visual.hide()
 	game.mesh_node(line,self,Vector3.ZERO,game.material(Color("d8f5e5")))
 	# Visible while a custom VRM is transferring; never creates a local camera.
 	game.box(fallback,Vector3(0,1.05,0),Vector3(.35,.6,.20),game.material(Color("4d7667")))
@@ -103,12 +102,11 @@ func _process(delta: float) -> void:
 	caught.visible=target.caught
 	float_mesh.global_position=rendered.bobber
 	var fly_mode:bool=Fish.Fly.river(target.location)
-	float_mesh.visible=target.state in [1,2,3,4] and not (fly_mode and target.bait==0)
+	float_mesh.visible=target.bobber_visible and not target.caught
 	float_mesh.scale=Vector3.ONE*(.32 if fly_mode else 1.0)
-	fly_lure.visible=fly_mode and target.state in [1,2,3,4]
-	if fly_mode:
-		fly_lure.set_bait(clampi(target.bait,0,1),false,true)
-		fly_lure.global_position=rendered.bobber-Vector3.UP*(.4 if target.bait==1 else 0)
+	bait_visual.visible=target.bait_visible and not target.caught
+	bait_visual.set_bait(clampi(target.bait,0,1) if fly_mode else target.bait,Fish.is_marine_location(target.location),fly_mode)
+	bait_visual.global_position=rendered.bait_position
 	fallback.global_position=rendered.feet
 	if is_instance_valid(avatar):
 		var body: Dictionary={}
@@ -127,7 +125,7 @@ func _process(delta: float) -> void:
 
 func _draw_line() -> void:
 	line.clear_surfaces()
-	if target.caught or float_mesh.visible or fly_lure.visible:
+	if target.caught or float_mesh.visible or bait_visual.visible:
 		line.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
 		if not target.caught and Fish.Fly.river(target.location):
 			line.surface_add_vertex(rod.to_global(Fish.Fly.LINE_OUTLET))
@@ -143,4 +141,5 @@ func _draw_line() -> void:
 			for i in range(1,25):
 				var t:=i/24.0
 				line.surface_add_vertex(rendered.tip.lerp(rendered.bobber,t)-Vector3.UP*sin(t*PI)*.15)
+			if bait_visual.visible:line.surface_add_vertex(rendered.bait_position)
 		line.surface_end()

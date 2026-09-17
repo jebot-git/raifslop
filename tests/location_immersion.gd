@@ -17,7 +17,8 @@ func run():
 		var compositor:=Compositor.new();compositor.compositor_effects=[capture];g.head.compositor=compositor
 	var folder:="res://test-results/immersion"
 	DirAccess.make_dir_recursive_absolute(folder)
-	for id in ["meadow_bend","boulder_run","lake_pier","simons_town_rocks"]:
+	for entry in g.Locations.CATALOG:
+		var id:String=entry.id
 		check(g._select_location(id,false),"Travel "+id)
 		check(g.water_material.get_shader_parameter("boulder_pockets")== (id=="boulder_run"),"Rock wake state resets on travel")
 		if id in ["meadow_bend","boulder_run"]:

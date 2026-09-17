@@ -45,6 +45,7 @@ func run() -> void:
 		invalid=Protocol.capture(game,1); invalid.species=999
 		check(not Protocol.valid(invalid),"Unknown species rejected")
 		if role in ["sender","host"]:
+			game._select_bait(2)
 			var enc:=Fixture.encoder()
 			for frame in range(430):
 				game.head.position.x=.4+sin(frame*.03)*.2
@@ -54,7 +55,7 @@ func run() -> void:
 				game.tracking_manager.body={"hips":Transform3D(Basis(Vector3.UP,.3),Vector3(0,.92,0)),"left_foot":Transform3D(Basis.IDENTITY,Vector3(-.13,.3,0)),"left_curls":PackedFloat32Array([0,.2,.4,.6,.8])}
 				game.tracking_manager.face={"look":Vector2(.1,.05),"blink":Vector2(.4,.2),"gaze":true,"lids":true}
 				net.voice.set_mouth_pose(net.multiplayer.get_unique_id(),PackedFloat32Array([.7,.1,0,0,0]))
-				game.game.state=game.Session.State.CASTING if frame<80 else game.Session.State.LANDED
+				game.game.state=game.Session.State.CASTING if frame<80 else game.Session.State.LANDED if frame<330 else game.Session.State.READY
 				if frame==80:
 					game.game.fish_index=6
 					game.game.journal.append({"length":63.0})
@@ -63,6 +64,7 @@ func run() -> void:
 				if frame==200: game.catch_in_hand=true
 				if frame==330: game.fish_display.visible=false; game.game.state=game.Session.State.READY
 				game.bobber.position=Vector3(0,0,-10)
+				game._update_line()
 				net.voice.send_packet(Fixture.packet(enc,frame*960))
 				await create_timer(.02).timeout
 			check(net.voice.received_packets==0,"Voice sender has no network echo")
@@ -92,9 +94,13 @@ func run() -> void:
 					if s.in_hand and s.caught: observations.hand=true
 					if observations.has("catch") and not s.caught: observations.release=true
 					if s.head.origin.x>.3 and s.motion.x==.5: observations.movement=true
-				if net.fighters.has(sender) and not net.fighters[sender].avatar_hash.is_empty(): observations.avatar=true
+				if net.fighters.has(sender):
+					var remote=net.fighters[sender]
+					if not remote.avatar_hash.is_empty(): observations.avatar=true
+					if remote.float_mesh.visible and remote.bait_visual.visible and remote.bait_visual.selected==2:
+						observations.tackle=true
 				await create_timer(.02).timeout
-			for key in (["catch","hand","release","movement","avatar","body","fingers","face","visemes"] if role=="late" else ["casting","catch","hand","release","movement","avatar","body","fingers","face","visemes"]): check(observations.has(key),"Remote "+key)
+			for key in (["catch","hand","release","movement","avatar","body","fingers","face","visemes","tackle"] if role=="late" else ["casting","catch","hand","release","movement","avatar","body","fingers","face","visemes","tackle"]): check(observations.has(key),"Remote "+key)
 			check(net.voice.decoded_packets>20 and net.voice.decoded_peak>.01,"Real Opus voice decoded with audible signal")
 			check(game.game.journal==baseline,"Remote catches never write local Fish Guide")
 			if net.fighters.has(sender):

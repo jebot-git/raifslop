@@ -2,7 +2,7 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 4 # Avatar selection ACK/cancel/retry RPCs require matching clients and server.
+const VERSION := 5 # Explicit float/lure visibility and bait position in owner snapshots.
 const State = preload("res://scripts/network/state.gd")
 const Remote = preload("res://scripts/network/remote_angler.gd")
 var root_game: Node
