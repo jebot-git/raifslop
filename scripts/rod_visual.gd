@@ -4,6 +4,7 @@ const MODELS = ["willow", "reed", "heron", "kingfisher"]
 var tier := -1
 var fly_mode := false
 var feeder_mode:=false
+var lure_mode:=false
 var quiver=preload("res://scripts/feeder_tip.gd").new()
 var folded := false
 var folded_model: Node3D
@@ -16,12 +17,12 @@ func _init() -> void:
 	crank.position = Vector3(-.085,-.075,.04)
 	add_child(crank)
 	crank.add_child(load("res://assets/models/rods/handle.glb").instantiate())
-func equip(index: int, fly := false, feeder:=false) -> void:
+func equip(index: int, fly := false, feeder:=false,lure:=false) -> void:
 	index = clampi(index,0,MODELS.size()-1)
-	if tier == index and fly_mode==fly and feeder_mode==feeder: return
-	fly_mode=fly;feeder_mode=feeder
-	crank.position.x=-.036 if fly else -.085
-	var model_name:String=MODELS[index]+("_fly" if fly else "_feeder" if feeder else "")
+	if tier == index and fly_mode==fly and feeder_mode==feeder and lure_mode==lure: return
+	fly_mode=fly;feeder_mode=feeder;lure_mode=lure
+	crank.position=Vector3(-.055,.028,.04) if lure else Vector3(-.036 if fly else -.085,-.075,.04)
+	var model_name:String=MODELS[index]+("_lure" if lure else "_fly" if fly else "_feeder" if feeder else "")
 	if is_instance_valid(model):
 		remove_child(model)
 		model.queue_free()
@@ -32,12 +33,12 @@ func equip(index: int, fly := false, feeder:=false) -> void:
 	folded_model = load("res://assets/models/rods/" + model_name + "_folded.glb").instantiate()
 	add_child(folded_model)
 	for child in crank.get_children():crank.remove_child(child);child.queue_free()
-	crank.add_child(load("res://assets/models/rods/"+("fly_handle" if fly else "handle")+".glb").instantiate())
+	crank.add_child(load("res://assets/models/rods/"+("lure_handle" if lure else "fly_handle" if fly else "handle")+".glb").instantiate())
 	tier = index
 	set_folded(folded)
 
 func crank_grip_position() -> Vector3:
-	return Vector3(-.0105, .039, 0) if fly_mode else Vector3(-.035, .08, 0)
+	return Vector3(-.02,.045,0) if lure_mode else Vector3(-.0105, .039, 0) if fly_mode else Vector3(-.035, .08, 0)
 
 func set_folded(value: bool) -> void:
 	folded=value

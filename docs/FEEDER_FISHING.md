@@ -8,13 +8,13 @@ and saved catches remain unchanged.
 ## Selection and interaction
 
 While ready to cast, hold **right joystick press**, point left for classic tackle
-or right for feeder, and release the press. Releasing in the central dead zone
-cancels. At rivers, classic means the existing fly setup. The small two-sector
+right for feeder or up for lure, and release the press. Releasing in the central dead zone
+cancels. At rivers, classic means the existing fly setup. The small three-sector
 radial menu reserves right-stick turning until the stick returns to centre;
 left-stick push-to-talk remains available. It closes without selecting on tracking
 loss, menu opening or offhand-device use. Active casts, bites, fights and landed
 catches cannot change rigs. The selected rig is saved in player preferences.
-Desktop uses **Tab + Left/Right**, releasing Tab to confirm.
+Desktop uses **Tab + Left/Right/Up**, releasing Tab to confirm.
 
 Cast normally and let the cage sink. Settling depth is an authored per-location
 value, varied by fishing-grid row (roughly 0.9–2.8 m); this is a lightweight
@@ -77,7 +77,7 @@ The fly reel no longer contains the spinning-reel spindle. Its short direct
 crank and grip pivot now sit against the spool face. Both unfolded and folded
 fly models were regenerated, and controller reeling tests cover the new pivot.
 
-Protocol **7** adds the selected rig. Other players see the same cage, rod and
+Protocol **8** carries the selected rig, including the new lure option. Other players see the same cage, rod and
 hook bait; floats and fly-line strips remain hidden for feeder mode. Server
 validation rejects unsupported rig/location/bait combinations, method changes
 inside a catch attempt, and impossible feeder species. The separate dedicated

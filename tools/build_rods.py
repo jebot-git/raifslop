@@ -6,6 +6,7 @@ import bpy, math, numpy as np
 from pathlib import Path
 from mathutils import Vector
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'assets/models/rods';OUT.mkdir(parents=True,exist_ok=True)
+exec((ROOT/"tools/rod_styles.py").read_text())
 scenes=[]
 def p(v):return Vector((v[0],-v[2],v[1]))
 def material(name,color,metal=0,rough=.4):
@@ -38,12 +39,13 @@ def export(scene,name):
  bpy.ops.export_scene.gltf(filepath=str(OUT/(name+'.glb')),export_format='GLB',use_active_scene=True,export_animations=False)
 for variant in range(12):
  index=variant%4;fly=4<=variant<8;feeder=variant>=8
- name=['willow','reed','heron','kingfisher'][index]+('_fly' if fly else '_feeder' if feeder else '')
+ style=ROD_STYLES[index]
+ name=style['name']+('_fly' if fly else '_feeder' if feeder else '')
  scene=bpy.data.scenes.new('Rod_'+name);scenes.append(scene);bpy.context.window.scene=scene
- accent=material(name+' wraps',[(.18,.25,.10),(.48,.53,.56),(.65,.35,.075),(.025,.52,.66)][index],.5,.3)
- carbon=material(name+' blank',[(.028,.055,.018),(.025,.045,.075),(.20,.018,.03),(.01,.16,.23)][index],.4,.3)
- reel_metal=material(name+' reel finish',[(.07,.09,.05),(.38,.43,.47),(.45,.21,.055),(.04,.32,.43)][index],.75,.3)
- grip=cork if index in [0,2] else rubber
+ accent=material(name+' wraps',style['trim'],.5,.3)
+ carbon=material(name+' blank',style['blank'],.4,.3)
+ reel_metal=material(name+' reel finish',style['reel'],.75,.3)
+ grip=cork if style['cork'] else rubber
  # One continuous tapered carbon blank rather than thick segmented sticks.
  cylinder('Tapered carbon blank',(0,0,.19),(0,0,-1.40 if feeder else -1.68),.0065,carbon,.0018 if feeder else .0009)
  if index in [1,3]:

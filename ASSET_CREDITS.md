@@ -172,3 +172,5 @@ Packed source: `source/marine_expansion.blend`.
 Original quiet-interface pictograms (`assets/ui/pictograms/*.svg`) were authored for this project on 17 September 2026. No external icon font or image assets are used.
 
 Feeder cage, groundbait texture, flexible tip and feeder rod variants are original project assets, authored with Blender and procedural mesh tooling (`tools/build_feeder.py`, `tools/build_rods.py`, `scripts/feeder_tip.gd`). Sources: `source/feeder.blend` and `source/rods.blend`. The feeder menu symbol is original SVG artwork. No third-party asset licensing or attribution is required for these additions.
+
+Casting rods (four tiers and folded variants), compact baitcaster/double-paddle handle, inline spinner, casting spoon, paddle-tail jig and diving minnow are original project assets authored in Blender. Packed EVA grain and lure-scale textures and the lure SVG menu symbol are original. Source: `source/lure_tackle.blend`; builders: `tools/build_lure_tackle.py`, `tools/build_folded_rods.py`; shared tier palette: `tools/rod_styles.py`. These additions require no third-party asset attribution.

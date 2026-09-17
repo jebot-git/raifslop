@@ -3,12 +3,18 @@ extends Node3D
 var selected := -1
 var marine := false
 var fly_mode := false
-func set_bait(index: int, saltwater: bool = false, fly_fishing:bool=false) -> void:
-	if selected==index and marine==saltwater and fly_mode==fly_fishing:return
-	marine=saltwater;fly_mode=fly_fishing
+var lure_mode:=false
+func set_bait(index: int, saltwater: bool = false, fly_fishing:bool=false,lure_fishing:bool=false) -> void:
+	if selected==index and marine==saltwater and fly_mode==fly_fishing and lure_mode==lure_fishing:return
+	marine=saltwater;fly_mode=fly_fishing;lure_mode=lure_fishing
+	scale=Vector3.ONE;rotation=Vector3.ZERO
 	selected=index
 	for child in get_children():remove_child(child);child.queue_free()
-	if fly_mode:
+	if lure_mode:
+		var asset:String="casting_spoon" if marine and index==0 else preload("res://scripts/lure_fishing.gd").MODELS[index]
+		add_child(load("res://assets/models/lures/"+asset+".glb").instantiate())
+		scale=Vector3.ONE*(1.3 if marine else 1.0)
+	elif fly_mode:
 		if index==0:fly()
 		else:nymph()
 	elif marine:
@@ -147,3 +153,8 @@ func nymph():
 	hook(Vector3.ZERO)
 	oval(Vector3(0,0,0),Vector3(.004,.004,.004),mat("cba754",.7),"NymphBead")
 	segment(Vector3(0,-.003,0),Vector3(0,-.014,0),.0025,mat("594834"),"NymphBody")
+
+func pose_lure(toward:Vector3,swimming:bool)->void:
+	if not lure_mode:return
+	toward.y=0
+	quaternion=Quaternion(Vector3.UP,toward.normalized()) if swimming and toward.length_squared()>.0001 else Quaternion.IDENTITY

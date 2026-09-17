@@ -25,7 +25,7 @@ FPSloppa's TwoVoIP integration supplies 48 kHz mono Opus, 20 ms frames, RNNoise 
 
 FPSloppa’s shoulder radio supplies a second channel to **all anglers on the server**, regardless of water or distance. Hold **B** on desktop. In VR, reach to the **left shoulder**, squeeze grip to take the radio, and hold the **left trigger** to transmit. Release trigger to stop talking; release grip to dock it. While the radio is held, voice activation cannot leak speech onto the nearby channel. The rod remains in the right hand. Radio playback uses FPSloppa’s narrow-band filtering and on/off click cues; existing player mute, Mute all, Listen only, and host voice policy apply. Opening the menu, losing focus or controller tracking releases the radio.
 
-This development build uses **protocol 5**, adding explicit bobber/bait visibility and interpolated bait positions to release 0.1.10’s protocol 4. Update clients and server together; released protocol-4 clients cannot join. Avatar offer acknowledgements and transfer cancellation/recovery are retained.
+This development build uses **protocol 8**, including explicit terminal-tackle visibility/positions, server accomplishments and classic/feeder/lure rig selection. Update clients and server together; older clients cannot join. Avatar offer acknowledgements and transfer cancellation/recovery are retained.
 
 Android microphone capture requests `android.permission.RECORD_AUDIO` when enabled. The Quest and Pico release APKs declare RECORD_AUDIO and INTERNET and include TwoVoIP's ARM64 native library. Optional avatar tracking now uses the shared Quest/Pico tracking permission queue; see [tracking setup](AVATAR_TRACKING.md). Eye tracking never affects cast aim. Synthetic tests use generated tones, never the microphone.
 
@@ -53,7 +53,7 @@ Native stereo/controller integration: `python3 tools/test_multiplayer_xr.py` run
 
 ### Transport threading
 
-`threaded_peer.gd` gives each ENet connection one socket-owning worker. Native ENet polling, acknowledgements and packet receipt continue through main-thread stalls. Bounded packet/event queues deliver to SceneMultiplayer on the main thread; game state, RPCs, avatar scene instantiation and voice dispatch stay there. This does not make gameplay simulation or microphone capture independent of frame stalls. Closing/leaving joins the worker. The seven existing channels remain compatible with stock ENet. Fishing’s application handshake is protocol 5; protocol 3 added radio, protocol 4 added avatar offer/cancel/recovery messages, and protocol 5 adds visible tackle state.
+`threaded_peer.gd` gives each ENet connection one socket-owning worker. Native ENet polling, acknowledgements and packet receipt continue through main-thread stalls. Bounded packet/event queues deliver to SceneMultiplayer on the main thread; game state, RPCs, avatar scene instantiation and voice dispatch stay there. This does not make gameplay simulation or microphone capture independent of frame stalls. Closing/leaving joins the worker. The seven existing channels remain compatible with stock ENet. Fishing’s application handshake is protocol 8; protocol 3 added radio, protocol 4 added avatar offer/cancel/recovery messages, and protocol 5 adds visible tackle state.
 
 FPSloppa checkout `8898d03a33f42e6eec472506fccce6d68dad83d1` threads disk jobs rather than its ENet peer. Its immutable-job/main-thread-completion pattern is retained here; the socket worker is a local addition. Its decoded-VRM cache pattern is also applied so repeated remote models reuse a decoded PackedScene.
 
@@ -71,4 +71,4 @@ Latest accepted avatar selection wins. Superseded transfers are cancelled; rejec
 
 ## Server accomplishments and separate binary
 
-Protocol 7 adds persistent player identities and host-owned accomplishment rankings. See [dedicated server and leaderboard details](DEDICATED_SERVER.md). The menu header now opens Leaderboard; controls are in the [HTML manual](MANUAL.html).
+Protocol 6 added persistent player identities and host-owned accomplishment rankings; 7 added feeder rigs and 8 adds lure rigs. See [dedicated server and leaderboard details](DEDICATED_SERVER.md). The menu header now opens Leaderboard; controls are in the [HTML manual](MANUAL.html).

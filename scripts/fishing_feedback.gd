@@ -153,7 +153,7 @@ func _process(delta: float) -> void:
   game_root.left.trigger_haptic_pulse("haptic",0.0,reel_pulse.strength,reel_pulse.duration,0.0)
  clock+=delta
  reel_player.global_position=game_root.crank.global_position
- if (g.state==S.State.FIGHT or (g.is_fly_fishing() and g.state==S.State.WAITING)) and reel_rate>.03:
+ if (g.state==S.State.FIGHT or ((g.is_fly_fishing() or g.is_lure_fishing()) and g.state==S.State.WAITING)) and reel_rate>.03:
   reel_player.pitch_scale=clampf(reel_rate,.4,2.0)
   if not reel_player.playing:reel_player.play()
  else:reel_player.stop()

@@ -1,9 +1,9 @@
 # Fishing methods and roster expansion
 
-Design study, 17 September 2026. Cage feeder fishing is now implemented; the other methods below remain proposals. See [feeder implementation](FEEDER_FISHING.md).
+Design study, 17 September 2026. Cage feeder and active lure fishing are now implemented; the remaining methods below are proposals. See [feeder implementation](FEEDER_FISHING.md) and [lure implementation](LURE_FISHING.md).
 The current roster has 32 species. Float/bait fishing covers the lakes and coast;
-two river locations use dry-fly/nymph casting, stripping and mending. Selecting a
-spinner currently changes attraction, not a dedicated retrieve simulation.
+two river locations use dry-fly/nymph casting, stripping and mending. The classic spinner remains available for compatibility; the new Lure rig adds
+active retrieves, jig/minnow pause windows and dedicated casting tackle.
 
 ## Recommended order
 

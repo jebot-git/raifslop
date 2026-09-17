@@ -13,7 +13,7 @@ builds/Server/RealAIFishingServer.x86_64 -- --port 24567 --bind 0.0.0.0 \
 output folder. The engine needs its matching Linux release export template.
 The generated project is under `builds/Server/project`; `manifest.json` lists
 every bundled script and the executable's checksum. This server starts in
-headless mode automatically. It uses protocol 7: update clients and server together.
+headless mode automatically. It uses protocol 8: update clients and server together.
 
 The build copies only the transitive `preload` dependencies of the minimal server
 entry point. It shares the client's actual session, state validation, avatar

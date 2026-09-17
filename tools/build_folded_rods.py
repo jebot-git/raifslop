@@ -76,4 +76,4 @@ def fold(path):
     output=struct.pack('<III',0x46546c67,2,28+len(encoded)+len(binary))+struct.pack('<II',len(encoded),0x4e4f534a)+encoded+struct.pack('<II',len(binary),0x004e4942)+binary
     path.with_name(path.stem+'_folded.glb').write_bytes(output);print(path.stem,'folded',len(output),'bytes')
 for name in ['willow','reed','heron','kingfisher']:
-    for suffix in ['', '_fly', '_feeder']:fold(ROOT/'assets/models/rods'/f'{name}{suffix}.glb')
+    for suffix in ['', '_fly', '_feeder', '_lure']:fold(ROOT/'assets/models/rods'/f'{name}{suffix}.glb')

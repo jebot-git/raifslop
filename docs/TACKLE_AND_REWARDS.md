@@ -13,6 +13,8 @@ Payout is `round(20 × rarity × (caught length / typical species length)²)`. T
 | Heron | 450 | ×1.55 | ×1.65 |
 | Kingfisher | 1,000 | ×1.90 | ×2.10 |
 
+Every tier applies to classic, fly, feeder and lure tackle. Switching rig preserves the selected tier and its bonuses. Held and folded models use the same tier palette; see [style identities and validation](LURE_FISHING.md#every-style-follows-the-same-progression).
+
 Purchased rods remain owned and can be equipped again for free. Durability reduces extra tension from running/reeling against a run and extends overload tolerance from 1.4 seconds to 1.4 × durability. Slack still loses the hook after 1.4 seconds. Normal reel tension recovery remains available with every rod. Fatigue improves both steady reeling and successful counters; upgrades do not remove the need to manage tension.
 
 Species have distinct stamina capacities, represented by a normalized percentage on the HUD. These values and rarity tiers are gameplay balancing choices, not biological measurements or conservation categories.

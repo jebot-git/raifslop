@@ -98,17 +98,22 @@ const Fly = preload("res://scripts/fly_fishing.gd")
 var fly=Fly.new()
 const Feeder=preload("res://scripts/feeder_fishing.gd")
 var feeder=Feeder.new()
-enum Rig { CLASSIC, FEEDER }
+const Lure=preload("res://scripts/lure_fishing.gd")
+var lure=Lure.new()
+enum Rig { CLASSIC, FEEDER, LURE }
 var rig:Rig=Rig.CLASSIC
 func is_feeder_fishing()->bool:return rig==Rig.FEEDER and Feeder.supported(location_id)
+func is_lure_fishing()->bool:return rig==Rig.LURE and Lure.supported(location_id)
+static func rig_supported(value:int,id:String)->bool:
+	return value==Rig.CLASSIC or value==Rig.FEEDER and Feeder.supported(id) or value==Rig.LURE and Lure.supported(id)
 func select_rig(value:int)->bool:
-	if state!=State.READY or value not in [Rig.CLASSIC,Rig.FEEDER] or value==Rig.FEEDER and not Feeder.supported(location_id):return false
+	if state!=State.READY or not rig_supported(value,location_id):return false
 	if rig==value:return true
-	rig=value; bait=0;fly.reset();feeder.reset();return true
+	rig=value; bait=0;fly.reset();feeder.reset();lure.reset();return true
 func current_species()->Array:
-	return Feeder.preferred(bait,location_id) if is_feeder_fishing() else species_for_bait(bait,location_id)
+	return Lure.preferred(bait,location_id) if is_lure_fishing() else Feeder.preferred(bait,location_id) if is_feeder_fishing() else species_for_bait(bait,location_id)
 func choose_fish(sector:int)->int:
-	return population.choose(location_id,current_species(),sector,SPECIES,rng,Feeder.POOLS[location_id] if is_feeder_fishing() else current_species() if Fly.river(location_id) else [])
+	return population.choose(location_id,current_species(),sector,SPECIES,rng,Lure.POOLS[location_id] if is_lure_fishing() else Feeder.POOLS[location_id] if is_feeder_fishing() else current_species() if Fly.river(location_id) else [])
 func bait_model()->int:return Feeder.BAIT_MODELS[bait] if is_feeder_fishing() else bait
 
 const Population = preload("res://scripts/fish_population.gd")
@@ -122,8 +127,8 @@ func feeding_activity(sector: int) -> float:
 	prepare_population()
 	return population.activity(location_id, current_species(), sector)
 
-func is_fly_fishing()->bool:return Fly.river(location_id) and not is_feeder_fishing()
-func bait_count()->int:return Feeder.BAIT_NAMES.size() if is_feeder_fishing() else 2 if is_fly_fishing() else BAITS.size()
+func is_fly_fishing()->bool:return Fly.river(location_id) and rig==Rig.CLASSIC
+func bait_count()->int:return Lure.BAIT_NAMES.size() if is_lure_fishing() else Feeder.BAIT_NAMES.size() if is_feeder_fishing() else 2 if is_fly_fishing() else BAITS.size()
 const Tackle = preload("res://scripts/tackle.gd")
 var tackle = Tackle.new()
 var counter_rest := 0.0
@@ -196,6 +201,7 @@ static func is_marine_location(id: String) -> bool:
 	return id in ["simons_town_rocks", "blouberg_sunrise_2", "secluded_beach", "fish_hoek_beach"]
 
 func bait_name(index: int) -> String:
+	if is_lure_fishing():return (Lure.MARINE_NAMES if is_marine_location(location_id) else Lure.BAIT_NAMES)[clampi(index,0,2)]
 	if is_feeder_fishing():return Feeder.BAIT_NAMES[clampi(index,0,3)]
 	if is_fly_fishing():return ["Dry fly","Nymph"][clampi(index,0,1)]
 	return (MARINE_BAITS if is_marine_location(location_id) else BAITS)[clampi(index,0,BAITS.size()-1)]
@@ -215,6 +221,7 @@ static func species_for_bait(index: int, id: String = "") -> Array[int]:
 	return candidates
 
 func bait_hint(index: int) -> String:
+	if is_lure_fishing():return "%d species · %s"%[Lure.preferred(index,location_id).size(),["Steady retrieve","Slow hops and pauses","Retrieve and pause"][clampi(index,0,2)]]
 	if is_feeder_fishing():return "%d bottom-feeding species · Cage feeder"%Feeder.preferred(index,location_id).size()
 	if is_fly_fishing():return "Surface drift · Watch the rise" if index==0 else "Subsurface · Watch indicator"
 	var pool := species_for_bait(index, location_id)
@@ -230,6 +237,7 @@ func cast(power: float, target := Vector3(INF, INF, INF), anchor := Vector3(INF,
 	cast_position = target if target.is_finite() else Vector3(0, 0, -cast_distance)
 	retrieve_origin=anchor if anchor.is_finite() else Vector3(0,cast_position.y,0)
 	if is_feeder_fishing():feeder.cast(location_id,population.sector_for(location_id,cast_position))
+	lure.reset()
 	fly.start = cast_position
 	prepare_population()
 	distance = cast_distance
@@ -468,10 +476,14 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false) -> 
 				var sector := population.sector_for(location_id,cast_position)
 				var preferred := current_species()
 				timer = population.bite_delay(location_id, preferred, sector, rng, is_fly_fishing())
+				if is_lure_fishing():timer=clampf(timer*.55,3,14)
 				fish_index = choose_fish(sector)
-				message = "Drift naturally. Sweep upstream against the current to mend." if is_fly_fishing() else "Watch the float. A quick lift sets the hook."
+				message = "Drift naturally. Sweep upstream against the current to mend." if is_fly_fishing() else "Retrieve the lure; lift on a strike." if is_lure_fishing() else "Watch the quiver tip. Lift on a bite." if is_feeder_fishing() else "Watch the float. A quick lift sets the hook."
 		State.WAITING:
-			if is_feeder_fishing():
+			if is_lure_fishing():
+				if _retrieve_empty_line(delta,reel):return
+				timer-=delta*lure.work(delta,reel,rod_lift,bait,Fly.river(location_id))
+			elif is_feeder_fishing():
 				if _retrieve_empty_line(delta,reel):return
 				if reel>.03:feeder.age=maxf(0,feeder.age-delta*2);return
 				var sector:=population.sector_for(location_id,cast_position)
@@ -650,6 +662,7 @@ func _check_line_failure(delta: float) -> bool:
 func reset() -> void:
 	fly_reel_penalty=false
 	feeder.reset()
+	lure.reset()
 	fly.reset()
 	_reset_submerge()
 	state = State.READY

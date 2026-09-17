@@ -72,6 +72,7 @@ func observe(peer:int,data:Dictionary)->bool:
  var index:int=data.species
  if index not in Fish.species_for_location(data.location):return false
  if attempt.rig==1 and (not Fish.Feeder.supported(data.location) or index not in Fish.Feeder.POOLS[data.location] and index!=Fish.WELS):return false
+ if attempt.rig==2 and (not Fish.Lure.supported(data.location) or index not in Fish.Lure.POOLS[data.location] and index not in [Fish.WELS,Fish.BRONZE_WHALER]):return false
  var species:Dictionary=Fish.SPECIES[index]
  var ratio:float=float(data.length)/float(species.length)
  if not is_finite(ratio) or ratio<.8499 or ratio>1.1501:return false

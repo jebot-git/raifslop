@@ -97,7 +97,7 @@ func _process(delta: float) -> void:
 		rendered[key]=rendered[key].lerp(target[key],blend)
 	head.global_transform=rendered.head
 	left.global_transform=rendered.left; right.global_transform=rendered.right
-	rod_visual.equip(target.rod_tier,Fish.Fly.river(target.location) and target.rig==0,target.rig==1)
+	rod_visual.equip(target.rod_tier,Fish.Fly.river(target.location) and target.rig==0,target.rig==1,target.rig==2)
 	rod_visual.update_tip(target.state,Time.get_ticks_msec()/1000.0)
 	rod_visual.set_folded(preload("res://scripts/rod_holster.gd").remote_stowed(target))
 	rod_visual.crank.rotation.x=lerp_angle(rod_visual.crank.rotation.x,target.reel_angle,blend)
@@ -110,8 +110,9 @@ func _process(delta: float) -> void:
 	float_mesh.visible=target.bobber_visible and not target.caught
 	float_mesh.scale=Vector3.ONE*(.32 if fly_mode else 1.0)
 	bait_visual.visible=target.bait_visible and not target.caught
-	bait_visual.set_bait(Fish.Feeder.BAIT_MODELS[target.bait] if target.rig==1 else clampi(target.bait,0,1) if fly_mode else target.bait,Fish.is_marine_location(target.location),fly_mode)
+	bait_visual.set_bait(Fish.Feeder.BAIT_MODELS[target.bait] if target.rig==1 else clampi(target.bait,0,1) if fly_mode else target.bait,Fish.is_marine_location(target.location),fly_mode,target.rig==2)
 	bait_visual.global_position=rendered.bait_position
+	bait_visual.pose_lure(rendered.tip-rendered.bobber,target.state in [Fish.State.WAITING,Fish.State.BITE,Fish.State.FIGHT])
 	fallback.global_position=rendered.feet
 	if is_instance_valid(avatar):
 		var body: Dictionary={}

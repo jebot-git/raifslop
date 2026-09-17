@@ -44,7 +44,8 @@ static func valid(data: Dictionary) -> bool:
 		if not data.get(key) is int: return false
 	if data.serial<0 or data.serial>2147483647 or data.state<0 or data.state>6 or data.bait<0 or data.bait>=Fish.BAITS.size() or data.species<0 or data.species>=Fish.SPECIES.size(): return false
 	if not data.get("location") is String or not Fish.LOCATION_SPECIES.has(data.location): return false
-	if data.rig not in [0,1]:return false
+	if not Fish.rig_supported(data.rig,data.location):return false
+	if data.rig==2 and data.bait>=Fish.Lure.BAIT_NAMES.size():return false
 	if data.rig==1 and (not Fish.Feeder.supported(data.location) or data.bait>=4):return false
 	for key in ["length","curl","reel_angle"]:
 		if not (data.get(key) is float or data.get(key) is int) or not is_finite(data[key]): return false
