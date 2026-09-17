@@ -23,6 +23,8 @@ uniform bool protect_panorama_foreground = false;
 uniform bool replace_near_jetty = false;
 uniform bool coastal_foreground = false;
 uniform bool beach_sides = false;
+uniform bool align_beach_projection = false;
+uniform vec3 shore_projection_origin = vec3(0.0,1.65,.65);
 uniform bool coastal_shallows = false;
 uniform bool sheltered_cove = false;
 // Authored in panorama UVs: only clear open water may receive animated reflections.
@@ -104,9 +106,20 @@ void fragment() {
 		*(1.0-smoothstep(-5.0,-2.0,world_position.z)) : 0.0;
 	if (beach_sides) {
 		// Keep the central animated water; join photographed surf sooner along the sides.
-		distant=max(distant,smoothstep(3.5,9.0,abs(world_position.x))*smoothstep(4.0,14.0,distance_to_view));
+		float side_blend=smoothstep(3.5,9.0,abs(world_position.x));
+		if(align_beach_projection && world_position.x<0.0){
+			// Match the sand apron instead of exposing the photographed beach
+			// several metres before the authored ground reaches its blend.
+			side_blend=smoothstep(10.5,22.0,-world_position.x);
+		}
+		distant=max(distant,side_blend*smoothstep(4.0,14.0,distance_to_view));
 	}
 	vec3 photograph = panorama_sample(sky_inverse * incident, true) * sky_energy;
+	if(align_beach_projection){
+		float shore_weight=smoothstep(4.0,12.0,-world_position.x)*(1.0-smoothstep(40.0,65.0,distance_to_view));
+		vec3 shore_ray=normalize(world_position-shore_projection_origin);
+		photograph=mix(photograph,panorama_sample(sky_inverse*shore_ray,true)*sky_energy,shore_weight);
+	}
 	if (protect_panorama_foreground) {
 		vec2 uv = panorama_uv(sky_inverse * incident);
 		vec4 r = panorama_water_region;
@@ -119,6 +132,11 @@ void fragment() {
 		// Keep it dry; only the front-facing obsolete rails need replacement.
 		near_jetty *= 1.0-smoothstep(.32,.65,incident.x);
 		if (replace_near_jetty) {
+			// The maintenance bridge crosses a rear basin, not a concrete apron.
+			// World-space coverage is stable between eyes and stops at the quay wall.
+			float rear_basin=smoothstep(3.5,5.0,world_position.z)*(1.0-smoothstep(12.0,18.0,world_position.z));
+			rear_basin*=1.0-smoothstep(9.0,20.0,abs(world_position.x));
+			near_jetty=max(near_jetty,rear_basin);
 			// Hide the old photographic floor/rail immediately below the 3D head,
 			// while retaining the right walkway once it leaves that footprint.
 			near_jetty=max(near_jetty,(1.0-smoothstep(3.8,5.8,distance_to_view))*smoothstep(.60,.65,uv.y));
@@ -158,7 +176,17 @@ void fragment() {
 		// Reveal the actual submerged sand at the contact edge. Depth comes from
 		// the authored slope, so the transition follows the irregular shoreline.
 		float depth=max(0.0,world_position.y-under_world.y);
-		float sand_edge=smoothstep(.015,.38,depth);
+		float shallow_span=mix(.38,1.05,align_beach_projection ? smoothstep(6.0,16.0,-world_position.x) : 0.0);
+		float sand_edge=smoothstep(.015,shallow_span,depth);
 		ALPHA*=mix(sand_edge,1.0,smoothstep(18.0,24.0,distance_to_view));
+		// Low, broken wash follows the real submerged slope, in world space.
+		// Broad derivative-filtered edges avoid sparkling subpixel foam in VR.
+		float wash_depth=.13+.065*sin(TIME*.65+world_position.x*.35);
+		float width=max(.035,fwidth(depth)*1.5);
+		float wash=1.0-smoothstep(width,width+.065,abs(depth-wash_depth));
+		float breakup=smoothstep(-.45,.7,sin(world_position.x*7.0+micro.x*2.0)+sin(world_position.z*9.0-TIME*.35));
+		wash*=breakup*(1.0-smoothstep(8.0,19.0,distance_to_view))*(1.0-distant)*.30;
+		ALBEDO=mix(ALBEDO,vec3(.48,.52,.49)*sky_energy,wash);
+		ALPHA=max(ALPHA,wash*.7);
 	}
 }

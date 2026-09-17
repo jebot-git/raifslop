@@ -24,8 +24,10 @@ static func create(id: String) -> Node3D:
 	if id in ["lakeside", "gray_pier", "bell_park_pier"]:
 		slope_distant_land(visual)
 	if id=="simons_town_rocks":coastal_footings(visual)
+	if id=="fish_hoek_beach":extend_hoek_sand(visual)
 	if id in ["lake_pier","simons_town_rocks"]:ground_pier_cleat(visual,id)
 	repair_bench_supports(visual,id)
+	preload("res://scripts/retired_shore_details.gd").apply(visual,id)
 	prepare_lighting(visual, id)
 	if preload("res://scripts/locations.gd").find_location(id).get("sand_shore",false):
 		# Cast/landing rays must see the curved sand slope, not only the flat
@@ -69,6 +71,7 @@ static func create(id: String) -> Node3D:
 	life.configure(id)
 	var details=preload("res://scripts/shore_details.gd").create(id)
 	if details!=null:root.add_child(details)
+	preload("res://scripts/shore_dressing.gd").add_to(root,id)
 	return root
 
 static func ground_pier_cleat(root: Node3D, id: String = "lake_pier") -> void:
@@ -180,11 +183,10 @@ static func prepare_lighting(node: Node, id: String) -> void:
 			var source := node.get_active_material(index) as StandardMaterial3D
 			if source == null: continue
 			if source.resource_name.begins_with("FG_rope"):
-				# One consistent tan across spans and coils, including older baked models.
-				# Tiny atlas islands and faceted tube lighting must not stripe the rope.
-				var rope := StandardMaterial3D.new()
-				rope.albedo_color = Color("9b8158")
-				rope.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				# Spans share the new coil's fibre treatment; old floor coils were removed.
+				var rope := ShaderMaterial.new()
+				rope.shader=preload("res://assets/environment/shore_details/authored/fibres.gdshader")
+				rope.set_shader_parameter("rope",true)
 				node.set_surface_override_material(index, rope)
 				continue
 			if baked:
@@ -225,6 +227,7 @@ static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := 
 	var blend := ShaderMaterial.new()
 	blend.shader = preload("res://assets/environment/harbour_ground.gdshader")
 	blend.set_shader_parameter("authored_bridge",root.get_meta("location_id","")=="lake_pier")
+	blend.set_shader_parameter("far_projection_fade",root.get_meta("location_id","")=="fish_hoek_beach")
 	blend.set_shader_parameter("ground_bounds", bounds)
 	blend.set_shader_parameter("transition_width", transition_width)
 	blend.set_shader_parameter("projection_origin", root.get_meta("spawn",Vector3(0,.02,.65))+Vector3.UP*1.63)
@@ -242,4 +245,27 @@ static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := 
 			if not source: continue
 			if str(node.name).contains("BakedForeground") and root.get_meta("location_id","")=="lake_pier":
 				if not source.resource_name.begins_with("FG_concrete"):continue
-			if mat: mat.next_pass = blend
+			if mat is ShaderMaterial and root.get_meta("location_id","")=="fish_hoek_beach" and source.resource_name.begins_with("FG_sand"):
+				mat.set_shader_parameter("ground_projection",true)
+				for setting in ["ground_bounds","transition_width","projection_origin","panorama","sky_inverse","sky_energy","detail_strength","vibrance","shadow_lift"]:
+					mat.set_shader_parameter(setting,blend.get_shader_parameter(setting))
+			elif mat: mat.next_pass = blend
+
+static func extend_hoek_sand(root:Node3D)->void:
+	# The photographed strand bends towards the sea down the left side. Extend
+	# the submerged toe and sand apron together outside the playable footprint.
+	for node in root.find_children("*","MeshInstance3D",true,false):
+		var rebuilt:=ArrayMesh.new()
+		for surface in node.mesh.get_surface_count():
+			var mat:Material=node.mesh.surface_get_material(surface)
+			var arrays:Array=node.mesh.surface_get_arrays(surface)
+			if mat and mat.resource_name.begins_with("FG_sand"):
+				var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+				for i in vertices.size():
+					var p:Vector3=vertices[i]
+					var bend:float=smoothstep(10.0,40.0,-p.x)*22.0
+					p.z-=bend*(1.0-smoothstep(0.0,10.0,p.z));vertices[i]=p
+				arrays[Mesh.ARRAY_VERTEX]=vertices
+			rebuilt.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+			rebuilt.surface_set_material(rebuilt.get_surface_count()-1,mat)
+		node.mesh=rebuilt

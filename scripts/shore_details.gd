@@ -51,6 +51,7 @@ static func create(id:String)->Node3D:
   var ground:=ShaderMaterial.new();ground.shader=preload("res://assets/environment/shore_details/ground_cover.gdshader")
   ground.set_shader_parameter("cover",load("res://assets/environment/rivers/river_bank.png"));ground.set_shader_parameter("strength",.45 if id=="gray_pier" else .6)
   patch.material_override=ground;patch.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;root.add_child(patch)
+ if id=="lakeside":add_lakeside_reeds(root)
  return root
 
 static func remove_old_seed_heads(node:MeshInstance3D):
@@ -72,3 +73,14 @@ static func remove_old_seed_heads(node:MeshInstance3D):
   mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
   mesh.surface_set_material(mesh.get_surface_count()-1,mat)
  node.mesh=mesh
+
+static func add_lakeside_reeds(root:Node3D):
+ var multi:=MultiMesh.new();multi.transform_format=MultiMesh.TRANSFORM_3D;multi.use_custom_data=true;multi.mesh=crossed_mesh(false,3);multi.instance_count=8
+ for i in 8:
+  var at:=Vector3(-6.2 if i<4 else 6.2,-.6,-3.25-(i%4)*.48)
+  multi.set_instance_transform(i,Transform3D(Basis(Vector3.UP,i*.71).scaled_local(Vector3(.7,1.05+(i%3)*.12,.7)),at))
+  multi.set_instance_custom_data(i,Color(.9,0,0,1))
+ var visual:=MultiMeshInstance3D.new();visual.name="NaturalLakesideReeds";visual.multimesh=multi
+ var mat:=ShaderMaterial.new();mat.shader=SHADER
+ mat.set_shader_parameter("foliage",load("res://assets/environment/shore_details/lakeshore_reeds.png"));mat.set_shader_parameter("exposure",.45);mat.set_shader_parameter("sway",.009)
+ visual.material_override=mat;visual.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;root.add_child(visual)

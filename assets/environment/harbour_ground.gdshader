@@ -2,6 +2,7 @@ shader_type spatial;
 render_mode unshaded, depth_draw_never, shadows_disabled;
 #include "res://shaders/panorama_sampling.gdshaderinc"
 uniform bool authored_bridge = false;
+uniform bool far_projection_fade = false;
 uniform mat3 sky_inverse = mat3(1.0);
 uniform float sky_energy = 1.0;
 uniform vec4 ground_bounds = vec4(0.0,3.0,5.0,6.0);
@@ -24,5 +25,10 @@ void fragment() {
 	// A fixed photographic viewpoint binds the texture to the actual ground.
 	// Per-eye VIEW rays instead make that ground appear infinitely far away in VR.
 	vec3 incident = normalize(world_position-projection_origin);
+	if(far_projection_fade){
+		float far_blend=smoothstep(45.0,85.0,length(world_position.xz-projection_origin.xz));
+		vec3 sky_ray=-normalize(mat3(INV_VIEW_MATRIX)*VIEW);
+		incident=normalize(mix(incident,sky_ray,far_blend));
+	}
 	ALBEDO = panorama_sample(sky_inverse*incident,true)*sky_energy;
 }

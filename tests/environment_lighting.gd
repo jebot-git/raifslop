@@ -22,7 +22,7 @@ func run():
    valid_uv=valid_uv and arrays[Mesh.ARRAY_TEX_UV2]!=null and arrays[Mesh.ARRAY_TEX_UV2].size()==arrays[Mesh.ARRAY_VERTEX].size()
    var mat=mesh.get_active_material(i)
    if mesh.mesh.surface_get_material(i).resource_name.begins_with("FG_rope"):
-    check(mat is StandardMaterial3D and mat.shading_mode==BaseMaterial3D.SHADING_MODE_UNSHADED and mat.albedo_color==Color("9b8158"),"Rope has uniform tan without baked stripes: "+entry.id)
+    check(mat is ShaderMaterial and mat.shader.resource_path.ends_with("fibres.gdshader") and mat.get_shader_parameter("rope")==true,"Rope spans share textured coil fibres: "+entry.id)
     continue
    check(mat is ShaderMaterial and mat.get_shader_parameter("irradiance_tex")!=null and mat.get_shader_parameter("occlusion_tex")!=null,"Baked material atlases bound: "+entry.id+"/"+str(i))
    normals=normals or mat.get_shader_parameter("normal_tex")!=null

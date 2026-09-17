@@ -1,5 +1,15 @@
 shader_type spatial;
 render_mode ambient_light_disabled;
+#include "res://shaders/panorama_sampling.gdshaderinc"
+// Hoek's sand/photo blend must write opaque depth before shallow water.
+uniform bool ground_projection = false;
+uniform mat3 sky_inverse = mat3(1.0);
+uniform float sky_energy = 1.0;
+uniform vec4 ground_bounds = vec4(0.0,3.0,5.0,6.0);
+uniform vec3 projection_origin = vec3(0.0,1.65,.65);
+uniform vec2 transition_width = vec2(6.0);
+varying vec3 world_position;
+void vertex() { world_position=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz; }
 uniform sampler2D albedo_tex : source_color, hint_default_white, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D rough_tex : hint_default_white, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D normal_tex : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
@@ -34,6 +44,15 @@ void fragment() {
  vec3 detail_normal=normalize(TANGENT*detail.x+BINORMAL*detail.y+NORMAL*detail.z);
  float response=clamp((max(dot(detail_normal,sun_view),0.0)+.2)/(max(dot(NORMAL,sun_view),0.0)+.2),.75,1.25);
  EMISSION=base*(min(sky,total)+max(total-sky,vec3(0.0))*response)*ao*bake_energy;
+ if (ground_projection) {
+  vec2 outside_ground=max(abs(world_position.xz-ground_bounds.xy)-ground_bounds.zw,vec2(0.0));
+  float photo_weight=max(smoothstep(.5,transition_width.x,outside_ground.x),smoothstep(.5,transition_width.y,outside_ground.y));
+  vec3 incident=normalize(world_position-projection_origin);
+  float far_blend=smoothstep(45.0,85.0,length(world_position.xz-projection_origin.xz));
+  incident=normalize(mix(incident,-normalize(mat3(INV_VIEW_MATRIX)*VIEW),far_blend));
+  EMISSION=mix(EMISSION,panorama_sample(sky_inverse*incident,true)*sky_energy,photo_weight);
+  ROUGHNESS=mix(ROUGHNESS,1.0,photo_weight);
+ }
  AO=ao;
  AO_LIGHT_AFFECT=.1;
 }

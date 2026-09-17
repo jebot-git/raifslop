@@ -90,6 +90,7 @@ static func create(id:String)->Node3D:
  add_margin_reeds(root,rng)
  batch_cards(shrubs,shrub_texture,3)
  batch_cards(trees,tree_texture,2)
+ preload("res://scripts/shore_dressing.gd").add_to(root,id)
  return root
 static func ground_height(x:float,z:float,far:bool)->float:
  # Match the authored terrain triangles, including their linear interpolation.

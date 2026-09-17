@@ -104,3 +104,74 @@ release's required overhead backswing. Catch captures go to `test-results/xr/`.
 All-ten-environment native stereo validation passes 213 checks, with sixty eye
 captures across thirty standing, seated and side viewpoints. Physical headset
 comfort and sustained standalone GPU performance still require device testing.
+
+## Shore dressing follow-up — 17 September 2026
+
+Natural shores and both rivers now have forked driftwood and irregular scan-based
+pebble patches; piers have authored mooring coils. Blender sources include baked
+vertex AO. Wood grain follows the trunk, end caps have separate UVs, and the
+shader supplies filtered fibre normals and roughness. Existing rope spans use
+the same material treatment. Added prop lighting has a bounded diffuse response
+to the relative HDR suns, avoiding clipped white wood beside baked scenery.
+The custom light stage follows [Godot's spatial shader contract](https://docs.godotengine.org/en/stable/tutorials/shaders/shader_reference/spatial_shader.html#light-built-ins).
+
+Older floor coils, coarse Lakeside grass/reed triangles and the primitive inland
+Tidal Strand trunks are removed from runtime mesh batches. Replacement reed
+cutouts are rooted below the waterline. Support timbers, rail spans, collision,
+UVs and the remaining baked surfaces are preserved.
+
+Placement reserves expanded footprints around vegetation, rocks, benches and
+rails. Pebbles avoid both the driftwood and each other. The small lily patches
+at Lakeside, Gray Pier and Bell Park also use separated leaves; their geometric
+slits, vein shading and gentle bobbing do not use transparent billboards.
+Props remain outside the central casting lane. Decorative assets add no physics
+barriers. Shared meshes use at most four dressing batches per location, plus one
+replacement reed batch at Lakeside; contact shadows use small local planes.
+
+Coastal wash follows the actual shallow submerged geometry. It uses the existing
+depth sample, broad filtered edges and distance fading; absent depth still leaves
+the ocean opaque. This adds no full-screen pass or additional reflection capture.
+
+Run `tests/shore_dressing.gd -- --capture` with a real renderer to inspect all ten
+locations and validate ground contact, spacing, UV/tangent/AO data and removal of
+old coils. Images are written under `test-results/shore-dressing/`. Rebuild the
+Blender assets with `blender --background --python tools/build_shore_dressing.py`.
+Small new props use their own vertex AO and local contact shading; they do not
+change the existing bank geometry or require regeneration of the bank lightmaps.
+
+Pebble deposits now have uneven clusters offset from the logs, with sparse
+outliers and varied size/orientation. They no longer trace a ring around the
+reserved log footprint. The final all-location GPU placement suite passes
+679 checks, including decoration clearance and ground contact.
+
+Hoek's left sand apron and submerged toe curve towards the sea outside the
+playable footprint. The left seawall parallax extends to 125 degrees. Ground
+and water share a photographic anchor near the shoreline and transition back
+to the sky at distance. Sand blends the photograph in its opaque baked material;
+a transparent next pass was being cut off by water depth, exposing a hard
+triangular seam. Existing UV/lightmap coordinates and walkable elevations are
+retained. `tests/hoek_transition.gd -- --capture` checks the extension, opaque
+blend and travel reset, with standing, seated, left-edge and rear-left captures.
+
+Review captures: [river dressing](locations/meadow_bend_dressing.png),
+[pier rope](locations/gray_pier_dressing.png),
+[lily detail](locations/lakeside_lilies.png), and
+[Hoek left shoreline](locations/hoek_left_transition.png).
+
+Lake Pier's rear basin now has animated water beneath and beside the maintenance
+bridge. The old flat concrete apron is removed by triangle selection, retaining
+the landing and bridge's original geometry and UVs. The photographed harbour
+wall uses a vertical projection at the bridge end; its submerged skirt yields
+to water. Coverage is anchored in world space for both eyes, then fades towards
+the distant harbour. This uses the existing water draw and reduces apron geometry.
+Compare [previous bridge](locations/lake_pier_bridge_before.png) with the
+[water replacement](locations/lake_pier_bridge_water.png) and
+[rear quay view](locations/lake_pier_rear_water.png).
+
+Final native OpenXR checks pass for Hoek (11 checks, eight eye captures) and
+Lake Pier (8 checks, eight eye captures), including seated and shifted views.
+All-location dressing checks pass 679 assertions; lighting, locations, scenery
+repairs, shore transitions, aiming grid, retrieval and absent-depth water
+coverage tests pass. Synthetic OpenXR still reports its existing session-stop
+and interaction-profile teardown warnings. Physical headset comfort and
+standalone frame time remain device-validation work.

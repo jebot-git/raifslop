@@ -1240,6 +1240,8 @@ func _select_location(id: String, persist := true) -> bool:
 	water_material.set_shader_parameter("replace_near_jetty",id=="lake_pier")
 	water_material.set_shader_parameter("coastal_foreground",id=="simons_town_rocks")
 	water_material.set_shader_parameter("beach_sides",entry.get("beach_sides",false))
+	water_material.set_shader_parameter("align_beach_projection",id=="fish_hoek_beach")
+	water_material.set_shader_parameter("shore_projection_origin",foreground.get_meta("spawn")+Vector3.UP*1.63)
 	water_material.set_shader_parameter("coastal_shallows",entry.get("coastal_shallows",false))
 	water_material.set_shader_parameter("sheltered_cove",id=="secluded_beach")
 	water_material.set_shader_parameter("panorama_water_region",entry.get("panorama_water_region",Vector4(0,1,0,1)))

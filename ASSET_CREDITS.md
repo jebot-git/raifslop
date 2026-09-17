@@ -155,3 +155,16 @@ Blender reconstruction and baked normal maps. No third-party artwork copied.
 [exact prompts](docs/marine_expansion_prompts.json),
 [asset checksums](docs/marine_expansion_assets.json).
 Packed source: `source/marine_expansion.blend`.
+
+## Shore dressing — 17 September 2026
+
+- Forked driftwood and mooring coil: original Blender meshes authored through
+  Blender MCP, with deterministic hemisphere-ray vertex AO and explicit end-cap
+  UVs. Editable source: `source/shore_dressing.blend`; rebuild:
+  `tools/build_shore_dressing.py`. Runtime grain/fibre shaders are original.
+- Driftwood reuses the already credited weathered timber texture. Shore pebble
+  instances reuse the credited Poly Haven Boulder 01 proxy, atlas and AO; no new
+  downloaded assets or license dependencies.
+- Lily-pad geometry, veins, motion, contact shadows and shallow coastal wash are
+  authored procedurally in the project. Existing credited reed cutouts replace
+  the older primitive Lakeside reeds.
