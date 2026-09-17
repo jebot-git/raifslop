@@ -8,6 +8,7 @@ var left: XRController3D
 var right: XRController3D
 var xr := false
 var blocked := false
+var turn_reserved:=false
 var tracking_focused := true
 var catch_controls := false
 var smooth_turn := false
@@ -78,6 +79,9 @@ func _physics_process(delta: float) -> void:
 		stick = Vector2.ZERO
 		turn_axis = 0.0
 		velocity = Vector3.ZERO
+	if turn_reserved:
+		if absf(turn_axis)<.2 and (not xr or not right.is_button_pressed("primary_click")):turn_reserved=false
+		turn_axis=0
 	apply_turn_input(turn_axis, delta)
 	var forward := -head.global_basis.z
 	forward.y = 0.0

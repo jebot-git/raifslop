@@ -64,6 +64,7 @@ func run() -> void:
 					game.fish_display.transform=Transform3D(Basis(Vector3.FORWARD,-PI/2),Vector3(.4,1.25,-.5))
 				if frame==200: game.catch_in_hand=true
 				if frame==330: game.fish_display.visible=false; game.game.state=game.Session.State.READY
+				if frame==350:game._select_rig(1);game._select_bait(1)
 				game.bobber.position=Vector3(0,0,-10)
 				game._update_line()
 				net.voice.send_packet(Fixture.packet(enc,frame*960))
@@ -98,11 +99,12 @@ func run() -> void:
 					if s.head.origin.x>.3 and s.motion.x==.5: observations.movement=true
 				if net.fighters.has(sender):
 					var remote=net.fighters[sender]
+					if remote.feeder_visual.visible and remote.rod_visual.feeder_mode and not remote.float_mesh.visible and remote.bait_visual.selected==1:observations.feeder=true
 					if not remote.avatar_hash.is_empty(): observations.avatar=true
 					if remote.float_mesh.visible and remote.bait_visual.visible and remote.bait_visual.selected==2:
 						observations.tackle=true
 				await create_timer(.02).timeout
-			for key in (["catch","hand","release","movement","avatar","body","fingers","face","visemes","tackle"] if role=="late" else ["casting","catch","hand","release","movement","avatar","body","fingers","face","visemes","tackle"]): check(observations.has(key),"Remote "+key)
+			for key in (["catch","hand","release","movement","avatar","body","fingers","face","visemes","tackle","feeder"] if role=="late" else ["casting","catch","hand","release","movement","avatar","body","fingers","face","visemes","tackle","feeder"]): check(observations.has(key),"Remote "+key)
 			check(net.voice.decoded_packets>20 and net.voice.decoded_peak>.01,"Real Opus voice decoded with audible signal")
 			check(game.game.journal==baseline,"Remote catches never write local Fish Guide")
 			if net.fighters.has(sender):

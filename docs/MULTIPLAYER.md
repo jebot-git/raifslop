@@ -71,4 +71,4 @@ Latest accepted avatar selection wins. Superseded transfers are cancelled; rejec
 
 ## Server accomplishments and separate binary
 
-Protocol 6 adds persistent player identities and host-owned accomplishment rankings. See [dedicated server and leaderboard details](DEDICATED_SERVER.md). The menu header now opens Leaderboard; controls are in the [HTML manual](MANUAL.html).
+Protocol 7 adds persistent player identities and host-owned accomplishment rankings. See [dedicated server and leaderboard details](DEDICATED_SERVER.md). The menu header now opens Leaderboard; controls are in the [HTML manual](MANUAL.html).

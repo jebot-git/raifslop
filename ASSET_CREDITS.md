@@ -170,3 +170,5 @@ Packed source: `source/marine_expansion.blend`.
   the older primitive Lakeside reeds.
 
 Original quiet-interface pictograms (`assets/ui/pictograms/*.svg`) were authored for this project on 17 September 2026. No external icon font or image assets are used.
+
+Feeder cage, groundbait texture, flexible tip and feeder rod variants are original project assets, authored with Blender and procedural mesh tooling (`tools/build_feeder.py`, `tools/build_rods.py`, `scripts/feeder_tip.gd`). Sources: `source/feeder.blend` and `source/rods.blend`. The feeder menu symbol is original SVG artwork. No third-party asset licensing or attribution is required for these additions.

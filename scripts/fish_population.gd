@@ -87,12 +87,12 @@ func weight(id: String, species: int, sector: int, rarity: float) -> float:
 	var presence := 1.0 if stock.sector == sector else .08
 	return presence * pow(stock.abundance, 2.0) / rarity
 
-func choose(id: String, preferred: Array, sector: int, species: Array, roll_rng: RandomNumberGenerator) -> int:
+func choose(id: String, preferred: Array, sector: int, species: Array, roll_rng: RandomNumberGenerator, eligible:Array=[]) -> int:
 	var off_bait: Array = []
 	for index in waters[id]:
-		if index not in preferred: off_bait.append(index)
+		if index not in preferred and (eligible.is_empty() or index in eligible): off_bait.append(index)
 	var pool: Array = off_bait if not off_bait.is_empty() and roll_rng.randf() < OFF_BAIT_CHANCE else preferred
-	if pool.is_empty(): pool = waters[id].keys()
+	if pool.is_empty(): pool = eligible if not eligible.is_empty() else waters[id].keys()
 	var total := 0.0
 	for index in pool: total += weight(id, index, sector, species[index].rarity)
 	var roll := roll_rng.randf() * total

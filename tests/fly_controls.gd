@@ -39,7 +39,7 @@ func run()->void:
    var before:float=g.crank.rotation.x
    var raw_rod:Transform3D=g.right.transform*g.rod_holster.HELD_POSE
    var a:float=g.reel_tracker.previous_angle+.16
-   pose(0,raw_rod*(g.crank.position+Vector3(.0385,cos(a)*.039,sin(a)*.039)-g.reel_tracking_offset));await settle()
+   pose(0,raw_rod*(g.crank.position+Vector3(-.0105,cos(a)*.039,sin(a)*.039)-g.reel_tracking_offset));await settle()
    check(absf(g.crank.rotation.x-before)>.1 and g.game.fly_reel_penalty,"Actual fly-crank motion winds and applies fighting-fish strain")
    trackers[0].set_input(input,0.0);await settle()
    check(not g.reel_tracker.engaged,"Release frees fly reel")

@@ -18,7 +18,7 @@ func run():
  check(net.join("127.0.0.1",int(args[1]))==OK,"Connect")
  check(await wait_for(func():return net.active and not net.leaderboard_view.is_empty()),"Handshake and server standings")
  if role=="writer":
-  var d:Dictionary={"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"serial":0,"location":"lakeside","rod_tier":0,"reel_angle":0.0,"state":0,"bait":0,"species":0,"length":Net.State.Fish.SPECIES[0].length*1.14,"caught":false,"in_hand":false,"xr":false,"left_valid":true,"right_valid":true,"bobber_visible":true,"bait_visible":true,"curl":0.0}
+  var d:Dictionary={"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"serial":0,"location":"lakeside","rod_tier":0,"rig":0,"reel_angle":0.0,"state":0,"bait":0,"species":0,"length":Net.State.Fish.SPECIES[0].length*1.14,"caught":false,"in_hand":false,"xr":false,"left_valid":true,"right_valid":true,"bobber_visible":true,"bait_visible":true,"curl":0.0}
   for key in Net.State.TRANSFORMS:d[key]=Transform3D.IDENTITY
   for key in Net.State.VECTORS:d[key]=Vector3.ZERO
   check(Net.State.valid(d),"Wire fixture validates")

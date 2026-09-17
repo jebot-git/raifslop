@@ -112,7 +112,7 @@ Meta avatar option research: [Quest and PC feasibility](docs/META_AVATARS_FEASIB
 
 ## Multiplayer and voice
 
-Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-6 server and clients.
+Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-7 server and clients.
 
 Run `./run.sh --server --port 24567` for a headless dedicated server. LAN/Internet connections use direct UDP; Internet hosts need port forwarding or a reachable server. See [setup, controls and limitations](docs/MULTIPLAYER.md) and [FPSloppa code reuse](docs/FPSLOPPA_REUSE.md).
 
@@ -180,3 +180,7 @@ asset-free Linux server with `python3 tools/build_server.py`; see
 [The tackle expansion study](docs/FISHING_EXPANSION.md) recommends bottom/feeder
 rigs and active lure retrieves first, then light rock, surf ledger and additional
 fly presentations. Proposed species remain gated by location and habitat.
+
+### Cage feeder rig
+
+Hold **right joystick press**, point left/right and release to select classic tackle or the feeder while ready to cast. The feeder uses a sinking cage, a short baited leader and a flexible quiver tip. Earthworm, sweetcorn, maggots and bread target local coarse species across four lakes and Meadow Bend. Desktop: hold **Tab** with Left/Right. [Methods, habitat distribution, assets and validation](docs/FEEDER_FISHING.md).

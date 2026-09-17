@@ -13,6 +13,7 @@ var rod_visual: Node3D
 var caught := Node3D.new()
 var float_mesh: MeshInstance3D
 var bait_visual: Node3D
+var feeder_visual:Node3D
 var label := Label3D.new()
 var line := ImmediateMesh.new()
 var target: Dictionary = {}
@@ -30,6 +31,7 @@ func _ready() -> void:
 	rod.add_child(rod_visual)
 	rod_visual.equip(0)
 	float_mesh=preload("res://scripts/bobber_visual.gd").new();add_child(float_mesh);float_mesh.hide()
+	feeder_visual=load("res://assets/models/rods/cage_feeder.glb").instantiate();add_child(feeder_visual);feeder_visual.hide()
 	bait_visual=preload("res://scripts/bait_visual.gd").new();add_child(bait_visual);bait_visual.hide()
 	game.mesh_node(line,self,Vector3.ZERO,game.material(Color("d8f5e5")))
 	# Visible while a custom VRM is transferring; never creates a local camera.
@@ -95,17 +97,20 @@ func _process(delta: float) -> void:
 		rendered[key]=rendered[key].lerp(target[key],blend)
 	head.global_transform=rendered.head
 	left.global_transform=rendered.left; right.global_transform=rendered.right
-	rod_visual.equip(target.rod_tier,Fish.Fly.river(target.location))
+	rod_visual.equip(target.rod_tier,Fish.Fly.river(target.location) and target.rig==0,target.rig==1)
+	rod_visual.update_tip(target.state,Time.get_ticks_msec()/1000.0)
 	rod_visual.set_folded(preload("res://scripts/rod_holster.gd").remote_stowed(target))
 	rod_visual.crank.rotation.x=lerp_angle(rod_visual.crank.rotation.x,target.reel_angle,blend)
 	rod.global_transform=rendered.rod; caught.global_transform=rendered.fish
 	caught.visible=target.caught
 	float_mesh.global_position=rendered.bobber
-	var fly_mode:bool=Fish.Fly.river(target.location)
+	var fly_mode:bool=Fish.Fly.river(target.location) and target.rig==0
+	feeder_visual.visible=target.rig==1 and target.bait_visible and not target.caught
+	feeder_visual.global_position=rendered.bobber
 	float_mesh.visible=target.bobber_visible and not target.caught
 	float_mesh.scale=Vector3.ONE*(.32 if fly_mode else 1.0)
 	bait_visual.visible=target.bait_visible and not target.caught
-	bait_visual.set_bait(clampi(target.bait,0,1) if fly_mode else target.bait,Fish.is_marine_location(target.location),fly_mode)
+	bait_visual.set_bait(Fish.Feeder.BAIT_MODELS[target.bait] if target.rig==1 else clampi(target.bait,0,1) if fly_mode else target.bait,Fish.is_marine_location(target.location),fly_mode)
 	bait_visual.global_position=rendered.bait_position
 	fallback.global_position=rendered.feet
 	if is_instance_valid(avatar):
@@ -131,7 +136,7 @@ func _draw_line() -> void:
 	line.clear_surfaces()
 	if target.caught or float_mesh.visible or bait_visual.visible:
 		line.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
-		if not target.caught and Fish.Fly.river(target.location):
+		if not target.caught and target.rig==0 and Fish.Fly.river(target.location):
 			line.surface_add_vertex(rod.to_global(Fish.Fly.LINE_OUTLET))
 			if target.in_hand:
 				var grip = avatar.hand_grip_pose(true) if is_instance_valid(avatar) else null

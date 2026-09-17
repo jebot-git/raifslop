@@ -52,6 +52,7 @@ var left: XRController3D
 var right: XRController3D
 var rod_holster: Node3D
 var rod_visual: Node3D
+var rig_radial:Node3D
 var rod: Node3D
 var tip: Node3D
 var crank: Node3D
@@ -284,6 +285,7 @@ func _build_rod() -> void:
 	rod_visual = preload("res://scripts/rod_visual.gd").new()
 	rod.add_child(rod_visual)
 	rod_visual.equip(game.tackle.equipped)
+	rig_radial=preload("res://scripts/ui/rig_radial.gd").new();add_child(rig_radial);rig_radial.setup(self)
 	crank = rod_visual.crank
 	tip = Node3D.new()
 	rod.add_child(tip)
@@ -333,8 +335,10 @@ func _load_player_preferences() -> void:
 	motor.smooth_turn_speed=clampf(float(speed),30,360) if (speed is float or speed is int) and is_finite(speed) else 75.0
 	var angle = cfg.get_value("controls","snap_turn_angle",30.0)
 	motor.snap_turn_angle=clampf(float(angle),15,90) if (angle is float or angle is int) and is_finite(angle) else 30.0
+	var saved_rig=cfg.get_value("tackle","rig",0)
+	game.rig=saved_rig if saved_rig is int and saved_rig in [0,1] else 0
 	var bait = cfg.get_value("tackle", "bait", 0)
-	game.bait = clampi(int(bait), 0, Session.BAITS.size()-1) if (bait is int or bait is float) and is_finite(bait) else 0
+	game.bait = clampi(int(bait), 0, game.bait_count()-1) if (bait is int or bait is float) and is_finite(bait) else 0
 
 func controller_pose(hand: int) -> Transform3D:
 	return (left.global_transform if hand == 0 else right.global_transform) * controller_calibration.pose(hand)
@@ -356,6 +360,7 @@ func _save_player_preferences() -> void:
 	cfg.set_value("controls", "smooth_turn_speed", motor.smooth_turn_speed)
 	cfg.set_value("controls", "snap_turn_angle", motor.snap_turn_angle)
 	cfg.set_value("tackle", "bait", game.bait)
+	cfg.set_value("tackle", "rig",game.rig)
 	var error := cfg.save("user://player.cfg")
 	if error != OK: push_warning("Cannot save player settings: " + error_string(error))
 
@@ -387,6 +392,11 @@ func _quit_game() -> void:
 	await get_tree().create_timer(.3).timeout
 	get_tree().quit()
 
+func _select_rig(value:int)->void:
+	if not game.select_rig(value):return
+	rod_visual.equip(game.tackle.equipped,game.is_fly_fishing(),game.is_feeder_fishing())
+	rod_status.update_bait();rod_status.show_bait();_update_line();hud.queue_redraw();_save_player_preferences()
+
 func _select_bait(index: int) -> void:
 	var previous: int = game.bait
 	game.select_bait(index)
@@ -395,6 +405,7 @@ func _select_bait(index: int) -> void:
 	hud.queue_redraw()
 
 func _left_button(button: String) -> void:
+	if rig_radial.opened:return
 	if is_instance_valid(shoulder_radio) and shoulder_radio.held:return
 	if fish_guide.held:
 		if button == "trigger_click": fish_guide.photo_camera.toggle(); return
@@ -410,6 +421,8 @@ func _left_button(button: String) -> void:
 		_primary_action()
 
 func _right_pressed(button: String) -> void:
+	if button=="primary_click":rig_radial.open();return
+	if rig_radial.opened and button!="by_button":return
 	if fish_guide.held:
 		if button == "trigger_click": fish_guide.photo_camera.capture()
 		elif button == "ax_button": fish_guide.photo_camera.toggle_selfie()
@@ -429,6 +442,8 @@ func _right_pressed(button: String) -> void:
 		_primary_action()
 
 func _right_released(button: String) -> void:
+	if button=="primary_click":rig_radial.close(true);return
+	if rig_radial.opened:return
 	if fish_guide.held: return
 	if menu_open:
 		if button == "trigger_click": _menu_click(false)
@@ -663,6 +678,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if menu_open:
 		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE: _toggle_avatar_menu()
 		return
+	if not xr and event is InputEventKey and event.keycode==KEY_TAB and not event.echo:
+		if event.pressed:rig_radial.open()
+		else:rig_radial.close(true)
+		return
+	if rig_radial.opened:return
 	if not xr and game.state==Session.State.READY and not rod_holster.stowed and event is InputEventKey and event.keycode==KEY_SPACE and not event.echo:
 		if event.pressed:
 			_begin_cast()
@@ -703,12 +723,13 @@ func _update_tracking_warning(delta: float) -> void:
 		hud.queue_redraw()
 
 func _process(delta: float) -> void:
-	if is_instance_valid(rod_visual): rod_visual.equip(game.tackle.equipped,game.is_fly_fishing())
+	if is_instance_valid(rod_visual): rod_visual.equip(game.tackle.equipped,game.is_fly_fishing(),game.is_feeder_fishing())
 	if server_only: return
 	rod_holster.update_holster()
 	fish_guide.update_device()
 	if is_instance_valid(tracking_manager): tracking_manager.sample(delta)
 	shoulder_radio.update()
+	rig_radial.update()
 	_update_tracking_warning(delta)
 	rod_visual.visible = true
 	rod.visible = rod_holster.stowed or not xr or right.get_has_tracking_data()
@@ -723,6 +744,8 @@ func _process(delta: float) -> void:
 	if fish_display.visible: catch_twitch.tick(delta)
 	_update_avatar(delta)
 	if avatar_loading: return
+	if rig_radial.opened:
+		casting=false;game.fly.charging=false;reel_tracker.engaged=false;_update_line();return
 	if fish_guide.held:
 		game.fly.charging=false;game.fly.release_strip(true)
 		fight_input.reset()
@@ -979,6 +1002,9 @@ func _append_fly_grip_line() -> void:
 	line_mesh.surface_add_vertex(rod.to_global(Session.Fly.LINE_GUIDE))
 
 func _update_line() -> void:
+	rod_visual.update_tip(game.state,time)
+	# Keep the tracked input anchor fixed: visual tip knocks must not set the hook.
+	var line_tip:Vector3=rod_visual.to_global(rod_visual.quiver.end) if game.is_feeder_fishing() else tip.global_position
 	_update_cast_aim()
 	if game.state!=Session.State.FIGHT and is_instance_valid(hooked_fish):hooked_fish.update(0)
 	var tension_color := Color("d8f5e5")
@@ -989,28 +1015,30 @@ func _update_line() -> void:
 	line_material.albedo_color = tension_color
 	var active: bool = game.state in [Session.State.CASTING, Session.State.WAITING, Session.State.BITE, Session.State.FIGHT]
 	var ready: bool = game.state == Session.State.READY and not rod_holster.stowed
-	bobber.visible = active or ready
+	bobber.visible = (active or ready) and not game.is_feeder_fishing()
+	rod_status.feeder_visual.visible=(active or ready) and game.is_feeder_fishing()
 	bobber.scale=Vector3.ONE*(.32 if game.is_fly_fishing() else 1.0)
 	if game.is_fly_fishing() and game.bait==0:bobber.hide()
 	if is_instance_valid(rod_status): rod_status.bait_visual.visible = ready or active
 	line_mesh.clear_surfaces()
 	if xr and game.state == Session.State.LANDED and fish_display.visible:
 		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
-		line_mesh.surface_add_vertex(tip.global_position)
+		line_mesh.surface_add_vertex(line_tip)
 		if catch_in_hand: line_mesh.surface_add_vertex(controller_pose(0).origin)
 		line_mesh.surface_add_vertex(fish_display.to_global(_catch_mouth()))
 		line_mesh.surface_end()
 		return
 	if ready:
-		bobber.global_position = tip.global_position + Vector3.DOWN * .30
+		bobber.global_position = line_tip + Vector3.DOWN * .30
+		rod_status.feeder_visual.global_position=bobber.global_position
 		rod_status.bait_visual.global_position = bobber.global_position + Vector3.DOWN * .18
 		line_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
 		_append_fly_grip_line()
-		line_mesh.surface_add_vertex(tip.global_position)
+		line_mesh.surface_add_vertex(line_tip)
 		if game.is_fly_fishing() and game.fly.charging:
 			for i in 24:
 				var t:=i/23.0
-				line_mesh.surface_add_vertex(tip.global_position+Vector3(sin(t*TAU)*.5,sin(t*PI)*1.1,cos(game.fly.charge_age*5)*sin(t*PI)*3.0))
+				line_mesh.surface_add_vertex(line_tip+Vector3(sin(t*TAU)*.5,sin(t*PI)*1.1,cos(game.fly.charge_age*5)*sin(t*PI)*3.0))
 		line_mesh.surface_add_vertex(bobber.global_position)
 		line_mesh.surface_add_vertex(rod_status.bait_visual.global_position)
 		line_mesh.surface_end()
@@ -1034,7 +1062,11 @@ func _update_line() -> void:
 		bobber.position = cast_target + Vector3(0, sin(time * 3.0) * 0.025, 0)
 		if game.state == Session.State.BITE:
 			bobber.position.y -= 0.10 + sin(time * 22) * 0.05
-	if game.is_fly_fishing():
+	if game.is_feeder_fishing():
+		if game.state in [Session.State.WAITING,Session.State.BITE]:bobber.position.y=water_level-game.feeder.drop()
+		rod_status.feeder_visual.global_position=bobber.global_position
+		rod_status.bait_visual.global_position=bobber.global_position+Vector3(.16,-.055,0)
+	elif game.is_fly_fishing():
 		rod_status.bait_visual.global_position=bobber.global_position+Vector3.DOWN*(.4 if game.bait==1 else 0.0)
 		if game.state==Session.State.BITE and game.bait==0:rod_status.bait_visual.position.y-=.04
 	else:
@@ -1042,6 +1074,7 @@ func _update_line() -> void:
 	hooked_fish.update(0)
 	if game.jump_time>0:
 		bobber.hide()
+		rod_status.feeder_visual.hide()
 		rod_status.bait_visual.hide()
 	var line_end:Vector3=bobber.position
 	if game.jump_time>0 and hooked_fish.visible:line_end=hooked_fish.mouth_position()
@@ -1049,7 +1082,7 @@ func _update_line() -> void:
 	_append_fly_grip_line()
 	for i in range(25):
 		var t := i / 24.0
-		var p := tip.global_position.lerp(line_end, t)
+		var p := line_tip.lerp(line_end, t)
 		if game.is_fly_fishing():
 			if game.state==Session.State.CASTING:p.y+=sin(t*TAU)*sin((1.0-game.timer/.8)*PI)*1.1
 			elif game.state==Session.State.WAITING:p.x+=sin(t*PI)*(-(1.0-game.fly.drag)*.7+game.fly.mend_bend())
@@ -1259,6 +1292,7 @@ func _select_location(id: String, persist := true) -> bool:
 	game.location_id = id
 	game.location_name = entry.name
 	game.prepare_population()
+	if not game.Feeder.supported(id):game.rig=Session.Rig.CLASSIC
 	game.bait=clampi(game.bait,0,game.bait_count()-1)
 	game.fly.reset()
 	game.message="Hold trigger: sweep back, forward, release. Strip with left grip; mend upstream." if xr and game.is_fly_fishing() else "Hold SPACE briefly, release to cast. R strips line; LEFT mends upstream." if game.is_fly_fishing() else "Choose your bait, then cast into open water."
@@ -1274,6 +1308,7 @@ func _select_location(id: String, persist := true) -> bool:
 
 func _toggle_avatar_menu() -> void:
 	if avatar_loading: return
+	rig_radial.close()
 	menu_open = not menu_open
 	menu_filtered_position = Vector2(-1, -1)
 	if not menu_open: avatar_menu.close_overlays()

@@ -90,6 +90,9 @@ static func discovery_hint(index: int) -> Dictionary:
 	var bait: String = Session.MARINE_BAITS[species.bait] if habitat == "Sea" else Session.BAITS[species.bait]
 	if habitat == "River": bait = "Dry fly" if index in [12, 14] else "Nymph / wet fly"
 	if species.get("predator", false): bait = "Hooked coastal fish" if habitat == "Sea" else "Hooked freshwater fish"
+	if index in [1,3,4,5,8,13,16]:
+		habitat="River bottom" if index in [13,16] else "Lake / slow water"
+		bait="Feeder · "+("Worm / maggots" if index in [3,13,16] else "Sweetcorn / worm")
 	return {"habitat": habitat, "bait": bait}
 
 func ordered_entries() -> Array:

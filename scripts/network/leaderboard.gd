@@ -57,11 +57,11 @@ func observe(peer:int,data:Dictionary)->bool:
  var state:int=data.state
  if state==Fish.State.CASTING:
   if not attempts.has(peer) or attempts[peer].get("phase")!=state:
-   attempts[peer]={"phase":state,"location":data.location,"fought":false}
+   attempts[peer]={"phase":state,"location":data.location,"rig":data.get("rig",0),"bait":data.get("bait",0),"fought":false}
   return false
  if not attempts.has(peer):return false
  var attempt:Dictionary=attempts[peer]
- if data.location!=attempt.location or state in [Fish.State.READY,Fish.State.LOST]:attempts.erase(peer);return false
+ if data.location!=attempt.location or data.get("rig",0)!=attempt.rig or data.get("bait",0)!=attempt.bait or state in [Fish.State.READY,Fish.State.LOST]:attempts.erase(peer);return false
  if state==Fish.State.FIGHT:
   attempt.fought=true;attempt.species=data.species;attempt.phase=state;return false
  if state!=Fish.State.LANDED:return false
@@ -71,6 +71,7 @@ func observe(peer:int,data:Dictionary)->bool:
  if not attempt.fought or data.species!=attempt.species or not data.caught:return false
  var index:int=data.species
  if index not in Fish.species_for_location(data.location):return false
+ if attempt.rig==1 and (not Fish.Feeder.supported(data.location) or index not in Fish.Feeder.POOLS[data.location] and index!=Fish.WELS):return false
  var species:Dictionary=Fish.SPECIES[index]
  var ratio:float=float(data.length)/float(species.length)
  if not is_finite(ratio) or ratio<.8499 or ratio>1.1501:return false

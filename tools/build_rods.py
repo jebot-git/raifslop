@@ -9,13 +9,13 @@ ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'assets/models/rods';OUT.mkdir
 scenes=[]
 def p(v):return Vector((v[0],-v[2],v[1]))
 def material(name,color,metal=0,rough=.4):
- m=bpy.data.materials.new(name);m.diffuse_color=(*color,1);m.use_nodes=True;s=m.node_tree.nodes.get('Principled BSDF');s.inputs['Base Color'].default_value=(*color,1);s.inputs['Metallic'].default_value=metal;s.inputs['Roughness'].default_value=rough;return m
+ m=bpy.data.materials.new(name);m.diffuse_color=(*color,1);m.use_nodes=True;s=next(n for n in m.node_tree.nodes if n.type=='BSDF_PRINCIPLED');s.inputs['Base Color'].default_value=(*color,1);s.inputs['Metallic'].default_value=metal;s.inputs['Roughness'].default_value=rough;return m
 carbon=material('Satin graphite',(.022,.028,.03),.25,.36);rubber=material('Matte EVA',(.025,.026,.026),0,.78);steel=material('Brushed stainless',(.38,.41,.42),.85,.3);ceramic=material('Ceramic guide inserts',(.055,.06,.06),.12,.26);line=material('Wound nylon',(.26,.29,.23),0,.55)
 cork=material('Natural cork',(.5,.33,.18),0,.78)
 rng=np.random.default_rng(124);a=rng.random((512,1024));grain=(a>.987).astype(float)
 for _ in range(3):grain=np.maximum(grain,np.roll(grain,1,axis=1)*.85)
 c=np.zeros((512,1024,4),np.float32);base=np.array([.52,.35,.19]);c[:,:,:3]=base[None,None,:]*(.88+a[:,:,None]*.24-grain[:,:,None]*.5);c[:,:,3]=1
-im=bpy.data.images.new('Cork grain',width=1024,height=512);im.pixels.foreach_set(c.ravel());im.pack();t=cork.node_tree.nodes.new('ShaderNodeTexImage');t.image=im;cork.node_tree.links.new(t.outputs['Color'],cork.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+im=bpy.data.images.new('Cork grain',width=1024,height=512);im.pixels.foreach_set(c.ravel());im.pack();t=cork.node_tree.nodes.new('ShaderNodeTexImage');t.image=im;cork.node_tree.links.new(t.outputs['Color'],next(n for n in cork.node_tree.nodes if n.type=='BSDF_PRINCIPLED').inputs['Base Color'])
 def finish(o,name,mat):
  o.name=name;o.data.materials.append(mat)
  for f in o.data.polygons:f.use_smooth=True
@@ -36,16 +36,16 @@ def export(scene,name):
  for o in obs:o.select_set(True)
  bpy.context.view_layer.objects.active=obs[0];bpy.ops.object.join();bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
  bpy.ops.export_scene.gltf(filepath=str(OUT/(name+'.glb')),export_format='GLB',use_active_scene=True,export_animations=False)
-for variant in range(8):
- index=variant%4;fly=variant>=4
- name=['willow','reed','heron','kingfisher'][index]+('_fly' if fly else '')
+for variant in range(12):
+ index=variant%4;fly=4<=variant<8;feeder=variant>=8
+ name=['willow','reed','heron','kingfisher'][index]+('_fly' if fly else '_feeder' if feeder else '')
  scene=bpy.data.scenes.new('Rod_'+name);scenes.append(scene);bpy.context.window.scene=scene
  accent=material(name+' wraps',[(.18,.25,.10),(.48,.53,.56),(.65,.35,.075),(.025,.52,.66)][index],.5,.3)
  carbon=material(name+' blank',[(.028,.055,.018),(.025,.045,.075),(.20,.018,.03),(.01,.16,.23)][index],.4,.3)
  reel_metal=material(name+' reel finish',[(.07,.09,.05),(.38,.43,.47),(.45,.21,.055),(.04,.32,.43)][index],.75,.3)
  grip=cork if index in [0,2] else rubber
  # One continuous tapered carbon blank rather than thick segmented sticks.
- cylinder('Tapered carbon blank',(0,0,.19),(0,0,-1.68),.0065,carbon,.0009)
+ cylinder('Tapered carbon blank',(0,0,.19),(0,0,-1.40 if feeder else -1.68),.0065,carbon,.0018 if feeder else .0009)
  if index in [1,3]:
   cylinder('Split grip butt',(0,0,.21),(0,0,.155),.019,grip,.015)
   cylinder('Exposed split seat',(0,0,.155),(0,0,.095),.009,carbon)
@@ -63,6 +63,7 @@ for variant in range(8):
  for z in [-.16,-.19,-.24]:cylinder('Thread binding',(0,0,z+.009),(0,0,z-.009),.007,accent)
  # Diminishing ceramic line guides under the spinning rod.
  for i,z in enumerate([-.31,-.55,-.8,-1.02,-1.22,-1.4,-1.55,-1.678]):
+  if feeder and z< -1.4:continue
   r=.018*(1-i/9)+.0015;y=-r-.007
   torus('Line guide',(0,y,z),r,.0012,steel);torus('Ceramic ring',(0,y,z),r-.0014,.001,ceramic)
   tube('Guide support',[(0,-.004,z+.024),(0,y-r*.7,z),(0,-.004,z-.019)],.0013,steel)
@@ -93,7 +94,7 @@ for variant in range(8):
    a=math.pi*j/24;bail.append((.043*math.cos(a),-.081+.043*math.sin(a),-.066-.023*math.sin(a)))
   tube('Bail wire',bail,.0015,steel)
   for side in [-1,1]:tube('Rotor arm',[(side*.022,-.08,.007),(side*.043,-.081,-.066)],.004,accent)
- cylinder('Crank spindle',(-.085,-.075,.04),(0,-.075,.04),.004,steel)
+ if not fly:cylinder('Crank spindle',(-.085,-.075,.04),(0,-.075,.04),.004,steel)
  export(scene,name)
 scene=bpy.data.scenes.new('Reel_handle');scenes.append(scene);bpy.context.window.scene=scene
 # Local pivot matches the existing controller reeling gesture: rotate around local X.
@@ -103,8 +104,8 @@ ellipsoid('Reel paddle',(-.035,.08,0),(.014,.023,.014),rubber)
 export(scene,'handle')
 scene=bpy.data.scenes.new('Fly_reel_handle');scenes.append(scene);bpy.context.window.scene=scene
 # Short crank lies against the left spool face, using the existing X-axis pivot.
-tube('Fly direct crank',[(0,0,0),(.049,0,0),(.049,.039,0)],.003,steel)
-cylinder('Fly crank knob',(.049,.039,0),(.028,.039,0),.007,rubber)
+tube('Fly direct crank',[(0,0,0),(0,.039,0)],.003,steel)
+cylinder('Fly crank knob',(0,.039,0),(-.021,.039,0),.007,rubber)
 export(scene,'fly_handle')
 bpy.data.libraries.write(str(ROOT/'source/rods.blend'),set(scenes),path_remap='RELATIVE',fake_user=True,compress=True)
 print('RODS_COMPLETE')

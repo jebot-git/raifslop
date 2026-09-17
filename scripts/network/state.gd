@@ -19,15 +19,15 @@ static func capture(root: Node, serial: int) -> Dictionary:
 		"left":root.left.global_transform if root.xr and not root.reel_tracker.engaged else root.desktop_left.global_transform,
 		"right":root.right.global_transform if root.xr else root.rod.global_transform,
 		"rod_tier":root.game.tackle.equipped,"reel_angle":fposmod(root.crank.rotation.x,TAU),"rod":root.rod.global_transform,"fish":root.fish_display.global_transform,
-		"feet":root.motor.global_position,"motion":root.motor.last_motion,"tip":root.tip.global_position,
+		"feet":root.motor.global_position,"motion":root.motor.last_motion,"tip":root.rod_visual.to_global(root.rod_visual.quiver.end) if root.game.is_feeder_fishing() else root.tip.global_position,
 		"bobber":root.bobber.global_position,"mouth":root.fish_display.to_global(root._catch_mouth()),
 		"bait_position":root.rod_status.bait_visual.global_position,"bobber_visible":tackle_active and root.bobber.is_visible_in_tree(),"bait_visible":tackle_active and root.rod_status.bait_visual.is_visible_in_tree(),
-		"target":root.cast_target,"state":int(root.game.state),"bait":root.game.bait,"species":root.game.fish_index,
+		"target":root.cast_target,"state":int(root.game.state),"rig":int(root.game.rig),"bait":root.game.bait,"species":root.game.fish_index,
 		"length":size,"caught":root.fish_display.visible,"in_hand":root.catch_in_hand if root.game.state==Fish.State.LANDED else root.game.is_fly_fishing() and root.game.fly.strip_engaged,"xr":root.xr,
 		"left_valid":not root.xr or root.left.get_has_tracking_data(),"right_valid":not root.xr or root.right.get_has_tracking_data(),
 		"curl":root.avatar.left_curl if is_instance_valid(root.avatar) else 0.0}
 static func valid(data: Dictionary) -> bool:
-	if data.size()!=31: return false
+	if data.size()!=32: return false
 	if not data.get("body") is Dictionary or not data.get("face") is Dictionary: return false
 	if Poses.validate_body(data.body).size()!=data.body.size() or Poses.validate_face(data.face).size()!=data.face.size(): return false
 	if not Poses.valid_weights(data.get("visemes")): return false
@@ -40,10 +40,12 @@ static func valid(data: Dictionary) -> bool:
 		if absf(t.basis.determinant()-1.0)>.1: return false
 	for key in VECTORS:
 		if not data.get(key) is Vector3 or not bounded(data[key]): return false
-	for key in ["serial","state","bait","species","rod_tier"]:
+	for key in ["serial","state","bait","species","rod_tier","rig"]:
 		if not data.get(key) is int: return false
 	if data.serial<0 or data.serial>2147483647 or data.state<0 or data.state>6 or data.bait<0 or data.bait>=Fish.BAITS.size() or data.species<0 or data.species>=Fish.SPECIES.size(): return false
 	if not data.get("location") is String or not Fish.LOCATION_SPECIES.has(data.location): return false
+	if data.rig not in [0,1]:return false
+	if data.rig==1 and (not Fish.Feeder.supported(data.location) or data.bait>=4):return false
 	for key in ["length","curl","reel_angle"]:
 		if not (data.get(key) is float or data.get(key) is int) or not is_finite(data[key]): return false
 	if data.rod_tier<0 or data.rod_tier>=4 or data.reel_angle<0 or data.reel_angle>TAU: return false
@@ -55,4 +57,4 @@ static func valid(data: Dictionary) -> bool:
 static func bounded(v: Vector3) -> bool:
 	return v.is_finite() and maxf(absf(v.x),maxf(absf(v.y),absf(v.z)))<2048
 static func event_key(data: Dictionary) -> Array:
-	return [data.location,data.state,data.bait,data.species,data.length,data.caught,data.in_hand,data.rod_tier,data.bobber_visible,data.bait_visible]
+	return [data.location,data.state,data.rig,data.bait,data.species,data.length,data.caught,data.in_hand,data.rod_tier,data.bobber_visible,data.bait_visible]

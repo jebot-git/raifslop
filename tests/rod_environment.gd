@@ -24,6 +24,9 @@ func run() -> void:
 		check(not schema.valid(state),"Nonfinite remote handle rejected")
 	for location in preload("res://scripts/locations.gd").CATALOG:
 		g.game.reset();g._select_location(location.id,false)
+		check(g.panorama_material.panorama.get_size()==Vector2(8192,4096),"Native 8K panorama loaded")
+		# Authored river foregrounds do not use the photographed-shore wildlife node.
+		if g.game.Fly.river(location.id):continue
 		var life=g.foreground.get_node("EnvironmentalLife")
 		check(life.birds.multimesh.instance_count<=8 and life.insects.multimesh.instance_count<=3,"Bounded wildlife count")
 		var before: Transform3D=life.birds.multimesh.get_instance_transform(0)

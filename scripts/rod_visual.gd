@@ -3,21 +3,25 @@ extends Node3D
 const MODELS = ["willow", "reed", "heron", "kingfisher"]
 var tier := -1
 var fly_mode := false
+var feeder_mode:=false
+var quiver=preload("res://scripts/feeder_tip.gd").new()
 var folded := false
 var folded_model: Node3D
 var model: Node3D
 var crank := Node3D.new()
 func _init() -> void:
 	name = "RodVisual"
+	add_child(quiver);quiver.hide()
 	crank.name = "ReelCrank"
 	crank.position = Vector3(-.085,-.075,.04)
 	add_child(crank)
 	crank.add_child(load("res://assets/models/rods/handle.glb").instantiate())
-func equip(index: int, fly := false) -> void:
+func equip(index: int, fly := false, feeder:=false) -> void:
 	index = clampi(index,0,MODELS.size()-1)
-	if tier == index and fly_mode==fly: return
-	fly_mode=fly
-	var model_name:String=MODELS[index]+("_fly" if fly else "")
+	if tier == index and fly_mode==fly and feeder_mode==feeder: return
+	fly_mode=fly;feeder_mode=feeder
+	crank.position.x=-.036 if fly else -.085
+	var model_name:String=MODELS[index]+("_fly" if fly else "_feeder" if feeder else "")
 	if is_instance_valid(model):
 		remove_child(model)
 		model.queue_free()
@@ -33,10 +37,15 @@ func equip(index: int, fly := false) -> void:
 	set_folded(folded)
 
 func crank_grip_position() -> Vector3:
-	return Vector3(.0385, .039, 0) if fly_mode else Vector3(-.035, .08, 0)
+	return Vector3(-.0105, .039, 0) if fly_mode else Vector3(-.035, .08, 0)
 
 func set_folded(value: bool) -> void:
 	folded=value
 	if is_instance_valid(model): model.visible=not folded
 	if is_instance_valid(folded_model): folded_model.visible=folded
 	crank.visible=not folded
+	quiver.visible=feeder_mode and not folded
+
+func update_tip(state:int,phase:float)->void:
+	var load:=.022 if state==2 else .035+sin(phase*22)*.018 if state==3 else .065 if state==4 else 0.0
+	quiver.bend(load if feeder_mode else 0.0)

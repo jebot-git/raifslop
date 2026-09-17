@@ -11,7 +11,10 @@ var shown_icon:=""
 var previous_bait := -1
 var previous_marine := false
 var previous_fly := false
+var previous_feeder:=false
+var feeder_visual:Node3D
 func _ready() -> void:
+	feeder_visual=load("res://assets/models/rods/cage_feeder.glb").instantiate();add_child(feeder_visual);feeder_visual.hide()
 	bait_visual=preload("res://scripts/bait_visual.gd").new();add_child(bait_visual)
 	label=Label3D.new();add_child(label)
 	label.layers=preload("res://scripts/guide_camera.gd").UI_LAYER
@@ -26,11 +29,12 @@ func _ready() -> void:
 func update_bait() -> void:
 	var marine: bool = game_root.game.is_marine_location(game_root.game.location_id)
 	var fly:bool=game_root.game.is_fly_fishing()
-	if previous_bait==game_root.game.bait and previous_marine==marine and previous_fly==fly:return
+	if previous_bait==game_root.game.bait and previous_marine==marine and previous_fly==fly and previous_feeder==game_root.game.is_feeder_fishing():return
+	previous_feeder=game_root.game.is_feeder_fishing()
 	previous_fly=fly
 	previous_marine=marine
 	previous_bait=game_root.game.bait
-	bait_visual.set_bait(previous_bait,marine,fly)
+	bait_visual.set_bait(game_root.game.bait_model(),marine,fly)
 	label.text=game_root.game.bait_name(previous_bait)
 func show_bait() -> void:
 	update_bait();label.text=game_root.game.bait_name(game_root.game.bait)

@@ -1,6 +1,6 @@
 # Fishing methods and roster expansion
 
-Design study, 17 September 2026. These are proposals, not new selectable modes.
+Design study, 17 September 2026. Cage feeder fishing is now implemented; the other methods below remain proposals. See [feeder implementation](FEEDER_FISHING.md).
 The current roster has 32 species. Float/bait fishing covers the lakes and coast;
 two river locations use dry-fly/nymph casting, stripping and mending. Selecting a
 spinner currently changes attraction, not a dedicated retrieve simulation.
