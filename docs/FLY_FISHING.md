@@ -1,5 +1,7 @@
 # Fly fishing and river locations
 
+The expanded roster adds ide to Meadow Bend and brook trout to Boulder Run. Dry/nymph preferences and the complete current distribution are documented in [location species](LOCATION_SPECIES.md).
+
 Fly mode activates automatically at **Meadow Bend** and **Boulder Run**. It uses the existing tackle progression, fish assets, journal and fight mechanics. It adds dry-fly/nymph presentations, authored river currents, stripping, upstream mending and a lightweight animated casting loop.
 
 ## Controls

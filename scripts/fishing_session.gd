@@ -46,22 +46,28 @@ const SPECIES = [
 	{"name": "White stumpnose", "latin": "Rhabdosargus globiceps", "length": 38.0, "weight": 0.95, "rarity": 2, "endurance": 105.0, "power": 1.0, "bait": 3, "habitat": "marine", "model": "res://assets/models/fish/white_stumpnose.glb"},
 	{"name": "Zebra seabream", "latin": "Diplodus hottentotus", "length": 35.0, "weight": 0.85, "rarity": 2, "endurance": 115.0, "power": 1.05, "bait": 0, "habitat": "marine", "model": "res://assets/models/fish/zebra_seabream.glb"},
 	{"name": "Cape horse mackerel", "latin": "Trachurus capensis", "length": 30.0, "weight": 0.28, "rarity": 1, "endurance": 65.0, "power": 0.78, "bait": 2, "habitat": "marine", "model": "res://assets/models/fish/cape_horse_mackerel.glb"},
+	{"name": "Silver bream", "latin": "Blicca bjoerkna", "length": 25.0, "weight": 0.24, "rarity": 1, "endurance": 65.0, "power": 0.75, "bait": 3, "model": "res://assets/models/fish/silver_bream.glb"},
+	{"name": "Ruffe", "latin": "Gymnocephalus cernua", "length": 15.0, "weight": 0.04, "rarity": 1, "endurance": 45.0, "power": 0.6, "bait": 0, "model": "res://assets/models/fish/ruffe.glb"},
+	{"name": "Ide", "latin": "Leuciscus idus", "length": 42.0, "weight": 1.05, "rarity": 2, "endurance": 115.0, "power": 1.05, "bait": 4, "model": "res://assets/models/fish/ide.glb"},
+	{"name": "Asp", "latin": "Leuciscus aspius", "length": 65.0, "weight": 2.6, "rarity": 3, "endurance": 150.0, "power": 1.25, "bait": 2, "model": "res://assets/models/fish/asp.glb"},
+	{"name": "Leervis", "latin": "Lichia amia", "length": 85.0, "weight": 5.0, "rarity": 3, "endurance": 165.0, "power": 1.3, "bait": 4, "habitat": "marine", "model": "res://assets/models/fish/leervis.glb"},
+	{"name": "Atlantic chub mackerel", "latin": "Scomber colias", "length": 35.0, "weight": 0.42, "rarity": 1, "endurance": 80.0, "power": 0.85, "bait": 2, "habitat": "marine", "model": "res://assets/models/fish/atlantic_chub_mackerel.glb"},
 ]
 # Stable indices preserve existing catch records and model mapping.
 const MARINE_BAITS = ["Ragworm", "Squid", "Spinner", "Prawn", "Sardine", "Saltwater fly"]
-const MARINE_BAIT_SPECIES = {0:[18,19,20,22,25,29,30], 1:[18,20,21,22,23,24,28,29,30,31], 2:[23,24,28,31], 3:[18,19,20,21,22,25,29,30], 4:[18,21,23,24,28,31], 5:[18,23,24,25,28,31]}
-const EXTRA_BAIT_SPECIES = {3: [0,3,5,7,9,12,13,16], 4: [1,3,4,7,8,9,13,14,15], 5: [9,10,11,14,15,17]}
+const MARINE_BAIT_SPECIES = {0:[18,19,20,22,25,29,30], 1:[18,20,21,22,23,24,28,29,30,31,37], 2:[23,24,28,31,36,37], 3:[18,19,20,21,22,25,29,30], 4:[18,21,23,24,28,31,36,37], 5:[18,23,24,25,28,31,36,37]}
+const EXTRA_BAIT_SPECIES = {2:[34], 1:[32,34], 0:[32,34], 3: [0,3,5,7,9,12,13,16,33,34], 4: [1,3,4,7,8,9,13,14,15,32], 5: [9,10,11,14,15,17,34,35]}
 const LOCATION_SPECIES = {
- "lakeside": [0,1,2,3,4,5,6,7,8,9,13,14,15,16],
- "lake_pier": [0,1,2,3,5,6,7,9,10,11,12,14,15,17],
- "gray_pier": [0,1,2,3,4,5,6,7,8,11,12,13,15,16],
- "bell_park_pier": [0,1,2,3,4,5,8,9,10,11,13,14,16,17],
- "simons_town_rocks": [18,19,20,21,23,24,28,30,31],
- "blouberg_sunrise_2": [18,19,22,23,24,25,28,29,31],
- "secluded_beach": [18,19,20,21,23,25,29,30,31],
- "fish_hoek_beach": [18,20,22,23,24,25,28,29,31],
- "meadow_bend":[11,12,9,14,3,13,16],
- "boulder_run":[10,11,12]
+ "lakeside": [0,1,2,3,4,5,6,7,8,9,13,14,15,16,32,33,34],
+ "lake_pier": [0,1,2,3,5,6,7,9,10,11,12,14,15,17,32,33,34,35],
+ "gray_pier": [0,1,2,3,4,5,6,7,8,11,12,13,15,16,32,33],
+ "bell_park_pier": [0,1,2,3,4,5,8,9,10,11,13,14,16,17,32,34,35],
+ "simons_town_rocks": [18,19,20,21,23,24,28,30,31,37],
+ "blouberg_sunrise_2": [18,19,22,23,24,25,28,29,31,37],
+ "secluded_beach": [18,19,20,21,23,25,29,30,31,36],
+ "fish_hoek_beach": [18,20,22,23,24,25,28,29,31,36,37],
+ "meadow_bend":[11,12,9,14,3,13,16,33,34,35],
+ "boulder_run":[10,11,12,17]
 }
 # A single chance per eligible retrieval, never a per-frame probability.
 const PREDATOR_CHANCE := .02
@@ -209,7 +215,7 @@ func bait_name(index: int) -> String:
 static func species_for_bait(index: int, id: String = "") -> Array[int]:
 	var candidates: Array[int] = []
 	if Fly.river(id):
-		for i in ([11,12,9,14] if id=="meadow_bend" else LOCATION_SPECIES[id]):candidates.append(i)
+		for i in Fly.preferred(index,id):candidates.append(i)
 		return candidates
 	var local := species_for_location(id, false) if not id.is_empty() else range(SPECIES.size())
 	for i in local:

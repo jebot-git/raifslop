@@ -24,7 +24,9 @@ Feeder fishing retains **four** distinct hook baits: earthworm, sweetcorn, maggo
 and bread. Its preferences and bottom-feeding mechanics remain separate. See
 [feeder details](FEEDER_FISHING.md).
 
-## Authored location pools
+The expanded roster adds ide, asp, leervis and Atlantic chub mackerel to appropriate lure waters and brook trout to Boulder Run. See the [current distribution and preferences](ROSTER_EXPANSION.md). The original pools below predate those additions.
+
+## Original authored location pools
 
 | Location | Eligible lure fish |
 | --- | --- |
@@ -75,7 +77,7 @@ rigid-body tackle chain or third-party asset dependency is introduced.
 
 ## Multiplayer and validation
 
-Protocol **8** supports all three rigs. Peers see the equipped tier, correct
+Protocol **9** supports all three rigs. Peers see the equipped tier, correct
 casting reel, selected lure (including the coastal spoon), terminal position and
 swimming/hanging orientation. Lure mode hides the float and cage. Server validation
 rejects unsupported rig/bait combinations and impossible lure catches. Update

@@ -13,6 +13,12 @@ var touch_source := ""
 var previous_touch := Vector3(INF, INF, INF)
 const Session = preload("res://scripts/fishing_session.gd")
 const DESCRIPTIONS = {
+ "Blicca bjoerkna": "A small, deep-bodied silver fish with a large eye and pinkish fin bases. It shoals in lakes and slow rivers, feeding on small invertebrates.",
+ "Gymnocephalus cernua": "A small mottled perch relative with joined spiny and soft dorsal fins. It searches lake and slow-river bottoms for worms and insect larvae.",
+ "Leuciscus idus": "A robust silver fish with orange-red lower fins. It feeds on insects, plants and small fish near lake margins and in slower river water.",
+ "Leuciscus aspius": "A streamlined silver predator with a projecting lower jaw. It pursues small fish around open water and flowing channels, making fast runs when hooked.",
+ "Lichia amia": "A large silver coastal predator with a wavy lateral line and long pointed fins. It hunts schooling fish around surf zones and estuary mouths.",
+ "Scomber colias": "A schooling blue-green mackerel with dark wavy back markings, a forked tail and small finlets. It feeds on plankton, crustaceans and small fish.",
  "Argyrosomus japonicus": "A large silver croaker with a bronze back, pearly lateral-line spots and a broad mouth. It hunts fish and crustaceans in coastal and estuarine waters.",
  "Rhabdosargus globiceps": "A silver seabream with a blunt forehead, small mouth and forked tail. It searches shallow reefs and sandy coastal bottoms for invertebrates.",
  "Diplodus hottentotus": "A deep-bodied seabream with bold dark vertical bands. It lives around rocky shores and reefs, feeding on worms and small crustaceans.",
@@ -93,7 +99,21 @@ static func discovery_hint(index: int) -> Dictionary:
 	if index in [1,3,4,5,8,13,16]:
 		habitat="River bottom" if index in [13,16] else "Lake / slow water"
 		bait="Feeder · "+("Worm / maggots" if index in [3,13,16] else "Sweetcorn / worm")
-	return {"habitat": habitat, "bait": bait}
+	if index>=32:
+		habitat=["Lake / slow water","Lake / river bottom","Lake / slow river","Lake / river channel","Coastal surf / estuary","Coastal open water"][index-32]
+		bait=["Worm / corn / maggots","Worm / maggots","Bread / flies / spinner","Spinner / minnow","Sardine / spoon / minnow","Squid / spoon / jig"][index-32]
+	var methods:Array[String]=[]
+	var waters:Array[String]=[]
+	const NAMES={"lakeside":"Lakeside","lake_pier":"Lake Pier","gray_pier":"Gray Pier","bell_park_pier":"Bell Park","meadow_bend":"Meadow Bend","boulder_run":"Boulder Run","simons_town_rocks":"Simon's Town","blouberg_sunrise_2":"Blouberg","secluded_beach":"Secluded Beach","fish_hoek_beach":"Fish Hoek"}
+	for location in Session.LOCATION_SPECIES:
+		if index not in Session.species_for_location(location):continue
+		waters.append(NAMES[location])
+		if species.get("predator",false):continue
+		if not Session.Fly.river(location) and not "Bait" in methods:methods.append("Bait")
+		for method in [["Fly",Session.Fly.POOLS],["Feeder",Session.Feeder.POOLS],["Lure",Session.Lure.POOLS]]:
+			if index in method[1].get(location,[]) and not method[0] in methods:methods.append(method[0])
+	if species.get("predator",false):methods.append("Hooked-fish encounter")
+	return {"habitat": habitat, "bait": bait,"methods":" / ".join(methods),"waters":", ".join(waters)}
 
 func ordered_entries() -> Array:
 	var result := []

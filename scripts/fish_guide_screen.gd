@@ -19,9 +19,9 @@ func _draw() -> void:
 	label("%02d / %02d SPECIES FOUND" % [guide.entries.size(), rows.size()], Vector2(36, 174), 28)
 	guide.selected = clampi(guide.selected, 0, rows.size() - 1)
 	var entry: Dictionary = rows[guide.selected]
-	label(entry.name, Vector2(36, 235), 39)
-	label(entry.latin if entry.discovered else "UNDISCOVERED", Vector2(36, 274), 26, Color("a9dfb2"))
-	var center := Vector2(320, 343)
+	label(entry.name, Vector2(36, 225), mini(39,int(39*568/maxf(568,font.get_string_size(entry.name,HORIZONTAL_ALIGNMENT_LEFT,-1,39).x))))
+	label(entry.latin if entry.discovered else "UNDISCOVERED", Vector2(36, 259), 26, Color("a9dfb2"))
+	var center := Vector2(320, 317)
 	if entry.discovered:
 		var silhouette := Icons.contour(entry.latin, center, 110.0)
 		draw_colored_polygon(silhouette, Color("a9dfb2"))
@@ -29,23 +29,27 @@ func _draw() -> void:
 		draw_polyline(edge, Color("d5f5ce"), 2.0, true)
 		draw_circle(center + Vector2(0.65, -0.04) * 110.0, 4, Color("112b28"))
 	else:
-		label("?", Vector2(287, 382), 108, Color("a9dfb2"))
-	label("HABITAT · " + entry.habitat, Vector2(36, 435), 25, Color("a9dfb2"))
-	label("PREFERRED BAIT · " + entry.bait, Vector2(36, 474), 23, Color("a9dfb2"))
-	var line := ""
-	var y := 518.0
-	for word in str(entry.description).split(" "):
-		var next := word if line.is_empty() else line + " " + word
-		if font.get_string_size(next, HORIZONTAL_ALIGNMENT_LEFT, -1, 23).x > 565:
-			label(line, Vector2(36, y), 23); y += 29; line = word
-		else: line = next
-	label(line, Vector2(36, y), 23)
+		label("?", Vector2(287, 356), 108, Color("a9dfb2"))
+	label("HABITAT · " + entry.habitat, Vector2(36, 398), 25, Color("a9dfb2"))
+	label("PREFERRED BAIT · " + entry.bait, Vector2(36, 430), 23, Color("a9dfb2"))
+	label("METHODS · " + entry.methods,Vector2(36,462),23,Color("a9dfb2"))
+	wrapped("WATERS · "+entry.waters,Vector2(36,494),20,24)
+	wrapped(entry.description,Vector2(36,556),20,24)
 	draw_rect(Rect2(28, 633, 584, 77), Color("234a3d"))
 	label("PERSONAL BEST" if entry.discovered else "NOT CAUGHT YET", Vector2(46, 663), 24)
 	label("%.1f cm" % entry.length if entry.discovered else "—", Vector2(370, 692), 37, Color("b9f0c0"))
 	label("ENTRY %02d / %02d" % [guide.selected + 1, rows.size()], Vector2(36, 747), 25)
 	label("FINGER: ‹ › PAGES · LEFT TRIGGER: CAMERA" if guide.game_root.xr else "C: CAMERA · ← →: BROWSE", Vector2(36, 782), 22)
 	label("RELEASE GRIP: RETURN TO BELT" if guide.game_root.xr else "G: CLOSE GUIDE", Vector2(36, 819), 21)
+
+func wrapped(text:String,at:Vector2,size_:int,line_height:int)->void:
+	var line:=""
+	for word in text.split(" "):
+		var next:=word if line.is_empty() else line+" "+word
+		if font.get_string_size(next,HORIZONTAL_ALIGNMENT_LEFT,-1,size_).x>565:
+			label(line,at,size_);at.y+=line_height;line=word
+		else:line=next
+	label(line,at,size_)
 
 func _draw_camera() -> void:
 	var photo = guide.photo_camera

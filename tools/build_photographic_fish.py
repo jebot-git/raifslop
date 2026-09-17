@@ -24,7 +24,7 @@ def build(name,d):
  im.pixels.foreach_set(corrected.ravel());im.update()
  im.filepath_raw=str(TEX/(name+'_photographic.png'));im.file_format='PNG';im.save();im.pack()
  mat=bpy.data.materials.new(name+' photographic skin');mat.use_nodes=True;mat.use_backface_culling=False
- p=mat.node_tree.nodes.get('Principled BSDF');p.inputs['Roughness'].default_value=.42;p.inputs['Metallic'].default_value=.035
+ p=next(n for n in mat.node_tree.nodes if n.type=='BSDF_PRINCIPLED');p.inputs['Roughness'].default_value=.42;p.inputs['Metallic'].default_value=.035
  p.inputs['Coat Weight'].default_value=.25;p.inputs['Coat Roughness'].default_value=.27
  tex=mat.node_tree.nodes.new('ShaderNodeTexImage');tex.image=im;mat.node_tree.links.new(tex.outputs['Color'],p.inputs['Base Color'])
  xmin,xmax=d['extent'];length=xmax-xmin;cy=d['center'];thickness=d['thickness']
@@ -41,11 +41,11 @@ def build(name,d):
  profile=d['body']; dense=[]
  for i in range(len(profile)-1):
   aa=np.array(profile[max(0,i-1)],float);bb=np.array(profile[i],float);cc=np.array(profile[i+1],float);dd=np.array(profile[min(len(profile)-1,i+2)],float)
-  for j in range(6):
-   t=j/6;v=.5*((2*bb)+(-aa+cc)*t+(2*aa-5*bb+4*cc-dd)*t*t+(-aa+3*bb-3*cc+dd)*t*t*t)
+  for j in range(d.get("profile_steps",6)):
+   t=j/d.get("profile_steps",6);v=.5*((2*bb)+(-aa+cc)*t+(2*aa-5*bb+4*cc-dd)*t*t+(-aa+3*bb-3*cc+dd)*t*t*t)
    dense.append(v)
  dense.append(profile[-1]);dense=np.array(dense)
- verts=[];coords=[];faces=[];N=64
+ verts=[];coords=[];faces=[];N=d.get("radial_steps",64)
  for x,top,bottom,width in dense:
   center=(top+bottom)/2;radius=(bottom-top)/2
   for j in range(N+1):
@@ -75,7 +75,7 @@ def build(name,d):
  # Thin fin surfaces follow the photographed contour. Only external fins/tail are kept;
  # body and cheek are fully volumetric, not a billboard.
  mask=(pixels[:,:,:3].min(axis=2)<.94)
- step=3; fv=[];fc=[];ff=[];lookup={}
+ step=d.get("fin_step",3); fv=[];fc=[];ff=[];lookup={}
  def vtx(x,y):
   key=(x,y)
   if key not in lookup:lookup[key]=len(fv);fv.append(pos(x,y));fc.append((x,y))
@@ -94,7 +94,7 @@ def build(name,d):
    # Reject white corners to avoid a white fringe around membranes.
    if not all(mask[H-1-min(H-1,int(py)),min(W-1,int(px))] for px,py in corners):continue
    ff.append(tuple(vtx(px,py) for px,py in corners))
- finmat=mat.copy();finmat.name=name+' fin membranes';fp=finmat.node_tree.nodes.get('Principled BSDF');fp.inputs['Roughness'].default_value=.57;fp.inputs['Coat Weight'].default_value=.1
+ finmat=mat.copy();finmat.name=name+' fin membranes';fp=next(n for n in finmat.node_tree.nodes if n.type=='BSDF_PRINCIPLED');fp.inputs['Roughness'].default_value=.57;fp.inputs['Coat Weight'].default_value=.1
  mesh(name+' traced fins',fv,ff,finmat,fc)
  # Paired pectoral fins lift away from the flank, retaining their reference markings.
  for side in [-1,1]:
@@ -124,7 +124,7 @@ def build(name,d):
     for j in range(8):a=k*8+j;b=k*8+(j+1)%8;bf.append((a,b,b+8,a+8))
    mesh('Sensory barbel',bv,bf,mat,bc)
  # Convex corneas use the reference iris, keeping exact natural eye size and colour.
- eye_mat=mat.copy();eye_mat.name=name+' wet cornea';ep=eye_mat.node_tree.nodes.get('Principled BSDF');ep.inputs['Roughness'].default_value=.12;ep.inputs['Coat Weight'].default_value=.7;ep.inputs['Coat Roughness'].default_value=.075;ep.inputs['Metallic'].default_value=0
+ eye_mat=mat.copy();eye_mat.name=name+' wet cornea';ep=next(n for n in eye_mat.node_tree.nodes if n.type=='BSDF_PRINCIPLED');ep.inputs['Roughness'].default_value=.12;ep.inputs['Coat Weight'].default_value=.7;ep.inputs['Coat Roughness'].default_value=.075;ep.inputs['Metallic'].default_value=0
  ex,ey,er=d['eye']
  for side in [-1,1]:
   ev=[];ec=[];ef=[];R=10;M=48
@@ -155,7 +155,9 @@ def build(name,d):
  bpy.ops.object.select_all(action='DESELECT');body.select_set(True);bpy.context.view_layer.objects.active=body
  nodes=mat.node_tree.nodes;links=mat.node_tree.links
  bump=nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.12;bump.inputs['Distance'].default_value=.00035;links.new(tex.outputs['Color'],bump.inputs['Height']);links.new(bump.outputs['Normal'],p.inputs['Normal'])
- scene.render.engine='CYCLES';scene.cycles.samples=8;scene.cycles.device='CPU'
+ try:scene.render.engine='CYCLES'
+ except TypeError as error:raise RuntimeError('Cycles is required to bake fish normals') from error
+ scene.cycles.samples=8;scene.cycles.device='CPU'
  image=bpy.data.images.new(name+' baked normal',width=1024,height=1024);image.colorspace_settings.name='Non-Color'
  target=nodes.new('ShaderNodeTexImage');target.image=image;nodes.active=target
  bpy.ops.object.bake(type='NORMAL',margin=8,use_clear=True)

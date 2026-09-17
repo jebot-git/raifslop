@@ -12,7 +12,7 @@ func run() -> void:
 		g.game.reset();check(g._select_location(id,false),"Travel "+id)
 		var marine:=Session.is_marine_location(id)
 		if marine:
-			check(Session.species_for_location(id,false).size()==9,"Nine regular marine targets "+id)
+			check(Session.species_for_location(id,false).size()==(11 if id=="fish_hoek_beach" else 10),"Expanded regular marine targets "+id)
 			check(Session.species_for_bait(2,id).size()>=2,"Multiple spinner targets at every coast "+id)
 		for bait in 6:
 			g.game.select_bait(bait);g.rod_status.show_bait()

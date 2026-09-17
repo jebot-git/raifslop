@@ -5,17 +5,17 @@ const BAIT_NAMES=["Inline spinner","Paddle-tail jig","Diving minnow"]
 const MARINE_NAMES=["Casting spoon","Paddle-tail jig","Diving minnow"]
 const MODELS=["inline_spinner","paddle_shad","diving_minnow"]
 const POOLS={
- "lakeside":[0,2,6,9],
- "lake_pier":[0,2,6,9,10,11,17],
+ "lakeside":[0,2,6,9,34],
+ "lake_pier":[0,2,6,9,10,11,17,34,35],
  "gray_pier":[0,2,6,11],
- "bell_park_pier":[0,2,9,10,11,17],
- "meadow_bend":[9,11],"boulder_run":[10,11],
- "simons_town_rocks":[18,21,23,24,28,31],
- "blouberg_sunrise_2":[18,23,24,28,31],
- "secluded_beach":[18,21,23,31],
- "fish_hoek_beach":[18,23,24,28,31]
+ "bell_park_pier":[0,2,9,10,11,17,34,35],
+ "meadow_bend":[9,11,34,35],"boulder_run":[10,11,17],
+ "simons_town_rocks":[18,21,23,24,28,31,37],
+ "blouberg_sunrise_2":[18,23,24,28,31,37],
+ "secluded_beach":[18,21,23,31,36],
+ "fish_hoek_beach":[18,23,24,28,31,36,37]
 }
-const PREFERENCES={0:[0,9,10,11,17,23,24,31],1:[0,2,6,10,11,17,18,21,28],2:[2,6,9,10,11,23,24,28]}
+const PREFERENCES={0:[0,9,10,11,17,23,24,31,34,35,36,37],1:[0,2,6,10,11,17,18,21,28,36,37],2:[2,6,9,10,11,23,24,28,34,35,36,37]}
 var depth:=0.0
 var action:=0.0
 var pause_window:=0.0

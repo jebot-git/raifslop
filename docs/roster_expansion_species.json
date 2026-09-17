@@ -1,0 +1,70 @@
+[
+  {
+    "name": "Silver bream",
+    "latin": "Blicca bjoerkna",
+    "length": 25.0,
+    "weight": 0.24,
+    "rarity": 1,
+    "endurance": 65.0,
+    "power": 0.75,
+    "bait": 3,
+    "slug": "silver_bream"
+  },
+  {
+    "name": "Ruffe",
+    "latin": "Gymnocephalus cernua",
+    "length": 15.0,
+    "weight": 0.04,
+    "rarity": 1,
+    "endurance": 45.0,
+    "power": 0.6,
+    "bait": 0,
+    "slug": "ruffe"
+  },
+  {
+    "name": "Ide",
+    "latin": "Leuciscus idus",
+    "length": 42.0,
+    "weight": 1.05,
+    "rarity": 2,
+    "endurance": 115.0,
+    "power": 1.05,
+    "bait": 4,
+    "slug": "ide"
+  },
+  {
+    "name": "Asp",
+    "latin": "Leuciscus aspius",
+    "length": 65.0,
+    "weight": 2.6,
+    "rarity": 3,
+    "endurance": 150.0,
+    "power": 1.25,
+    "bait": 2,
+    "slug": "asp"
+  },
+  {
+    "name": "Leervis",
+    "latin": "Lichia amia",
+    "length": 85.0,
+    "weight": 5.0,
+    "rarity": 3,
+    "endurance": 165.0,
+    "power": 1.3,
+    "bait": 4,
+    "habitat": "marine",
+    "slug": "leervis"
+  },
+  {
+    "name": "Atlantic chub mackerel",
+    "latin": "Scomber colias",
+    "length": 35.0,
+    "weight": 0.42,
+    "rarity": 1,
+    "endurance": 80.0,
+    "power": 0.85,
+    "bait": 2,
+    "habitat": "marine",
+    "slug": "atlantic_chub_mackerel"
+  }
+]

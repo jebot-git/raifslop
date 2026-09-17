@@ -4,13 +4,13 @@ extends RefCounted
 const BAIT_NAMES=["Earthworm","Sweetcorn","Maggots","Bread"]
 const BAIT_MODELS=[0,1,3,4]
 const POOLS={
- "lakeside":[0,1,3,4,5,8,16],
- "lake_pier":[0,1,3,5],
- "gray_pier":[0,1,3,4,5,8,16],
- "bell_park_pier":[0,1,3,4,5,8,9,16],
- "meadow_bend":[3,9,13,14,16]
+ "lakeside":[0,1,3,4,5,8,16,32,33,34],
+ "lake_pier":[0,1,3,5,32,33,34],
+ "gray_pier":[0,1,3,4,5,8,16,32,33],
+ "bell_park_pier":[0,1,3,4,5,8,9,16,32,34],
+ "meadow_bend":[3,9,13,14,16,33,34]
 }
-const PREFERENCES={0:[0,3,4,5,9,13,16],1:[1,3,4,5,8,13],2:[0,3,5,9,13,14,16],3:[1,3,5,8,9,14]}
+const PREFERENCES={0:[0,3,4,5,9,13,16,32,33,34],1:[1,3,4,5,8,13,32,34],2:[0,3,5,9,13,14,16,32,33,34],3:[1,3,5,8,9,14,32,34]}
 const DEPTHS={"lakeside":1.7,"lake_pier":2.8,"gray_pier":2.2,"bell_park_pier":1.9,"meadow_bend":1.1}
 var age:=0.0
 var depth:=0.0

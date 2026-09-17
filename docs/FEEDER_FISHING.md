@@ -41,7 +41,9 @@ remain within that same feeder pool: no pike, trout or surface-only species are
 chosen as feeder bites. Existing rare predator takeovers during retrieval remain
 possible where the original predator rules allow them.
 
-## Location distribution
+The roster expansion adds silver bream, ruffe and ide to eligible feeder waters; see the [current distribution and preferences](ROSTER_EXPANSION.md). The original pools below predate those additions.
+
+## Original location distribution
 
 | Location | Feeder pool |
 | --- | --- |
@@ -77,7 +79,7 @@ The fly reel no longer contains the spinning-reel spindle. Its short direct
 crank and grip pivot now sit against the spool face. Both unfolded and folded
 fly models were regenerated, and controller reeling tests cover the new pivot.
 
-Protocol **8** carries the selected rig, including the new lure option. Other players see the same cage, rod and
+Protocol **9** carries the selected rig, including the new lure option. Other players see the same cage, rod and
 hook bait; floats and fly-line strips remain hidden for feeder mode. Server
 validation rejects unsupported rig/location/bait combinations, method changes
 inside a catch attempt, and impossible feeder species. The separate dedicated

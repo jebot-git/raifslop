@@ -1,7 +1,7 @@
 # Fishing methods and roster expansion
 
 Design study, 17 September 2026. Cage feeder and active lure fishing are now implemented; the remaining methods below are proposals. See [feeder implementation](FEEDER_FISHING.md) and [lure implementation](LURE_FISHING.md).
-The current roster has 32 species. Float/bait fishing covers the lakes and coast;
+The current roster has 38 species; the [six-species expansion](ROSTER_EXPANSION.md) implements silver bream, ruffe, ide, asp, leervis and Atlantic chub mackerel. Float/bait fishing covers the lakes and coast;
 two river locations use dry-fly/nymph casting, stripping and mending. The classic spinner remains available for compatibility; the new Lure rig adds
 active retrieves, jig/minnow pause windows and dedicated casting tackle.
 
@@ -9,8 +9,8 @@ active retrieves, jig/minnow pause windows and dedicated casting tackle.
 
 | Priority | Method and tackle | Distinct VR interaction | Existing roster to validate it | Logical expansion |
 |---|---|---|---|---|
-| 1 | Bottom / feeder: sinker, short leader, cage feeder, quiver tip | Cast, let the rig settle, watch tip knocks; feed one chosen patch | Bream, tench, carp, barbel; coastal kob and steenbras | Silver bream, ruffe and ide in suitable European waters; validate individual habitat before adding each |
-| 2 | Spinning / soft-plastic jig: weighted lure, optional wire leader | Reel speed and rod lifts control depth; pause on the drop | Perch, pike, zander; elf and yellowtail | Asp in an appropriate European river; smallmouth/largemouth bass only with a regionally appropriate new water |
+| 1 | Bottom / feeder: sinker, short leader, cage feeder, quiver tip | Cast, let the rig settle, watch tip knocks; feed one chosen patch | Bream, tench, carp, barbel; coastal kob and steenbras | Silver bream, ruffe and ide now implemented in selected freshwater pools |
+| 2 | Spinning / soft-plastic jig: weighted lure, optional wire leader | Reel speed and rod lifts control depth; pause on the drop | Perch, pike, zander; elf and yellowtail | Asp, leervis and Atlantic chub mackerel now implemented; bass would require a regionally appropriate new water |
 | 3 | Light rock fishing / drop-shot | Hold the lure near structure; small wrist twitches and controlled descent | Blacktail, roman, zebra seabream, horse mackerel | Local gobies or wrasses after confirming Cape species, substrate and depth; avoid generic worldwide species pools |
 | 4 | Surf ledger: sand sinker, baited trace, longer rod | Choose a channel between sandbars; follow wave-driven tension and tip bites | White steenbras, stumpnose, kob | A regional flatfish or ray package after species/location research; flatfish need new body animation and bottom behaviour |
 | 5 | Streamer / wet-fly retrieve and expanded nymph depth | Reuse fly casts and stripping, add sinking leader and retrieve cadence | Brown/rainbow trout, chub and grayling | Atlantic salmon or sea trout only in a suitable seasonal river/estuary; do not add them indiscriminately to the current river pools |

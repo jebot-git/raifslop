@@ -25,6 +25,14 @@ var mend_previous:=Vector3.ZERO
 var mend_tracking:=false
 var mend_travel:=0.0
 var mend_latched:=false
+# Stable species IDs: dry-fly surface feeders differ from the nymph pool.
+const POOLS={"meadow_bend":[11,12,9,14,34],"boulder_run":[10,11,12,17]}
+const PREFERENCES={0:[9,10,11,12,14,17,34],1:[9,10,11,12,17,34]}
+static func preferred(bait:int,id:String)->Array:
+ var result:Array=[]
+ for index in POOLS.get(id,[]):
+  if index in PREFERENCES.get(bait,[]):result.append(index)
+ return result
 static func river(id:String)->bool:return id in ["meadow_bend","boulder_run"]
 static func current(at:Vector3,id:String)->Vector3:
  var across:float=absf(at.z+11.0)

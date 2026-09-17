@@ -48,7 +48,7 @@ Fish occupy a 3×3 grid of nine sectors. Different species start in separate qua
 
 Open **V → Locations** (VR: **right B → Locations**) to choose Lakeside, Lake Pier, Gray Pier or Bell Park Pier. Select **Fish here** while ready to cast. Each spot has its own lighting and water preset; selection persists, and catches record their location. Walk a gravel cove at Lakeside, a concrete harbour quay at Lake Pier, a weathered reed boardwalk at Gray Pier, or a moored fishing boat at Bell Park Pier. Travel places you at a safe arrival point on the new model.
 
-A handheld **Field Guide** shows uncaught species as unnamed question marks with habitat and preferred-bait hints. Catches reveal their names, descriptions, species silhouettes and your longest specimen of each species. Smaller or equal catches never replace the record. Existing catches populate it from the saved journal. In VR, grab the lower handle at your left hip with left grip; the hand stays below the screen and controls. Fishing pauses while inspecting. See [Field Guide details and captures](docs/FIELD_GUIDE.md).
+A handheld **Field Guide** shows uncaught species as unnamed question marks with habitat, preferred-bait, method and named-water hints. Catches reveal their names, descriptions, species silhouettes and your longest specimen of each species. Smaller or equal catches never replace the record. Existing catches populate it from the saved journal. In VR, grab the lower handle at your left hip with left grip; the hand stays below the screen and controls. Fishing pauses while inspecting. See [Field Guide details and captures](docs/FIELD_GUIDE.md).
 
 ## Walking and avatars
 
@@ -112,7 +112,7 @@ Meta avatar option research: [Quest and PC feasibility](docs/META_AVATARS_FEASIB
 
 ## Multiplayer and voice
 
-Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-8 server and clients.
+Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-9 server and clients.
 
 Run `./run.sh --server --port 24567` for a headless dedicated server. LAN/Internet connections use direct UDP; Internet hosts need port forwarding or a reachable server. See [setup, controls and limitations](docs/MULTIPLAYER.md) and [FPSloppa code reuse](docs/FPSLOPPA_REUSE.md).
 
@@ -190,3 +190,7 @@ Hold **right joystick press**, point left/right/up and release to select classic
 ### Lure rig and tackle tiers
 
 Select **Lure** with right joystick press + up (desktop Tab + Up). Left X cycles an inline spinner (casting spoon at sea), paddle-tail jig and diving minnow. Retrieve actively and lift on a strike. All ten locations use suitable subsets of their fish rosters. Each of the four tackle tiers has matching classic, fly, feeder and casting models, folded models and reel handles; purchases and fight bonuses apply across styles. [Lure methods, progression, assets and validation](docs/LURE_FISHING.md).
+
+### Expanded fish roster
+
+The catalogue now has **38 species**, including new silver bream, ruffe, ide, asp, leervis and Atlantic chub mackerel. Distribution and bait preferences cover classic, fly, feeder and lure fishing; brook trout also appear in Boulder Run. Fish Guide pages show methods and named waters while preserving existing discoveries and personal bests. [Species, assets, sources and validation](docs/ROSTER_EXPANSION.md) · [complete location matrix](docs/LOCATION_SPECIES.md).

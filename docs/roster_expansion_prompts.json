@@ -1,0 +1,44 @@
+[
+  {
+    "name": "silver_bream",
+    "prompt": "Use case: scientific-educational. Asset type: original photographic texture reference for a volumetric VR fishing game fish model. Silver bream, Blicca bjoerkna. Deep laterally compressed bright silver body, relatively large eye, small head and terminal mouth, grey dorsal and forked tail, pale pinkish-orange bases on paired lower fins, long anal fin. Distinguish from bronze common bream. ONE fish only, perfect flat orthographic LEFT SIDE profile with head pointing RIGHT and tail pointing LEFT. Whole fish including every fin and tail fully inside canvas with 6% white margin; straight horizontal body, fins naturally spread. Pure solid WHITE background, no shadow, no water, no props, no hooks, no text or labels. Realistic biological specimen photograph, fine scales and fin rays, restrained wet sheen, even diffuse cross-polarized light with no directional cast shadows or blown highlights. Landscape 1536x1024 composition. Reference should clearly separate body and fin silhouette.",
+    "source": "/home/blux/.codex/generated_images/01a0ae87-649f-78f0-a11c-ad72f49d0990/exec-d37694c5-6655-40aa-a55e-d89173c959c7.png",
+    "destination": "source/fish_references/roster_expansion/silver_bream.png",
+    "generator": "built-in image_gen"
+  },
+  {
+    "name": "ruffe",
+    "prompt": "Use case: scientific-educational. Asset type: original photographic texture reference for a volumetric VR fishing game fish model. Ruffe, Gymnocephalus cernua. Small stout olive-brown perch relative, irregular dark speckles and mottling over body, large eye, continuous two-part spiny and soft dorsal fin, mottled grey rounded fins, small downward terminal mouth. No barbels, no bold perch bands. ONE fish only, perfect flat orthographic LEFT SIDE profile with head pointing RIGHT and tail pointing LEFT. Whole fish including every fin and tail fully inside canvas with 6% white margin; straight horizontal body, fins naturally spread. Pure solid WHITE background, no shadow, no water, no props, no hooks, no text or labels. Realistic biological specimen photograph, fine scales and fin rays, restrained wet sheen, even diffuse cross-polarized light with no directional cast shadows or blown highlights. Landscape 1536x1024 composition. Reference should clearly separate body and fin silhouette.",
+    "source": "/home/blux/.codex/generated_images/01a0ae87-649f-78f0-a11c-ad72f49d0990/exec-df901745-deca-4110-9451-43c3beca9216.png",
+    "destination": "source/fish_references/roster_expansion/ruffe.png",
+    "generator": "built-in image_gen"
+  },
+  {
+    "name": "ide",
+    "prompt": "Use case: scientific-educational. Asset type: original photographic texture reference for a volumetric VR fishing game fish model. Ide, Leuciscus idus. Robust elongated silvery freshwater cyprinid, arched dark olive back, fine distinct silver-gold scales, small terminal mouth, pale gold iris, distinctly orange-red pelvic and anal fins, reddish forked tail, grey dorsal. Natural wild silver ide, NOT orange ornamental orfe. ONE fish only, perfect flat orthographic LEFT SIDE profile with head pointing RIGHT and tail pointing LEFT. Whole fish including every fin and tail fully inside canvas with 6% white margin; straight horizontal body, fins naturally spread. Pure solid WHITE background, no shadow, no water, no props, no hooks, no text or labels. Realistic biological specimen photograph, fine scales and fin rays, restrained wet sheen, even diffuse cross-polarized light with no directional cast shadows or blown highlights. Landscape 1536x1024 composition. Reference should clearly separate body and fin silhouette.",
+    "source": "/home/blux/.codex/generated_images/01a0ae87-649f-78f0-a11c-ad72f49d0990/exec-fc704f00-b3a0-4838-80c0-f39513bd7d75.png",
+    "destination": "source/fish_references/roster_expansion/ide.png",
+    "generator": "built-in image_gen"
+  },
+  {
+    "name": "asp",
+    "prompt": "Use case: scientific-educational. Asset type: original photographic texture reference for a volumetric VR fishing game fish model. Asp, Leuciscus aspius. Long muscular silvery predatory cyprinid, pointed head, large upturned mouth with projecting lower jaw, small gold eye, blue grey dorsal back, fine silver scales, dark grey sharply forked tail and dorsal, pale grey lower fins with subtle red bases. Not a trout, no adipose fin. ONE fish only, perfect flat orthographic LEFT SIDE profile with head pointing RIGHT and tail pointing LEFT. Whole fish including every fin and tail fully inside canvas with 6% white margin; straight horizontal body, fins naturally spread. Pure solid WHITE background, no shadow, no water, no props, no hooks, no text or labels. Realistic biological specimen photograph, fine scales and fin rays, restrained wet sheen, even diffuse cross-polarized light with no directional cast shadows or blown highlights. Landscape 1536x1024 composition. Reference should clearly separate body and fin silhouette.",
+    "source": "/home/blux/.codex/generated_images/01a0ae87-649f-78f0-a11c-ad72f49d0990/exec-a132a882-bac7-4e7e-9d3d-1ca8b43e59fa.png",
+    "destination": "source/fish_references/roster_expansion/asp.png",
+    "generator": "built-in image_gen"
+  },
+  {
+    "name": "leervis",
+    "prompt": "Use case: scientific-educational. Asset type: original photographic texture reference for a volumetric VR fishing game fish model. Leervis / leerfish / garrick, Lichia amia. Elongated laterally compressed brilliant silver jack fish, olive-grey back, distinctive wavy dark lateral line bending above pectoral then downward behind, small dark eye, large terminal mouth, long low soft dorsal and anal fins with tall pointed anterior lobes, separated small dorsal spines, sharply forked dark-grey tail, thin tapered caudal peduncle. ONE fish only, perfect flat orthographic LEFT SIDE profile with head pointing RIGHT and tail pointing LEFT. Whole fish including every fin and tail fully inside canvas with 6% white margin; straight horizontal body, fins naturally spread. Pure solid WHITE background, no shadow, no water, no props, no hooks, no text or labels. Realistic biological specimen photograph, fine scales and fin rays, restrained wet sheen, even diffuse cross-polarized light with no directional cast shadows or blown highlights. Landscape 1536x1024 composition. Reference should clearly separate body and fin silhouette.",
+    "source": "/home/blux/.codex/generated_images/01a0ae87-649f-78f0-a11c-ad72f49d0990/exec-c2c3ffae-e5c0-453b-bde0-e5a6d349c160.png",
+    "destination": "source/fish_references/roster_expansion/leervis.png",
+    "generator": "built-in image_gen"
+  },
+  {
+    "name": "atlantic_chub_mackerel",
+    "prompt": "Use case: scientific-educational. Asset type: original photographic texture reference for a volumetric VR fishing game fish model. Atlantic chub mackerel, Scomber colias. Streamlined torpedo-shaped marine fish, iridescent blue-green back with irregular dark wavy transverse bars, silver flanks with scattered faint dusky spots below lateral line, pale belly, large eye, two separate dorsal fins, several small dorsal and ventral finlets before deeply forked tail. Small pointed head and terminal mouth. Accurate mackerel silhouette. ONE fish only, perfect flat orthographic LEFT SIDE profile with head pointing RIGHT and tail pointing LEFT. Whole fish including every fin and tail fully inside canvas with 6% white margin; straight horizontal body, fins naturally spread. Pure solid WHITE background, no shadow, no water, no props, no hooks, no text or labels. Realistic biological specimen photograph, fine scales and fin rays, restrained wet sheen, even diffuse cross-polarized light with no directional cast shadows or blown highlights. Landscape 1536x1024 composition. Reference should clearly separate body and fin silhouette.",
+    "source": "/home/blux/.codex/generated_images/01a0ae87-649f-78f0-a11c-ad72f49d0990/exec-4a00b626-d2c8-4078-9ae5-fb4813f44885.png",
+    "destination": "source/fish_references/roster_expansion/atlantic_chub_mackerel.png",
+    "generator": "built-in image_gen"
+  }
+]

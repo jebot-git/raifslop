@@ -58,7 +58,7 @@ func run() -> void:
 				net.voice.set_mouth_pose(net.multiplayer.get_unique_id(),PackedFloat32Array([.7,.1,0,0,0]))
 				game.game.state=game.Session.State.CASTING if frame<80 else game.Session.State.LANDED if frame<330 else game.Session.State.READY
 				if frame==80:
-					game.game.fish_index=6
+					game.game.fish_index=35
 					game.game.journal.append({"length":63.0})
 					game._show_fish()
 					game.fish_display.transform=Transform3D(Basis(Vector3.FORWARD,-PI/2),Vector3(.4,1.25,-.5))
@@ -94,7 +94,7 @@ func run() -> void:
 					if s.face.get("gaze",false) and s.face.blink.x>.3: observations.face=true
 					if s.visemes[0]>.6: observations.visemes=true
 					if s.state==1: observations.casting=true
-					if s.caught and s.species==6 and s.length==63: observations.catch=true
+					if s.caught and s.species==35 and s.length==63: observations.catch=true
 					if s.in_hand and s.caught: observations.hand=true
 					if observations.has("catch") and not s.caught: observations.release=true
 					if s.head.origin.x>.3 and s.motion.x==.5: observations.movement=true

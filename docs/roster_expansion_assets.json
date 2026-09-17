@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Silver bream",
+    "model": "assets/models/fish/silver_bream.glb",
+    "sha256": "89b583f1368daa9b70b6a5afb21c8e527b71dcc161b49927e2dd00be3e29f3e2",
+    "triangles": 25474,
+    "materials": 3,
+    "bytes": 2750096,
+    "reference": "source/fish_references/roster_expansion/silver_bream.png",
+    "provenance": "Original authored mesh with built-in image_gen texture reference; not a specimen photograph or scan."
+  },
+  {
+    "name": "Ruffe",
+    "model": "assets/models/fish/ruffe.glb",
+    "sha256": "a06c5a3f6fba8f12a2b9a8ee0a7e4713dcc6fcf569edf71aebf649a6a89909ce",
+    "triangles": 27818,
+    "materials": 3,
+    "bytes": 2706504,
+    "reference": "source/fish_references/roster_expansion/ruffe.png",
+    "provenance": "Original authored mesh with built-in image_gen texture reference; not a specimen photograph or scan."
+  },
+  {
+    "name": "Ide",
+    "model": "assets/models/fish/ide.glb",
+    "sha256": "160042e9ac07fec977e02d5bc3ed616263a18988207bc62fe2e8e8e1ff7751f1",
+    "triangles": 22534,
+    "materials": 3,
+    "bytes": 2487508,
+    "reference": "source/fish_references/roster_expansion/ide.png",
+    "provenance": "Original authored mesh with built-in image_gen texture reference; not a specimen photograph or scan."
+  },
+  {
+    "name": "Asp",
+    "model": "assets/models/fish/asp.glb",
+    "sha256": "2c1b1f6dce291c9b947f18420e35462bceb4221fe1b86515d4a670e7c2fb2521",
+    "triangles": 20126,
+    "materials": 3,
+    "bytes": 2364088,
+    "reference": "source/fish_references/roster_expansion/asp.png",
+    "provenance": "Original authored mesh with built-in image_gen texture reference; not a specimen photograph or scan."
+  },
+  {
+    "name": "Leervis",
+    "model": "assets/models/fish/leervis.glb",
+    "sha256": "a10ac9283214fee77f058a5c745e5b52042295ad8e972572a2d8622f18e822cb",
+    "triangles": 21318,
+    "materials": 3,
+    "bytes": 2369992,
+    "reference": "source/fish_references/roster_expansion/leervis.png",
+    "provenance": "Original authored mesh with built-in image_gen texture reference; not a specimen photograph or scan."
+  },
+  {
+    "name": "Atlantic chub mackerel",
+    "model": "assets/models/fish/atlantic_chub_mackerel.glb",
+    "sha256": "645ce9ebe727a76b3aaf809dc92380e6198b966a3ea8d3fe7e0abde2a1b7a304",
+    "triangles": 13422,
+    "materials": 3,
+    "bytes": 1913256,
+    "reference": "source/fish_references/roster_expansion/atlantic_chub_mackerel.png",
+    "provenance": "Original authored mesh with built-in image_gen texture reference; not a specimen photograph or scan."
+  }
+]

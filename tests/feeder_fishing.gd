@@ -42,7 +42,7 @@ func _initialize():
   g.reset();g.rig=0;g.location_id=location
   check(not g.select_rig(1),"Unsuitable location refuses feeder: "+location)
  g.location_id="meadow_bend";g.rig=0;g.prepare_population()
- for i in 100:check(g.choose_fish(i%9) in [11,12,9,14],"Fly pool excludes feeder-only river fish")
+ for i in 100:check(g.choose_fish(i%9) in [11,12,9,14,34],"Fly pool excludes feeder-only river fish")
  g.location_id="lakeside";g.rig=1;g.bait=2
  check(g.bait_name(2)=="Maggots" and g.bait_model()==3,"Feeder bait selection maps to correct visual")
  g.reset();g.cast(5);g.tick(.81,0,0);g.tick(5,1,0)
