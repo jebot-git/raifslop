@@ -1,8 +1,9 @@
 # Lure fishing and shared tackle progression
 
-While ready to cast, hold **right joystick press**, point **up**, and release to
-select Lure. Left selects Classic (Fly at rivers); right selects Feeder where
-available. Neutral release cancels. Desktop uses Tab + Up/Left/Right. Left X cycles
+While ready to cast, tap **right joystick press**, release the click, then point
+**up** to select Lure and close the menu. Left selects Classic (Fly at rivers);
+right selects Feeder where available. Tap again to cancel. Desktop uses a Tab
+tap followed by Up/Left/Right; another Tab tap cancels. Left X cycles
 three lures; bait names remain the brief permitted textual popup. No additional
 world-space guide text is introduced. Gameplay pictograms remain optional.
 

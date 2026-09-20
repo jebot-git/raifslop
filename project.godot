@@ -43,10 +43,13 @@ common/physics_ticks_per_second=90
 textures/vram_compression/import_etc2_astc=true
 
 renderer/rendering_method="mobile"
+; Keep PC OpenXR on the Vulkan path used by the headset renderer.
+rendering_device/driver.windows="vulkan"
 
 [xr]
 
 openxr/enabled=true
+openxr/default_action_map="res://openxr_action_map.tres"
 openxr/extensions/hand_tracking=true
 openxr/extensions/hand_tracking_unobstructed_data_source=true
 openxr/extensions/hand_tracking_controller_data_source=true

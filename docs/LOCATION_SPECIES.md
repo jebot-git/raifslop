@@ -54,7 +54,7 @@ Casting intersects each location with the selected method and bait preferences. 
 
 ## Bait and method selection
 
-Hold right joystick press, choose Classic/Fly (left), Feeder (right) or Lure (up), then release. Left X cycles the selected method’s baits. Desktop uses Tab with Left/Right/Up and number keys. Switch only while ready to cast.
+Tap right joystick press, then point toward Classic/Fly (left), Feeder (right) or Lure (up) to select and close. No hold is needed; tap again to cancel. Left X cycles the selected method’s baits. Desktop uses Tab with Left/Right/Up and number keys. Switch only while ready to cast.
 
 - **Classic bait:** six freshwater or six coastal slots; [new species affinities](ROSTER_EXPANSION.md) extend the existing lists. Classic wet-fly and spinner slots remain available.
 - **River fly:** dry fly and nymph. Meadow Bend offers brown trout, grayling, chub and ide on either; surface-feeding dace favour the dry fly. Boulder Run offers rainbow, brown and brook trout plus grayling on either. No asp or bottom-only feeder species enter this fly pool.

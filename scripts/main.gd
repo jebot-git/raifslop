@@ -238,6 +238,20 @@ func _build_environment() -> void:
 func _build_rig() -> void:
 	var interface := XRServer.find_interface("OpenXR")
 	xr = interface != null and interface.is_initialized()
+	# Log the application API, selected runtime and renderer for support reports.
+	var xr_info := {
+		"api": "OpenXR" if xr else "Desktop",
+		"initialized": xr,
+		"rendering_driver": RenderingServer.get_current_rendering_driver_name(),
+		"rendering_method": RenderingServer.get_current_rendering_method(),
+	}
+	if xr:
+		xr_info.merge(interface.get_system_info())
+	print("XR_STARTUP ", JSON.stringify(xr_info))
+	if not xr and "--xr-mode" in OS.get_cmdline_args():
+		var mode_index := OS.get_cmdline_args().find("--xr-mode")
+		if mode_index + 1 < OS.get_cmdline_args().size() and OS.get_cmdline_args()[mode_index + 1] == "on":
+			push_warning("OpenXR did not initialize; using desktop controls. Select an active OpenXR runtime (VDXR or SteamVR on Windows), connect the headset, and restart. See the earlier OpenXR errors in this log.")
 	# PC VR renders stereo into a dedicated viewport, leaving the window mono.
 	# Standalone headsets retain their single XR output without a spectator pass.
 	if xr and not OS.has_feature("android"):
@@ -439,7 +453,7 @@ func _left_button(button: String) -> void:
 		_primary_action()
 
 func _right_pressed(button: String) -> void:
-	if button=="primary_click":rig_radial.open();return
+	if button=="primary_click":rig_radial.toggle();return
 	if rig_radial.opened and button!="by_button":return
 	if fish_guide.held:
 		if button == "trigger_click": fish_guide.photo_camera.capture()
@@ -460,7 +474,7 @@ func _right_pressed(button: String) -> void:
 		_primary_action()
 
 func _right_released(button: String) -> void:
-	if button=="primary_click":rig_radial.close(true);return
+	if button=="primary_click":return
 	if rig_radial.opened:return
 	if fish_guide.held: return
 	if menu_open:
@@ -697,8 +711,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE: _toggle_avatar_menu()
 		return
 	if not xr and event is InputEventKey and event.keycode==KEY_TAB and not event.echo:
-		if event.pressed:rig_radial.open()
-		else:rig_radial.close(true)
+		if event.pressed:rig_radial.toggle()
 		return
 	if rig_radial.opened:return
 	if not xr and game.state==Session.State.READY and not rod_holster.stowed and event is InputEventKey and event.keycode==KEY_SPACE and not event.echo:

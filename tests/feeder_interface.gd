@@ -37,8 +37,17 @@ func run():
  g.game.reset();g._select_location("lakeside",false);g._select_rig(0)
  await process_frame
  g._right_pressed("primary_click");check(g.rig_radial.opened,"Joystick press opens radial")
- tracker.set_input("primary",Vector2.RIGHT);await process_frame;g.rig_radial.update()
- check(g.rig_radial.choice==1 and g.motor.turn_reserved,"Stick selects feeder without turning")
+ g._right_released("primary_click");g.rig_radial.update()
+ check(g.rig_radial.opened and g.game.rig==0,"Releasing stick click leaves radial open without selecting")
+ var motor_xr:bool=g.motor.xr
+ g.motor.xr=true;g.motor.tracking_focused=true
+ g.motor._physics_process(1.0/90)
+ check(g.motor.turn_reserved,"Neutral stick cannot release turning while radial remains open")
+ tracker.set_input("primary",Vector2.RIGHT);await process_frame;g.rig_radial.point(Vector2.RIGHT)
+ var facing:Basis=g.origin.basis
+ g.motor._physics_process(1.0/90)
+ check(g.origin.basis.is_equal_approx(facing),"Selecting a direction does not turn the player")
+ g.motor.xr=motor_xr
  g._right_pressed("trigger_click");check(not g.casting,"Radial consumes cast trigger")
  if "--capture" in OS.get_cmdline_user_args():
   DirAccess.make_dir_recursive_absolute("res://test-results/feeder")
@@ -48,8 +57,10 @@ func run():
   await capture(g,"radial")
   g.xr=true
  g.rod_status.show();g.rod.show()
+ g.rig_radial.update()
+ check(g.motor.turn_reserved and not g.motor.radial_open,"Selection reserves turning until stick recentres")
  g._right_released("primary_click")
- check(g.game.is_feeder_fishing() and not g.rig_radial.opened,"Release confirms selected rig")
+ check(g.game.is_feeder_fishing() and not g.rig_radial.opened,"Stick direction selects feeder and closes radial without holding click")
  check(g.rod_visual.feeder_mode and g.rod_visual.quiver.visible,"Feeder rod fitted with quiver tip")
  check(not g.bobber.visible and g.rod_status.feeder_visual.visible,"Feeder replaces float")
  var anchor:Vector3=g.tip.position;g.game.state=g.Session.State.BITE;g.time+=.1;g._update_line()
@@ -79,8 +90,12 @@ func run():
  var invalid=Wire.capture(g,checks);invalid.location="boulder_run";check(not Wire.valid(invalid),"Wire rejects rig at unsupported location")
  invalid=Wire.capture(g,checks);invalid.bait=5;check(not Wire.valid(invalid),"Wire rejects invalid feeder bait")
  g.game.reset();g._select_location("lakeside",false);g._select_rig(1)
- g._right_pressed("primary_click");g.rig_radial.point(Vector2.ZERO);g._right_released("primary_click")
- check(g.game.rig==1,"Neutral release cancels")
+ g._right_pressed("primary_click");g.rig_radial.update()
+ check(g.rig_radial.opened and g.game.rig==1,"Opening with deflected stick waits for centre")
+ tracker.set_input("primary",Vector2.ZERO);await process_frame;g.rig_radial.update()
+ check(g.rig_radial.opened and g.rig_radial.selection_ready,"Neutral stick keeps menu open and arms selection")
+ g._right_pressed("primary_click");g._right_released("primary_click")
+ check(not g.rig_radial.opened and g.game.rig==1,"Second click cancels without changing rig")
  g.game.rig=0;g._load_player_preferences()
  check(g.game.rig==1,"Selected feeder survives preferences reload")
  g.xr=native
@@ -95,6 +110,23 @@ func run():
  check(g.game.rig==0 and g.game.is_fly_fishing(),"Travel to trout stream restores fly tackle")
  g.rod_visual.equip(0,true)
  check(is_equal_approx(g.crank.position.x,-.036),"Fly crank sits on spool face")
+ g._right_pressed("primary_click");g._right_released("primary_click")
+ tracker.set_input("primary",Vector2.RIGHT);await process_frame;g.rig_radial.update()
+ check(g.rig_radial.opened and g.game.rig==0,"Unavailable feeder keeps menu open without changing rig")
+ tracker.set_input("primary",Vector2(0,1));await process_frame;g.rig_radial.update()
+ check(not g.rig_radial.opened and g.game.rig==2,"Available choice after unavailable option selects and closes")
+ g.xr=false
+ var tab:=InputEventKey.new();tab.keycode=KEY_TAB;tab.pressed=true
+ g._unhandled_input(tab);tab.pressed=false;g._unhandled_input(tab)
+ check(g.rig_radial.opened,"Desktop Tab tap leaves radial open after release")
+ var arrow:=InputEventKey.new();arrow.keycode=KEY_LEFT;arrow.pressed=true
+ Input.parse_input_event(arrow);Input.flush_buffered_events();g.rig_radial.update()
+ var arrow_release:InputEventKey=arrow.duplicate();arrow_release.pressed=false
+ Input.parse_input_event(arrow_release);Input.flush_buffered_events()
+ check(not g.rig_radial.opened and g.game.rig==0,"Desktop arrow selects and closes without holding Tab")
+ tab.pressed=true;g._unhandled_input(tab);tab.pressed=false;g._unhandled_input(tab)
+ tab.pressed=true;g._unhandled_input(tab);tab.pressed=false;g._unhandled_input(tab)
+ check(not g.rig_radial.opened,"Second Tab tap cancels desktop radial")
  if "--capture" in OS.get_cmdline_user_args():
   peer.hide();g.game.reset();g._select_location("lakeside",false)
   g.xr=native;g.rod.hide();g.rod_status.hide();g.bobber.hide();g.line_mesh.clear_surfaces()

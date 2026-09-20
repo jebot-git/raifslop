@@ -8,14 +8,16 @@ and saved catches remain unchanged.
 
 ## Selection and interaction
 
-While ready to cast, hold **right joystick press**, point left for classic tackle
-right for feeder or up for lure, and release the press. Releasing in the central dead zone
-cancels. At rivers, classic means the existing fly setup. The small three-sector
+While ready to cast, tap **right joystick press** to open the menu. Release the
+click, then point left for classic tackle, right for feeder or up for lure to
+select and close it. Tap the stick again to cancel. If the stick is already
+deflected when opening, return it to centre before selecting. At rivers, classic means the existing fly setup. The small three-sector
 radial menu reserves right-stick turning until the stick returns to centre;
 left-stick push-to-talk remains available. It closes without selecting on tracking
 loss, menu opening or offhand-device use. Active casts, bites, fights and landed
 catches cannot change rigs. The selected rig is saved in player preferences.
-Desktop uses **Tab + Left/Right/Up**, releasing Tab to confirm.
+Desktop uses a **Tab** tap to open, then **Left/Right/Up** to select and close.
+Tap Tab again to cancel.
 
 Cast normally and let the cage sink. Settling depth is an authored per-location
 value, varied by fishing-grid row (roughly 0.9–2.8 m); this is a lightweight
@@ -93,8 +95,8 @@ server together.
 
 - `tests/feeder_fishing.gd`: 3,910 checks of location/bait pools, settling, feed
   deposits and decay, recasts, hook setting, rig locking and server eligibility.
-- `tests/feeder_interface.gd`: 1,105 headless checks, including tracked joystick press/selection/release, neutral
-  and focus cancellation, stable input anchors, remote cage/bait visibility,
+- `tests/feeder_interface.gd`: headless checks, including tap-to-open selection, release persistence,
+  second-click and focus cancellation, stable input anchors, remote cage/bait visibility,
   travel fallback, invalid wire states and stereo captures.
 - Existing fly controls, fly fishing, population, tackle replication, network
   guards, leaderboard and core simulation suites cover regressions.

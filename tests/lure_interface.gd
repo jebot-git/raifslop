@@ -38,16 +38,18 @@ func run():
  g.game.reset();g._select_location("lakeside",false);g._select_rig(0)
  await process_frame
  g._right_pressed("primary_click");check(g.rig_radial.opened,"Joystick press opens radial")
- trackers[1].set_input("primary",Vector2(0,1));await process_frame;g.rig_radial.update()
- check(g.rig_radial.choice==2 and g.motor.turn_reserved,"Stick up selects lure without turning")
+ g._right_released("primary_click");g.rig_radial.update()
+ check(g.rig_radial.opened,"Radial stays open after joystick click is released")
+ trackers[1].set_input("primary",Vector2(0,1));await process_frame;g.rig_radial.point(Vector2(0,1))
  if "--capture" in OS.get_cmdline_user_args():
   DirAccess.make_dir_recursive_absolute("res://test-results/lure")
   g.xr=native;g.hud.hide();g.rod.hide();g.rod_status.hide()
   if native:
    var compositor:=Compositor.new();compositor.compositor_effects=[effect];g.head.compositor=compositor
   await capture(g,"radial");g.xr=true
- g.rod.show();g.rod_status.show();g._right_released("primary_click")
- check(g.game.is_lure_fishing() and g.rod_visual.lure_mode,"Release fits lure tackle")
+ g.rod.show();g.rod_status.show();g.rig_radial.update();g._right_released("primary_click")
+ check(g.game.is_lure_fishing() and g.rod_visual.lure_mode and not g.rig_radial.opened,"Stick up fits lure tackle and closes menu without holding click")
+ check(g.motor.turn_reserved,"Selection keeps turning reserved until stick recentres")
  check(not g.bobber.visible and not g.rod_status.feeder_visual.visible,"Lure has no float or cage")
  g._left_button("ax_button");check(g.game.bait==1,"Offhand bait button selects jig")
  var peer=preload("res://scripts/network/remote_angler.gd").new();peer.session=g.network;root.add_child(peer);peer.set_process(false)

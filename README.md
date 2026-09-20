@@ -11,6 +11,9 @@ Open `project.godot` in Godot 4.7.2 and press F6/F5, or launch:
 
 Set `GODOT_BIN` to your engine executable on another machine. The project uses Mobile/Vulkan rendering and a saved OpenXR default action map. Compatibility rendering on the development machine failed stereo shader compilation; use Mobile for VR. If no OpenXR interface initializes, the game falls back to desktop controls. A simulated runtime may initialize without usable controllers; use `--desktop` in that case.
 
+Windows uses native OpenXR with the selected runtime, including VDXR or SteamVR
+OpenXR. See [Windows setup, runtime logs and capture troubleshooting](docs/WINDOWS_OPENXR.md).
+
 In PC VR, the desktop window automatically shows a third-person streaming view. Capture the game window in your streaming software to show the full angler from an elevated rear angle. The camera smooths walking and turning, avoids solid scenery, and resets after teleporting. Feeding-indicator ripples appear only in the player's view; actual fish wakes and splashes remain visible in the stream. The headset keeps its tracked stereo view and spatial audio. This adds a separate scene render; standalone Android VR does not enable it.
 
 Catches now earn **shekels** based on species rarity and specimen size. Open **Field station → Tackle** to buy rods with stronger lines and faster fish fatigue. Species have different stamina capacities; successful counters stop runs and delay the next escape attempt. [Rewards and tackle](docs/TACKLE_AND_REWARDS.md).
@@ -188,7 +191,7 @@ fly presentations. Proposed species remain gated by location and habitat.
 
 ### Cage feeder rig
 
-Hold **right joystick press**, point left/right/up and release to select classic tackle, feeder or lure while ready to cast. The feeder uses a sinking cage filled with the selected bait and a flexible quiver tip. Earthworm, sweetcorn, maggots and bread target local coarse species across four lakes and Meadow Bend. Desktop: hold **Tab** with Left/Right/Up. [Methods, habitat distribution, assets and validation](docs/FEEDER_FISHING.md).
+Tap **right joystick press** to open the selector, then point left/right/up to select classic tackle, feeder or lure and close it. Holding the click is unnecessary; tap again to cancel. The feeder uses a sinking cage filled with the selected bait and a flexible quiver tip. Earthworm, sweetcorn, maggots and bread target local coarse species across four lakes and Meadow Bend. Desktop: tap **Tab**, then Left/Right/Up to select; tap Tab again to cancel. [Methods, habitat distribution, assets and validation](docs/FEEDER_FISHING.md).
 
 ### Lure rig and tackle tiers
 

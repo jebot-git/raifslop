@@ -68,7 +68,7 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
         folder = stage / target
         shutil.copytree(BUILD / target, folder)
         copy_notices(folder)
-        for name, args in [('Desktop', '--xr-mode off'), ('VR', ''),
+        for name, args in [('Desktop', '--xr-mode off'), ('VR', '--xr-mode on --rendering-driver vulkan'),
                            ('Server', '--headless --xr-mode off -- --server')]:
             if target == 'Linux':
                 script = folder / (name + '.sh')

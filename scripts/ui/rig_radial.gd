@@ -1,8 +1,9 @@
 extends Node3D
-## Hold right stick click, point left/right/up, release. Neutral release cancels.
+## Tap right stick click, then point to select. Tap again to cancel.
 var game_root:Node3D
 var opened:=false
 var choice:=-1
+var selection_ready:=false
 var view:=SubViewport.new()
 var canvas:Control
 class Dial extends Control:
@@ -35,9 +36,15 @@ func open()->bool:
  var g=game_root
  if g.menu_open or g.fish_guide.held or g.shoulder_radio.held or g.avatar_loading or g.casting or g.game.state!=g.Session.State.READY:return false
  if g.xr and (not g.right.get_has_tracking_data() or not g.tracking_manager.focused):return false
- opened=true;choice=-1;show();global_transform=g.head.global_transform*Transform3D(Basis.IDENTITY,Vector3(0,-.12,-.65))
- view.render_target_update_mode=SubViewport.UPDATE_ALWAYS;canvas.queue_redraw();g.motor.turn_reserved=true
+ opened=true;choice=-1;selection_ready=selection_axis().length()<.2
+ show();global_transform=g.head.global_transform*Transform3D(Basis.IDENTITY,Vector3(0,-.12,-.65))
+ view.render_target_update_mode=SubViewport.UPDATE_ALWAYS;canvas.queue_redraw();g.motor.turn_reserved=true;g.motor.radial_open=true
  return true
+func toggle():
+ if opened:close()
+ else:open()
+func selection_axis()->Vector2:
+ return game_root.right.get_vector2("primary") if game_root.xr else Vector2(float(Input.is_key_pressed(KEY_RIGHT))-float(Input.is_key_pressed(KEY_LEFT)),float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN)))
 func point(axis:Vector2):
  choice=-1
  if axis.length()>.45:
@@ -51,10 +58,17 @@ func point(axis:Vector2):
 func close(confirm:=false):
  if not opened:return
  var selected:=choice;opened=false;hide();view.render_target_update_mode=SubViewport.UPDATE_DISABLED
+ game_root.motor.radial_open=false
  if confirm and selected>=0:game_root._select_rig(selected)
  game_root.tracking_was_valid=false;game_root.reel_tracker.engaged=false;game_root.reel_tracker.angular_delta=0
 func update():
  if not opened:return
  var g=game_root
  if g.menu_open or g.fish_guide.held or g.shoulder_radio.held or g.game.state!=g.Session.State.READY or g.xr and (not g.right.get_has_tracking_data() or not g.tracking_manager.focused):close();return
- point(g.right.get_vector2("primary") if g.xr else Vector2(float(Input.is_key_pressed(KEY_RIGHT))-float(Input.is_key_pressed(KEY_LEFT)),float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN))))
+ var axis:=selection_axis()
+ # Opening while already turning must not immediately select a rig.
+ if not selection_ready:
+  if axis.length()<.2:selection_ready=true
+  return
+ point(axis)
+ if choice>=0:close(true)

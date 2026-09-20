@@ -14,6 +14,8 @@ See [0.1.12 changes and validation](RELEASE_NOTES_0.1.12.md).
 - Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime or
   `Desktop.sh`. Keep the executable, PCK and shared libraries together.
 - Windows: extract the ZIP and run `VR.cmd` or `Desktop.cmd`; retain the PCK/DLLs.
+  See [Windows OpenXR setup and capture troubleshooting](WINDOWS_OPENXR.md) for
+  VDXR and SteamVR runtime selection and verification.
 - Quest 3: sideload the signed APK with `adb install -r RealAIFishing-0.1.12-Quest.apk`; launch Real AI Fishing from the headset app library. Controllers remain the supported gameplay input.
 - Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional
   arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`.
