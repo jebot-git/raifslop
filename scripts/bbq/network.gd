@@ -18,7 +18,7 @@ func local_id() -> int:
 func actor(peer:int) -> Dictionary:
  if not session.active or (peer==local_id() and not session.dedicated):
   var g=session.root_game
-  if not is_instance_valid(g.head):return {}
+  if not is_instance_valid(g) or not is_instance_valid(g.get("head")):return {}
   return {"location":g.current_location,"feet":g.motor.global_position,"head":g.head.global_transform,"left":g.left.global_transform if g.xr else g.head.global_transform,"right":g.right.global_transform if g.xr else g.head.global_transform,"left_valid":not g.xr or g.left.get_has_tracking_data(),"right_valid":not g.xr or g.right.get_has_tracking_data(),"xr":g.xr,"state":g.game.state}
  var data:Dictionary=session.states.get(peer,{})
  for key in ["location","feet","head","left","right","left_valid","right_valid","xr","state"]:
