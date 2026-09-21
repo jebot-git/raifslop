@@ -1,6 +1,6 @@
 # Releases and build policy
 
-Release **0.1.12** targets Linux x86_64, Windows x86_64, Quest standalone and a
+Release **0.1.13** targets Linux x86_64, Windows x86_64, Quest standalone and a
 separate asset-free Linux dedicated server. Quest 3 performance passed physical
 device testing and was accepted by the user. The signed Quest APK is included in
 build, packaging and publishing validation. Hand-tracking controls remain in planning.
@@ -9,14 +9,14 @@ Pico standalone builds remain retired after the reported Pico 4 startup failure;
 Historical releases remain available without a claim of current device support.
 
 Download from [GitHub Releases](https://github.com/jebot-git/raifslop/releases).
-See [0.1.12 changes and validation](RELEASE_NOTES_0.1.12.md).
+See [0.1.13 changes and validation](RELEASE_NOTES_0.1.13.md).
 
 - Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime or
   `Desktop.sh`. Keep the executable, PCK and shared libraries together.
 - Windows: extract the ZIP and run `VR.cmd` or `Desktop.cmd`; retain the PCK/DLLs.
   See [Windows OpenXR setup and capture troubleshooting](WINDOWS_OPENXR.md) for
   VDXR and SteamVR runtime selection and verification.
-- Quest 3: sideload the signed APK with `adb install -r RealAIFishing-0.1.12-Quest.apk`; launch Real AI Fishing from the headset app library. Controllers remain the supported gameplay input.
+- Quest 3: sideload the signed APK with `adb install -r RealAIFishing-0.1.13-Quest.apk`; launch Real AI Fishing from the headset app library. Controllers remain the supported gameplay input.
 - Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional
   arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`.
   This binary embeds shared server scripts but no visual/audio assets or extensions.

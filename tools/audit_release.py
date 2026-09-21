@@ -51,7 +51,6 @@ def audit(path):
     pack = APK(path) if mobile else Pack(path)
     names = set(pack.names()); remaps = {}; hashes = {}; sizes = {}
     assert not any('hand_probe' in name for name in names), 'Hand-tracking diagnostic leaked into release'
-    assert not any('bbq' in name.lower() for name in names), 'BBQ prototype included in release'
     for name in sorted(names):
         parts = PurePosixPath(name).parts
         assert parts[0] not in {'docs','source','tests','tools','builds','data','.release-signing'}, name
@@ -69,7 +68,12 @@ def audit(path):
             assert digest not in hashes, ('Duplicate texture payload',name)
             hashes[digest] = name
     assert set(hashes.values()) <= set(remaps.values()), 'Orphan texture payload'
-    for required in ['ASSET_CREDITS.md','assets/models/locations/manifest.json',
+    for required in ['scripts/bbq/bbq.gd','scripts/bbq/food.gd','scripts/bbq/tongs.gd',
+                     'shaders/bbq_food.gdshader','assets/audio/bbq/can_open.wav',
+                     'assets/audio/bbq/grill_sizzle.wav',
+                     *['assets/models/bbq/'+asset+'.glb' for asset in
+                       ['station','cooler','cooler_lid','beer_can','fish_burger','tongs_handle','tongs_jaw']],
+                     'ASSET_CREDITS.md','assets/models/locations/manifest.json',
                      'assets/textures/lighting/panorama_lighting.json',
                      'scripts/rear_parallax.gd','assets/environment/rear_parallax.gdshader',
                      'assets/environment/shore_details/fishing_plan_poster.svg',

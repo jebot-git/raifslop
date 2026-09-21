@@ -200,3 +200,7 @@ Select **Lure** with right joystick press + up (desktop Tab + Up). Left X cycles
 ### Expanded fish roster
 
 The catalogue now has **40 species**, including huchen and ragged-tooth shark predators alongside silver bream, ruffe, ide, asp, leervis and Atlantic chub mackerel. Distribution and bait preferences cover classic, fly, feeder and lure fishing; brook trout also appear in Boulder Run. Fish Guide pages show methods and named waters while preserving existing discoveries and personal bests. [Species, assets, sources and validation](docs/ROSTER_EXPANSION.md) · [complete location matrix](docs/LOCATION_SPECIES.md).
+
+### Waterside BBQ
+
+Open **Menu → BBQ** (or **B** on desktop) for a cookout with fish caught at the current water and fish burgers. Grip food, turn your wrist, and release onto the grill to flip it. Eat with the holding-hand trigger or by bringing food to your mouth. Beer starts inside the closed cooler: trigger its lid, grip a can, and trigger once to open it; drink at your mouth or press again. [Controls, assets, and validation](docs/BBQ.md).

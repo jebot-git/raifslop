@@ -17,6 +17,7 @@ var rod_status: Node3D
 var server_only := false
 var fish_guide: Node3D
 var foreground: Node3D
+var bbq: Node3D
 var current_location := Locations.DEFAULT_ID
 var world_environment: Environment
 var panorama_material: ShaderMaterial
@@ -125,6 +126,8 @@ func _ready() -> void:
 	fish_guide.game_root = self
 	add_child(fish_guide)
 	_load_journal()
+	bbq = preload("res://scripts/bbq/bbq.gd").new()
+	add_child(bbq); bbq.setup(self)
 	game.tackle.load_profile()
 	avatar_menu.attach_tackle(game)
 	audio = AudioStreamPlayer.new()
@@ -437,6 +440,8 @@ func _select_bait(index: int) -> void:
 	hud.queue_redraw()
 
 func _left_button(button: String) -> void:
+	if is_instance_valid(bbq) and bbq.button(0,button): return
+	if is_instance_valid(bbq) and bbq.active and not menu_open: return
 	if rig_radial.opened:return
 	if is_instance_valid(shoulder_radio) and shoulder_radio.held:return
 	if fish_guide.held:
@@ -453,6 +458,8 @@ func _left_button(button: String) -> void:
 		_primary_action()
 
 func _right_pressed(button: String) -> void:
+	if is_instance_valid(bbq) and bbq.button(1,button): return
+	if is_instance_valid(bbq) and bbq.active and button != "by_button" and not menu_open: return
 	if button=="primary_click":rig_radial.toggle();return
 	if rig_radial.opened and button!="by_button":return
 	if fish_guide.held:
@@ -474,6 +481,7 @@ func _right_pressed(button: String) -> void:
 		_primary_action()
 
 func _right_released(button: String) -> void:
+	if is_instance_valid(bbq) and bbq.active and not menu_open: return
 	if button=="primary_click":return
 	if rig_radial.opened:return
 	if fish_guide.held: return
@@ -688,6 +696,10 @@ func _cast(_power: float) -> void:
 	fishing_feedback.cast_swish()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(bbq):
+		if bbq.desktop_input(event): return
+		if not xr and not menu_open and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_B:
+			_toggle_bbq(); return
 	if not xr and event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_J and not menu_open:
 			rod_holster.set_stowed(not rod_holster.stowed)
@@ -758,16 +770,19 @@ func _process(delta: float) -> void:
 	if server_only: return
 	if menu_open or fish_guide.held or rig_radial.opened or (xr and not tracking_was_valid) or game.state!=Session.State.WAITING:
 		game.lure.reset_motion()
-	rod_holster.update_holster()
-	fish_guide.update_device()
+	if not bbq.active:
+		rod_holster.update_holster()
+		fish_guide.update_device()
 	if is_instance_valid(tracking_manager): tracking_manager.sample(delta)
-	shoulder_radio.update()
-	rig_radial.update()
+	if not bbq.active:
+		shoulder_radio.update()
+		rig_radial.update()
+	bbq.tick(delta)
 	_update_tracking_warning(delta)
 	rod_visual.visible = true
 	rod.visible = rod_holster.stowed or not xr or right.get_has_tracking_data()
 	catch_in_hand = _catch_grip_active()
-	motor.catch_controls = fish_guide.held or catch_in_hand
+	motor.catch_controls = fish_guide.held or catch_in_hand or (is_instance_valid(bbq) and bbq.active and not xr)
 	if not xr: hud.visible = not menu_open and not fish_guide.held
 	time += delta
 	if not xr:
@@ -777,6 +792,8 @@ func _process(delta: float) -> void:
 	if fish_display.visible: catch_twitch.tick(delta)
 	_update_avatar(delta)
 	if avatar_loading: return
+	if bbq.active and not menu_open:
+		casting = false; reel_tracker.engaged = false; _update_line(); return
 	if rig_radial.opened:
 		casting=false;game.fly.charging=false;reel_tracker.engaged=false;_update_line();return
 	if fish_guide.held:
@@ -938,7 +955,7 @@ func _catch_grip_active() -> bool:
 
 func _update_catch(delta: float) -> void:
 	catch_in_hand = _catch_grip_active()
-	motor.catch_controls = fish_guide.held or catch_in_hand
+	motor.catch_controls = fish_guide.held or catch_in_hand or (is_instance_valid(bbq) and bbq.active and not xr)
 	if not xr:
 		fish_display.global_position = head.global_position - head.global_basis.z * 1.1 - Vector3.UP * 0.08
 		fish_display.rotation = Vector3(0, time * 0.35, 0)
@@ -1203,9 +1220,17 @@ func _load_journal() -> void:
 			game.catches = data.size()
 	if is_instance_valid(fish_guide): fish_guide.ingest(game.journal)
 
+func _toggle_bbq() -> void:
+	if not is_instance_valid(bbq): return
+	if bbq.active:
+		if menu_open: _toggle_avatar_menu()
+		bbq.stop()
+	else: bbq.start()
+
 func _build_avatar_menu() -> void:
 	avatar_menu = AvatarMenu.new()
 	avatar_menu.library = avatars
+	avatar_menu.bbq_requested.connect(_toggle_bbq)
 	avatar_menu.size = Vector2(900, 650)
 	if xr:
 		avatar_menu_view = SubViewport.new()
@@ -1282,6 +1307,7 @@ func _select_location(id: String, persist := true) -> bool:
 	if is_instance_valid(foreground):
 		remove_child(foreground)
 		foreground.queue_free()
+	if is_instance_valid(bbq) and bbq.active: bbq.stop()
 	foreground = replacement
 	add_child(foreground)
 	motor.relocate(foreground.get_meta("spawn"))

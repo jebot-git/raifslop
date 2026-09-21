@@ -19,7 +19,7 @@ func run() -> void:
 			var path := folder.path_join(child)
 			check(path not in ["res://docs", "res://source", "res://tests", "res://tools", "res://builds", "res://data", "res://.release-signing", "res://addons/godot_ai", "res://addons/fishing_export"], "Private/development folder leaked: " + path)
 			stack.append(path)
-	check(ProjectSettings.get_setting("application/config/version")=="0.1.12","Pack is version 0.1.12")
+	check(ProjectSettings.get_setting("application/config/version")=="0.1.13","Pack is version 0.1.13")
 	check(not ProjectSettings.get_setting("xr/openxr/extensions/hand_interaction_profile",false),"Hands-only controls remain in planning")
 	check(not ProjectSettings.has_setting("autoload/QuestHandProbe"),"Diagnostic hand overlay is excluded")
 	check(load("res://scripts/network/session.gd").VERSION==10,"Pack uses expanded predator protocol 10")
@@ -54,6 +54,16 @@ func run() -> void:
 	var game = load("res://scenes/main.tscn").instantiate(); root.add_child(game)
 	await create_timer(.4).timeout
 	game.set_process(false);game.motor.set_physics_process(false)
+	check(game.bbq.start(),"Pack starts BBQ with exported assets")
+	check(game.bbq.items.size() >= 5,"Pack loads food and cooler stock")
+	var tools_in_game := 0
+	for node in game.find_children("*","Node3D",true,false):
+		if node.get_script() == load("res://scripts/bbq/tongs.gd"): tools_in_game += 1
+	check(tools_in_game == 1,"Pack contains exactly one pair of tongs")
+	check(game.bbq.pickup(1,game.bbq.tongs,game.head.global_transform),"Pack can pick up tongs")
+	game.bbq.stop()
+	for mesh in game.bbq.find_children("*","MeshInstance3D",true,false):
+		check(not mesh.is_visible_in_tree(),"Pack hides BBQ mesh on exit: "+str(mesh.get_path()))
 	for tier in 4:
 		for fly in [false,true]:
 			game.rod_visual.equip(tier,fly)
