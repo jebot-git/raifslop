@@ -74,7 +74,10 @@ func run():
   else:
    await RenderingServer.frame_post_draw
    root.get_texture().get_image().save_png("res://test-results/pictograms/all.png")
- g.head.compositor=null;g.queue_free();await process_frame
+ g.head.compositor=null
+ g.ambience.stop()
+ await create_timer(.3).timeout
+ g.queue_free();await process_frame;await create_timer(.3).timeout
  print("PICTOGRAM_RESULT ",checks," checks, ",failures);quit(0 if failures.is_empty() else 1)
 
 func status_toggle_check(g):

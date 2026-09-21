@@ -9,11 +9,14 @@ ROOT=Path(__file__).resolve().parents[1]; REF=ROOT/'source/fish_references'; OUT
 DATA=json.loads((REF/'anatomy.json').read_text()); scenes=[]
 sys.path.insert(0,str(ROOT/'tools'))
 from fish_fin_geometry import repair_fins
+from fish_surface_sampling import BodyUVSampler, inside_region
 
 def build(name,d):
  scene=bpy.data.scenes.new('Photographic_'+name);bpy.context.window.scene=scene;scenes.append(scene)
  im=bpy.data.images.load(str(REF/(name+'.png')),check_existing=False);im.pack();W,H=im.size
  pixels=np.array(im.pixels[:],dtype=np.float32).reshape(H,W,4)
+ # Blender pixels are linear; .835 corresponds to .92 in the retained sRGB PNG.
+ body_uv=BodyUVSampler(pixels[::-1],d,threshold=.835)
  # Replace white backdrop inside the open mouth with a subdued oral-cavity tone.
  # Retain the untouched reference and its silhouette mask separately.
  corrected=pixels.copy()
@@ -61,18 +64,12 @@ def build(name,d):
     row=pixels[H-1-min(H-1,max(0,int(y))),:,:3].min(axis=1)
     colored=np.where((row<.92)&(np.arange(W)>d['eye'][0]))[0]
     if len(colored):px=min(x,float(colored[-1])-2)
-   verts.append(pos(px,y,width*math.cos(a)));coords.append((px,y))
+   verts.append(pos(px,y,width*math.cos(a)));coords.append(body_uv.sample(px,y,width*math.cos(a)))
  for i in range(len(dense)-1):
   for j in range(N):
    a=i*(N+1)+j;faces.append((a,a+1,a+N+2,a+N+1))
  faces.extend([tuple(reversed(range(N+1))),tuple((len(dense)-1)*(N+1)+j for j in range(N+1))])
  body=mesh(name+' reconstructed body',verts,faces,mat,coords)
- def inside_region(x,y,poly):
-  inside=False
-  for i,(ax,ay) in enumerate(poly):
-   bx,by=poly[i-1]
-   if (ay>y)!=(by>y) and x<(bx-ax)*(y-ay)/(by-ay)+ax:inside=not inside
-  return inside
  # Thin fin surfaces follow the photographed contour. Only external fins/tail are kept;
  # body and cheek are fully volumetric, not a billboard.
  mask=(pixels[:,:,:3].min(axis=2)<.94)
@@ -143,8 +140,13 @@ def build(name,d):
    for j in range(M+1):
     angle=j/M*math.tau;x=ex+er*rr*math.cos(angle);y=ey+er*rr*math.sin(angle)
     ok,pt,n,_=body.ray_cast(pos(x,y,side*.35),Vector((0,-side,0)))
-    point=pt if ok else pos(x,y,side*thickness*.5)
-    point.y+=side*(.0003+.0022*(1-rr*rr))
+    if ok:
+     point=pt;point.y+=side*(.0003+.0022*(1-rr*rr))
+    else:
+     # A rim just above the body profile must sit on the nearest skin;
+     # a half-width fallback creates a protruding tube above the eye.
+     found,pt,n,_=body.closest_point_on_mesh(pos(x,y))
+     point=pt+n*.0003 if found else pos(x,y)
     ev.append(point);ec.append((x,y))
   for i in range(R):
    for j in range(M):

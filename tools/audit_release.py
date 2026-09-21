@@ -68,11 +68,12 @@ def audit(path):
             assert digest not in hashes, ('Duplicate texture payload',name)
             hashes[digest] = name
     assert set(hashes.values()) <= set(remaps.values()), 'Orphan texture payload'
-    for required in ['scripts/bbq/bbq.gd','scripts/bbq/food.gd','scripts/bbq/tongs.gd',
+    for required in ['scripts/bbq/activity.gd','scripts/bbq/model.gd','scripts/bbq/network.gd',
+                     'scripts/bbq/sites.gd','scripts/bbq/food.gd','scripts/bbq/tongs.gd',
                      'shaders/bbq_food.gdshader','assets/audio/bbq/can_open.wav',
                      'assets/audio/bbq/grill_sizzle.wav',
                      *['assets/models/bbq/'+asset+'.glb' for asset in
-                       ['station','cooler','cooler_lid','beer_can','fish_burger','tongs_handle','tongs_jaw']],
+                       ['station','cooler','cooler_lid','beer_can','fish_burger','tongs_handle','tongs_jaw','sausage','corn','mushroom']],
                      'ASSET_CREDITS.md','assets/models/locations/manifest.json',
                      'assets/textures/lighting/panorama_lighting.json',
                      'scripts/rear_parallax.gd','assets/environment/rear_parallax.gdshader',

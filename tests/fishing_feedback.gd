@@ -53,6 +53,16 @@ func run():
  f._process(.02)
  check(f.water_fx.get_shader_parameter("strength")<.4 and is_equal_approx(f.surface.global_position.y,root_game.water_level+.045),"Submerged fish leaves a quieter wake on the actual water surface")
  g.submerge=S.Submerge.NONE
+ g.at_ground_boundary=true;g.jump_time=0
+ var distance_before:float=g.distance
+ root_game.time=.10;root_game._update_line()
+ var bobber_before:Vector3=root_game.bobber.position
+ var rotation_before:Vector3=root_game.bobber.rotation
+ root_game.time=.23;root_game._update_line()
+ check(absf(root_game.bobber.position.y-bobber_before.y)>.01 and root_game.bobber.rotation.distance_to(rotation_before)>.05,"Blocked fighting fish keeps float hopping and shaking")
+ check(g.distance==distance_before and g.state==S.State.FIGHT,"Shore float animation does not move fish or finish fight")
+ g.at_ground_boundary=false;root_game._update_line()
+ check(root_game.bobber.rotation.is_zero_approx(),"Float shake stops when fish leaves boundary")
  g.tension=0;root_game._update_line();var slack_color=root_game.line_material.albedo_color
  g.tension=1;root_game._update_line();var tight_color=root_game.line_material.albedo_color
  check(slack_color.b>slack_color.r and tight_color.r>tight_color.b,"Line shows blue slack and red high tension")

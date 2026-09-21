@@ -64,7 +64,19 @@ func _initialize():
  check(lure.sample_motion(Vector3(.04,0,0),Basis.IDENTITY,.02)>1,"Physical sideways rod motion is sampled")
  check(lure.sample_motion(Vector3(.04,0,0),Basis(Vector3.UP,.7),.02)==0,"Turning view alone cannot twitch")
  check(lure.sample_motion(Vector3(3,0,0),Basis.IDENTITY,.02)==0,"Tracking teleport cannot twitch")
+ for yaw in [0.0,PI/2,-.8]:
+  for sign in [-1.0,1.0]:
+   lure.reset()
+   var outward:=Basis(Vector3.UP,yaw)*Vector3(0,0,-20)
+   lure.move_sideways(outward,Vector3.ZERO,sign*2,.02)
+   var side:Vector3=outward.normalized().cross(Vector3.UP)*sign
+   check(lure.twitch_heading.dot(side)>.999,"Wake follows signed twitch for every cast bearing")
+   lure.work(.02,0,0,1,false,sign*2)
+   check(lure.twitch_wake>0,"Twitch wake survives release briefly")
+   lure.work(.5,0,0,1,false)
+   check(lure.twitch_wake==0,"Directional twitch wake expires")
  lure.reset_motion()
+ check(lure.twitch_heading==Vector3.ZERO and lure.twitch_wake==0,"Tracking reset discards stale ripple direction")
  check(lure.sample_motion(Vector3(-1,0,0),Basis.IDENTITY,.02)==0,"Resume starts a fresh motion baseline")
  g.reset();g.location_id="lakeside";g.select_rig(2);g.cast(5);g.tick(.81,0,0);g.tick(5,1,0)
  check(g.state==S.State.READY and g.rig==2,"Empty retrieve rearms lure")

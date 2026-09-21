@@ -32,7 +32,12 @@ func _initialize():
   g.timer=100;g.feeder.settle(30,location,sector);g.tick(.1,1,0)
   check(g.feeder.drop()<g.feeder.depth,"Reeling lifts a long-settled cage immediately")
   g.tick(g.feeder.settle_time,0,0)
-  g.timer=.01;g.tick(.02,0,0);check(g.state==S.State.BITE,"Settled feeder gets a tip bite")
+  g.timer=.01;g.tick(.02,0,0)
+  check(g.state==S.State.WAITING and g.feeder.nibbling,"Settled feeder starts with nibbles")
+  for i in 120:
+   if g.state==S.State.BITE:break
+   g.tick(.05,0,0)
+  check(g.state==S.State.BITE,"Nibbles lead to a real bite")
   check(not g.select_rig(0),"Cannot change rigs during bite")
   g.strike();check(g.state==S.State.FIGHT,"Lift hooks feeder fish")
   g.reset();g.cast(12);g.tick(.81,0,0);g.tick(g.feeder.settle_time,0,0)

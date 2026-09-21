@@ -51,7 +51,7 @@ material('weathered',(.45,.46,.45),'weathered_timber')
 def cv(p):return (p[0],-p[2],p[1])
 def build(id):
  rng=random.Random(246+len(id));scene=bpy.data.scenes.new('Foreground_'+id);SCENES.append(scene)
- groups={};collision=[]
+ groups={};collision=[];rail_posts={}
  def face(mat,points):
   verts,faces=groups.setdefault(mat,([],[]));start=len(verts);verts.extend(cv(p) for p in points);faces.append(tuple(range(start,start+len(points))))
  def box(mat,p,d,rot=0):
@@ -70,7 +70,9 @@ def build(id):
  def rail(a,b,mat='timber',height=.85):
   aa=Vector((a[0],0,a[1]));bb=Vector((b[0],0,b[1]));length=(bb-aa).length;n=math.ceil(length/1.8)
   for i in range(n+1):
-   p=aa.lerp(bb,i/n);beam('weathered' if mat=='rope' else mat,p-Vector((0,.18,0)),p+Vector((0,height+.05,0)),.05 if mat=='rope' else .045)
+   p=aa.lerp(bb,i/n)
+   key=(round(p.x,5),round(p.z,5),'weathered' if mat=='rope' else mat,.05 if mat=='rope' else .045)
+   rail_posts[key]=max(rail_posts.get(key,0),height+.05)
   if mat=='rope':
    for segment in range(n):
     a0=aa.lerp(bb,segment/n);b0=aa.lerp(bb,(segment+1)/n)
@@ -289,6 +291,8 @@ def build(id):
     beam('weathered',a.lerp(b,.7),a.lerp(b,.7)+Vector((.3,.4,.65)),.09,8)
   scene['shore_connected']=True
  else:raise ValueError(id)
+ # A corner belongs to both spans, but has only one post at the taller height.
+ for (x,z,mat,radius),height in rail_posts.items():beam(mat,Vector((x,-.18,z)),Vector((x,height,z)),radius)
  objects=[]
  for mat,(vertices,faces) in groups.items():
   mesh=bpy.data.meshes.new(id+'_'+mat);mesh.from_pydata(vertices,[],faces);mesh.update()

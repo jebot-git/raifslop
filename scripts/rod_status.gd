@@ -46,6 +46,7 @@ func show_notice(icon:String) -> void:
 func active_icon()->String:
 	if notice_remaining>0:return notice_icon
 	var g=game_root.game
+	if g.is_feeder_fishing() and g.state==g.State.WAITING and g.feeder.nibbling:return "stop"
 	if g.state==g.State.BITE:return "up"
 	if g.state==g.State.FIGHT:
 		if g.jump_time>0 and g.cue>=0:return ["left","right"][mini(g.cue,1)]

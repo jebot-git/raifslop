@@ -2,7 +2,7 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 10 # 40-species roster with river and coastal predator encounters.
+const VERSION := 11 # Shared BBQ ownership and cooking snapshots.
 const State = preload("res://scripts/network/state.gd")
 var leaderboard=preload("res://scripts/network/leaderboard.gd").new()
 var leaderboard_view:Dictionary={}
@@ -29,6 +29,7 @@ func _leaderboard(data:Dictionary)->void:
 			if not leaderboard.valid_row(row):return
 	leaderboard_view=data.duplicate(true);leaderboard_changed.emit()
 
+var bbq: Node
 var root_game: Node
 var active := false
 var dedicated := false
@@ -73,6 +74,7 @@ func setup(root: Node, server_only: bool = false) -> void:
 	headless = DisplayServer.get_name()=="headless"
 	if not dedicated: load_preferences()
 	name = "Network"
+	bbq=preload("res://scripts/bbq/network.gd").new();add_child(bbq);bbq.setup(self)
 	add_child(permissions)
 	add_child(avatars); avatars.setup(self)
 	voice.name = "Voice"; add_child(voice); voice.setup(self)
@@ -138,6 +140,7 @@ func join(address: String, port: int = 24567) -> Error:
 	return OK
 
 func leave(reason: String = "Offline") -> void:
+	if is_instance_valid(bbq):bbq.reset()
 	if active and multiplayer.is_server():leaderboard.save()
 	leaderboard.peers.clear();leaderboard.attempts.clear();leaderboard_view.clear()
 	leaderboard_changed.emit()
@@ -203,6 +206,7 @@ func _roster(data: Dictionary) -> void:
 	changed.emit()
 
 func _peer_left(id: int) -> void:
+	if is_instance_valid(bbq):bbq.model.release_peer(id);bbq.limits.erase(id)
 	leaderboard.disconnect_player(id)
 	state_arrivals.erase(id)
 	waiting.erase(id); players.erase(id); states.erase(id); guards.erase(id)

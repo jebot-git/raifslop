@@ -1,9 +1,10 @@
 # Lure fishing and shared tackle progression
 
 While ready to cast, tap **right joystick press**, release the click, then point
-**up** to select Lure and close the menu. Left selects Classic (Fly at rivers);
-right selects Feeder where available. Tap again to cancel. Desktop uses a Tab
-tap followed by Up/Left/Right; another Tab tap cancels. Left X cycles
+**up** to highlight Lure. Rotate the stick to highlight Classic (Fly at rivers)
+on the left or Feeder on the right where available. Return the stick to centre
+to select and close the menu; tap again to cancel. Desktop uses a Tab tap followed
+by Up/Left/Right, then release the direction keys to confirm; another Tab tap cancels. Left X cycles
 three lures; bait names remain the brief permitted textual popup. No additional
 world-space guide text is introduced. Gameplay pictograms remain optional.
 
@@ -111,3 +112,5 @@ Inspection captures: [radial, left eye](validation/lure/radial_eye0.png),
 [Kingfisher](validation/lure/casting-kingfisher_eye0.png),
 [double paddle](validation/lure/casting-crank_eye0.png),
 [lure selection](validation/lure/lures_eye0.png). Both eyes are retained for each.
+
+Sideways rod twitches produce a small directional surface wake aligned with the twitch, even without reeling. Reversing the rod reverses the wake immediately; the cue lingers briefly after release without mistaking the lure’s settling motion for another twitch.

@@ -15,13 +15,14 @@ func attempt(height: float, direction: Vector3, basis: Basis, reverse := false) 
 			pose.origin += movement
 			fly.stroke(.05, motion.sample(movement, pose, 1.65, Vector3.FORWARD, fly.strokes > 0) / .05)
 	if reverse:
-		for i in 25: motion.sample(Vector3.BACK * .008, pose, 1.65, Vector3.FORWARD, true)
+		for i in 45: motion.sample(Vector3.BACK * .008, pose, 1.65, Vector3.FORWARD, true)
 	return fly.strokes > 0 and motion.release_allowed(pose, 1.65, Vector3.FORWARD)
 func _initialize() -> void:
 	var raised := Basis(Vector3.RIGHT, .35)
 	check(attempt(1.3, Vector3.FORWARD, raised), "Slow shoulder-height back/forward swing remains comfortable")
 	check(attempt(1.3, Vector3(-.4, 0, -1).normalized(), raised), "Moderately diagonal forward cast remains accepted")
-	check(not attempt(.55, Vector3.FORWARD, raised), "Low waist-level swing cannot cast")
+	check(attempt(.55, Vector3.FORWARD, Basis.IDENTITY), "Level waist-height sidearm cast is accepted")
+	check(not attempt(.1, Vector3.FORWARD, raised), "Accidental floor-level sweep cannot cast")
 	check(not attempt(1.3, Vector3(1, 0, -.2).normalized(), raised), "Sideways sweep with a little forward travel cannot cast")
 	check(not attempt(1.3, Vector3.FORWARD, Basis(Vector3.UP, PI) * raised), "Backward-pointing rod cannot cast")
 	check(not attempt(1.3, Vector3.FORWARD, raised, true), "Deliberate reverse sweep after readiness cannot release a cast")

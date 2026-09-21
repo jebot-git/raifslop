@@ -253,16 +253,28 @@ func _touch_from(source: String, point: Variant) -> Variant:
 
 func touch_position() -> Variant:
 	var g = game_root
+	# Runtime hand joints can describe a different hand size or an inferred
+	# controller hand (VDXR). Contact must match the fingertip the player sees.
+	if is_instance_valid(g.avatar):
+		var point = g.avatar.index_touch_position()
+		if g.right.get_has_tracking_data() and point is Vector3 and point.is_finite():
+			return _touch_from("avatar", point)
+		return _touch_from("none", null)
 	var hand := XRServer.get_tracker("/user/hand_tracker/right") as XRHandTracker
-	if hand and hand.has_tracking_data:
+	if hand and hand.has_tracking_data and hand.hand_tracking_source == XRHandTracker.HAND_TRACKING_SOURCE_UNOBSTRUCTED:
 		var joint := XRHandTracker.HAND_JOINT_INDEX_FINGER_TIP
 		if hand.get_hand_joint_flags(joint) & XRHandTracker.HAND_JOINT_FLAG_POSITION_VALID:
 			var point := hand.get_hand_joint_transform(joint).origin
 			if point.is_finite(): return _touch_from("native", g.origin.to_global(point * XRServer.world_scale))
-	if g.right.get_has_tracking_data() and is_instance_valid(g.avatar):
-		var point = g.avatar.index_touch_position()
-		if point is Vector3 and point.is_finite(): return _touch_from("avatar", point)
 	return _touch_from("none", null)
+
+func update_touch() -> void:
+	# Called after the skeleton modifier captures this frame's visible finger.
+	if not held or not game_root.xr or game_root.menu_open or not game_root.tracking_manager.focused:
+		reset_touch(); return
+	var touch = touch_position()
+	if touch is Vector3: press_buttons(touch)
+	else: reset_touch()
 
 func can_grab() -> bool:
 	return game_root.game.state not in [game_root.Session.State.BITE, game_root.Session.State.FIGHT]
@@ -292,9 +304,7 @@ func update_device() -> void:
 		if held:
 			# Fixed grip-relative pose: the player can naturally turn the screen over.
 			global_transform = g.controller_pose(0) * Transform3D(GRIP_BASIS, GRIP_OFFSET)
-			var touch = touch_position()
-			if touch is Vector3: press_buttons(touch)
-			else: reset_touch()
+			if not is_instance_valid(g.avatar): update_touch()
 			if not photo_camera.active:
 				var axes: Vector2 = g.left.get_vector2("primary") + g.right.get_vector2("primary")
 				var axis: float = axes.x if absf(axes.x) >= absf(axes.y) else axes.y

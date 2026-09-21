@@ -296,7 +296,7 @@ func strike() -> void:
 				next_cue=float(profile.run)*tempo+.8
 		message = "Hook set! Strip line; save the reel for a rush or tired fish." if is_fly_fishing() else "Hook set! Reel steadily; ease off during a run."
 	elif state == State.WAITING:
-		lose("Too early. Wait for the float to dip.")
+		lose("Too early. Wait for the strong feeder bite, not the light nibbles." if is_feeder_fishing() else "Too early. Wait for the float to dip.")
 
 func gesture(direction: int) -> bool:
 	# Sampled once per simulation step. An event or a brief flick cannot finish
@@ -502,7 +502,7 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false, rod
 				timer = population.bite_delay(location_id, preferred, sector, rng, is_fly_fishing())
 				if is_lure_fishing():timer=clampf(timer*.55,3,14)
 				fish_index = choose_fish(sector)
-				message = "Drift naturally. Sweep upstream against the current to mend." if is_fly_fishing() else "Retrieve the lure; lift on a strike." if is_lure_fishing() else "Watch the quiver tip. Lift on a bite." if is_feeder_fishing() else "Watch the float. A quick lift sets the hook."
+				message = "Drift naturally. Sweep upstream against the current to mend." if is_fly_fishing() else "Retrieve the lure; lift on a strike." if is_lure_fishing() else "Wait through light nibbles. Lift on the strong pull." if is_feeder_fishing() else "Watch the float. A quick lift sets the hook."
 		State.WAITING:
 			if is_lure_fishing():
 				if _retrieve_empty_line(delta,reel):return
@@ -510,11 +510,21 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false, rod
 				distance=retrieve_origin.distance_to(cast_position)
 				timer-=delta*lure.work(delta,reel,rod_lift,bait,Fly.river(location_id),rod_side_speed)
 			elif is_feeder_fishing():
-				if _retrieve_empty_line(delta,reel):return
-				if reel>.03:feeder.age=maxf(0,feeder.age-delta*2);return
-				var sector:=population.sector_for(location_id,cast_position)
-				if not feeder.settle(delta,location_id,sector):return
-				timer-=delta*feeder.attraction(location_id,sector)
+				if feeder.nibbling:
+					# Guard before retrieval, including quiet gaps between knocks.
+					if reel>.03:
+						lose("Reeled during a nibble. Wait for the strong feeder bite.");return
+					if not feeder.advance_nibbles(delta,rng):return
+				else:
+					if _retrieve_empty_line(delta,reel):return
+					if reel>.03:feeder.age=maxf(0,feeder.age-delta*2);return
+					var sector:=population.sector_for(location_id,cast_position)
+					if not feeder.settle(delta,location_id,sector):return
+					timer-=delta*feeder.attraction(location_id,sector)
+					if timer<=0:
+						feeder.begin_nibbles(rng)
+						message="Light nibbles — hold still. Wait for the strong pull."
+						return
 			elif is_fly_fishing():
 				fly.drift(delta,reel,location_id,bait==1)
 				if _retrieve_empty_line(delta,reel):return
@@ -528,7 +538,7 @@ func tick(delta: float, reel: float, rod_lift: float, winding_reel := false, rod
 				var at: Vector3 = fly.start + fly.offset if is_fly_fishing() else cast_position
 				fish_index = choose_fish(population.sector_for(location_id,at))
 				state = State.BITE
-				timer = (1.25 if bait==0 else 1.6) if is_fly_fishing() else 1.8
+				timer = (1.25 if bait==0 else 1.6) if is_fly_fishing() else Feeder.HOOK_WINDOW if is_feeder_fishing() else 1.8
 				message = "TAKE! Lift the rod now!" if is_fly_fishing() else "BITE! Lift the rod now!"
 		State.BITE:
 			if _retrieve_empty_line(delta,reel):return

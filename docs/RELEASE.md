@@ -1,28 +1,28 @@
 # Releases and build policy
 
-Release **0.1.13** targets Linux x86_64, Windows x86_64, Quest standalone and a
-separate asset-free Linux dedicated server. Quest 3 performance passed physical
-device testing and was accepted by the user. The signed Quest APK is included in
+Release **0.1.14** targets Linux x86_64, Windows x86_64, Quest standalone and a
+separate asset-free Linux dedicated server. Quest 3 performance in an earlier release passed physical
+device testing and was accepted by the user; this build has not been retested on hardware. The signed Quest APK is included in
 build, packaging and publishing validation. Hand-tracking controls remain in planning.
 Pico standalone builds remain retired after the reported Pico 4 startup failure;
 **Pico OS 6 support is a future goal only**, requiring hardware testing.
 Historical releases remain available without a claim of current device support.
 
 Download from [GitHub Releases](https://github.com/jebot-git/raifslop/releases).
-See [0.1.13 changes and validation](RELEASE_NOTES_0.1.13.md).
+See [0.1.14 changes and validation](RELEASE_NOTES_0.1.14.md).
 
 - Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime or
   `Desktop.sh`. Keep the executable, PCK and shared libraries together.
 - Windows: extract the ZIP and run `VR.cmd` or `Desktop.cmd`; retain the PCK/DLLs.
   See [Windows OpenXR setup and capture troubleshooting](WINDOWS_OPENXR.md) for
   VDXR and SteamVR runtime selection and verification.
-- Quest 3: sideload the signed APK with `adb install -r RealAIFishing-0.1.13-Quest.apk`; launch Real AI Fishing from the headset app library. Controllers remain the supported gameplay input.
+- Quest 3: sideload the signed APK with `adb install -r RealAIFishing-0.1.14-Quest.apk`; launch Real AI Fishing from the headset app library. Controllers remain the supported gameplay input.
 - Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional
   arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`.
   This binary embeds shared server scripts but no visual/audio assets or extensions.
   Desktop packages also retain their existing server launchers.
 
-Multiplayer uses **protocol 10**; update clients and server together. Publishing
+Multiplayer uses **protocol 11**; update clients and server together. Publishing
 packages does not upgrade an existing live server. Eight slots, direct UDP
 connections and local guide/progression remain unchanged. Accomplishment records
 are saved only by the server. Keep bundled asset credits and notices when sharing.
@@ -53,5 +53,5 @@ missing/excluded targets and refuses to modify an already published release.
 
 Simulated Monado/OpenXR and Linux Vulkan checks do not establish physical-headset
 comfort or frame rates. Windows runtime testing is unavailable on this Linux host.
-Quest 3 standalone and WiVRn headset behavior were tested; other Quest models remain untested. Pico is retired. Panoramas remain native 8K
+Earlier Quest 3 standalone and WiVRn headset behavior was tested; this build and other Quest models remain untested on hardware. Pico is retired. Panoramas remain native 8K
 mono photographs with authored stereo foreground geometry.

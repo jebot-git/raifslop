@@ -140,24 +140,8 @@ t=bpy.context.object; t.data.body='LAGER'; t.data.size=.012; t.data.extrude=.000
 bpy.ops.object.convert(target='MESH'); finish(bpy.context.object,'Lager lettering',cream)
 export('beer_can')
 
-# Fish burger has a crisp patty, ruffled greens, sauce, and sesame crown.
-ball('Bottom bun',(0,-.030,0),(.080,.020,.077),bun)
-cyl('Fish patty',(0,-.006,0),.077,.025,crumb,40)
-for i in range(24):
-    a=i*math.tau/24
-    ball('Crisp crumb',(.074*math.cos(a),-.005,.074*math.sin(a)),(.007,.010,.007),crumb)
-for i in range(12):
-    a=i*math.tau/12
-    ball('Leaf',(.054*math.cos(a),.012,.054*math.sin(a)),(.031,.005,.023),lettuce)
-cyl('Sauce',(0,.015,0),.064,.004,cream)
-ball('Brioche crown',(0,.032,0),(.080,.033,.077),bun)
-for i in range(42):
-    x=rng.uniform(-.060,.060);z=rng.uniform(-.056,.056)
-    if (x/.074)**2+(z/.071)**2>.83:continue
-    y=.032+.033*math.sqrt(1-(x/.080)**2-(z/.077)**2)
-    o=ball('Sesame',(x,y,z),(.003,.001,.0015),seed);o.rotation_euler.z=rng.random()*math.pi
-export('fish_burger')
-for name,at in [('station',(0,0,0)),('cooler',(.66,0,.48)),('cooler_lid',(.66,-.17,.85)),('fish_burger',(-.65,0,.95))]:
+# Food assets are authored independently by build_bbq_food.py.
+for name,at in [('station',(0,0,0)),('cooler',(.66,0,.48)),('cooler_lid',(.66,-.17,.85))]:
     asset=bpy.data.scenes.get('Asset_'+name)
     for original in asset.objects:
         o=original.copy(); scene.collection.objects.link(o); o.location+=Vector(at)

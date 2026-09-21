@@ -1,5 +1,5 @@
 extends Node3D
-## Tap right stick click, then point to select. Tap again to cancel.
+## Tap right stick click, point to highlight, then centre to select. Tap again to cancel.
 var game_root:Node3D
 var opened:=false
 var choice:=-1
@@ -70,5 +70,9 @@ func update():
  if not selection_ready:
   if axis.length()<.2:selection_ready=true
   return
- point(axis)
- if choice>=0:close(true)
+ # Keep the highlighted wedge while the stick travels back through the
+ # dead zone. Deflection only previews; returning to centre commits it.
+ if axis.length()<.2:
+  if choice>=0:close(true)
+ elif axis.length()>.45:
+  point(axis)

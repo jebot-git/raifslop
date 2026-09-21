@@ -1,5 +1,6 @@
 extends Node3D
 signal right_grip_updated(pose: Transform3D)
+signal hand_attachments_updated
 const Scale = preload("res://scripts/avatar_scale.gd")
 const IK = preload("res://scripts/avatar_ik.gd")
 const RestBounds = preload("res://scripts/avatar_rest_bounds.gd")
@@ -211,6 +212,7 @@ func _capture_hand_attachments() -> void:
 	if index_tip_bone >= 0:
 		right_index_tip = skeleton.to_global(skeleton.get_bone_global_pose(index_tip_bone) * index_tip_offset)
 		right_index_tip_frame = Engine.get_process_frames()
+	hand_attachments_updated.emit()
 
 func hand_grip_pose(left_hand := false) -> Variant:
 	return (left_grip if left_hand else right_grip) if Engine.get_process_frames() - right_grip_frame <= 2 else null

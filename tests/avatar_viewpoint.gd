@@ -35,6 +35,23 @@ func run():
   check(rig.viewpoint_position().distance_to(g.head.global_position)<.001,"Tracked hips retain headset viewpoint")
   var expected:Vector3=(g.motor.global_transform*rig.fit_tracked_hips(hips)).origin
   check(sk.to_global(sk.get_bone_global_pose(sk.find_bone("Hips")).origin).distance_to(expected)<.001,"Eye alignment preserves tracked hips")
+  for height in [.95, 1.15, 1.65]:
+   g.head.position=Vector3(.15,height,-.2)
+   hips.origin=Vector3(0,height-.73,.05)
+   var body={"hips":hips,"chest":Transform3D(Basis(Vector3.RIGHT,.2),Vector3(0,height-.3,-.05))}
+   var origin_before:Transform3D=g.origin.global_transform
+   for pitch in [-.6,.6]:
+    g.head.rotation.x=pitch
+    rig.apply_tracking(g.motor.global_transform,body,{})
+    rig.update_targets(g.head,g.desktop_left,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
+    rig.solver._process_modification_with_delta(.02)
+    var chest:=sk.find_bone("Chest")
+    if chest>=0:
+     check(sk.get_bone_pose_position(chest).is_equal_approx(sk.get_bone_rest(chest).origin),"FBT seated torso retains its length instead of being translated by eye alignment: "+path)
+    expected=(g.motor.global_transform*rig.fit_tracked_hips(hips)).origin
+    check(sk.to_global(sk.get_bone_global_pose(sk.find_bone("Hips")).origin).distance_to(expected)<.001,"Seated pelvis stays on its tracked target")
+    check(rig.viewpoint_position().distance_to(g.head.global_position)<.001,"Seated head still follows the headset")
+    check(g.origin.global_transform.is_equal_approx(origin_before),"Avatar fitting cannot move tracking origin")
  var locations=preload("res://scripts/locations.gd")
  for index in g.Session.SPECIES.size():
   var hint:Dictionary=g.fish_guide.discovery_hint(index)

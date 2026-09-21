@@ -8,10 +8,34 @@ static func mesh_for(path:String)->Mesh:
  var node:MeshInstance3D=source.find_children("*","MeshInstance3D",true,false)[0]
  var st:=SurfaceTool.new();st.create_from(node.mesh,0);st.generate_tangents()
  var mesh:=st.commit();meshes[path]=mesh;source.free();return mesh
-static func ground(id:String,x:float,z:float)->float:
+static func ground(id:String,x:float,z:float,terrain:PackedVector3Array=PackedVector3Array())->float:
+ var height:float=-INF
+ for i in range(0,terrain.size(),3):
+  var hit=Geometry3D.ray_intersects_triangle(Vector3(x,10,z),Vector3.DOWN,terrain[i],terrain[i+1],terrain[i+2])
+  if hit is Vector3:height=maxf(height,hit.y)
+ if is_finite(height):return height
  return load("res://scripts/river_foreground.gd").ground_height(x,z,false) if id in ["meadow_bend","boulder_run"] else 0.0
+static func ground_triangles(parent:Node3D)->PackedVector3Array:
+ var terrain:=PackedVector3Array()
+ for node in parent.find_children("*","MeshInstance3D",true,false):
+  var transform:Transform3D=node.transform
+  var ancestor:Node=node.get_parent()
+  while ancestor!=parent and ancestor is Node3D:
+   transform=ancestor.transform*transform;ancestor=ancestor.get_parent()
+  for surface in node.mesh.get_surface_count():
+   var mat:Material=node.mesh.surface_get_material(surface)
+   if not mat or not mat.resource_name.begins_with("FG_sand"):continue
+   var arrays:Array=node.mesh.surface_get_arrays(surface)
+   var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+   var indices:PackedInt32Array=arrays[Mesh.ARRAY_INDEX]
+   if indices.is_empty():
+    for p in vertices:terrain.append(transform*p)
+   else:
+    for index in indices:terrain.append(transform*vertices[index])
+ return terrain
 static func add_to(parent:Node3D,id:String)->void:
  var root:=Node3D.new();root.name="ShoreDressing";parent.add_child(root)
+ var terrain:=ground_triangles(parent)
  var pier:bool=id in ["lake_pier","gray_pier","bell_park_pier","simons_town_rocks"]
  var sites:Array
  if pier:
@@ -41,7 +65,7 @@ static func add_to(parent:Node3D,id:String)->void:
     multi.visible_instance_count=i;shadows.visible_instance_count=i;break
   var reserved:=Rect2(area.position+Vector2(at.x,at.z),area.size)
   occupied.append(reserved);exclusions.append(reserved)
-  var surface:float=ground(id,at.x,at.z)
+  var surface:float=ground(id,at.x,at.z,terrain)
   at.y=surface-mesh.get_aabb().position.y*size-(.003 if pier else .018)
   multi.set_instance_transform(i,Transform3D(Basis(Vector3.UP,yaw).scaled_local(Vector3.ONE*size),at))
   shadows.set_instance_transform(i,Transform3D(Basis(Vector3.UP,yaw).scaled_local(Vector3(.95 if pier else 2.3,1,.95 if pier else .65)*size),Vector3(at.x,surface+.004,at.z)))
@@ -51,12 +75,12 @@ static func add_to(parent:Node3D,id:String)->void:
  batch(root,"ContactShadows",shadows,shadow_mat)
  root.set_meta("prop_bases",footprints)
  root.set_meta("prop_footprints",exclusions)
- if not pier:add_pebbles(root,id,rng,occupied)
+ if not pier:add_pebbles(root,id,rng,occupied,terrain)
  add_lilies(root,id,rng)
 static func batch(root:Node3D,label:String,multi:MultiMesh,mat:Material):
  var visual:=MultiMeshInstance3D.new();visual.name=label;visual.multimesh=multi;visual.material_override=mat
  visual.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;root.add_child(visual)
-static func add_pebbles(root:Node3D,id:String,rng:RandomNumberGenerator,occupied:Array):
+static func add_pebbles(root:Node3D,id:String,rng:RandomNumberGenerator,occupied:Array,terrain:PackedVector3Array=PackedVector3Array()):
  var mesh:=mesh_for("res://assets/environment/rivers/river_boulder.glb")
  var mat:=ShaderMaterial.new();mat.shader=load("res://assets/environment/rivers/rock.gdshader")
  mat.set_shader_parameter("albedo_tex",load("res://assets/environment/rivers/river_boulder_coastal_granite_base.png"))
@@ -83,7 +107,7 @@ static func add_pebbles(root:Node3D,id:String,rng:RandomNumberGenerator,occupied
    occupied.append(area);pebble_areas.append(area);accepted=true;break
   if not accepted:
    multi.visible_instance_count=i;break
-  at.y=ground(id,at.x,at.z)-mesh.get_aabb().position.y*size.y-.012
+  at.y=ground(id,at.x,at.z,terrain)-mesh.get_aabb().position.y*size.y-.012
   multi.set_instance_transform(i,Transform3D(Basis(Vector3.UP,rng.randf_range(-PI,PI)).scaled_local(size),at))
   bases.append(at)
  batch(root,"ShorePebbles",multi,mat);root.set_meta("pebble_bases",bases);root.set_meta("pebble_footprints",pebble_areas)

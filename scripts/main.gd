@@ -126,13 +126,11 @@ func _ready() -> void:
 	fish_guide.game_root = self
 	add_child(fish_guide)
 	_load_journal()
-	bbq = preload("res://scripts/bbq/bbq.gd").new()
-	add_child(bbq); bbq.setup(self)
 	game.tackle.load_profile()
 	avatar_menu.attach_tackle(game)
 	audio = AudioStreamPlayer.new()
 	add_child(audio)
-	last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
+	last_tip = _strike_tip()
 	ambience=preload("res://scripts/ambience.gd").new()
 	add_child(ambience);ambience.setup(self)
 	shoulder_radio=preload("res://scripts/voice/shoulder_radio.gd").new()
@@ -148,6 +146,7 @@ func _ready() -> void:
 		add_child(spectator)
 		spectator.setup(self)
 	_start_network()
+	bbq=preload("res://scripts/bbq/activity.gd").new();add_child(bbq);bbq.setup(self)
 	print("Real AI Fishing ready | ", "OpenXR" if xr else "Desktop", " | panorama + location foreground loaded")
 
 func material(color: Color, metal := 0.0) -> StandardMaterial3D:
@@ -440,8 +439,9 @@ func _select_bait(index: int) -> void:
 	hud.queue_redraw()
 
 func _left_button(button: String) -> void:
-	if is_instance_valid(bbq) and bbq.button(0,button): return
-	if is_instance_valid(bbq) and bbq.active and not menu_open: return
+	if is_instance_valid(bbq) and bbq.holds(0) and not fish_guide.held and not menu_open:
+		if button=="ax_button":bbq.use(0,bbq.hovered,true)
+		return
 	if rig_radial.opened:return
 	if is_instance_valid(shoulder_radio) and shoulder_radio.held:return
 	if fish_guide.held:
@@ -458,8 +458,9 @@ func _left_button(button: String) -> void:
 		_primary_action()
 
 func _right_pressed(button: String) -> void:
-	if is_instance_valid(bbq) and bbq.button(1,button): return
-	if is_instance_valid(bbq) and bbq.active and button != "by_button" and not menu_open: return
+	if is_instance_valid(bbq) and bbq.holds(1) and not fish_guide.held and not menu_open and button!="by_button":
+		if button=="ax_button":bbq.use(1,bbq.hovered,true)
+		return
 	if button=="primary_click":rig_radial.toggle();return
 	if rig_radial.opened and button!="by_button":return
 	if fish_guide.held:
@@ -481,7 +482,6 @@ func _right_pressed(button: String) -> void:
 		_primary_action()
 
 func _right_released(button: String) -> void:
-	if is_instance_valid(bbq) and bbq.active and not menu_open: return
 	if button=="primary_click":return
 	if rig_radial.opened:return
 	if fish_guide.held: return
@@ -490,7 +490,7 @@ func _right_released(button: String) -> void:
 		return
 	if button == "trigger_click" and casting:
 		game.fly.charging = false
-		if game.fly.strokes > 0 and cast_motion.release_allowed(controller_local_pose(1) * rod_holster.HELD_POSE, head.position.y, cast_swing_axis) and left.get_has_tracking_data() and right.get_has_tracking_data():
+		if game.fly.strokes > 0 and cast_motion.release_allowed(controller_local_pose(1) * rod_holster.HELD_POSE, head.position.y, cast_swing_axis) and right.get_has_tracking_data() and tracking_manager.focused:
 			_cast(game.fly.cast_power())
 		else:
 			game.message = "Hold trigger, sweep back then forward, and release."
@@ -521,13 +521,18 @@ func _cast_direction() -> Vector3:
 func _tracked_cast_tip() -> Vector3:
 	return (controller_local_pose(1) * rod_holster.HELD_POSE) * Vector3(0, 0, -1.68)
 
+func _strike_tip() -> Vector3:
+	# Feeder strikes follow the physical rod, without avatar lag or quiver knocks.
+	if xr and game.is_feeder_fishing():return _tracked_cast_tip()
+	return origin.to_local(tip.global_position) if xr else tip.global_position
+
 func _sample_cast_swing(delta: float) -> void:
 	# Avatar IK can damp/lag the rendered tip. Cast from actual controller
 	# translation and wrist rotation, in tracking-origin space like fly mending.
 	var at := _tracked_cast_tip()
 	var movement := at - cast_last_tip
 	cast_last_tip = at
-	if delta <= 0.0 or delta > .1 or movement.length() > .5:
+	if delta <= 0.0 or delta > .1 or not movement.is_finite() or movement.length() > maxf(.5, delta * 35.0):
 		# Ignore discontinuities, retaining an already completed gesture.
 		return
 	var travel: float = cast_motion.sample(movement, controller_local_pose(1) * rod_holster.HELD_POSE, head.position.y, cast_swing_axis, game.fly.strokes > 0)
@@ -696,10 +701,7 @@ func _cast(_power: float) -> void:
 	fishing_feedback.cast_swish()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if is_instance_valid(bbq):
-		if bbq.desktop_input(event): return
-		if not xr and not menu_open and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_B:
-			_toggle_bbq(); return
+	if is_instance_valid(bbq) and bbq.handle_input(event):return
 	if not xr and event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_J and not menu_open:
 			rod_holster.set_stowed(not rod_holster.stowed)
@@ -770,19 +772,16 @@ func _process(delta: float) -> void:
 	if server_only: return
 	if menu_open or fish_guide.held or rig_radial.opened or (xr and not tracking_was_valid) or game.state!=Session.State.WAITING:
 		game.lure.reset_motion()
-	if not bbq.active:
-		rod_holster.update_holster()
-		fish_guide.update_device()
+	rod_holster.update_holster()
+	fish_guide.update_device()
 	if is_instance_valid(tracking_manager): tracking_manager.sample(delta)
-	if not bbq.active:
-		shoulder_radio.update()
-		rig_radial.update()
-	bbq.tick(delta)
+	shoulder_radio.update()
+	rig_radial.update()
 	_update_tracking_warning(delta)
 	rod_visual.visible = true
 	rod.visible = rod_holster.stowed or not xr or right.get_has_tracking_data()
 	catch_in_hand = _catch_grip_active()
-	motor.catch_controls = fish_guide.held or catch_in_hand or (is_instance_valid(bbq) and bbq.active and not xr)
+	motor.catch_controls = fish_guide.held or catch_in_hand or (is_instance_valid(bbq) and (bbq.holds(0) or bbq.holds(1)) and not xr)
 	if not xr: hud.visible = not menu_open and not fish_guide.held
 	time += delta
 	if not xr:
@@ -792,8 +791,6 @@ func _process(delta: float) -> void:
 	if fish_display.visible: catch_twitch.tick(delta)
 	_update_avatar(delta)
 	if avatar_loading: return
-	if bbq.active and not menu_open:
-		casting = false; reel_tracker.engaged = false; _update_line(); return
 	if rig_radial.opened:
 		casting=false;game.fly.charging=false;reel_tracker.engaged=false;_update_line();return
 	if fish_guide.held:
@@ -801,7 +798,7 @@ func _process(delta: float) -> void:
 		fight_input.reset()
 		casting = false
 		reel_tracker.engaged = false
-		last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
+		last_tip = _strike_tip()
 		if fish_display.visible: _update_catch(0)
 		_update_line()
 		return
@@ -813,7 +810,7 @@ func _process(delta: float) -> void:
 		if xr and right.get_has_tracking_data():
 			var scroll_axis := right.get_vector2("primary").y
 			if absf(scroll_axis) > 0.2: avatar_menu.scroll_page(-scroll_axis * 650.0 * delta)
-		last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
+		last_tip = _strike_tip()
 		_update_line()
 		return
 	if rod_holster.stowed:
@@ -823,7 +820,9 @@ func _process(delta: float) -> void:
 	gesture_cooldown = maxf(0.0, gesture_cooldown - delta)
 	var reel := 0.0
 	if xr:
-		var tracked: bool = right.get_has_tracking_data() and left.get_has_tracking_data() and (not is_instance_valid(tracking_manager) or tracking_manager.focused)
+		# The offhand commonly leaves the cameras during a backswing. It is
+		# required for fighting/reeling, but cannot cancel a one-handed cast.
+		var tracked: bool = right.get_has_tracking_data() and (left.get_has_tracking_data() or game.state in [Session.State.READY, Session.State.CASTING]) and (not is_instance_valid(tracking_manager) or tracking_manager.focused)
 		rod.visible = right.get_has_tracking_data()
 		if not tracked:
 			game.fly.charging=false;game.fly.release_strip(true)
@@ -837,10 +836,10 @@ func _process(delta: float) -> void:
 			hud.queue_redraw()
 			return
 		if not tracking_was_valid:
-			last_tip = origin.to_local(tip.global_position)
+			last_tip = _strike_tip()
 			tracking_was_valid = true
 		# Locomotion is not a fishing gesture. Use origin-local tracked motion.
-		velocity = origin.global_basis * ((origin.to_local(tip.global_position) - last_tip) / maxf(delta, 0.001))
+		velocity = origin.global_basis * ((_strike_tip() - last_tip) / maxf(delta, 0.001))
 		if casting:
 			_sample_cast_swing(delta)
 		var tracked_rod: Transform3D = controller_local_pose(1) * rod_holster.HELD_POSE
@@ -861,7 +860,7 @@ func _process(delta: float) -> void:
 			var raw_tip:Vector3=(controller_local_pose(1)*preload("res://scripts/rod_holster.gd").HELD_POSE)*Vector3(0,0,-1.68)
 			var mend:int=game.fly.sample_mend(raw_tip,origin.global_basis,delta,game.state==Session.State.WAITING)
 			if mend!=0:_mend_fly(mend)
-		if game.state == Session.State.BITE and velocity.y > 0.9:
+		if velocity.y > 0.9 and (game.state == Session.State.BITE or (game.is_feeder_fishing() and game.state==Session.State.WAITING and game.feeder.nibbling)):
 			game.strike()
 		if game.state == Session.State.FIGHT:
 			var facing := Basis(Vector3.UP,atan2(head.global_basis.z.x,head.global_basis.z.z))
@@ -896,7 +895,7 @@ func _process(delta: float) -> void:
 	fishing_feedback.reel_rate = reel
 	if game.state == Session.State.FIGHT and game.cue >= 0:
 		if game.jump_time<=0:escape_offset=escape_offset.move_toward(fish_escape_direction() * 1.1, delta * 1.8)
-	last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
+	last_tip = _strike_tip()
 	var prior_takeovers: int=game.takeover_count
 	if game.is_fly_fishing() and game.state==Session.State.FIGHT:
 		game.fly.current_speed=Session.Fly.current(bobber.global_position,game.location_id).length()
@@ -955,7 +954,7 @@ func _catch_grip_active() -> bool:
 
 func _update_catch(delta: float) -> void:
 	catch_in_hand = _catch_grip_active()
-	motor.catch_controls = fish_guide.held or catch_in_hand or (is_instance_valid(bbq) and bbq.active and not xr)
+	motor.catch_controls = fish_guide.held or catch_in_hand or (is_instance_valid(bbq) and (bbq.holds(0) or bbq.holds(1)) and not xr)
 	if not xr:
 		fish_display.global_position = head.global_position - head.global_basis.z * 1.1 - Vector3.UP * 0.08
 		fish_display.rotation = Vector3(0, time * 0.35, 0)
@@ -1045,8 +1044,10 @@ func _sample_lure_motion(delta:float)->float:
 		game.lure.reset_motion();return 0.0
 	# Raw controller input avoids a feedback loop through the solved avatar hand.
 	var input_tip:Vector3=(controller_local_pose(1)*rod_holster.HELD_POSE)*Vector3(0,0,-1.68) if xr else origin.to_local(tip.global_position)
-	var facing:=Basis(Vector3.UP,atan2(head.basis.z.x,head.basis.z.z))
-	return game.lure.sample_motion(input_tip-origin.to_local(head.global_position),facing,delta)
+	var direction:Vector3=origin.global_basis.inverse()*(game.cast_position-game.retrieve_origin)
+	direction.y=0
+	var facing:=Basis.looking_at(direction.normalized()) if direction.length_squared()>.001 else Basis.IDENTITY
+	return game.lure.sample_motion(input_tip,facing,delta)
 
 func _fly_hand_position() -> Vector3:
 	if is_instance_valid(avatar):
@@ -1061,7 +1062,9 @@ func _append_fly_grip_line() -> void:
 	line_mesh.surface_add_vertex(rod.to_global(Session.Fly.LINE_GUIDE))
 
 func _update_line() -> void:
-	rod_visual.update_tip(game.state,time)
+	var feeder_load:float=game.feeder.tip_load(game.state==Session.State.BITE) if game.is_feeder_fishing() and game.state in [Session.State.WAITING,Session.State.BITE] else -1.0
+	rod_visual.update_tip(game.state,time,feeder_load)
+	bobber.rotation = Vector3.ZERO
 	rod_status.bait_visual.pose_lure(Vector3.ZERO,false)
 	# Keep the tracked input anchor fixed: visual tip knocks must not set the hook.
 	var line_tip:Vector3=rod_visual.to_global(rod_visual.quiver.end) if game.is_feeder_fishing() else tip.global_position
@@ -1113,6 +1116,11 @@ func _update_line() -> void:
 		# Walking does not teleport the fish to the world origin or win a fight.
 		var direction := (cast_target - cast_anchor).normalized()
 		bobber.position = cast_anchor + direction * game.distance + escape_offset + Vector3(0, 0.02, 0)
+		if game.at_ground_boundary and game.jump_time <= 0:
+			# A blocked fish is still fighting. Animate the float independently
+			# of fish travel so the shoreline constraint cannot freeze this cue.
+			bobber.position.y += maxf(0.0, sin(time * 13.0)) * .07 + sin(time * 31.0) * .012
+			bobber.rotation = Vector3(sin(time * 23.0) * .16, 0, sin(time * 29.0) * .20)
 		if game.submerge==Session.Submerge.PULL:
 			var progress: float = 1.0-game.submerge_time/(Session.SUBMERGE_WARNING+Session.SUBMERGE_DURATION)
 			bobber.position.y-=sin(progress*PI)*.28
@@ -1220,17 +1228,9 @@ func _load_journal() -> void:
 			game.catches = data.size()
 	if is_instance_valid(fish_guide): fish_guide.ingest(game.journal)
 
-func _toggle_bbq() -> void:
-	if not is_instance_valid(bbq): return
-	if bbq.active:
-		if menu_open: _toggle_avatar_menu()
-		bbq.stop()
-	else: bbq.start()
-
 func _build_avatar_menu() -> void:
 	avatar_menu = AvatarMenu.new()
 	avatar_menu.library = avatars
-	avatar_menu.bbq_requested.connect(_toggle_bbq)
 	avatar_menu.size = Vector2(900, 650)
 	if xr:
 		avatar_menu_view = SubViewport.new()
@@ -1307,11 +1307,11 @@ func _select_location(id: String, persist := true) -> bool:
 	if is_instance_valid(foreground):
 		remove_child(foreground)
 		foreground.queue_free()
-	if is_instance_valid(bbq) and bbq.active: bbq.stop()
+	if is_instance_valid(bbq):bbq.release_all()
 	foreground = replacement
 	add_child(foreground)
 	motor.relocate(foreground.get_meta("spawn"))
-	last_tip = origin.to_local(tip.global_position) if xr else tip.global_position
+	last_tip = _strike_tip()
 	tracking_was_valid = false
 	panorama_material.panorama = texture
 	world_environment.sky_rotation = Vector3(0, deg_to_rad(entry.yaw), 0)
@@ -1439,6 +1439,7 @@ func _select_avatar(path: String) -> void:
 			if is_instance_valid(avatar): avatar.queue_free()
 			avatar = candidate
 			candidate.right_grip_updated.connect(_attach_rod_to_hand.bind(candidate))
+			candidate.hand_attachments_updated.connect(fish_guide.update_touch)
 			avatars.save_selection(path)
 			avatar_menu.status.text = "Avatar equipped · Hands and head follow your controls."
 		else:
@@ -1492,7 +1493,7 @@ func _update_avatar(delta: float) -> void:
 		avatar.grounded = motor.is_on_floor()
 		avatar.tracked_leg_animation = tracking_manager.tracked_leg_animation if is_instance_valid(tracking_manager) else false
 		avatar.apply_tracking(motor.global_transform, tracking_manager.body if is_instance_valid(tracking_manager) else {}, tracking_manager.face if is_instance_valid(tracking_manager) else {})
-		var right_hand:Node3D=calibrated_hands[1] if xr else rod
+		var right_hand:Node3D=calibrated_hands[1] if xr else (bbq.desktop_right if is_instance_valid(bbq) and bbq.holds(1) else rod)
 		avatar.update_targets(head, calibrated_hands[0] if xr else desktop_left, right_hand, motor.global_position.y, motor.last_motion, delta)
 		avatar.left_curl = left.get_float("grip") * 0.8 if xr else 0.7
 		avatar_menu.update_preview(avatar)

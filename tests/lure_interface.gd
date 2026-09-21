@@ -48,7 +48,9 @@ func run():
    var compositor:=Compositor.new();compositor.compositor_effects=[effect];g.head.compositor=compositor
   await capture(g,"radial");g.xr=true
  g.rod.show();g.rod_status.show();g.rig_radial.update();g._right_released("primary_click")
- check(g.game.is_lure_fishing() and g.rod_visual.lure_mode and not g.rig_radial.opened,"Stick up fits lure tackle and closes menu without holding click")
+ check(g.rig_radial.opened and g.rig_radial.choice==2 and not g.game.is_lure_fishing(),"Stick up highlights lure without selecting")
+ trackers[1].set_input("primary",Vector2.ZERO);await process_frame;g.rig_radial.update()
+ check(g.game.is_lure_fishing() and g.rod_visual.lure_mode and not g.rig_radial.opened,"Returning stick to neutral fits lure tackle without holding click")
  check(g.motor.turn_reserved,"Selection keeps turning reserved until stick recentres")
  check(not g.bobber.visible and not g.rod_status.feeder_visual.visible,"Lure has no float or cage")
  g._left_button("ax_button");check(g.game.bait==1,"Offhand bait button selects jig")
@@ -88,6 +90,33 @@ func run():
  g.origin.position+=Vector3(.3,0,.2);g.origin.rotate_y(.4)
  check(absf(g._sample_lure_motion(.02))<.001,"Locomotion and turning cannot work a stationary lure")
  g.origin.transform=original_origin
+ var head_before:Vector3=g.head.position
+ g.head.position.x+=.15
+ check(absf(g._sample_lure_motion(.02))<.001,"Head movement cannot twitch a stationary rod")
+ g.head.position=head_before
+ g.game.timer=100
+ var lure_before:Vector3=g.game.cast_position
+ var work_pose:Transform3D=g.controller_local_pose(1)
+ work_pose.basis=Basis(Vector3.UP,-.2)*work_pose.basis
+ trackers[1].set_pose("grip",work_pose,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+ await process_frame
+ var side_speed:float=g._sample_lure_motion(.02)
+ g.game.tick(.02,0,0,false,side_speed);g._update_line()
+ check(g.game.cast_position.x>lure_before.x+.1,"Wrist twitch moves actual tackle laterally without reeling")
+ g.fishing_feedback._process(.02)
+ check(g.fishing_feedback.surface.visible and g.fishing_feedback.water_fx.get_shader_parameter("strength")>.05,"Tracked lure twitch creates visible water ripples")
+ check(absf(g.fishing_feedback.surface.global_position.y-g.water_level-.045)<.001,"Lure ripple remains on water above submerged tackle")
+ check(g.fishing_feedback.water_fx.get_shader_parameter("directional"),"Sideways twitch has directional ripples without reeling")
+ var wake:Vector2=g.fishing_feedback.water_fx.get_shader_parameter("heading")
+ check(wake.x>.99,"Rightward wrist twitch points the wake right")
+ g.game.tick(.02,0,0,false,-4);g._update_line();g.fishing_feedback._process(.02)
+ wake=g.fishing_feedback.water_fx.get_shader_parameter("heading")
+ check(wake.x<-.99,"Reversing the twitch immediately reverses the ripple")
+ g.game.tick(.05,0,0);g._update_line();g.fishing_feedback._process(.05)
+ wake=g.fishing_feedback.water_fx.get_shader_parameter("heading")
+ check(wake.x<-.99,"Lateral settling does not falsely reverse the twitch ripple")
+ g.game.tick(2,0,0);g.fishing_feedback._process(.02)
+ check(not g.fishing_feedback.surface.visible,"Unworked lure ripple stops after its pause window")
  g.rod.position.x+=.1
  check(absf(g._sample_lure_motion(.02))<.001,"Rendered IK rod movement cannot feed back into lure input")
  g.game.reset()

@@ -64,12 +64,11 @@ func _process_modification_with_delta(_delta: float) -> void:
 		var head_index:=bone(sk,"Head")
 		var head_target:Transform3D=rig.tracking_transform()*rig.xr_pose.head
 		orient(sk,head_index,head_target.basis*reference_basis(sk,head_index))
-		# Anchor the eye midpoint, including the offset rotated by head pitch/roll.
-		# Moving the torso before limb IK also puts shoulder roots in this frame.
-		var anchor:=hips
-		if body.has("hips"):
-			anchor=bone(sk,"Chest")
-			if anchor<0:anchor=head_index
+		# Estimated bodies follow the eyes. With FBT, the pelvis and torso belong
+		# to the body trackers: translating Chest to fit the eyes stretches or
+		# collapses the seated torso and moves both shoulder roots. Fit only the
+		# head in that case; never change the tracking origin or tracked pelvis.
+		var anchor:=head_index if body.has("hips") else hips
 		var correction:Vector3=sk.global_basis.inverse()*(head_target.origin-rig.viewpoint_position())
 		var anchor_parent:=sk.get_bone_parent(anchor)
 		if anchor_parent>=0:correction=sk.get_bone_global_pose(anchor_parent).basis.inverse()*correction

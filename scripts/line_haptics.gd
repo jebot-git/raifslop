@@ -11,16 +11,20 @@ var cooldown := 0.0
 var controlled := false
 var reel_phase := 0.0
 var reel_cooldown := 0.0
+var nibble_count := 0
 func sample(game, delta: float) -> Dictionary:
 	cooldown=maxf(0,cooldown-delta)
 	var event := {}
 	if game.state != state:
 		match game.state:
-			S.State.BITE: event={"kind":"bite","strength":.35 if game.is_fly_fishing() else .8,"duration":.24}
+			S.State.BITE: event={"kind":"bite","strength":.35 if game.is_fly_fishing() else .9 if game.is_feeder_fishing() else .8,"duration":.35 if game.is_feeder_fishing() else .24}
 			S.State.FIGHT: event={"kind":"hook","strength":.35,"duration":.12}
 			S.State.LANDED: event={"kind":"landed","strength":.35,"duration":.25}
 			S.State.LOST: event={"kind":"lost","strength":.7,"duration":.3}
 		state=game.state;tension_peak=game.tension
+	if game.is_feeder_fishing() and game.state==S.State.WAITING and game.feeder.nibbling and game.feeder.nibble_count!=nibble_count:
+		event={"kind":"nibble","strength":.16,"duration":.06}
+	nibble_count=game.feeder.nibble_count
 	if game.takeover_count!=takeover_count:
 		if game.state==S.State.FIGHT:event={"kind":"predator","strength":.45,"duration":.2}
 		takeover_count=game.takeover_count

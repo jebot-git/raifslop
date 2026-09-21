@@ -60,6 +60,22 @@ func run() -> void:
 	trackers[1].set_input("trigger_click", false)
 	check(g.game.state == 0, "Locomotion cannot count as a casting swing")
 	for i in 8: await move_hand(0)
+	trackers[0].invalidate_pose("grip")
+	trackers[1].set_input("trigger_click",true)
+	for i in 4: await move_hand(.08)
+	for i in 5: await move_hand(-.08)
+	check(g.casting and g.game.fly.strokes>0,"Occluded offhand does not cancel right-hand casting")
+	trackers[1].set_input("trigger_click",false)
+	check(g.game.state==1,"Right hand can release a completed cast while offhand is occluded")
+	g.game.reset()
+	trackers[0].set_pose("grip",Transform3D(Basis.IDENTITY,Vector3(-.3,1.2,-.3)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	# A normal fast tip arc exceeds the old half-metre/frame cutoff at 30 FPS.
+	g._begin_cast();g.cast_last_tip=g._tracked_cast_tip()-Vector3.BACK*.65
+	g._sample_cast_swing(1.0/30)
+	g.cast_last_tip=g._tracked_cast_tip()-Vector3.FORWARD*.75
+	g._sample_cast_swing(1.0/30)
+	check(g.game.fly.strokes>0,"Fast rod-tip travel remains castable at 30 FPS")
+	g.casting=false;g.game.reset()
 	for input in ["grip", "trigger"]:
 		g.fish_guide.grip_was_down=true
 		var near_reel: Vector3=g.origin.to_local(g.rod.to_global(g.crank.position+Vector3(-.035,.08,0)))
@@ -74,6 +90,19 @@ func run() -> void:
 		check(is_equal_approx(g.crank.rotation.x,still_angle),"Visual snap cannot generate free reeling")
 		trackers[0].set_input(input,0.0);await process_frame;g._process(.016)
 		check(not g.reel_tracker.engaged and g.avatar.left_target==g.calibrated_hands[0],"Releasing " + input + " returns offhand to tracked pose")
+	# A physical hook-setting lift must also fail during feeder nibbles.
+	g.game.reset();g._select_rig(1);await move_hand(0)
+	for during_bite in [false,true]:
+		g.game.reset();g.game.cast(12);g.game.tick(.81,0,0)
+		g.game.timer=100;g.game.tick(g.game.feeder.settle_time,0,0)
+		g.game.timer=0;g.game.tick(.02,0,0)
+		if during_bite:
+			for i in 120:
+				if g.game.state==g.Session.State.BITE:break
+				g.game.tick(.05,0,0)
+		await move_hand(0)
+		hand.y+=.12;await move_hand(0)
+		check(g.game.state==(g.Session.State.FIGHT if during_bite else g.Session.State.LOST),"Tracked rod lift hooks only the actual feeder bite" if during_bite else "Tracked rod lift during feeder nibbles loses the cast")
 	for tracker in trackers: XRServer.remove_tracker(tracker)
 	g.queue_free(); await process_frame; await create_timer(.3).timeout
 	print("TRACKED_CAST_RESULT ", failures); quit(0 if failures.is_empty() else 1)

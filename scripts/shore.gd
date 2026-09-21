@@ -26,6 +26,7 @@ static func create(id: String) -> Node3D:
 	if id=="simons_town_rocks":coastal_footings(visual)
 	if id=="fish_hoek_beach":extend_hoek_sand(visual)
 	if id in ["lake_pier","simons_town_rocks"]:ground_pier_cleat(visual,id)
+	if id=="lake_pier":repair_rail_posts(visual)
 	repair_bench_supports(visual,id)
 	preload("res://scripts/retired_shore_details.gd").apply(visual,id)
 	prepare_lighting(visual, id)
@@ -73,6 +74,42 @@ static func create(id: String) -> Node3D:
 	if details!=null:root.add_child(details)
 	preload("res://scripts/shore_dressing.gd").add_to(root,id)
 	return root
+
+static func repair_rail_posts(root:Node3D) -> void:
+	# Adjacent baked rail spans each included their endpoint post. At the
+	# front corners the .8 m post overlaps the 1 m post; rear posts coincide.
+	# Filter indices only, retaining the surviving post's UVs and lightmap.
+	for node in root.find_children("*","MeshInstance3D",true,false):
+		var rebuilt:=ArrayMesh.new()
+		var changed:=false
+		for surface in node.mesh.get_surface_count():
+			var arrays:Array=node.mesh.surface_get_arrays(surface)
+			var mat:Material=node.mesh.surface_get_material(surface)
+			if mat and mat.resource_name.begins_with("FG_steel"):
+				var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+				var indices:PackedInt32Array=arrays[Mesh.ARRAY_INDEX]
+				if indices.is_empty():
+					for i in vertices.size():indices.append(i)
+				var kept:=PackedInt32Array()
+				var seen:Dictionary={}
+				for i in range(0,indices.size(),3):
+					var points:Array[Vector3]=[vertices[indices[i]],vertices[indices[i+1]],vertices[indices[i+2]]]
+					var short_post:=true
+					var top:=false
+					var key:Array[String]=[]
+					for p in points:
+						short_post=short_post and absf(absf(p.x)-2.5)<.046 and absf(p.z+1.5)<.046 and p.y<=.801
+						top=top or absf(p.y-.8)<.001
+						key.append("%d,%d,%d"%[roundi(p.x*10000),roundi(p.y*10000),roundi(p.z*10000)])
+					key.sort()
+					var face_key:=";".join(key)
+					if (short_post and top) or seen.has(face_key):changed=true;continue
+					seen[face_key]=true
+					kept.append_array(indices.slice(i,i+3))
+				arrays[Mesh.ARRAY_INDEX]=kept
+			rebuilt.add_surface_from_arrays(node.mesh.surface_get_primitive_type(surface),arrays)
+			rebuilt.surface_set_material(surface,mat)
+		if changed:node.mesh=rebuilt
 
 static func ground_pier_cleat(root: Node3D, id: String = "lake_pier") -> void:
 	var center:=Vector2(3.5,-2.5) if id=="simons_town_rocks" else Vector2(1.8,-.9)

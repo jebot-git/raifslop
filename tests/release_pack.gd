@@ -19,10 +19,10 @@ func run() -> void:
 			var path := folder.path_join(child)
 			check(path not in ["res://docs", "res://source", "res://tests", "res://tools", "res://builds", "res://data", "res://.release-signing", "res://addons/godot_ai", "res://addons/fishing_export"], "Private/development folder leaked: " + path)
 			stack.append(path)
-	check(ProjectSettings.get_setting("application/config/version")=="0.1.13","Pack is version 0.1.13")
+	check(ProjectSettings.get_setting("application/config/version")=="0.1.14","Pack is version 0.1.14")
 	check(not ProjectSettings.get_setting("xr/openxr/extensions/hand_interaction_profile",false),"Hands-only controls remain in planning")
 	check(not ProjectSettings.has_setting("autoload/QuestHandProbe"),"Diagnostic hand overlay is excluded")
-	check(load("res://scripts/network/session.gd").VERSION==10,"Pack uses expanded predator protocol 10")
+	check(load("res://scripts/network/session.gd").VERSION==11,"Pack uses shared BBQ protocol 11")
 	check(ResourceLoader.exists("res://scripts/client_diagnostics.gd"),"Pack includes opt-in client diagnostics")
 	for name in ["coastal_dune_grass.png","coastal_wrack.png","fishing_plan_poster.svg"]:
 		var tex:Texture2D=load("res://assets/environment/shore_details/"+name)
@@ -54,16 +54,26 @@ func run() -> void:
 	var game = load("res://scenes/main.tscn").instantiate(); root.add_child(game)
 	await create_timer(.4).timeout
 	game.set_process(false);game.motor.set_physics_process(false)
-	check(game.bbq.start(),"Pack starts BBQ with exported assets")
-	check(game.bbq.items.size() >= 5,"Pack loads food and cooler stock")
+	game.game.reset()
+	game.bbq.visit()
+	await create_timer(.6).timeout
+	check(game.bbq.visiting and is_instance_valid(game.bbq.station),"Pack starts shared BBQ with exported assets")
+	check(game.bbq.item_nodes.size() == 10,"Pack loads six foods, two tongs and two drinks")
+	var station = game.bbq.station
+	game.bbq.service.request("start")
+	check(game.bbq.station == station,"Repeated start reuses the shared station")
 	var tools_in_game := 0
-	for node in game.find_children("*","Node3D",true,false):
+	for node in game.bbq.station.find_children("*","Node3D",true,false):
 		if node.get_script() == load("res://scripts/bbq/tongs.gd"): tools_in_game += 1
-	check(tools_in_game == 1,"Pack contains exactly one pair of tongs")
-	check(game.bbq.pickup(1,game.bbq.tongs,game.head.global_transform),"Pack can pick up tongs")
-	game.bbq.stop()
-	for mesh in game.bbq.find_children("*","MeshInstance3D",true,false):
-		check(not mesh.is_visible_in_tree(),"Pack hides BBQ mesh on exit: "+str(mesh.get_path()))
+	check(tools_in_game == 2,"Pack contains two shared tongs")
+	game.bbq.service.request("grab",6,1)
+	check(game.bbq.holds(1),"Pack can pick up shared tongs")
+	check(game.fish_guide.can_grab(),"Pack keeps guide available at BBQ")
+	check(game.bbq.station.find_children("*","Label3D",true,false).is_empty(),"Pack uses BBQ guiding icons")
+	game.bbq.return_to_water()
+	await create_timer(.6).timeout
+	check(not game.bbq.visiting and not game.bbq.holds(1),"Returning releases shared BBQ props")
+	check(is_instance_valid(game.bbq.station),"Shared station remains for other cooks")
 	for tier in 4:
 		for fly in [false,true]:
 			game.rod_visual.equip(tier,fly)

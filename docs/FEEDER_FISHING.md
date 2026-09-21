@@ -10,13 +10,15 @@ and saved catches remain unchanged.
 
 While ready to cast, tap **right joystick press** to open the menu. Release the
 click, then point left for classic tackle, right for feeder or up for lure to
-select and close it. Tap the stick again to cancel. If the stick is already
+highlight it. Rotate the stick to change the highlight; return it to centre to
+select and close the menu. Tap the stick again to cancel. If the stick is already
 deflected when opening, return it to centre before selecting. At rivers, classic means the existing fly setup. The small three-sector
 radial menu reserves right-stick turning until the stick returns to centre;
 left-stick push-to-talk remains available. It closes without selecting on tracking
 loss, menu opening or offhand-device use. Active casts, bites, fights and landed
 catches cannot change rigs. The selected rig is saved in player preferences.
-Desktop uses a **Tab** tap to open, then **Left/Right/Up** to select and close.
+Desktop uses a **Tab** tap to open, then **Left/Right/Up** to highlight; releasing
+the direction keys selects and closes the menu.
 Tap Tab again to cancel.
 
 Cast normally and let the cage sink. Settling depth is an authored per-location

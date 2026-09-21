@@ -83,7 +83,9 @@ func sample(delta: float) -> void:
 			calibration_notice="T-pose detected · enable body trackers or SlimeVR OSC"
 			t_pose_detector.reset(); t_pose_detector.latched=false
 		elif detected:
-			if recenter(): tracking.calibrate(true)
+			# Body calibration must not move the floor or rescale every XR pose.
+			# Recenter is an explicit action; a T-pose only aligns body sensors.
+			tracking.calibrate(true)
 		else: calibration_notice="Hold T-pose · %.1f s" % maxf(0,t_pose_detector.HOLD_SECONDS-t_pose_detector.held)
 		calibration_notice_time=2.0 if detected else .25
 	root_game.hud.calibration_message=calibration_notice
@@ -115,7 +117,7 @@ func recenter() -> bool:
 	root_game.motor.velocity=Vector3.ZERO; root_game.motor.last_motion=Vector3.ZERO
 	root_game.peak_speed=0; root_game.casting=false; root_game.reel_tracker.engaged=false
 	root_game.tracking_was_valid=false; root_game.gesture_cooldown=.5
-	root_game.last_tip=origin.to_local(root_game.tip.global_position)
+	root_game.last_tip=root_game._strike_tip()
 	message="Recentered · recalibrate body trackers in your new pose"
 	return true
 func save() -> void:

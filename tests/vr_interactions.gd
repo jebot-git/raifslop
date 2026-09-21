@@ -77,8 +77,11 @@ func run() -> void:
 		guide.press_buttons(guide.to_global(center))
 		check(guide.selected==posmod(expected+1+(-1 if i==0 else 1),guide.entries.size()+1)-1,"Button release rearms next press")
 	# Real hand-tracker path: converted fingertip positions must activate the same buttons.
+	var rendered_avatar = g.avatar
+	g.avatar = null
 	var hand := XRHandTracker.new()
 	hand.name = "/user/hand_tracker/right";hand.has_tracking_data = true
+	hand.hand_tracking_source = XRHandTracker.HAND_TRACKING_SOURCE_UNOBSTRUCTED
 	XRServer.add_tracker(hand)
 	var tip_joint := XRHandTracker.HAND_JOINT_INDEX_FINGER_TIP
 	hand.set_hand_joint_flags(tip_joint, XRHandTracker.HAND_JOINT_FLAG_POSITION_VALID)
@@ -97,14 +100,21 @@ func run() -> void:
 		hand.set_hand_joint_transform(tip_joint,Transform3D(Basis.IDENTITY,g.origin.to_local(world)/XRServer.world_scale))
 		guide.press_buttons(guide.touch_position())
 	check(guide.selected==posmod(next_page+2,guide.entries.size()+1)-1,"Two-centimetre finger withdrawal rearms another press")
-	hand.has_tracking_data=false
+	g.avatar = rendered_avatar
 	trackers[1].set_pose("grip",Transform3D(Basis.IDENTITY,Vector3(.3,1.1,-.3)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
 	await settle();g._update_avatar(.016)
 	g.avatar.solver._process_modification_with_delta(.016);g.avatar._capture_hand_attachments()
 	var expected_tip: Vector3 = g.avatar.skeleton.to_global(g.avatar.skeleton.get_bone_global_pose(g.avatar.index_tip_bone)*g.avatar.index_tip_offset)
 	g.avatar.skeleton.reset_bone_poses()
 	check(guide.touch_position() is Vector3 and guide.touch_position().distance_to(expected_tip)<.0001,"Controller fallback follows rendered index tip, retaining the final IK pose")
-	check(guide.previous_touch==Vector3(INF,INF,INF),"Switching between native and avatar tips resets contact history")
+	check(guide.touch_source=="avatar","Visible fingertip takes priority even with native hand joints available")
+	var page_with_native:int=guide.selected
+	for depth in [.05,-.04]:
+		var world:Vector3=guide.to_global(center+Vector3(0,0,depth))
+		hand.set_hand_joint_transform(tip_joint,Transform3D(Basis.IDENTITY,g.origin.to_local(world)/XRServer.world_scale))
+		check(guide.touch_position().distance_to(expected_tip)<.0001,"Offset native joint cannot replace the rendered fingertip")
+	check(guide.selected==page_with_native,"Moving invisible runtime fingertip cannot turn pages")
+	hand.has_tracking_data=false
 	g.fish_guide.held=true
 	g._process(.016)
 	check(g.rod_visual.visible and g.rod.visible,"Holding guide keeps tracked rod visible in right hand")

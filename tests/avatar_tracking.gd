@@ -97,6 +97,30 @@ func run():
 	check(not game.tracking_manager.recenter(),"Recenter cannot turn an active cast into a gesture")
 	game.game.state=game.Session.State.READY;game.tracking_manager.seated=true;game.head.position.y=1.1
 	check(game.tracking_manager.recenter() and absf(game.head.global_position.y-anchor.y-1.65)<.01,"Seated calibration translates height while preserving reach scale")
+	# A body T-pose must not rebase the room or silently resize physical motion.
+	game.tracking_manager.seated=false
+	game.head.position=Vector3(.25,1.55,-.2);game.head.rotation=Vector3(0,.3,0)
+	var body_tracker:=XRBodyTracker.new();body_tracker.name="regression_body";body_tracker.has_tracking_data=true
+	for joint in range(XRBodyTracker.JOINT_MAX):body_tracker.set_joint_flags(joint,0)
+	for joint in [XRBodyTracker.JOINT_HIPS,XRBodyTracker.JOINT_LEFT_FOOT,XRBodyTracker.JOINT_RIGHT_FOOT]:
+		body_tracker.set_joint_flags(joint,XRBodyTracker.JOINT_FLAG_POSITION_VALID|XRBodyTracker.JOINT_FLAG_ORIENTATION_VALID)
+		body_tracker.set_joint_transform(joint,Transform3D(Basis.IDENTITY,Vector3(0,.9 if joint==XRBodyTracker.JOINT_HIPS else .08,0)))
+	XRServer.add_tracker(body_tracker)
+	var controllers:Array[XRControllerTracker]=[]
+	for side in 2:
+		var tracker:=XRControllerTracker.new();tracker.name="tpose_regression_"+str(side);XRServer.add_tracker(tracker);controllers.append(tracker)
+		var node:XRController3D=game.left if side==0 else game.right
+		node.tracker=tracker.name;node.pose="grip"
+		var at:Vector3=game.head.position+Basis(Vector3.UP,.3)*Vector3(-.65 if side==0 else .65,-.25,0)
+		tracker.set_pose("grip",Transform3D(Basis.IDENTITY,at),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	await process_frame
+	var room_before:Transform3D=game.origin.transform
+	var scale_before:float=XRServer.world_scale
+	for i in 80:game.tracking_manager.sample(.02)
+	check(game.tracking_manager.tracking.calibrated,"Live T-pose calibrates available body sensors")
+	check(game.origin.transform.is_equal_approx(room_before) and XRServer.world_scale==scale_before,"T-pose preserves room origin, floor height, yaw and world scale")
+	for tracker in controllers:XRServer.remove_tracker(tracker)
+	XRServer.remove_tracker(body_tracker)
 	head_tracker.invalidate_pose("default")
 	check(not game.tracking_manager.recenter(),"Recenter rejects lost head tracking")
 	XRServer.remove_tracker(head_tracker)

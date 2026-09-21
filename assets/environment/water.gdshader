@@ -182,7 +182,9 @@ void fragment() {
 		// Low, broken wash follows the real submerged slope, in world space.
 		// Broad derivative-filtered edges avoid sparkling subpixel foam in VR.
 		float wash_depth=.13+.065*sin(TIME*.65+world_position.x*.35);
-		float width=max(.035,fwidth(depth)*1.5);
+		// Depth jumps at opaque edges must not widen shoreline foam across
+		// distant terrain triangles or mask boundaries.
+		float width=clamp(fwidth(depth)*1.5,.035,.08);
 		float wash=1.0-smoothstep(width,width+.065,abs(depth-wash_depth));
 		float breakup=smoothstep(-.45,.7,sin(world_position.x*7.0+micro.x*2.0)+sin(world_position.z*9.0-TIME*.35));
 		wash*=breakup*(1.0-smoothstep(8.0,19.0,distance_to_view))*(1.0-distant)*.30;

@@ -7,11 +7,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'test-results/vr-fixes'
 SUITES = sys.argv[1:] or ['run_tests', 'hand_tracking', 'tracking_orientation', 'avatar_scaling', 'vrm_import_integrity', 'vr_ik', 'avatar_tracking', 'avatar_locomotion', 'fish_guide', 'guide_camera', 'shark_ambience_menu', 'network_guards', 'voice_recovery', 'session_feedback', 'fish_position', 'bait_visuals', 'external_data', 'vr_interactions', 'tester_feedback', 'tackle', 'fishing_feedback', 'quit_game', 'rod_holster', 'locations', 'raised_ankle', 'pier_gameplay', 'tracking_warning', 'menu_ray', 'menu_controls', 'vr_presentation']
-if len(sys.argv) == 1: SUITES.extend(['bbq', 'bbq_controllers'])
+if len(sys.argv) == 1: SUITES.extend(['bbq', 'bbq_controllers', 'bbq_model', 'bbq_food_art', 'bbq_visit', 'bbq_scene'])
 failures = []
 if len(sys.argv) == 1: SUITES.extend(['rod_attachment', 'radio', 'water_wildlife', 'fly_fishing', 'fish_jumps', 'coastal_locations', 'shore_transitions', 'gameplay_recording'])
 if len(sys.argv) == 1: SUITES.extend(['cast_tolerance', 'cast_direction', 'tracked_cast', 'fish_population', 'fishing_update', 'fly_controls', 'fly_reel_penalty', 'empty_retrieve', 'shore_retrieval', 'pier_cleat', 'hdr_bake_compression'])
 if len(sys.argv) == 1: SUITES.extend(['fishing_comfort', 'aim_water_grid', 'marine_species', 'fight_mechanics', 'avatar_image_failure', 'avatar_recovery', 'fight_recovery', 'scenery_repairs'])
+if len(sys.argv) == 1: SUITES.extend(['avatar_viewpoint', 'feeder_fishing', 'feeder_interface', 'feeder_nibbles', 'lure_fishing', 'lure_interface', 'fish_species', 'bbq_controls'])
 for suite in SUITES:
     data = OUT / suite
     data.mkdir(parents=True, exist_ok=True)

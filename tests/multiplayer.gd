@@ -26,7 +26,8 @@ func run() -> void:
 		check(await wait_for(func(): return net.players.size()==2),"Two clients joined dedicated server")
 		check(await wait_for(func(): return net.voice.relayed_packets>50),"Dedicated server relays voice")
 		check(await wait_for(func(): return net.avatars.choices.size()==2,25),"Dedicated server verifies both avatar offers")
-		await create_timer(9).timeout
+		# Allow the 14 MB fixture to upload, verify and relay to both clients.
+		await create_timer(35).timeout
 	else:
 		game.set_process(false); game.motor.set_physics_process(false)
 		net.headless=false # Exercise remote GLTF loading even with the dummy renderer.
@@ -72,9 +73,9 @@ func run() -> void:
 				await create_timer(.02).timeout
 			check(net.voice.received_packets==0,"Voice sender has no network echo")
 			# Keep the owner connected through upload, server verification and relay.
-			await create_timer(22 if OS.get_environment("FISHING_SERVER_BIN")!="" else 2).timeout
+			await create_timer(22).timeout
 		else:
-			var until:=Time.get_ticks_msec()+(30000 if OS.get_environment("FISHING_SERVER_BIN")!="" else 7000 if role=="late" else 11000)
+			var until:=Time.get_ticks_msec()+30000
 			var sender:=0
 			var mute_tested:=false
 			while Time.get_ticks_msec()<until:

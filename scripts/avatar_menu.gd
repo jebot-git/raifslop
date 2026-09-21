@@ -11,7 +11,6 @@ var smooth_turn_speed: HSlider
 var snap_turn_angle: HSlider
 signal turn_mode_changed(smooth: bool)
 signal location_selected(id: String)
-signal bbq_requested
 const Locations = preload("res://scripts/locations.gd")
 var keyboard: PanelContainer
 var shell: VBoxContainer
@@ -127,7 +126,6 @@ func _ready() -> void:
 	_bind_keyboard(vrm_browser)
 	refresh()
 	_build_locations()
-	_build_bbq()
 	_build_turn_controls()
 
 func _build_turn_controls() -> void:
@@ -441,23 +439,3 @@ func refresh_tackle() -> void:
 		var price: int = profile.RODS[index].price
 		button.text = "Equipped" if equipped else ("Equip" if owned else "Buy · %d shekels" % price)
 		button.disabled = not allowed or equipped or (not owned and profile.shekels < price)
-
-func _build_bbq() -> void:
-	var page := VBoxContainer.new()
-	page.add_theme_constant_override("separation", 20)
-	_register_page("bbq", "BBQ", page)
-	var heading := Label.new()
-	heading.text = "A cookout by the water"
-	heading.add_theme_font_size_override("font_size", 28)
-	page.add_child(heading)
-	var instructions := Label.new()
-	instructions.text = "Grill fish caught at your current water, or prepare a fish burger.\n\nGrip food to lift it. Turn your wrist, then release onto the grate.\nTongs: grip to hold; trigger clamps food at the tips.\nTurn your wrist; release trigger to put food down.\nBring food to your mouth, or press that hand's trigger, to eat.\n\nTrigger the cooler lid, then grip a can inside.\nFirst trigger opens it; drink at your mouth or press trigger again.\n\nA/X changes the food selection. Grip the prep sign to prepare it.\nDesktop: B enter/leave · E pick/place · F flip · Enter eat/open\nC cooler · N choose · P prepare · arrows move held food"
-	instructions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	instructions.add_theme_font_size_override("font_size", 21)
-	page.add_child(instructions)
-	var button := Button.new()
-	button.text = "Start / finish BBQ here"
-	button.custom_minimum_size.y = 58
-	button.pressed.connect(func(): bbq_requested.emit())
-	page.add_child(button)
-	page.hide()

@@ -47,6 +47,7 @@ func set_folded(value: bool) -> void:
 	crank.visible=not folded
 	quiver.visible=feeder_mode and not folded
 
-func update_tip(state:int,phase:float)->void:
+func update_tip(state:int,phase:float,feeder_load:float=-1.0)->void:
 	var load:=.022 if state==2 else .035+sin(phase*22)*.018 if state==3 else .065 if state==4 else 0.0
+	if feeder_load>=0:load=feeder_load
 	quiver.bend(load if feeder_mode else 0.0)

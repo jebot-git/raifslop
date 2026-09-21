@@ -21,7 +21,7 @@ func update_holster() -> void:
 		grip_was_down=true
 		return
 	var down: bool=g.right.get_float("grip")>(.35 if grip_was_down else .55)
-	if down and not grip_was_down and not g.menu_open and g.tracking_manager.focused and g.controller_pose(1).origin.distance_to(belt_pose.origin)<.23:
+	if down and not grip_was_down and not (is_instance_valid(g.bbq) and g.bbq.holds(1)) and not g.menu_open and g.tracking_manager.focused and g.controller_pose(1).origin.distance_to(belt_pose.origin)<.23:
 		set_stowed(not stowed)
 	grip_was_down=down
 
@@ -38,6 +38,7 @@ func set_stowed(value: bool) -> bool:
 		g.rod.reparent(g)
 		g.rod.global_transform=belt_pose
 	else:
+		if is_instance_valid(g.bbq):g.bbq.release_all()
 		g.rod.reparent(g.right if g.xr else g.origin)
 		g.rod.top_level=g.xr
 		if g.xr:
