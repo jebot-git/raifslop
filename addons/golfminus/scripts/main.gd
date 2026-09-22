@@ -165,6 +165,8 @@ func _ui() -> void:
 		var dot_material:=StandardMaterial3D.new();dot_material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;dot_material.albedo_color=Color("f3ca75");pointer_dot.material_override=dot_material;add_child(pointer_dot);pointer_dot.visible=false
 		pointer_laser=MeshInstance3D.new();var beam:=CylinderMesh.new();beam.top_radius=.0012;beam.bottom_radius=.0012;beam.height=1.0;beam.radial_segments=6
 		pointer_laser.mesh=beam;pointer_laser.material_override=dot_material;add_child(pointer_laser);pointer_laser.visible=false
+		if is_instance_valid(host_game):
+			for item in [ui_plane,pointer_dot,pointer_laser]:preload("res://scripts/guide_camera.gd").mark_ui(item)
 	else:
 		var layer:=CanvasLayer.new();add_child(layer);layer.add_child(hud)
 func select_course(id: String) -> void:
@@ -248,6 +250,7 @@ func toggle_menu(show_menu: bool) -> void:
 	else:
 		preview_camera.current=show_menu
 		head.current=not show_menu
+	if is_instance_valid(host_activity):host_activity.preserve_mirror()
 	if not show_menu:_save_preferences()
 func set_hand(value: bool) -> void:
 	club_radial.close()
@@ -310,6 +313,7 @@ func _save_preferences() -> void:
 	cfg.set_value("interface","pictograms",ICONS.enabled)
 	cfg.set_value("golf","reach",club_reach);cfg.set_value("golf","left_handed",left_handed);cfg.save("user://golf_controls.cfg")
 func _input(event: InputEvent) -> void:
+	if is_instance_valid(course_guide) and course_guide.camera_key(event):return
 	if is_instance_valid(host_activity) and is_instance_valid(host_game.get("bbq")) and host_game.bbq.visiting and host_game.bbq.handle_input(event):return
 	if event is InputEventKey and not event.echo:
 		if event.pressed and event.keycode==KEY_V:godview.toggle();return
@@ -344,6 +348,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not xr and not menu_open and not club_radial.opened and not godview.active:
 		head.rotate_y(-event.relative.x*.003);head.rotation.x=clampf(head.rotation.x-event.relative.y*.003,-1.25,1.0)
 func _left_button(action: String) -> void:
+	if course_guide.camera_button(action,true):return
 	if is_instance_valid(host_activity) and is_instance_valid(host_game.get("bbq")) and host_game.bbq.holds(0) and action!="menu_button":
 		if action=="ax_button":host_game.bbq.use(0,host_game.bbq.hovered,true)
 		return
@@ -361,6 +366,7 @@ func _left_button(action: String) -> void:
 	if fitting_club:_fit_button(action,left_handed);return
 	if action=="trigger_click" and not menu_open:world.grid.visible=not world.grid.visible
 func _right_button(action: String) -> void:
+	if course_guide.camera_button(action,false):return
 	if is_instance_valid(host_activity) and is_instance_valid(host_game.get("bbq")) and host_game.bbq.holds(1) and action!="by_button":
 		if action=="ax_button":host_game.bbq.use(1,host_game.bbq.hovered,true)
 		return

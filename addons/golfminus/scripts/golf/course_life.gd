@@ -25,7 +25,7 @@ func setup(a:Node)->void:
 		var animal:=Node3D.new();animal.name="GroundSquirrel";add_child(animal);animals.append(animal)
 		for part in [[Vector3(0,.15,0),Vector3(.13,.12,.25)],[Vector3(0,.23,-.2),Vector3(.10,.10,.10)],[Vector3(0,.28,.22),Vector3(.075,.23,.075)]]:
 			var mesh:=MeshInstance3D.new();var shape:=SphereMesh.new();shape.radius=1;shape.height=2;shape.radial_segments=12;shape.rings=6;mesh.mesh=shape;mesh.scale=part[1];mesh.position=part[0];mesh.material_override=fur;animal.add_child(mesh)
-	add_child(marker);marker.name="CurrentHoleGuide";marker.text="⚑\n01";marker.font_size=96;marker.pixel_size=.055;marker.modulate=Color("ffe29c");marker.outline_modulate=Color("16362c");marker.outline_size=18;marker.billboard=BaseMaterial3D.BILLBOARD_ENABLED;marker.no_depth_test=true
+	add_child(marker);marker.layers=preload("res://scripts/guide_camera.gd").UI_LAYER;marker.name="CurrentHoleGuide";marker.text="⚑\n01";marker.font_size=96;marker.pixel_size=.055;marker.modulate=Color("ffe29c");marker.outline_modulate=Color("16362c");marker.outline_size=18;marker.billboard=BaseMaterial3D.BILLBOARD_ENABLED;marker.no_depth_test=true
 func _process(dt:float)->void:
 	if not is_instance_valid(activity) or not activity.active:return
 	clock+=dt

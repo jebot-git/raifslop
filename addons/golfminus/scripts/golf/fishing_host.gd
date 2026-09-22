@@ -76,7 +76,7 @@ func enter(id: String="spyglass") -> void:
 	if is_instance_valid(host.get("fish_guide")):host.fish_guide.dock()
 	if is_instance_valid(host.get("shoulder_radio")):host.shoulder_radio.reset()
 	if host.menu_open:host._toggle_avatar_menu()
-	player_snapshot={"rod_stowed":host.rod_holster.stowed if is_instance_valid(host.get("rod_holster")) else false,"location":host.current_location,"motor":host.motor.global_transform,"origin":host.origin.transform,"head":host.head.transform,"head_current":host.head.current,"head_far":host.head.far,"safe":host.motor.safe_spawn,"velocity":host.motor.velocity,"blocked":host.motor.blocked,"catch_controls":host.motor.catch_controls,"turn_reserved":host.motor.turn_reserved,"radial_open":host.motor.radial_open,"world_scale":XRServer.world_scale}
+	player_snapshot={"rod_stowed":host.rod_holster.stowed if is_instance_valid(host.get("rod_holster")) else false,"location":host.current_location,"motor":host.motor.global_transform,"origin":host.origin.transform,"head":host.head.transform,"head_current":host.head.current,"head_far":host.head.far,"safe":host.motor.safe_spawn,"velocity":host.motor.velocity,"blocked":host.motor.blocked,"catch_controls":host.motor.catch_controls,"turn_reserved":host.motor.turn_reserved,"radial_open":host.motor.radial_open,"world_scale":XRServer.world_scale,"window_camera":host.get_viewport().get_camera_3d(),"mirror_far":host.spectator.camera.far if is_instance_valid(host.spectator) else 0.0}
 	if is_instance_valid(host.get("bbq")):
 		var bbq_state:Dictionary={}
 		for key in ["visiting","return_at","return_safe","return_location","return_yaw"]:bbq_state[key]=host.bbq.get(key)
@@ -108,9 +108,16 @@ func enter(id: String="spyglass") -> void:
 	clubhouse_board=preload("res://addons/golfminus/scripts/golf/clubhouse_board.gd").new();golf.add_child(clubhouse_board);clubhouse_board.setup(self)
 	course_life=preload("res://addons/golfminus/scripts/golf/course_life.gd").new();golf.add_child(course_life);course_life.setup(self)
 	golf.toggle_menu(false)
+	preserve_mirror()
 	arrive_clubhouse()
+func preserve_mirror()->void:
+	if not host.xr or not is_instance_valid(host.xr_view) or not is_instance_valid(host.spectator):return
+	# The PC window remains mono third person. Never move/reparent the XR camera.
+	host.spectator.camera.make_current();host.head.make_current()
+	host.spectator.camera.far=host.head.far
 func update_player(delta: float) -> void:
 	if not active:return
+	preserve_mirror()
 	if is_instance_valid(host.avatar) and avatar_bound!=host.avatar:
 		avatar_bound=host.avatar;avatar_bound.hand_attachments_updated.connect(attach_club_to_hand)
 	if is_instance_valid(host.get("bbq")):
@@ -184,6 +191,8 @@ func leave() -> void:
 	host.motor.blocked=player_snapshot.blocked;host.motor.catch_controls=player_snapshot.catch_controls
 	host.motor.turn_reserved=player_snapshot.turn_reserved;host.motor.radial_open=player_snapshot.radial_open
 	XRServer.world_scale=player_snapshot.world_scale
+	if is_instance_valid(player_snapshot.window_camera):player_snapshot.window_camera.make_current()
+	if is_instance_valid(host.spectator):host.spectator.camera.far=player_snapshot.mirror_far
 	host.current_location=player_snapshot.location
 	active=false;bbq_was_visiting=false
 	host.ambience.select_location(host.current_location)

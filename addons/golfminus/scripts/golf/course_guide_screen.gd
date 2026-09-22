@@ -46,6 +46,8 @@ func project(point:Vector3)->Vector2:
 func _draw()->void:
 	draw_rect(Rect2(0,0,640,840),Color("112b28"))
 	if not is_instance_valid(guide) or guide.game.model.hole.is_empty():return
+	if is_instance_valid(guide.photo_camera) and guide.photo_camera.active:
+		preload("res://scripts/guide_camera_panel.gd").draw(self,guide);return
 	var g=guide.game
 	label("FIELD GUIDE",Vector2(34,65),42,Color("a9dfb2"))
 	label(g.model.course.name,Vector2(36,108),27)
@@ -54,6 +56,7 @@ func _draw()->void:
 	else:_draw_progress()
 	draw_line(Vector2(34,738),Vector2(606,738),Color("49715d"),2)
 	label("%02d / 02"%[guide.page_index+1],Vector2(277,774),23)
+	label("Guide-hand trigger: camera" if g.xr else "C: camera · J: close",Vector2(155,835),20)
 	if Icons.enabled:
 		for entry in [["left",Vector2(38,750)],["grip",Vector2(291,788)],["right",Vector2(552,750)]]:draw_texture_rect(Icons.texture(entry[0]),Rect2(entry[1],Vector2(42,42)),false)
 		label(("B" if g.left_handed else "Y") if g.xr else "Left",Vector2(94,780),24)

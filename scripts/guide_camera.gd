@@ -68,6 +68,7 @@ func toggle_selfie() -> void:
 
 func update_pose() -> void:
 	var game = guide.game_root
+	camera.far=game.head.far
 	# The guide has its own grip rotation. Controller -Z now points along the
 	# handle, so using the controller pose puts the lens on the device's edge.
 	if game.xr:
@@ -131,7 +132,8 @@ func sample_selfie_input(delta:float)->void:
 	var axis:=0.0
 	if game.xr:
 		if not game.tracking_manager.focused or not game.right.get_has_tracking_data() or not game.left.get_has_tracking_data():return
-		axis=game.right.get_vector2("primary").y
+		var controller:XRController3D=guide.photo_input_hand() if guide.has_method("photo_input_hand") else game.right
+		axis=controller.get_vector2("primary").y
 	else:
 		axis=float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN))
 	adjust_selfie(axis,delta)
@@ -172,7 +174,8 @@ func capture() -> void:
 		_finish_save(ERR_CANT_CREATE, "")
 		return
 	var stamp := Time.get_datetime_string_from_system().replace(":", "-")
-	var path := PHOTO_DIR.path_join("fishing_%s_%d.png" % [stamp, Time.get_ticks_usec()])
+	var prefix:="golf" if guide.has_method("camera_controls") else "fishing"
+	var path := PHOTO_DIR.path_join("%s_%s_%d.png" % [prefix,stamp, Time.get_ticks_usec()])
 	status = "Saving photo…"
 	# PNG compression and disk writes cannot stall the render/network dispatch.
 	if not disk.submit(save_photo.bind(photo,path),func(error): _finish_save(error,path)):

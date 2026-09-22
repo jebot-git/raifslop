@@ -57,23 +57,7 @@ func wrapped(text:String,at:Vector2,size_:int,line_height:int)->void:
 	label(line,at,size_)
 
 func _draw_camera() -> void:
-	var photo = guide.photo_camera
-	label("FIELD CAMERA", Vector2(34, 65), 42, Color("a9dfb2"))
-	label("SELFIE STICK" if photo.selfie else "LOOK THROUGH THE LENS", Vector2(36, 112), 26)
-	draw_texture_rect(photo.view.get_texture(), Rect2(20, 170, 600, 337.5), false)
-	var extension_hint:String="RIGHT STICK ↑/↓: EXTEND / RETRACT" if guide.game_root.xr else "↑ / ↓: EXTEND / RETRACT"
-	label(extension_hint if photo.selfie else "1920 × 1080 · UI-free photo", Vector2(36, 555), 23 if photo.selfie else 27)
-	var words: PackedStringArray = photo.status.split(" ")
-	var line := ""
-	var y := 605.0
-	for word in words:
-		if font.get_string_size(line + word, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x > 560:
-			label(line, Vector2(36, y), 20); y += 26; line = ""
-		line += word + " "
-	label(line, Vector2(36, y), 20)
-	label("PRESS › / RIGHT TRIGGER: PHOTO" if guide.game_root.xr else "SPACE: TAKE PHOTO", Vector2(36, 735), 25)
-	label("PRESS ‹ / RIGHT A: SELFIE ON/OFF" if guide.game_root.xr else "F: SELFIE ON/OFF · MIDDLE-DRAG: AIM", Vector2(36, 777), 23)
-	label("LEFT TRIGGER: GUIDE" if guide.game_root.xr else "C: GUIDE · G: CLOSE", Vector2(36, 819), 23)
+	preload("res://scripts/guide_camera_panel.gd").draw(self,guide)
 
 func status_rows() -> Array:
 	var session = guide.game_root.game
