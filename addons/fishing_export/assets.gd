@@ -35,7 +35,7 @@ func _export_file(path: String, _type: String, _features: PackedStringArray) -> 
 		add_file(path, FileAccess.get_file_as_bytes(path), false)
 	elif textures.has(path):
 		var imported: String = textures[path]
-		if path.get_extension() in ["hdr", "exr"]:
+		if path.get_extension() in ["hdr", "exr"] and not path.begins_with("res://addons/golfminus/"):
 			var compressed := HDR.export_path(path, imported, desktop)
 			if compressed.is_empty(): return # Error is reported; build tooling rejects it.
 			imported = compressed

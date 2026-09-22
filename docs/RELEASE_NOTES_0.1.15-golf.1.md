@@ -7,7 +7,7 @@ First integrated desktop prototype from `integration/golf-fishing`, protocol 13.
 - Toggle Godview with left-stick click. Automatic tee club selection and putter switching remain enabled.
 - Golf leaderboards appear on golfing courses. Turns have audible/visual notifications; an absent player forfeits the hole after five minutes. Players can retire or visit clubhouse BBQ.
 - Dedicated server includes numerical course data and validates golf commands, turns, scorecards and persisted rankings. Ball flight remains owner-client simulated.
-- Golf textures use the same desktop compression/deduplication path as Fishing; course and equipment credits are included.
+- Golf textures use the shared deduplication path; golf panoramas retain their existing lossless HDR format. Release archives are compressed, and course and equipment credits are included.
 
 ## Downloads
 
