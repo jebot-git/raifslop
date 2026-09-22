@@ -2,7 +2,7 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 13 # Shared BBQ and golf equipment, course presence and turns.
+const VERSION := 14 # Shared BBQ and golf equipment, course presence and turns.
 const State = preload("res://scripts/network/state.gd")
 var leaderboard=preload("res://scripts/network/leaderboard.gd").new()
 var leaderboard_view:Dictionary={}

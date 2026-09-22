@@ -1,4 +1,5 @@
 extends RefCounted
+const Handicap=preload("res://addons/golfminus/scripts/golf/handicap.gd")
 ## Nested in Fishing's existing player records, saved by its atomic leaderboard writer.
 static func valid(data:Variant)->bool:
 	if not data is Dictionary or data.size()>4:return false
@@ -8,6 +9,12 @@ static func valid(data:Variant)->bool:
 		for field in ["rounds","forfeits","best","last"]:
 			var n=row.get(field)
 			if not (n is int or n is float) or not is_finite(n) or n<0 or n>1e9 or n!=int(n):return false
+		var history=row.get("history",[])
+		if not history is Array or history.size()>20:return false
+		for r in history:
+			if not r is Dictionary:return false
+			for field in ["time","differential"]:
+				if not (r.get(field) is float or r.get(field) is int) or not is_finite(float(r[field])):return false
 	return true
 static func finish(records:Dictionary,key:String,course:String,scores:Array,count_forfeits:=true)->bool:
 	if not records.has(key) or scores.size()!=18:return false
@@ -24,6 +31,9 @@ static func finish(records:Dictionary,key:String,course:String,scores:Array,coun
 	if forfeits==0:
 		row.rounds+=1;row.last=total
 		row.best=total if row.best==0 else mini(row.best,total)
+		var history:Array=row.get("history",[])
+		history.append({"time":Time.get_unix_time_from_system(),"differential":float(total-Handicap.total_par(course))})
+		row.history=history.slice(maxi(0,history.size()-20))
 	return true
 static func snapshot(records:Dictionary)->Dictionary:
 	var result:Dictionary={}
@@ -32,7 +42,7 @@ static func snapshot(records:Dictionary)->Dictionary:
 		for record in records.values():
 			var stats:Dictionary=record.get("golf",{}).get(course,{})
 			if stats.is_empty() or stats.rounds==0:continue
-			var row:Dictionary=stats.duplicate();row.name=record.name;rows.append(row)
+			var row:Dictionary=stats.duplicate();row.erase("history");row.handicap=Handicap.index(record.get("golf",{}));row.name=record.name;rows.append(row)
 		rows.sort_custom(func(a,b):return a.name.naturalnocasecmp_to(b.name)<0 if a.best==b.best else a.best<b.best)
 		result[course]=rows.slice(0,50)
 	return result

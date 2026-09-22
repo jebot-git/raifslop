@@ -202,7 +202,7 @@ func load_hole(index: int) -> void:
 	preview_camera.look_at(model.pin()+Vector3(0,1,0))
 	hud.refresh()
 func start_round() -> void:
-	practice=false;round_active=true;round_state.start();load_hole(0);toggle_menu(false)
+	practice=false;round_active=true;round_state.handicap=round_state.local_handicap();round_state.start();load_hole(0);toggle_menu(false)
 	status_text="Hold SPACE to build power, then release."
 	bridge.activity_started.emit(course_id);_save_preferences();save_progress()
 func save_progress() -> void:
@@ -436,9 +436,15 @@ func recover_ball() -> void:
 	if practice:start_practice();return
 	if is_instance_valid(host_activity) and host_activity.enrolled():
 		if not host_activity.service.can_shoot():return
-		host_activity.service.request("penalty",{"epoch":host_activity.service.view.epoch})
+		host_activity.request_relief();return
 	if round_state.strokes==0:return
-	ball.place(round_state.penalty());address_ball();status_text="Stroke-and-distance relief  ·  +1 penalty";save_progress()
+	ball.place(round_state.penalty())
+	var maximum:int=preload("res://addons/golfminus/scripts/golf/handicap.gd").cap(course_id,model.index,round_state.handicap)
+	if round_state.strokes>=maximum:
+		round_state.strokes=maximum;ball.holed=true;round_state.complete_hole();round_state.save_result(course_id)
+		status_text="Net double bogey · hole complete"
+	else:address_ball();status_text="Stroke-and-distance relief · +1 penalty"
+	save_progress()
 func next_hole() -> void:
 	if is_instance_valid(host_activity) and host_activity.enrolled():host_activity.sync_session();return
 	if not ball.holed:return
@@ -464,6 +470,10 @@ func _physics_process(dt: float) -> void:
 		if tick%3==0:trail_points.append(ball.position);_draw_trail()
 		status_text="CARRY %.0f m   ·   APEX %.1f m"%[ball.carry,ball.peak]
 	elif was_moving:
+		if not practice and not (is_instance_valid(host_activity) and host_activity.enrolled()):
+			var maximum:int=preload("res://addons/golfminus/scripts/golf/handicap.gd").cap(course_id,model.index,round_state.handicap)
+			if round_state.strokes+(1 if ball.hazard else 0)>=maximum:
+				round_state.strokes=maximum;ball.hazard=false;ball.holed=true
 		_complete_shot()
 		was_moving=false
 		if ball.hazard:

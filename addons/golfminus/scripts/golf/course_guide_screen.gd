@@ -113,7 +113,8 @@ func _draw_progress()->void:
 	var g=guide.game
 	label("COURSE TRACKER",Vector2(36,176),30,Color("a9dfb2"))
 	label("%02d / 18 completed"%g.round_state.scores.size(),Vector2(36,222),29)
-	label("%d strokes"%g.round_state.total(),Vector2(36,267),38,Color("a9dfb2"))
+	var handicap:int=g.host_activity.service.view.handicap if is_instance_valid(g.host_activity) and g.host_activity.enrolled() else g.round_state.handicap
+	label("%d strokes · HCP %d*"%[g.round_state.total(),handicap],Vector2(36,267),32,Color("a9dfb2"))
 	for i in 18:
 		var x:=36+(i%3)*193;var y:=324+(i/3)*62
 		var value:String=("F" if g.round_state.scores[i]<0 else str(g.round_state.scores[i])) if i<g.round_state.scores.size() else "—"

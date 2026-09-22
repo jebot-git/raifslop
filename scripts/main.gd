@@ -1298,7 +1298,9 @@ func _panorama_texture(entry: Dictionary) -> Texture2D:
 	return ResourceLoader.load(entry.panorama, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
 
 func _select_location(id: String, persist := true) -> bool:
-	if is_instance_valid(golf_activity) and golf_activity.active:golf_activity.leave()
+	if is_instance_valid(golf_activity) and golf_activity.active:
+		golf_activity.leave()
+		if golf_activity.active:return false
 	var diagnostic_started:=Time.get_ticks_usec()
 	# Switching never silently discards a cast, fight, or unreleased catch.
 	if game.state != Session.State.READY or casting:

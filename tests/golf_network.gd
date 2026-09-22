@@ -37,7 +37,7 @@ func run()->void:
   check(net.host(port,"127.0.0.1")==OK,"Dedicated host starts")
   check(await until(func():return net.players.size()==2),"Both clients complete shared Fishing handshake")
   check(net.voice.recipients(net.players.keys()[0],true).size()==1,"Radio recipients cross activity/location boundaries")
-  check(net.voice.recipients(net.players.keys()[0],false).is_empty(),"Proximity voice remains location-scoped")
+  check(await until(func():return net.states.size()==2 and not net.same_location(net.players.keys()[0],net.players.keys()[1])),"Proximity voice remains location-scoped")
   check(await until(func():
    var m:Dictionary=net.golf.rules.membership("a".repeat(64).sha256_text())
    return not m.is_empty() and m.game.hole==0 and m.game.epoch>=3 and m.game.deadline>0),"Fishing player remains enrolled with return deadline")
@@ -57,9 +57,14 @@ func run()->void:
   net.join("127.0.0.1",port)
   check(await until(func():return net.active),"Client connects through existing identity protocol")
   if role=="B":await create_timer(1).timeout
-  net.golf.request("join",{"course":"spyglass"})
+  send_pose(true,1)
+  await create_timer(.3).timeout
+  net.golf.request("join",{"course":"spyglass","mode":"competition"})
   check(await until(func():return not net.golf.view.is_empty()),"Course membership arrives by reliable RPC")
-  send_pose(role=="B",1)
+  check(await until(func():return net.golf.view.roster.size()==2),"Players gather in clubhouse")
+  if role=="A":net.golf.request("start")
+  check(await until(func():return net.golf.view.started),"Competition starts explicitly")
+  send_pose(role=="B",2)
   if role=="A":
    net.golf.request("presence",{"present":true})
    check(await until(func():return net.golf.can_shoot() and net.golf.view.roster.size()==2),"First player claims turn after both enroll")
@@ -70,7 +75,7 @@ func run()->void:
    check(await until(func():return net.golf.view.your_turn and net.golf.view.epoch>epoch),"Turn returns after other player's hole")
    net.golf.request("presence",{"present":false})
    check(await until(func():return net.golf.view.hole==1),"Server timeout advances forfeited hole while away")
-   check(net.golf.view.scores==[-1],"Client receives explicit hole forfeit")
+   check(net.golf.view.scores==[load("res://addons/golfminus/scripts/golf/handicap.gd").cap("spyglass",0,54)],"Client receives net-double-bogey timeout score")
    net.golf.request("retire")
    check(await until(func():return net.golf.view.get("retired",false)),"Retirement acknowledged")
   else:

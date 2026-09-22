@@ -51,6 +51,7 @@ func set_avatar(model: Node3D, hash: String) -> void:
 	next.first_person=false
 	avatar=next; avatar_hash=hash; fallback.hide()
 	next.right_grip_updated.connect(_attach_rod_to_hand.bind(next))
+	next.hand_attachments_updated.connect(_attach_golf_to_hand.bind(next))
 
 func _attach_rod_to_hand(grip: Transform3D, source: Node3D) -> void:
 	if not target.is_empty() and target.golf_club>=0:return
@@ -169,3 +170,9 @@ func _draw_line() -> void:
 				line.surface_add_vertex(rendered.tip.lerp(rendered.bobber,t)-Vector3.UP*sin(t*PI)*.15)
 			if bait_visual.visible and target.rig!=1:line.surface_add_vertex(rendered.bait_position)
 		line.surface_end()
+
+func _attach_golf_to_hand(source:Node3D)->void:
+	if source!=avatar or target.is_empty() or target.golf_club<0 or target.golf_stowed or not is_instance_valid(golf_club):return
+	var use_left:bool=rendered.rod.origin.distance_to(rendered.left.origin)<rendered.rod.origin.distance_to(rendered.right.origin)
+	var grip=avatar.hand_grip_pose(use_left)
+	if grip is Transform3D:golf_club.global_position=grip.origin

@@ -32,9 +32,9 @@ func _command(action:String,data:Dictionary)->void:
 	if multiplayer.is_server():_accept(multiplayer.get_remote_sender_id(),action,data)
 static func valid_command(action:String,data:Dictionary)->bool:
 	match action:
-		"join":return data.size()==1 and data.get("course") is String and data.course in Rules.COURSES
+		"join":return data.size() in [1,2] and data.get("course") is String and data.course in Rules.COURSES and data.get("mode","solo") in ["solo","competition"] and data.keys().all(func(k):return k in ["course","mode"])
 		"presence":return data.size()==1 and data.get("present") is bool
-		"retire":return data.is_empty()
+		"retire","start":return data.is_empty()
 		"shot","penalty","settled":
 			if not data.get("epoch") is int or data.epoch<0:return false
 			if action!="settled":return data.size()==1
@@ -55,6 +55,25 @@ func _accept(peer:int,action:String,data:Dictionary)->void:
 	guard.tokens-=1
 	var key:String=session.leaderboard.peers[peer]
 	rules.tick(now)
+	if action=="join" or action=="start":
+		var course:String=data.get("course",rules.view(key).get("course",""))
+		var peers:Array=[peer]
+		if action=="start":
+			var m:Dictionary=rules.membership(key)
+			if not m.is_empty():
+				for other in session.leaderboard.peers:
+					if session.leaderboard.peers[other] in m.game.order and not m.game.members[session.leaderboard.peers[other]].retired and other not in peers:peers.append(other)
+				if peers.size()!=m.game.members.values().filter(func(member):return not member.retired).size():peers.append(-1)
+		if action=="start" or data.get("mode","solo")=="competition":
+			for other in peers:
+				var state:Dictionary=session.states.get(other,{})
+				var location:String="golf_%s_clubhouse"%course
+				var nearby:bool=state.get("feet",Vector3.INF).distance_to(preload("res://addons/golfminus/scripts/golf/host_locations.gd").pose(location).origin)<15 if course in Rules.COURSES else false
+				if state.get("location","")!=location or not nearby:
+					if peer==multiplayer.get_unique_id():result.emit(action,false)
+					else:_reply.rpc_id(peer,action,false)
+					return
+		rules.stats[key]=session.leaderboard.records.get(key,{}).get("golf",{})
 	var accepted:bool=rules.command(key,session.players[peer].name,action,data,now)
 	publish()
 	if peer==multiplayer.get_unique_id():result.emit(action,accepted)

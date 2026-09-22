@@ -93,9 +93,8 @@ func _ready() -> void:
 	button(box,"Preview club angle & reach from address pose",func():game.begin_club_fit())
 	button(box,"Undo last accepted fit",func():game.undo_club_fit())
 	button(box,"Reverse fitted club face",func():game.flip_club_face())
-	button(box,"Stash / retrieve club",func():game.equipment.set_stowed(not game.equipment.stowed))
-	if is_instance_valid(game.host_activity):
-		button(box,"Avatar, tracking & shared settings",func():game.host_activity.open_settings())
+	if not is_instance_valid(game.host_activity):button(box,"Stash / retrieve club",func():game.equipment.set_stowed(not game.equipment.stowed))
+
 	else:
 		var turning:=CheckButton.new();turning.text="Smooth turning";turning.button_pressed=game.body.smooth_turn;box.add_child(turning)
 		turning.toggled.connect(func(value):game.body.smooth_turn=value;game._save_preferences())

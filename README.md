@@ -118,7 +118,7 @@ Meta avatar option research: [Quest and PC feasibility](docs/META_AVATARS_FEASIB
 
 ## Multiplayer and voice
 
-Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-13 server and clients.
+Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-14 server and clients.
 
 Run `./run.sh --server --port 24567` for a headless dedicated server. LAN/Internet connections use direct UDP; Internet hosts need port forwarding or a reachable server. See [setup, controls and limitations](docs/MULTIPLAYER.md) and [FPSloppa code reuse](docs/FPSLOPPA_REUSE.md).
 
@@ -207,4 +207,4 @@ Open **Menu → BBQ** (or **B** on desktop) for a cookout with fish caught at th
 
 ## Golf integration branch
 
-This branch integrates GolfMinus into the existing Fishing menu, avatar, radio, shared records and clubhouse BBQ. See [integration notes](docs/GOLF_INTEGRATION.md) for dedicated-server packaging and verification. Clients and servers must both use protocol 13.
+This branch integrates GolfMinus into the existing Fishing menu, avatar, radio, shared records and clubhouse BBQ. See [integration notes](docs/GOLF_INTEGRATION.md) for dedicated-server packaging and verification. Clients and servers must both use protocol 14.

@@ -13,8 +13,8 @@ func until(test:Callable,seconds:=20.0)->bool:
   await create_timer(.05).timeout
  return false
 func _initialize()->void:run.call_deferred()
-func pose(location:String,serial:int)->void:
- var at:Vector3=preload("res://scripts/bbq/sites.gd").arrival(location)
+func pose(location:String,serial:int,offset:=Vector3.ZERO)->void:
+ var at:Vector3=preload("res://scripts/bbq/sites.gd").arrival(location)+offset
  var data:Dictionary={"serial":serial,"location":location,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"state":0,"bait":0,"species":0,"rod_tier":0,"rig":0,"length":10.0,"curl":0.0,"reel_angle":0.0,"golf_club":0,"golf_stowed":true}
  for key in Net.State.TRANSFORMS:data[key]=Transform3D(Basis.IDENTITY,at+Vector3.UP*1.7)
  for key in Net.State.VECTORS:data[key]=at
@@ -33,9 +33,21 @@ func run()->void:
   check(await until(func():return net.golf.board.spyglass.size()==2),"Golf rankings survive exported server restart")
   check(net.golf.board.spyglass.all(func(r):return r.best==18 and r.rounds==1),"Both full scorecards persist exactly once")
  else:
-  net.golf.request("join",{"course":"spyglass"})
+  var join_rejected:Array=[]
+  net.golf.result.connect(func(action,accepted):
+   if action=="join" and not accepted:join_rejected.append(true))
+  pose("golf_spyglass_clubhouse",1,Vector3(40,0,0))
+  await create_timer(.3).timeout
+  net.golf.request("join",{"course":"spyglass","mode":"competition"})
+  check(await until(func():return not join_rejected.is_empty()),"Competition rejects players physically away from clubhouse")
+  pose("golf_spyglass_clubhouse",2)
+  await create_timer(.3).timeout
+  net.golf.request("join",{"course":"spyglass","mode":"competition"})
   check(await until(func():return not net.golf.view.is_empty() and net.golf.view.roster.size()==2),"Two identities join one dedicated golf game")
-  pose("golf_spyglass_clubhouse" if role=="B" else "golf_spyglass_05",1)
+  check(not net.golf.view.started,"Competition waits at clubhouse")
+  if net.golf.view.owner:net.golf.request("start")
+  check(await until(func():return net.golf.view.started),"Clubhouse organiser starts competition")
+  pose("golf_spyglass_clubhouse" if role=="B" else "golf_spyglass_05",3)
   check(await until(func():return net.states.size()==2),"Course poses replicated across holes and clubhouse")
   check(net.same_location(net.states.keys()[0],net.states.keys()[1]),"Dedicated server and client share course visibility domain")
   if role=="B":

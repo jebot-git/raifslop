@@ -165,11 +165,3 @@ func _mapped_trees(entries:Array)->void:
 		var multi:=MultiMesh.new();multi.transform_format=MultiMesh.TRANSFORM_3D;multi.mesh=mesh;multi.instance_count=groups[key].size()
 		for i in groups[key].size():multi.set_instance_transform(i,groups[key][i])
 		batch.multimesh=multi;add_child(batch)
-		# Solid canopy caps remain readable from Godview where vertical tree cards
-		# are edge-on. Shared sphere meshes add one draw per foliage tile.
-		var caps:=MultiMeshInstance3D.new();caps.name="CanopyCaps"
-		var sphere:=SphereMesh.new();sphere.radius=2.7;sphere.height=4.6;sphere.radial_segments=8;sphere.rings=4
-		var crowns:=MultiMesh.new();crowns.transform_format=MultiMesh.TRANSFORM_3D;crowns.mesh=sphere;crowns.instance_count=groups[key].size()
-		for i in groups[key].size():
-			var pose:Transform3D=groups[key][i];pose.origin+=pose.basis*Vector3(0,7.7,0);crowns.set_instance_transform(i,pose)
-		caps.multimesh=crowns;caps.material_override=material(Color("35533a"));add_child(caps)

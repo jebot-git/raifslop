@@ -16,6 +16,7 @@ var menu_ready:=false
 var routing_menu:=false
 var shot_granted:=false
 var pending_shot:Dictionary={}
+var pending_relief:=false
 var last_turn:=""
 var joining:=""
 var cached_rounds:Dictionary={}
@@ -23,8 +24,15 @@ var bbq_was_visiting:=false
 var club_settings:Control
 var clubhouse_round:ConfigFile
 var clubhouse_round_active:=false
+var last_course:=""
+var lobby_waiting:=false
+var clubhouse_board:Node3D
+var course_life:Node3D
+var avatar_bound:Node3D
 func setup(root: Node3D) -> void:
 	host=root
+	var saved:=ConfigFile.new()
+	if saved.load("user://golf_round.cfg")==OK:last_course=str(saved.get_value("round","course",""))
 	var page:=VBoxContainer.new();page.add_theme_constant_override("separation",16)
 	var title:=Label.new();title.text="Golf";page.add_child(title)
 	var courses:=HBoxContainer.new();page.add_child(courses)
@@ -32,7 +40,7 @@ func setup(root: Node3D) -> void:
 		var b:=Button.new();b.text=entry[0];b.custom_minimum_size.y=56;b.size_flags_horizontal=Control.SIZE_EXPAND_FILL;courses.add_child(b);b.pressed.connect(join_course.bind(entry[1]))
 	status=Label.new();status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_child(status)
 	var actions:=GridContainer.new();actions.columns=2;page.add_child(actions)
-	for entry in [["Return to course",resume_course],["Go fishing",leave],["Clubhouse BBQ",visit_bbq],["Retire from course",retire]]:
+	for entry in [["Return to course",resume_course],["Visit clubhouse",arrive_clubhouse],["Retire from course",retire]]:
 		var button:=Button.new();button.text=entry[0];button.custom_minimum_size.y=50;button.size_flags_horizontal=Control.SIZE_EXPAND_FILL;actions.add_child(button);button.pressed.connect(entry[1])
 	if is_instance_valid(host.get("network")):service=host.network.get("golf")
 	if is_instance_valid(service):service.changed.connect(sync_session,CONNECT_DEFERRED);service.result.connect(command_result)
@@ -78,7 +86,8 @@ func enter(id: String="spyglass") -> void:
 		var tool=host.get(key)
 		if is_instance_valid(tool) and tool is Node3D:
 			snapshots.append({"node":tool,"visible":tool.visible});tool.visible=false
-	active=true
+	host.ambience.stop();host.ambience.location=""
+	active=true;last_course=id
 	host.current_location=preload("res://addons/golfminus/scripts/golf/host_locations.gd").location(id,0)
 	host.motor.catch_controls=false;host.motor.turn_reserved=false;host.motor.radial_open=false
 	golf=load("res://addons/golfminus/scripts/main.gd").new();golf.host_game=host;golf.host_activity=self;golf.name="GolfActivity"
@@ -96,17 +105,21 @@ func enter(id: String="spyglass") -> void:
 	club_settings.reparent(host.avatar_menu.pages.golf.page)
 	menu_ready=true
 	if is_instance_valid(host.get("bbq")):host.bbq.select_location()
-	if enrolled():service.request("presence",{"present":true});sync_session()
+	clubhouse_board=preload("res://addons/golfminus/scripts/golf/clubhouse_board.gd").new();golf.add_child(clubhouse_board);clubhouse_board.setup(self)
+	course_life=preload("res://addons/golfminus/scripts/golf/course_life.gd").new();golf.add_child(course_life);course_life.setup(self)
 	golf.toggle_menu(false)
+	arrive_clubhouse()
 func update_player(delta: float) -> void:
 	if not active:return
+	if is_instance_valid(host.avatar) and avatar_bound!=host.avatar:
+		avatar_bound=host.avatar;avatar_bound.hand_attachments_updated.connect(attach_club_to_hand)
 	if is_instance_valid(host.get("bbq")):
 		var visiting:bool=host.bbq.visiting
 		if clubhouse_round!=null:golf.hud.hide()
 		if visiting!=bbq_was_visiting:
 			bbq_was_visiting=visiting
 			golf.equipment.set_stowed(visiting)
-			if enrolled():service.request("presence",{"present":not visiting});sync_session()
+			if enrolled():service.request("presence",{"present":not visiting and clubhouse_round==null});sync_session()
 	var symbols=host.avatar_menu.get("pictograms_toggle")
 	if is_instance_valid(symbols):
 		preload("res://addons/golfminus/scripts/golf/pictograms.gd").enabled=symbols.button_pressed
@@ -130,6 +143,7 @@ func update_player(delta: float) -> void:
 		host.avatar.tracked_leg_animation=tm.tracked_leg_animation if is_instance_valid(tm) else false
 		host.avatar.apply_tracking(host.motor.global_transform,tm.body if is_instance_valid(tm) else {},tm.face if is_instance_valid(tm) else {})
 		var left_target: Node3D=host.calibrated_hands[0] if host.xr else host.desktop_left
+		if not host.xr and golf.left_handed and not golf.equipment.stowed:left_target=golf.club
 		var right_target: Node3D=host.calibrated_hands[1] if host.xr else host.bbq.desktop_right if is_instance_valid(host.get("bbq")) and host.bbq.holds(1) else host.right if golf.equipment.stowed else golf.club
 		host.avatar.update_targets(host.head,left_target,right_target,host.motor.global_position.y,host.motor.last_motion,delta)
 		host.avatar.left_curl=host.left.get_float("grip")*.8 if host.xr else .7
@@ -147,8 +161,11 @@ func leave() -> void:
 	if is_instance_valid(host.get("bbq")):host.bbq.release_all();host.bbq.visiting=false
 	golf.save_progress()
 	var cfg=golf.round_state.read_progress()
+	if clubhouse_round!=null:cfg=clubhouse_round
 	if cfg!=null:cached_rounds[golf.course_id]=cfg
-	pending_shot.clear();clubhouse_round=null
+	pending_shot.clear();pending_relief=false;clubhouse_round=null
+	if is_instance_valid(avatar_bound) and avatar_bound.hand_attachments_updated.is_connected(attach_club_to_hand):avatar_bound.hand_attachments_updated.disconnect(attach_club_to_hand)
+	avatar_bound=null
 	if is_instance_valid(club_settings):club_settings.reparent(golf.hud.pages.controls.view);club_settings=null
 	golf.release_borrowed_rig()
 	host.remove_child(golf);golf.queue_free();golf=null
@@ -169,6 +186,7 @@ func leave() -> void:
 	XRServer.world_scale=player_snapshot.world_scale
 	host.current_location=player_snapshot.location
 	active=false;bbq_was_visiting=false
+	host.ambience.select_location(host.current_location)
 	if is_instance_valid(host.get("rod_holster")):host.rod_holster.set_stowed(player_snapshot.rod_stowed)
 	if is_instance_valid(host.get("bbq")):
 		host.bbq.select_location()
@@ -209,19 +227,55 @@ func enrolled()->bool:
 	return is_instance_valid(service) and host.network.active and not service.view.is_empty() and not service.view.get("retired",true) and not service.view.get("finished",true)
 func join_course(id:String)->void:
 	if active:
-		if golf.course_id==id and (enrolled() or not is_instance_valid(service) or not host.network.active):resume_course();return
-		if enrolled():status.text="Retire from the current course before joining another.";return
+		if golf.course_id==id:arrive_clubhouse();return
+		if enrolled():status.text="Retire from the current round before changing courses.";return
 		leave()
-	if is_instance_valid(service) and host.network.active:
-		joining=id;service.request("join",{"course":id})
-	else:enter(id)
+		if active:return
+	enter(id)
+func start_play(mode:String)->void:
+	if not active or clubhouse_round==null:return
+	if enrolled():
+		if service.view.mode!=mode:status.text="Retire from the current round before changing mode.";return
+		if service.view.started:return_from_clubhouse()
+		return
+	if mode=="competition" and not host.network.active:status.text="Host or join a multiplayer server first.";return
+	if host.network.active:
+		joining=golf.course_id;lobby_waiting=true
+		service.request("join",{"course":golf.course_id,"mode":mode})
+	else:
+		if golf.round_state.finished:
+			clubhouse_round=null;golf.start_round();prepare_clubhouse()
+		return_from_clubhouse()
+func start_competition()->void:
+	if enrolled():service.request("start")
 func resume_course()->void:
-	if active:
-		if clubhouse_round!=null:return_from_clubhouse();return
-		if is_instance_valid(host.get("bbq")) and host.bbq.visiting:host.bbq.return_to_water()
-		if settings_open:close_settings()
-		golf.toggle_menu(false);return
-	if enrolled():enter(service.view.course)
+	if not active:
+		var id:String=service.view.course if enrolled() else last_course
+		if id.is_empty():return
+		enter(id)
+	if not active:return
+	if enrolled() and not service.view.started:arrive_clubhouse();return
+	if clubhouse_round!=null:
+		if host.network.active and not enrolled():start_play("solo")
+		else:return_from_clubhouse()
+		return
+	if is_instance_valid(host.get("bbq")) and host.bbq.visiting:host.bbq.return_to_water()
+	if settings_open:close_settings()
+	golf.toggle_menu(false)
+func arrive_clubhouse()->void:
+	if not active or not prepare_clubhouse():return
+	var pose:Transform3D=preload("res://addons/golfminus/scripts/golf/host_locations.gd").pose(host.current_location)
+	host.motor.global_position=pose.origin+Vector3(0,.02,0);host.motor.safe_spawn=host.motor.global_position
+	host.motor.velocity=Vector3.ZERO;golf.equipment.set_stowed(true)
+	if is_instance_valid(clubhouse_board):clubhouse_board.refresh()
+func attach_club_to_hand()->void:
+	if not active or not is_instance_valid(golf) or golf.equipment.stowed or golf.fitting_club:return
+	var grip=host.avatar.hand_grip_pose(golf.left_handed)
+	if not grip is Transform3D:return
+	# Keep calibrated club orientation and physical length; snap the grip origin
+	# to the resolved VRM palm rather than leaving it at the controller origin.
+	golf.club.global_position=grip.origin
+	golf._sync_physical_head()
 func retire()->void:
 	if is_instance_valid(service) and enrolled():service.request("retire");return
 	leave()
@@ -238,11 +292,18 @@ func sync_session()->void:
 	var v:Dictionary=service.view
 	if v.is_empty():pending_shot.clear();status.text="Join a course to play with this server.";return
 	status.text="%s · Hole %02d · %s"%[v.course,mini(18,int(v.hole)+1),"Retired" if v.retired else "Round complete" if v.finished else "Your turn" if v.your_turn else "Waiting for "+v.turn_name]
-	if v.your_turn and not v.present:status.text+=" · Return within 5 minutes"
+	if v.mode=="competition" and v.started and v.your_turn and not v.present:status.text+=" · Return within 5 minutes"
 	var turn:="%s/%s/%s"%[v.course,v.id,v.epoch]
-	if v.your_turn and turn!=last_turn:
+	if v.mode=="competition" and v.started and v.your_turn and turn!=last_turn:
 		last_turn=turn;notice.show_turn(v.hole,not v.present)
-	elif v.your_turn:notice.set_context(v.hole,not v.present)
+	elif v.mode=="competition" and v.started and v.your_turn:notice.set_context(v.hole,not v.present)
+	if is_instance_valid(clubhouse_board):clubhouse_board.refresh()
+	if active and lobby_waiting and v.started:
+		lobby_waiting=false
+		golf.round_state.start();golf.round_state.handicap=int(v.handicap);golf.load_hole(int(v.hole))
+		golf.round_state.save_progress(golf.course_id,golf.tee_kind,golf.ball)
+		clubhouse_round=golf.round_state.read_progress();clubhouse_round_active=true
+		return_from_clubhouse()
 	if active and golf.course_id==v.course and v.finished and not v.retired and clubhouse_round==null:
 		if golf.model.index!=17:golf.load_hole(17)
 		host.current_location=preload("res://addons/golfminus/scripts/golf/host_locations.gd").location(v.course,17)
@@ -266,17 +327,37 @@ func sync_session()->void:
 		host.current_location=preload("res://addons/golfminus/scripts/golf/host_locations.gd").location(v.course,v.hole)
 		if is_instance_valid(host.get("bbq")):host.bbq.select_location()
 func intercept_shot(v:Vector3,face:Vector3,contact:Dictionary)->bool:
+	if clubhouse_round!=null:return true
 	if not enrolled() or shot_granted:return false
-	if not service.can_shoot():golf.status_text="Waiting for your turn";return true
+	if clubhouse_round!=null or not service.can_shoot():golf.status_text="Waiting for your turn";return true
 	if not pending_shot.is_empty():return true
 	pending_shot={"velocity":v,"face":face,"contact":contact.duplicate(true)}
 	service.request("shot",{"epoch":service.view.epoch});return true
+func request_relief()->void:
+	if pending_relief or not enrolled() or not service.can_shoot():return
+	pending_relief=true;service.request("penalty",{"epoch":service.view.epoch})
 func command_result(action:String,accepted:bool)->void:
+	if action=="start" and not accepted:
+		status.text="Everyone must gather at the clubhouse before the organiser starts."
+		if is_instance_valid(clubhouse_board):clubhouse_board.refresh();clubhouse_board.label.text+="\n"+status.text
+		return
+	if action=="penalty" and pending_relief:
+		pending_relief=false
+		if accepted and active and service.view.hole==golf.model.index:
+			golf.round_state.strokes=int(service.view.strokes)
+			if service.view.done:golf.ball.holed=true
+			else:golf.ball.place(golf.round_state.last_safe);golf.address_ball()
+		if active:sync_session()
+		return
 	if action=="retire" and accepted:leave();return
 	if action=="join":
 		var id:=joining;joining=""
-		if accepted and not id.is_empty():enter(id)
-		elif not accepted:status.text="Unable to join. Retire from your current course first."
+		if accepted and not id.is_empty():
+			if not active:enter(id)
+			sync_session()
+		elif not accepted:
+			lobby_waiting=false;status.text="Unable to join. Gather at the clubhouse or retire from your current round first."
+			if is_instance_valid(clubhouse_board):clubhouse_board.refresh();clubhouse_board.label.text+="\n"+status.text
 	if action=="shot" and not pending_shot.is_empty():
 		var shot:=pending_shot.duplicate(true);pending_shot.clear()
 		if accepted and active:
@@ -298,12 +379,13 @@ func prepare_clubhouse()->bool:
 	if clubhouse_round==null:return false
 	clubhouse_round_active=golf.round_active;golf.round_active=false
 	if enrolled():service.request("presence",{"present":false})
-	golf.load_hole(0);golf.equipment.set_stowed(true);golf.hud.hide()
+	golf.equipment.set_stowed(true);golf.hud.hide()
 	host.current_location=preload("res://addons/golfminus/scripts/golf/host_locations.gd").clubhouse(golf.course_id)
-	host.bbq.select_location();bbq_was_visiting=true
+	host.bbq.select_location();bbq_was_visiting=false
 	return true
 func return_from_clubhouse()->void:
 	if not active or clubhouse_round==null:return
+	if enrolled() and not service.view.started:return
 	if settings_open:close_settings()
 	host.bbq.release_all();host.bbq.visiting=false;bbq_was_visiting=false
 	var saved:=clubhouse_round;clubhouse_round=null
@@ -312,6 +394,7 @@ func return_from_clubhouse()->void:
 	host.current_location=preload("res://addons/golfminus/scripts/golf/host_locations.gd").location(golf.course_id,golf.round_state.hole)
 	host.bbq.select_location();golf.equipment.set_stowed(false);golf.hud.show();golf.address_ball()
 	if enrolled():service.request("presence",{"present":true})
+	if is_instance_valid(clubhouse_board):clubhouse_board.refresh()
 	sync_session()
 
 func can_restore(cfg:ConfigFile,id:String)->bool:

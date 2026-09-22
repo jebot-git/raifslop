@@ -1,26 +1,38 @@
 extends Control
-var game: Node
-func _draw() -> void:
+## North-up whole-course projection shared with the field guide's surface data.
+var game:Node
+var bounds:=Rect2()
+var rect:=Rect2()
+var texture:ImageTexture
+var key:=""
+func project(p:Vector3)->Vector2:
+	return rect.position+(Vector2(p.x,p.z)-bounds.position)/bounds.size*rect.size
+func prepare()->void:
 	if not is_instance_valid(game) or game.model.hole.is_empty():return
 	var m=game.model
-	var h: float=m.hole.length
-	var k: float=(size.y-42)/h
-	var center:=size.x*.5
-	var path:=PackedVector2Array()
-	for i in 51:
-		var t:=i/50.0
-		path.append(Vector2(center+m.center_x(t)*k, size.y-22-t*(size.y-42)))
-	draw_polyline(path,Color("39523d"),float(m.hole.width)*2*k,true)
-	draw_polyline(path,Color("617452"),float(m.hole.width)*1.35*k,true)
-	var pin:=Vector2(center+m.center_x(1)*k,22)
-	draw_circle(pin,float(m.hole.green_radius)*k,Color("8b9e6e"))
-	for b in m.hole.bunkers:
-		var p: Vector2=m.bunker_center(b)
-		draw_circle(Vector2(center+p.x*k,size.y-22+p.y*k),float(b.radius)*k,Color("d2bd8e"))
-	draw_line(pin,pin+Vector2(0,-12),Color("edcb89"),2,true)
-	draw_colored_polygon(PackedVector2Array([pin+Vector2(0,-12),pin+Vector2(9,-9),pin+Vector2(0,-6)]),Color("edcb89"))
-	var bp: Vector3=m.to_hole(game.ball.position)
-	draw_circle(Vector2(center+bp.x*k,size.y-22+bp.z*k),4,Color("fff6df"))
-	var dir: Vector3=m.to_hole(game.ball.position+game.aim_direction())-bp
-	var p:=Vector2(center+bp.x*k,size.y-22+bp.z*k)
-	draw_line(p,p+Vector2(dir.x,dir.z)*26,Color("e6c88a"),1,true)
+	var next_key:String=m.course.id+str(size)
+	if key!=next_key:
+		bounds=m.course_bounds() if m.connected else m.map_bounds()
+		var scale:float=minf((size.x-8)/bounds.size.x,(size.y-8)/bounds.size.y)
+		rect=Rect2((size-bounds.size*scale)*.5,bounds.size*scale)
+		var image:=Image.create(192,192,false,Image.FORMAT_RGBA8)
+		for y in 192:
+			for x in 192:
+				var p:Vector2=bounds.position+Vector2((x+.5)/192,(y+.5)/192)*bounds.size
+				image.set_pixel(x,y,preload("res://addons/golfminus/scripts/golf/course_guide_screen.gd").COLORS[m.lie(p.x,p.y)])
+		texture=ImageTexture.create_from_image(image);key=next_key
+
+func _draw()->void:
+	prepare()
+	if texture==null:return
+	var m=game.model
+	draw_texture_rect(texture,rect,false)
+	if m.connected:
+		for i in 18:
+			var path:=PackedVector2Array()
+			for p in m.course.holes[i].get("routing",{}).get("path",[]):path.append(project(Vector3(p[0],0,p[1])))
+			if path.size()>1:draw_polyline(path,Color("f6d888") if i==m.index else Color("8aab83"),2 if i==m.index else 1,true)
+			draw_string(ThemeDB.fallback_font,project(m.pin_for(i)),str(i+1),HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color.WHITE)
+	var pin:=project(m.pin());var ball:=project(game.ball.position)
+	draw_line(ball,pin,Color("f6d888"),1,true);draw_circle(pin,3,Color("f6d888"));draw_circle(ball,3,Color.WHITE)
+	draw_circle(project(game.head.global_position),3,Color("7de1da"))
