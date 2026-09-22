@@ -1,0 +1,74 @@
+{
+  "dalkey": {
+    "source": "dalkey_view_8k.hdr",
+    "yaw_degrees": 0,
+    "sky_energy": 0.65,
+    "sun_direction": [
+      -0.5911940058822552,
+      0.43153658965020425,
+      0.681370544712613
+    ],
+    "sun_rotation": [
+      -25.565115568471768,
+      -40.94667876616047,
+      0
+    ],
+    "sun_energy": 0.08767596779600026,
+    "sun_color_linear": [
+      0.9175437355061712,
+      1.0,
+      0.8254302085678836
+    ],
+    "sun_angular_diameter_degrees": 16.0,
+    "peak_to_median": 57.30350875854492,
+    "extraction_cap_degrees": 8.0,
+    "diffuse_sky_mean": 0.8971706963058453,
+    "samples": 24,
+    "resolution": [
+      512,
+      1024
+    ],
+    "energy_units": "relative HDR radiance; not calibrated lux",
+    "sky_resolution": [
+      1024,
+      512
+    ],
+    "sun_shadow_angle_degrees": 16.0
+  },
+  "alpine": {
+    "source": "alps_field_8k.hdr",
+    "yaw_degrees": 0,
+    "sky_energy": 0.65,
+    "sun_direction": [
+      -0.4377975183196098,
+      0.6701552206537247,
+      0.5993540799758924
+    ],
+    "sun_rotation": [
+      -42.07904593639427,
+      -36.14621863051286,
+      0
+    ],
+    "sun_energy": 4.575392886490692,
+    "sun_color_linear": [
+      1.0,
+      0.9735120617405157,
+      0.9311181423764163
+    ],
+    "sun_angular_diameter_degrees": 0.53,
+    "peak_to_median": 451607.65625,
+    "extraction_cap_degrees": 2.0,
+    "diffuse_sky_mean": 0.20690296827571905,
+    "samples": 24,
+    "resolution": [
+      512,
+      1024
+    ],
+    "energy_units": "relative HDR radiance; not calibrated lux",
+    "sky_resolution": [
+      1024,
+      512
+    ],
+    "sun_shadow_angle_degrees": 4
+  }
+}

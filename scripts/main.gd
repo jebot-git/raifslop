@@ -9,6 +9,7 @@ const AvatarLibrary = preload("res://scripts/avatar_library.gd")
 const AvatarRig = preload("res://scripts/avatar_rig.gd")
 const AvatarMenu = preload("res://scripts/avatar_menu.gd")
 const Locations = preload("res://scripts/locations.gd")
+var golf_activity: Node
 var tracking_manager: Node
 var ambience: Node
 var shoulder_radio: Node3D
@@ -147,6 +148,8 @@ func _ready() -> void:
 		spectator.setup(self)
 	_start_network()
 	bbq=preload("res://scripts/bbq/activity.gd").new();add_child(bbq);bbq.setup(self)
+	golf_activity = preload("res://addons/golfminus/scripts/golf/fishing_host.gd").new()
+	add_child(golf_activity); golf_activity.setup(self)
 	print("Real AI Fishing ready | ", "OpenXR" if xr else "Desktop", " | panorama + location foreground loaded")
 
 func material(color: Color, metal := 0.0) -> StandardMaterial3D:
@@ -439,6 +442,7 @@ func _select_bait(index: int) -> void:
 	hud.queue_redraw()
 
 func _left_button(button: String) -> void:
+	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if is_instance_valid(bbq) and bbq.holds(0) and not fish_guide.held and not menu_open:
 		if button=="ax_button":bbq.use(0,bbq.hovered,true)
 		return
@@ -458,6 +462,7 @@ func _left_button(button: String) -> void:
 		_primary_action()
 
 func _right_pressed(button: String) -> void:
+	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if is_instance_valid(bbq) and bbq.holds(1) and not fish_guide.held and not menu_open and button!="by_button":
 		if button=="ax_button":bbq.use(1,bbq.hovered,true)
 		return
@@ -482,6 +487,7 @@ func _right_pressed(button: String) -> void:
 		_primary_action()
 
 func _right_released(button: String) -> void:
+	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if button=="primary_click":return
 	if rig_radial.opened:return
 	if fish_guide.held: return
@@ -701,6 +707,7 @@ func _cast(_power: float) -> void:
 	fishing_feedback.cast_swish()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if is_instance_valid(bbq) and bbq.handle_input(event):return
 	if not xr and event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_J and not menu_open:
@@ -768,6 +775,9 @@ func _update_tracking_warning(delta: float) -> void:
 		hud.queue_redraw()
 
 func _process(delta: float) -> void:
+	if is_instance_valid(golf_activity) and golf_activity.active:
+		golf_activity.update_player(delta)
+		return
 	if is_instance_valid(rod_visual): rod_visual.equip(game.tackle.equipped,game.is_fly_fishing(),game.is_feeder_fishing(),game.is_lure_fishing())
 	if server_only: return
 	if menu_open or fish_guide.held or rig_radial.opened or (xr and not tracking_was_valid) or game.state!=Session.State.WAITING:
@@ -1288,6 +1298,7 @@ func _panorama_texture(entry: Dictionary) -> Texture2D:
 	return ResourceLoader.load(entry.panorama, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
 
 func _select_location(id: String, persist := true) -> bool:
+	if is_instance_valid(golf_activity) and golf_activity.active:golf_activity.leave()
 	var diagnostic_started:=Time.get_ticks_usec()
 	# Switching never silently discards a cast, fight, or unreleased catch.
 	if game.state != Session.State.READY or casting:
@@ -1465,6 +1476,7 @@ func _import_avatar(path: String) -> void:
 		avatar_loading=false;avatar_menu.status.text="Avatar import is busy. Try again."
 
 func _attach_rod_to_hand(grip: Transform3D, source: Node3D) -> void:
+	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if not xr or source != avatar or rod_holster.stowed: return
 	rod.top_level = true
 	rod.global_transform = grip * rod_holster.HELD_POSE

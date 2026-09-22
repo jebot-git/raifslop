@@ -4,6 +4,7 @@ signal import_requested(path: String)
 signal closed
 signal quit_requested
 var quit_button: Button
+var resume_button:Button
 var leaderboard_button: Button
 var pictograms_toggle: CheckButton
 var turn_mode: CheckButton
@@ -300,7 +301,7 @@ func _build_shell() -> void:
 	shell=VBoxContainer.new();shell.add_theme_constant_override("separation",12);add_child(shell)
 	var top:=HBoxContainer.new();shell.add_child(top)
 	var title:=Label.new();title.text="Field station";var serif:=SystemFont.new();serif.font_names=PackedStringArray(["DejaVu Serif"]);title.add_theme_font_override("font",serif);title.add_theme_font_size_override("font_size",28);title.add_theme_color_override("font_color",Color("d5b777"));top.add_child(title)
-	var subtitle:=Label.new();subtitle.text="Make yourself at home by the water";subtitle.size_flags_horizontal=SIZE_EXPAND_FILL;subtitle.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT;subtitle.add_theme_font_size_override("font_size",16);top.add_child(subtitle)
+	var subtitle:=Label.new();subtitle.text="Make yourself at home outdoors";subtitle.size_flags_horizontal=SIZE_EXPAND_FILL;subtitle.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT;subtitle.add_theme_font_size_override("font_size",16);top.add_child(subtitle)
 	tabs=HBoxContainer.new();tabs.add_theme_constant_override("separation",8);shell.add_child(tabs)
 	content=Control.new();content.clip_contents=true;content.size_flags_vertical=SIZE_EXPAND_FILL;shell.add_child(content)
 	var bottom:=HBoxContainer.new();shell.add_child(bottom)
@@ -313,7 +314,7 @@ func _build_shell() -> void:
 		bottom.add_child(scroll_button)
 		scroll_button.pressed.connect(func(): scroll_page(step * 180.0))
 	quit_button=Button.new();quit_button.text="Quit game";quit_button.custom_minimum_size=Vector2(150,44);bottom.add_child(quit_button);quit_button.pressed.connect(func(): quit_requested.emit())
-	var resume:=Button.new();resume.text="Return to the water";resume.custom_minimum_size=Vector2(250,44);bottom.add_child(resume);resume.pressed.connect(func(): closed.emit())
+	var resume:=Button.new();resume_button=resume;resume.text="Return to the water";resume.custom_minimum_size=Vector2(250,44);bottom.add_child(resume);resume.pressed.connect(func(): closed.emit())
 
 func scroll_page(pixels: float) -> void:
 	if is_instance_valid(vrm_browser) and vrm_browser.visible:
@@ -341,6 +342,7 @@ func _register_page(id: String, title: String, page: VBoxContainer) -> void:
 	show_page(active_page)
 
 func show_page(id: String) -> void:
+	if id=="leaderboard" and pages.has(id):pages[id].page.refresh()
 	if id == "tackle": refresh_tackle()
 	if not pages.has(id):return
 	if is_instance_valid(keyboard): keyboard.hide()

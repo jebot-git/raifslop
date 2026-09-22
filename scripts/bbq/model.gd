@@ -8,7 +8,7 @@ var stations:Dictionary={}
 var clock:=0.0
 
 func start(location:String) -> bool:
- if not Sites.SITES.has(location):return false
+ if not Sites.supported(location):return false
  if stations.has(location):return true
  var items:Array=[]
  for i in 10:

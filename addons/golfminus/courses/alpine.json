@@ -1,0 +1,667 @@
+{
+  "id": "alpine",
+  "name": "Alpine Reserve",
+  "region": "SWISS ALPS",
+  "subtitle": "Alpine golf at the edge of the Swiss Alps",
+  "kind": "alpine",
+  "seed": 1291,
+  "wind": [
+    -2.1,
+    0,
+    -1.4
+  ],
+  "latitude": 46.609194,
+  "longitude": 9.429675,
+  "panorama": "alps_field",
+  "panorama_yaw": 0,
+  "holes": [
+    {
+      "name": "Valley Arrival",
+      "par": 4,
+      "length": 356,
+      "bend": 24,
+      "width": 19,
+      "green_radius": 12,
+      "green_slope": [
+        -0.011,
+        -0.009000000000000001
+      ],
+      "elevation": 5,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 6
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 35.6,
+        "forward": 78.32000000000001
+      }
+    },
+    {
+      "name": "Beech Terrace",
+      "par": 4,
+      "length": 382,
+      "bend": -42,
+      "width": 21,
+      "green_radius": 13,
+      "green_slope": [
+        0.0,
+        -0.003
+      ],
+      "elevation": 7,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 7
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 38.2,
+        "forward": 84.04
+      }
+    },
+    {
+      "name": "Schist",
+      "par": 3,
+      "length": 148,
+      "bend": 10,
+      "width": 23,
+      "green_radius": 14,
+      "green_slope": [
+        0.011,
+        0.003
+      ],
+      "elevation": 9,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 8
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": true,
+      "tee_options": {
+        "back": 0,
+        "club": 14.8,
+        "forward": 32.56
+      }
+    },
+    {
+      "name": "Valley View",
+      "par": 5,
+      "length": 502,
+      "bend": -46,
+      "width": 25,
+      "green_radius": 12,
+      "green_slope": [
+        -0.011,
+        0.009000000000000001
+      ],
+      "elevation": 11,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 6
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 50.2,
+        "forward": 110.44
+      }
+    },
+    {
+      "name": "Moraine",
+      "par": 4,
+      "length": 367,
+      "bend": 38,
+      "width": 19,
+      "green_radius": 13,
+      "green_slope": [
+        0.0,
+        -0.009000000000000001
+      ],
+      "elevation": 5,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 7
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 36.7,
+        "forward": 80.74
+      }
+    },
+    {
+      "name": "The Tarn",
+      "par": 3,
+      "length": 174,
+      "bend": -16,
+      "width": 21,
+      "green_radius": 14,
+      "green_slope": [
+        0.011,
+        -0.003
+      ],
+      "elevation": 7,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 8
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": true,
+      "tee_options": {
+        "back": 0,
+        "club": 17.400000000000002,
+        "forward": 38.28
+      }
+    },
+    {
+      "name": "Morning Light",
+      "par": 5,
+      "length": 526,
+      "bend": 54,
+      "width": 23,
+      "green_radius": 12,
+      "green_slope": [
+        -0.011,
+        0.003
+      ],
+      "elevation": 9,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 6
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 52.6,
+        "forward": 115.72
+      }
+    },
+    {
+      "name": "Tussock Rise",
+      "par": 4,
+      "length": 394,
+      "bend": -32,
+      "width": 25,
+      "green_radius": 13,
+      "green_slope": [
+        0.0,
+        0.009000000000000001
+      ],
+      "elevation": 11,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 7
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 39.400000000000006,
+        "forward": 86.68
+      }
+    },
+    {
+      "name": "Pine Terrace",
+      "par": 4,
+      "length": 344,
+      "bend": 18,
+      "width": 19,
+      "green_radius": 14,
+      "green_slope": [
+        0.011,
+        -0.009000000000000001
+      ],
+      "elevation": 5,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 8
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 34.4,
+        "forward": 75.68
+      }
+    },
+    {
+      "name": "Glacier Line",
+      "par": 4,
+      "length": 419,
+      "bend": -48,
+      "width": 21,
+      "green_radius": 12,
+      "green_slope": [
+        -0.011,
+        -0.003
+      ],
+      "elevation": 7,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 6
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 41.900000000000006,
+        "forward": 92.18
+      }
+    },
+    {
+      "name": "Still Water",
+      "par": 3,
+      "length": 162,
+      "bend": 14,
+      "width": 23,
+      "green_radius": 13,
+      "green_slope": [
+        0.0,
+        0.003
+      ],
+      "elevation": 9,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 7
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 16.2,
+        "forward": 35.64
+      }
+    },
+    {
+      "name": "River Bend",
+      "par": 4,
+      "length": 376,
+      "bend": 42,
+      "width": 25,
+      "green_radius": 14,
+      "green_slope": [
+        0.011,
+        0.009000000000000001
+      ],
+      "elevation": 11,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 8
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": true,
+      "tee_options": {
+        "back": 0,
+        "club": 37.6,
+        "forward": 82.72
+      }
+    },
+    {
+      "name": "The Divide",
+      "par": 5,
+      "length": 509,
+      "bend": -52,
+      "width": 19,
+      "green_radius": 12,
+      "green_slope": [
+        -0.011,
+        -0.009000000000000001
+      ],
+      "elevation": 5,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 6
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 50.900000000000006,
+        "forward": 111.98
+      }
+    },
+    {
+      "name": "Beech Hollow",
+      "par": 4,
+      "length": 348,
+      "bend": 26,
+      "width": 21,
+      "green_radius": 13,
+      "green_slope": [
+        0.0,
+        -0.003
+      ],
+      "elevation": 7,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 7
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 34.800000000000004,
+        "forward": 76.56
+      }
+    },
+    {
+      "name": "Alpine Air",
+      "par": 3,
+      "length": 186,
+      "bend": -12,
+      "width": 23,
+      "green_radius": 14,
+      "green_slope": [
+        0.011,
+        0.003
+      ],
+      "elevation": 9,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 8
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": true,
+      "tee_options": {
+        "back": 0,
+        "club": 18.6,
+        "forward": 40.92
+      }
+    },
+    {
+      "name": "Terrace Edge",
+      "par": 4,
+      "length": 403,
+      "bend": -36,
+      "width": 25,
+      "green_radius": 12,
+      "green_slope": [
+        -0.011,
+        0.009000000000000001
+      ],
+      "elevation": 11,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 6
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 40.300000000000004,
+        "forward": 88.66
+      }
+    },
+    {
+      "name": "Long Reflection",
+      "par": 5,
+      "length": 494,
+      "bend": 46,
+      "width": 19,
+      "green_radius": 13,
+      "green_slope": [
+        0.0,
+        -0.009000000000000001
+      ],
+      "elevation": 5,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 7
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 49.400000000000006,
+        "forward": 108.68
+      }
+    },
+    {
+      "name": "Home Meadow",
+      "par": 4,
+      "length": 371,
+      "bend": -24,
+      "width": 21,
+      "green_radius": 14,
+      "green_slope": [
+        0.011,
+        -0.003
+      ],
+      "elevation": 7,
+      "bunkers": [
+        {
+          "t": 0.62,
+          "side": -1,
+          "radius": 8
+        },
+        {
+          "t": 0.92,
+          "side": 1,
+          "radius": 5
+        },
+        {
+          "t": 1.02,
+          "side": -1,
+          "radius": 4.5
+        }
+      ],
+      "water": false,
+      "tee_options": {
+        "back": 0,
+        "club": 37.1,
+        "forward": 81.62
+      }
+    }
+  ]
+}

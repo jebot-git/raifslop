@@ -183,10 +183,12 @@ func refresh() -> void:
  if active and not is_instance_valid(station):_build_station()
  if not active and is_instance_valid(station):station.free();station=null;item_nodes.clear();food_materials.clear()
  visit_button.text="Visit shared BBQ" if active else "Start BBQ & visit"
+ return_button.text="Return to course" if is_instance_valid(g.golf_activity) and g.golf_activity.active else "Return to fishing spot"
  return_button.disabled=not visiting or transitioning
  status.text="A shared BBQ is running here. Come and go whenever you like." if active else "Start a gathering at this water. Anyone can join."
 
 func visit() -> void:
+ if is_instance_valid(g.golf_activity) and g.golf_activity.active and not g.golf_activity.prepare_clubhouse():return
  if transitioning:return
  if g.game.state!=g.Session.State.READY:
   status.text="Finish your cast and release the catch before visiting.";return
@@ -194,18 +196,22 @@ func visit() -> void:
   return_at=g.motor.global_position;return_safe=g.motor.safe_spawn;return_location=location
   return_yaw=atan2(g.head.global_basis.z.x,g.head.global_basis.z.z)
  visiting=true
+ if is_instance_valid(g.golf_activity) and g.golf_activity.active:
+  g.golf_activity.golf.course_guide.dock();g.golf_activity.golf.equipment.set_stowed(true)
  g.fish_guide.dock();g.shoulder_radio.reset();g.rod_holster.set_stowed(true)
  service.request("start")
  var seat:int=(service.local_id()-1)%8
  _move(Sites.arrival(location,seat))
 
 func return_to_water() -> void:
+ if is_instance_valid(g.golf_activity) and g.golf_activity.active and g.golf_activity.clubhouse_round!=null:g.golf_activity.return_from_clubhouse();return
  if transitioning or not visiting:return
  release_all();visiting=false
  _move(return_at if return_location==location else g.foreground.get_meta("spawn",Vector3(0,.02,.65)),true)
 
 func _move(destination:Vector3,returning:=false) -> void:
  transitioning=true
+ if is_instance_valid(g.golf_activity) and g.golf_activity.settings_open:g.golf_activity.close_settings()
  if g.menu_open:g._toggle_avatar_menu()
  g.motor.blocked=true
  var move_location:=location
@@ -269,7 +275,7 @@ func use(hand:int,target:int,cool:=false) -> void:
 
 func handle_input(event:InputEvent) -> bool:
  if g.xr or g.menu_open or transitioning or g.fish_guide.held:return false
- if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_B:
+ if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_B and not (is_instance_valid(g.golf_activity) and g.golf_activity.active):
   if visiting:return_to_water()
   else:visit()
   return true

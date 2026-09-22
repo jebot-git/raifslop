@@ -51,7 +51,7 @@ func accept(peer:int,command:Dictionary) -> bool:
  if guard.tokens<1:return false
  guard.tokens-=1
  var who:=actor(peer)
- if who.is_empty() or not Sites.SITES.has(who.location):return false
+ if who.is_empty() or not Sites.supported(who.location):return false
  var location:String=who.location
  if who.state!=0:return false
  if command.action=="start":
@@ -94,7 +94,7 @@ func broadcast() -> void:
 
 @rpc("authority","call_remote","reliable",0)
 func _snapshot(location:String,state:Dictionary,clock:float) -> void:
- if not Sites.SITES.has(location) or not is_finite(clock):return
+ if not Sites.supported(location) or not is_finite(clock):return
  if state.is_empty():model.stations.erase(location)
  elif state.has("items") and state.items is Array and state.items.size()==10:
   model.stations[location]=state.duplicate(true)
@@ -109,7 +109,7 @@ func _process(delta:float) -> void:
  for peer in peers:
   var who:=actor(peer)
   if who.is_empty():continue
-  if Sites.SITES.has(who.location) and who.feet.distance_to(Sites.pose(who.location).origin)<5:occupied.append(who.location)
+  if Sites.supported(who.location) and who.feet.distance_to(Sites.pose(who.location).origin)<5:occupied.append(who.location)
  for location in model.stations:
   for item in model.stations[location].items:
    if item.owner==0:continue

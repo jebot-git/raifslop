@@ -29,6 +29,7 @@ func start(file_path:String)->void:
   if key is String and valid_token(key) and valid_row(row):records[key]=row
 static func valid_row(row:Variant)->bool:
  if not row is Dictionary or not row.get("name") is String or row.name.length()>32:return false
+ if not preload("res://addons/golfminus/scripts/golf/server_records.gd").valid(row.get("golf",{})):return false
  for field in CATEGORIES:
   var value=row.get(field)
   if not (value is float or value is int) or not is_finite(value) or value<0 or value>1e12:return false

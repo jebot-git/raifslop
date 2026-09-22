@@ -2,7 +2,7 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 11 # Shared BBQ ownership and cooking snapshots.
+const VERSION := 13 # Shared BBQ ownership and cooking snapshots.
 const State = preload("res://scripts/network/state.gd")
 var leaderboard=preload("res://scripts/network/leaderboard.gd").new()
 var leaderboard_view:Dictionary={}
@@ -15,6 +15,7 @@ func leaderboard_path()->String:
 func publish_leaderboard()->void:
 	if not active or not multiplayer.is_server():return
 	leaderboard_view=leaderboard.snapshot();leaderboard_changed.emit()
+	if is_instance_valid(golf):golf.publish()
 	for peer in players:
 		if peer>1:_leaderboard.rpc_id(peer,leaderboard_view)
 	var result:int=leaderboard.save()
@@ -29,6 +30,7 @@ func _leaderboard(data:Dictionary)->void:
 			if not leaderboard.valid_row(row):return
 	leaderboard_view=data.duplicate(true);leaderboard_changed.emit()
 
+var golf: Node
 var bbq: Node
 var root_game: Node
 var active := false
@@ -74,6 +76,7 @@ func setup(root: Node, server_only: bool = false) -> void:
 	headless = DisplayServer.get_name()=="headless"
 	if not dedicated: load_preferences()
 	name = "Network"
+	golf=preload("res://addons/golfminus/scripts/golf/network_service.gd").new();add_child(golf);golf.setup(self)
 	bbq=preload("res://scripts/bbq/network.gd").new();add_child(bbq);bbq.setup(self)
 	add_child(permissions)
 	add_child(avatars); avatars.setup(self)
@@ -140,6 +143,7 @@ func join(address: String, port: int = 24567) -> Error:
 	return OK
 
 func leave(reason: String = "Offline") -> void:
+	if is_instance_valid(golf):golf.reset()
 	if is_instance_valid(bbq):bbq.reset()
 	if active and multiplayer.is_server():leaderboard.save()
 	leaderboard.peers.clear();leaderboard.attempts.clear();leaderboard_view.clear()
@@ -206,6 +210,7 @@ func _roster(data: Dictionary) -> void:
 	changed.emit()
 
 func _peer_left(id: int) -> void:
+	if is_instance_valid(golf):golf.disconnected(id)
 	if is_instance_valid(bbq):bbq.model.release_peer(id);bbq.limits.erase(id)
 	leaderboard.disconnect_player(id)
 	state_arrivals.erase(id)
@@ -216,7 +221,7 @@ func _peer_left(id: int) -> void:
 	changed.emit()
 
 func same_location(a: int, b: int) -> bool:
-	return states.has(a) and states.has(b) and states[a].location==states[b].location
+	return states.has(a) and states.has(b) and preload("res://addons/golfminus/scripts/golf/host_locations.gd").same_world(states[a].location,states[b].location)
 
 func _process(delta: float) -> void:
 	clock+=delta
@@ -238,6 +243,7 @@ func _process(delta: float) -> void:
 	elapsed+=delta
 	if elapsed<.05: return
 	elapsed=fmod(elapsed,.05); serial+=1
+	if is_instance_valid(root_game.golf_activity) and root_game.golf_activity.active and root_game.golf_activity.golf.godview.active:return
 	var data := State.capture(root_game,serial)
 	var event := State.event_key(data)
 	var reliable := event!=last_event
@@ -261,7 +267,7 @@ func _accept(id: int, data: Dictionary, reliable: bool) -> void:
 	guard.tokens=minf(8,guard.tokens+maxf(0,clock-guard.time)*30); guard.time=clock; guards[id]=guard
 	if guard.tokens<1: return
 	guard.tokens-=1
-	leaderboard.observe(id,data)
+	if not data.location.begins_with("golf_"):leaderboard.observe(id,data)
 	_apply(id,data)
 	for peer in players:
 		if peer<=1 or peer==id: continue

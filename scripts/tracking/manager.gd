@@ -76,7 +76,7 @@ func sample(delta: float) -> void:
 		clear_samples(); return
 	body=preload("res://scripts/tracking/poses.gd").validate_body(tracking.sample())
 	face=eyes.sample() if expressions_enabled else {}
-	var allowed: bool=not seated and root_game.game.state==0 and not root_game.casting and not root_game.fish_guide.held and left.get_has_tracking_data() and right.get_has_tracking_data() and tracking.enabled
+	var allowed: bool=not seated and _activity_allows_calibration() and left.get_has_tracking_data() and right.get_has_tracking_data() and tracking.enabled
 	var detected := t_pose_detector.sample(head.transform,left.position,right.position,delta,allowed)
 	if t_pose_detector.held>0 or detected:
 		if not tracking.full_body_available():
@@ -94,7 +94,7 @@ func calibrate() -> void:
 	tracking.calibrate()
 	message=tracking.status
 func recenter() -> bool:
-	if not root_game.xr or not focused or root_game.game.state!=0 or root_game.casting or root_game.fish_guide.held:
+	if not root_game.xr or not focused or not _activity_allows_calibration():
 		message="Finish the cast and put away the Guide before recentering"
 		return false
 	if not head_tracked() or head.position.y<.3: message="Head tracking is unavailable"; return false
@@ -132,3 +132,8 @@ func head_tracked() -> bool:
 	if not tracker or not tracker.has_pose("default"): return false
 	var pose=tracker.get_pose("default")
 	return pose!=null and pose.has_tracking_data
+
+func _activity_allows_calibration() -> bool:
+	if is_instance_valid(root_game.golf_activity) and root_game.golf_activity.active:
+		return root_game.golf_activity.allows_calibration()
+	return root_game.game.state==0 and not root_game.casting and not root_game.fish_guide.held
