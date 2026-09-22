@@ -1,5 +1,6 @@
 """Package verified exports from one clean commit, retaining attribution."""
 from pathlib import Path
+import argparse
 import hashlib
 import json
 import re
@@ -13,6 +14,14 @@ BUILD = ROOT / 'builds'
 OUT = BUILD / 'release'
 VERSION = re.search(r'^config/version="([^"]+)"', (ROOT / 'project.godot').read_text(), re.M)[1]
 from release_targets import TARGETS, ANDROID_TARGETS
+parser = argparse.ArgumentParser()
+parser.add_argument('--prototype', action='store_true', help='Package desktop clients and dedicated server only')
+args = parser.parse_args()
+if args.prototype:
+    TARGETS = ['Linux', 'Windows', 'Server']
+    ANDROID_TARGETS = []
+    OUT = BUILD / 'prototype-release'
+LOG_ARGS = '--verbose --log-file user://logs/prototype.log ' if args.prototype else ''
 
 def digest(path):
     with path.open('rb') as stream:
@@ -28,7 +37,7 @@ def copy_notices(dest):
     for folder in [ROOT / 'addons', ROOT / 'assets/avatars', ROOT / 'assets/audio']:
         for source in folder.rglob('*'):
             if source.is_file() and (any(word in source.name.upper() for word in
-                                        ['LICENSE', 'COPYING', 'NOTICE', 'NOTES', 'SHA256'])
+                                        ['LICENSE', 'LICENCE', 'COPYING', 'NOTICE', 'NOTES', 'SHA256', 'CREDITS'])
                                      or source.name == 'FPSLOPPA-REUSE.md'):
                 target = dest / 'notices' / source.relative_to(ROOT)
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -68,17 +77,17 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
         folder = stage / target
         shutil.copytree(BUILD / target, folder)
         copy_notices(folder)
-        for name, args in [('Desktop', '--xr-mode off'), ('VR', '--xr-mode on --rendering-driver vulkan'),
+        for name, launch_args in [('Desktop', '--xr-mode off'), ('VR', '--xr-mode on --rendering-driver vulkan'),
                            ('Server', '--headless --xr-mode off -- --server')]:
             if target == 'Linux':
                 script = folder / (name + '.sh')
                 script.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\n'
-                                  'exec ./RealAIFishing.x86_64 ' + args + ' "$@"\n')
+                                  'exec ./RealAIFishing.x86_64 ' + LOG_ARGS + launch_args + ' "$@"\n')
                 script.chmod(0o755)
             else:
                 (folder / (name + '.cmd')).write_bytes(
                     ('@echo off\r\ncd /d "%~dp0"\r\n"%~dp0RealAIFishing.exe" '
-                     + args + ' %*\r\n').encode())
+                     + LOG_ARGS + launch_args + ' %*\r\n').encode())
         name = f'RealAIFishing-{VERSION}-{target}'
         archive(folder, result / (name + '-x86_64.zip'), name)
         print('PACKAGED ' + target, flush=True)
@@ -87,7 +96,7 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
     shutil.copy2(BUILD/'Server/RealAIFishingServer.x86_64', server/'RealAIFishingServer.x86_64')
     copy_notices(server)
     launcher = server/'Server.sh'
-    launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./RealAIFishingServer.x86_64 -- "$@"\n')
+    launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./RealAIFishingServer.x86_64 ' + LOG_ARGS + '-- "$@"\n')
     launcher.chmod(0o755)
     name = f'RealAIFishing-{VERSION}-Server-Linux-x86_64'
     archive(server, result/(name+'.zip'), name)
@@ -99,7 +108,7 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
     copy_notices(notices)
     archive(notices, result / f'RealAIFishing-{VERSION}-Notices.zip')
     (result / 'build-manifest.json').write_text(json.dumps(
-        {'version': VERSION, 'commit': revision, 'targets': records}, indent=2) + '\n')
+        {'version': VERSION, 'commit': revision, 'prerelease': args.prototype, 'targets': records}, indent=2) + '\n')
     (result / 'SHA256SUMS').write_text(''.join(
         digest(p) + '  ' + p.name + '\n' for p in sorted(result.iterdir()) if p.is_file()))
     if OUT.exists():

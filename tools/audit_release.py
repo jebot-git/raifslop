@@ -114,7 +114,7 @@ def audit(path):
     for source, target in remaps.items():
         if not source.endswith(('.hdr','.exr')): continue
         data = pack.read(target)
-        if mobile or source.startswith('assets/textures/lighting/'):
+        if mobile or '/textures/lighting/' in source:
             config = (ROOT / (source + '.import')).read_text()
             imported = re.search(r'^path="res://([^"]+)"', config, re.M)[1]
             assert hashlib.sha256(data).digest() == hashlib.sha256((ROOT/imported).read_bytes()).digest(), ('Lossless HDR changed', source)
@@ -122,7 +122,11 @@ def audit(path):
             assert target.endswith('.res'), ('Desktop HDR not compressed', source)
         if source.endswith('_8k.hdr'): panoramas[source] = len(data)
     expected_panoramas = {str(p.relative_to(ROOT)) for p in (ROOT / "assets/environment/locations").glob("*_8k.hdr")}
+    expected_panoramas.update(str(p.relative_to(ROOT)) for p in (ROOT/'addons/golfminus/assets/panoramas').glob('*_8k.hdr'))
     assert set(panoramas) == expected_panoramas, panoramas
+    for course in ['spyglass', 'pebble']:
+        for required in [f'addons/golfminus/courses/{course}.json', *[f'addons/golfminus/assets/course_data/{course}/{file}' for file in ['height.bin', 'lies.bin', 'outlines.json']]]:
+            assert required in names and pack.size(required)>0, ('Missing golf course data', required)
     result = {'artifact':str(path),'entries':len(names),'asset_bytes':sum(sizes.values()),
               'unique_texture_payloads':len(hashes),'texture_aliases':len([v for v in remaps.values() if v in hashes.values()]),
               'panoramas':panoramas,'largest':sorted(sizes.items(), key=lambda p:-p[1])[:20]}

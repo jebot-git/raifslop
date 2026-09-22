@@ -4,7 +4,7 @@ extends RefCounted
 static func export_path(source: String, imported: String, desktop: bool) -> String:
 	# Block compression perturbs small bright atlas texels and shadow edges.
 	# Preserve both total irradiance and sky fill exactly on every platform.
-	if not desktop or source.begins_with("res://assets/textures/lighting/"): return imported
+	if not desktop or "/textures/lighting/" in source: return imported
 	return prepare(imported)
 
 static func prepare(imported_path: String) -> String:

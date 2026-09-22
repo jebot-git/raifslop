@@ -1,15 +1,19 @@
 """Publish the validated current release through a draft, checking upload hashes."""
 from pathlib import Path
-import hashlib, http.client, json, os, shutil, subprocess, urllib.parse
+import argparse, hashlib, http.client, json, os, shutil, subprocess, urllib.parse
 
 from release_targets import TARGETS, ANDROID_TARGETS
 
 root=Path(__file__).resolve().parents[1]
-manifest=json.loads((root/'builds/release/build-manifest.json').read_text())
+parser=argparse.ArgumentParser();parser.add_argument('--prototype',action='store_true');args=parser.parse_args()
+assets_dir=root/('builds/prototype-release' if args.prototype else 'builds/release')
+if args.prototype:
+    TARGETS=['Linux','Windows','Server'];ANDROID_TARGETS=[]
+manifest=json.loads((assets_dir/'build-manifest.json').read_text())
+assert bool(manifest.get('prerelease',False)) == args.prototype
 assert sorted(item['target'] for item in manifest['targets'])==sorted(TARGETS), 'Release contains missing or retired targets; rebuild and repackage'
 version='v'+manifest['version']
 repo='jebot-git/raifslop'
-assets_dir=root/'builds/release'
 commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
 assert subprocess.check_output(['git','describe','--exact-match','--tags','HEAD'],cwd=root,text=True).strip()==version
 assert not subprocess.check_output(['git','status','--porcelain'],cwd=root), 'Working tree is not clean'
@@ -49,7 +53,7 @@ if release is None:
         if release is not None or len(candidates)<100:break
         page+=1
 if release is None:
-    release=api('POST',base,{'tag_name':version,'target_commitish':commit,'name':'Real AI Fishing '+version.removeprefix('v'),'body':(root/'docs'/('RELEASE_NOTES_'+version.removeprefix('v')+'.md')).read_text(),'draft':True,'prerelease':False})
+    release=api('POST',base,{'tag_name':version,'target_commitish':commit,'name':'Real AI Fishing '+version.removeprefix('v'),'body':(root/'docs'/('RELEASE_NOTES_'+version.removeprefix('v')+'.md')).read_text(),'draft':True,'prerelease':args.prototype})
 assert release['draft'], 'Release already published; refusing to modify it'
 expected=[]
 for name in sorted(p.name for p in assets_dir.iterdir() if p.is_file()):
@@ -81,7 +85,7 @@ for name in sorted(p.name for p in assets_dir.iterdir() if p.is_file()):
 release=api('GET',base+'/'+str(release['id']))
 actual={(a['name'],a.get('digest'),a['size']) for a in release['assets']}
 assert actual==set(expected), 'Release asset list differs from local manifest'
-release=api('PATCH',base+'/'+str(release['id']),{'draft':False,'make_latest':'true'})
+release=api('PATCH',base+'/'+str(release['id']),{'draft':False,'make_latest':'false' if args.prototype else 'true'})
 report={'url':release['html_url'],'version':version,'commit':commit,'assets':[{'name':a['name'],'sha256':a.get('digest'),'bytes':a['size']} for a in release['assets']]}
 (root/'test-results/release-published.json').write_text(json.dumps(report,indent=2)+'\n')
 print('PUBLISHED',release['html_url'],flush=True)

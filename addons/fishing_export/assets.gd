@@ -12,6 +12,7 @@ func _export_begin(features: PackedStringArray, _debug: bool, _path: String, _fl
 	emitted.clear()
 	desktop = features.has("pc")
 	_scan_textures("res://assets", features)
+	_scan_textures("res://addons/golfminus/assets", features)
 
 func _scan_textures(folder: String, features: PackedStringArray) -> void:
 	for name in DirAccess.get_files_at(folder):
