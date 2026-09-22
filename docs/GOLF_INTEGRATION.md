@@ -22,4 +22,4 @@ The golf test starts two clients, tests cross-hole presence and clubhouse BBQ, r
 
 ## Desktop builds
 
-Linux and Windows exports are available locally under `builds/Integration`; they are excluded from Git. Use `run-test.sh` or `run-test.cmd` for verbose logging. Linux was smoke-tested locally; the Windows runtime has not been tested on Windows.
+Linux and Windows exports are available locally under `builds/Integration`; they are excluded from Git. Use `run-test.sh` or `run-test.cmd` for verbose logging. Linux was smoke-tested locally with a successful exit; forced headless shutdown reports a retained Fishing lake ambience Ogg resource. No script errors were observed. The Windows runtime has not been tested on Windows.
