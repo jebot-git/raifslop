@@ -6,6 +6,33 @@ const AREA := PI*RADIUS*RADIUS
 const GRAVITY := Vector3(0,-9.80665,0)
 const SURFACES := {"green":[.25,.55],"fringe":[.30,.85],"fairway":[.42,1.8],"rough":[.23,2.5],"sand":[.10,4.5]}
 const SLIDING_FRICTION := {"green":.20,"fringe":.25,"fairway":.30,"rough":.45,"sand":.60}
+# Impact friction is separate from sustained sliding and rolling resistance.
+# Initial dry-surface coefficients; course-specific calibration needs measured shots.
+const LANDING_FRICTION := {"green":.35,"fringe":.40,"fairway":.50,"rough":.65,"sand":.80}
+# Effective normal stiffness (N/m) for a small compliant turf contact patch.
+# These are starting coefficients, not measured material properties.
+const LANDING_STIFFNESS := {"green":120000.0,"fringe":100000.0,"fairway":90000.0,"rough":50000.0,"sand":20000.0}
+func landing_contact(normal:Vector3,surface:String)->Dictionary:
+	var vn:=velocity.dot(normal)
+	if vn>=0:return {}
+	var restitution:float=SURFACES.get(surface,SURFACES.rough)[0]
+	var normal_delta:=-(1.0+restitution)*vn
+	# Normal kinetic energy loads a compliant patch: 1/2 k d² = 1/2 m vn².
+	# Bulk turf displacement resists translation through its pressure centroid,
+	# separately from point-contact sliding friction. Its impulse is capped so
+	# it cannot reverse translation or inject energy. No fixed speed retention.
+	var indentation:=minf(RADIUS*.8,absf(vn)*sqrt(MASS/float(LANDING_STIFFNESS.get(surface,50000.0))))
+	var tangent:=velocity-normal*vn
+	var deformation:Vector3=-tangent.normalized()*minf(tangent.length(),normal_delta*indentation/RADIUS)
+	velocity+=deformation
+	var arm:Vector3=-normal*RADIUS
+	var slip:=velocity-normal*vn+spin.cross(arm)
+	# A solid sphere has tangential inverse effective mass 3.5/m. Stop slip
+	# without reversing it, bounded by Coulomb friction on the normal impulse.
+	var friction:Vector3=-slip.normalized()*minf(slip.length()/3.5,float(LANDING_FRICTION.get(surface,.65))*normal_delta)
+	velocity+=normal*normal_delta+friction
+	spin+=arm.cross(friction)*2.5/(RADIUS*RADIUS)
+	return {"normal_impulse_ns":normal_delta*MASS,"friction_impulse_ns":friction*MASS,"deformation_impulse_ns":deformation*MASS,"indentation_m":indentation,"slip_before_friction":slip}
 var position := Vector3.ZERO
 var velocity := Vector3.ZERO
 var spin := Vector3.ZERO
@@ -97,17 +124,7 @@ func _substep(dt: float) -> void:
 			if carry==0: carry=Vector2(position.x-origin.x,position.z-origin.z).length()
 			position.y=floor_y
 			normal=model.normal_at(position.x,position.z)
-			props=SURFACES.get(model.lie(position.x,position.z),SURFACES.rough)
-			var vn := velocity.dot(normal)
-			if vn<0:
-				var tangent := velocity-normal*vn
-				# Friction opposes contact-point slip; bounded by impact impulse.
-				var slip := tangent+spin.cross(-normal*RADIUS)
-				var friction := -slip.normalized()*minf(slip.length()/3.5,absf(vn)*.35)
-				var turf: String=model.lie(position.x,position.z)
-				var retention: float={"green":.85,"fringe":.75,"fairway":.70,"rough":.45,"sand":.25}.get(turf,.6)
-				velocity=(tangent+friction)*retention-normal*vn*float(props[0])
-				spin+=(-normal*RADIUS).cross(friction)*2.5/(RADIUS*RADIUS)
+			landing_contact(normal,model.lie(position.x,position.z))
 			if absf(velocity.dot(normal))<.65:
 				grounded=true; velocity-=normal*velocity.dot(normal)
 	if collision_query.is_valid() and before.distance_squared_to(position)>.00000001:

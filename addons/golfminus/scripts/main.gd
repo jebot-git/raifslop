@@ -74,6 +74,7 @@ var aim:=0.0
 var status_text:="Choose a landscape to begin."
 var was_moving:=false
 var rest_delay:=0.0
+var contact_effects:Node3D
 var sound: AudioStreamPlayer3D
 var tick:=0
 var xr_interface: XRInterface
@@ -90,6 +91,7 @@ func _ready() -> void:
 		if telemetry.start_capture():print("Golf analytics capture: ",ProjectSettings.globalize_path(telemetry.path))
 		else:push_error("Could not open test-build analytics capture")
 	_lighting();_rig();_ball_visual()
+	contact_effects=preload("res://addons/golfminus/scripts/golf/contact_effects.gd").new();add_child(contact_effects)
 	equipment=preload("res://addons/golfminus/scripts/golf/equipment.gd").new();equipment.game=self;add_child(equipment)
 	course_guide=preload("res://addons/golfminus/scripts/golf/course_guide.gd").new();course_guide.game=self;add_child(course_guide)
 	godview=preload("res://addons/golfminus/scripts/golf/godview.gd").new();add_child(godview);godview.setup(self)
@@ -202,6 +204,7 @@ func load_hole(index: int) -> void:
 		world=(preload("res://addons/golfminus/scripts/world/connected_course_world.gd").new() if model.connected else preload("res://addons/golfminus/scripts/world/course_world.gd").new())
 		world.name="Course";world.tee_kind=tee_kind;add_child(world);world.build(model)
 	ball.model=model;ball.collision_query=world.sweep_ball;ball.place(model.tee(tee_kind));ball_mesh.position=ball.position
+	contact_effects.arm_tee(ball.position)
 	set_club(0)
 	trail_points.clear();trail.mesh=null
 	aim=(model.pin()-ball.position).signed_angle_to(Vector3.FORWARD,Vector3.UP)
@@ -221,12 +224,14 @@ func resume_round() -> bool:
 	if cfg==null:status_text="No saved round yet.";return false
 	practice=false;round_active=true;course_id=cfg.get_value("round","course");tee_kind=cfg.get_value("round","tee","club")
 	load_hole(cfg.get_value("round","hole"));round_state.restore(cfg,ball)
+	if round_state.strokes>0 or ball.moving or ball.position.distance_to(model.tee(tee_kind))>.06:contact_effects.clear()
 	was_moving=ball.moving;toggle_menu(false);address_ball();status_text="Round resumed."
 	return true
 func start_practice() -> void:
 	if is_instance_valid(host_activity) and host_activity.enrolled():status_text="Retire from the course before starting practice.";return
 	practice=true;round_active=false;round_state.start();load_hole(0)
 	var p: Vector3=model.pin()+Vector3(0,0,6);p.y=model.height(p.x,p.z)+BALL.RADIUS
+	contact_effects.clear()
 	ball.place(p);set_club(7);toggle_menu(false);address_ball();status_text="Putting practice  ·  six metres to the cup."
 func pointer_controller()->XRController3D:
 	var preferred:XRController3D=left if left_handed else right
@@ -292,6 +297,7 @@ func set_club(index: int) -> void:
 	reset_swing()
 func reset_swing() -> void:
 	last_swing_us=0
+	if is_instance_valid(contact_effects):contact_effects.valid=false
 	if is_instance_valid(telemetry):telemetry.end_swing("reset");telemetry.window.clear()
 	swing.reset()
 	if is_instance_valid(origin):last_origin_basis=origin.global_basis
@@ -427,6 +433,7 @@ func strike(v: Vector3,face: Vector3,contact:Dictionary={}) -> bool:
 		diagnostic.rejection=rejection;diagnostic.accepted=false;telemetry.contact(diagnostic);return false
 	if is_instance_valid(host_activity) and host_activity.intercept_shot(v,face,contact):return false
 	if ball.launch(impact.velocity,impact.spin):
+		contact_effects.launch_tee(ball.position,impact.velocity)
 		if xr:remember_address(head.global_position)
 		round_active=not practice;round_state.shot(ball.position);trail_points.clear();trail_points.append(ball.position);was_moving=true;rest_delay=0
 		status_text="Ball in flight";_impact_audio(float(impact.normal_speed_m_s))
@@ -517,8 +524,10 @@ func _swing() -> void:
 	var tip:=_update_club_pose()
 	if dt<=0:return
 	var active: bool=club_collision_enabled() and body.last_motion.length()<.2
-	if not controller.get_has_tracking_data():swing.reset();return
-	var sample: Dictionary=swing.sample_pose(physical_head.global_transform,head_shape,ball.position,dt,active,ball.velocity)
+	if not controller.get_has_tracking_data():swing.reset();contact_effects.valid=false;return
+	var ground_event:Dictionary=contact_effects.sample_ground(physical_head.global_transform,head_shape,model,dt,club_input_active() and body.last_motion.length()<.2)
+	if not ground_event.is_empty():controller.trigger_haptic_pulse("haptic",0,ground_event.strength,.055 if ground_event.hard else .025,0)
+	var sample: Dictionary=swing.sample_pose(physical_head.global_transform,head_shape,ball.position,dt,active,ball.velocity,model)
 	var observation:Dictionary=swing.last_sample.duplicate(true)
 	observation.merge({"monotonic_us":now,"club":club_index,"face":-physical_head.global_basis.z.normalized(),"grip":controller.get_float("grip"),"trigger":controller.get_float("trigger"),"tracked":controller.get_has_tracking_data(),"focused":focused,"body_speed_m_s":body.last_motion.length(),"menu_open":menu_open,"fitting":fitting_club},true)
 	if not active:observation.inactive_reason="tracking_lost" if not controller.get_has_tracking_data() else "grip_and_trigger_released" if not club_input_active() else "ball_moving" if ball.moving else "locomotion"

@@ -7,7 +7,7 @@ static func inverse_tensor(basis:Basis,diagonal:Vector3)->Basis:
 	return basis*Basis.from_scale(Vector3(1.0/diagonal.x,1.0/diagonal.y,1.0/diagonal.z))*basis.transposed()
 static func response(impulse:Vector3,arm:Vector3,ball_arm:Vector3,inverse:Basis,head_mass:float)->Vector3:
 	return impulse*(1.0/MASS+1.0/head_mass)-arm.cross(inverse*arm.cross(impulse))-ball_arm.cross(ball_arm.cross(impulse))/BALL_INERTIA
-static func solve(shape:RefCounted,linear:Vector3,angular:Vector3,contact:Dictionary,lie:String)->Dictionary:
+static func solve(shape:RefCounted,linear:Vector3,angular:Vector3,contact:Dictionary,_lie:String)->Dictionary:
 	if not linear.is_finite() or not angular.is_finite():return {}
 	var normal:Vector3=contact.get("normal",Vector3.ZERO)
 	var point:Vector3=contact.get("contact",Vector3.ZERO)
@@ -20,9 +20,8 @@ static func solve(shape:RefCounted,linear:Vector3,angular:Vector3,contact:Dictio
 	if not ball_velocity.is_finite() or not ball_spin.is_finite():return {}
 	var arm:=point-centre
 	var ball_arm:Vector3=-normal*RADIUS
-	# Turf attenuates incoming head motion, not a preset launch direction/spin.
-	var efficiency:float=.88 if lie=="rough" else .74 if lie=="sand" else 1.0
-	linear*=efficiency;angular*=efficiency
+	# Incoming motion already includes measured pre-ball turf resistance.
+	var efficiency:=1.0
 	var contact_velocity:=linear+angular.cross(arm)
 	var relative:=ball_velocity+ball_spin.cross(ball_arm)-contact_velocity
 	var closing:float=-relative.dot(normal)
@@ -38,7 +37,7 @@ static func solve(shape:RefCounted,linear:Vector3,angular:Vector3,contact:Dictio
 	if kn<=0 or determinant<=0:return {}
 	var face_contact:bool=(basis*Vector3.FORWARD).dot(normal)>.65
 	var restitution:float=shape.restitution if face_contact else .45
-	var mu:float=shape.friction*(.65 if lie=="rough" or lie=="sand" else 1.0)
+	var mu:float=shape.friction
 	var normal_impulse:=0.0
 	var tangent_impulse:=Vector2.ZERO
 	var impulse:=Vector3.ZERO
