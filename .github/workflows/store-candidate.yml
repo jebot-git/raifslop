@@ -1,0 +1,66 @@
+name: Prepare free Store candidate
+on:
+  workflow_dispatch:
+    inputs:
+      store:
+        description: Store to prepare (does not publish)
+        type: choice
+        options: [quest, steam]
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: store-release-runner
+  cancel-in-progress: false
+jobs:
+  candidate:
+    # Dedicated trusted runner with Godot/templates/native dependencies preinstalled.
+    # Never expose this signing-capable runner to pull_request jobs.
+    runs-on: [self-hosted, linux, x64, store-release]
+    environment: store-release
+    timeout-minutes: 180
+    env:
+      GODOT_BIN: ${{ vars.GODOT_BIN }}
+      JAVA_HOME: ${{ vars.JAVA_HOME }}
+      ANDROID_SDK_ROOT: ${{ vars.ANDROID_SDK_ROOT }}
+      STORE_KEYSTORE: ${{ vars.STORE_KEYSTORE }}
+      STORE_KEYSTORE_ALIAS: ${{ vars.STORE_KEYSTORE_ALIAS }}
+      STORE_KEYSTORE_PASSWORD: ${{ secrets.STORE_KEYSTORE_PASSWORD }}
+      STEAM_APP_ID: ${{ vars.STEAM_APP_ID }}
+      STEAM_WINDOWS_DEPOT: ${{ vars.STEAM_WINDOWS_DEPOT }}
+      STEAM_LINUX_DEPOT: ${{ vars.STEAM_LINUX_DEPOT }}
+      RELEASE_STORE: ${{ inputs.store }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate tooling and workflow tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x "$GODOT_BIN"
+          "$GODOT_BIN" --version | rg -q '^4\.7\.2\.'
+          python3 -m unittest discover -s tests -p 'test_store_release.py'
+      - name: Build and validate candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$RELEASE_STORE" = quest ]; then
+            test -x "$JAVA_HOME/bin/java"
+            export PATH="$JAVA_HOME/bin:$PATH"
+            python3 tools/build_release.py --target Quest --store-release
+            python3 tools/store_release.py quest
+          else
+            python3 tools/build_release.py --target Windows
+            python3 tools/build_release.py --target Linux
+            python3 tools/store_release.py steam --app-id "$STEAM_APP_ID" --windows-depot "$STEAM_WINDOWS_DEPOT" --linux-depot "$STEAM_LINUX_DEPOT"
+          fi
+          # Tar preserves Linux executable permissions through artifact transport.
+          tar -C "builds/store/$RELEASE_STORE" -cf "builds/$RELEASE_STORE-candidate.tar" "$(git rev-parse HEAD)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.store }}-candidate-${{ github.sha }}
+          path: builds/${{ inputs.store }}-candidate.tar
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14

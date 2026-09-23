@@ -145,6 +145,8 @@ This release provides Windows, Linux, Quest standalone and a separate Linux dedi
 
 Pico standalone builds are retired from future releases following a reported startup crash on standard Pico 4 (black screen, then immediate exit). Pico OS 6 support is a future goal only, pending suitable hardware and direct testing; current Pico compatibility is not claimed. Historical release artifacts remain available.
 
+Free Quest and Steam Store candidates: [build workflows, no-IAP policy, submission steps and acceptance checklist](docs/STORE_RELEASE.md). The manual GitHub Actions workflow prepares validated packages; Store uploads and publication remain separate steps.
+
 The latest visual pass adds [thirteen reconstructed fish](docs/PHOTOGRAPHIC_FISH.md), [realistic spinning tackle, native 8K panoramas and animated wildlife](docs/SCENERY_DETAIL.md). The original four additional fish retain their existing appearance.
 
 

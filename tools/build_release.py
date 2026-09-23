@@ -5,6 +5,7 @@ from release_targets import TARGETS, ANDROID_TARGETS
 ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
 p.add_argument('--target', choices=['all', *TARGETS], default='all')
+p.add_argument('--store-release', action='store_true', help='Require an existing externally provisioned Android signing identity')
 a = p.parse_args()
 if subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip():
     raise SystemExit('Commit the source changes before building a release.')
@@ -50,20 +51,30 @@ for target in (TARGETS if a.target=='all' else [a.target]):
         child_env['PATH'] = str(jdk/'bin')+os.pathsep+child_env['PATH']
         signing=ROOT/'.release-signing'; signing.mkdir(exist_ok=True, mode=0o700)
         credentials=signing/'credentials.json'
-        if not credentials.exists():
+        if a.store_release:
+            key=Path(os.environ.get('STORE_KEYSTORE', '/nonexistent'))
+            password=os.environ.get('STORE_KEYSTORE_PASSWORD', '')
+            alias=os.environ.get('STORE_KEYSTORE_ALIAS', 'fishing')
+            if not key.is_file() or not password or not alias:
+                raise SystemExit('Store builds require STORE_KEYSTORE, STORE_KEYSTORE_PASSWORD and an existing signing key. No key will be generated.')
+        elif not credentials.exists():
             credentials.write_text(json.dumps({'password':secrets.token_urlsafe(32)}));credentials.chmod(0o600)
-        password=json.loads(credentials.read_text())['password']; key=signing/'fishing.keystore'
+        if not a.store_release:
+            password=json.loads(credentials.read_text())['password']; key=signing/'fishing.keystore';alias='fishing'
         child_env['FISHING_SIGNING_PASSWORD']=password
         if not key.exists():
             run([str(jdk/'bin/keytool'),'-genkeypair','-keystore',str(key),'-alias','fishing','-keyalg','RSA','-keysize','2048','-validity','10000','-dname','CN=Real AI Fishing','-storepass:env','FISHING_SIGNING_PASSWORD','-keypass:env','FISHING_SIGNING_PASSWORD'], 'signing-key',child_env)
             key.chmod(0o600)
-        child_env.update(GODOT_ANDROID_KEYSTORE_RELEASE_PATH=str(key),GODOT_ANDROID_KEYSTORE_RELEASE_USER='fishing',GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=password)
+        child_env.update(GODOT_ANDROID_KEYSTORE_RELEASE_PATH=str(key.resolve()),GODOT_ANDROID_KEYSTORE_RELEASE_USER=alias,GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=password)
         android=ROOT/'android/build'
         if not (android/'gradlew').exists():
             android.mkdir(parents=True,exist_ok=True)
             with zipfile.ZipFile(Path.home()/'.local/share/godot/export_templates/4.7.2.stable/android_source.zip') as z: z.extractall(android)
             (ROOT/'android/.build_version').write_text('4.7.2.stable')
             (ROOT/'android/.gdignore').touch();(android/'gradlew').chmod(0o755)
+        if a.store_release:
+            from quest_store_manifest import configure
+            configure(android/'src/main/AndroidManifest.xml')
     ext={'Linux':'x86_64','Windows':'exe','Quest':'apk'}[target]
     artifact=out/('RealAIFishing.'+ext)
     run([godot,'--headless','--path',str(ROOT),'--xr-mode','off','--export-release',target,str(artifact)],'export-'+target,child_env)
@@ -79,7 +90,7 @@ for target in (TARGETS if a.target=='all' else [a.target]):
                     continue
                 dest.writestr(info, source.read(info), compress_type=info.compress_type, compresslevel=9)
         run([str(sdk/'build-tools/36.1.0/zipalign'),'-f','-P','16','4',str(unsigned),str(aligned)],'recompress-align-'+target,child_env)
-        run([str(sdk/'build-tools/36.1.0/apksigner'),'sign','--ks',str(key),'--ks-key-alias','fishing','--ks-pass','env:FISHING_SIGNING_PASSWORD','--key-pass','env:FISHING_SIGNING_PASSWORD','--out',str(artifact),str(aligned)],'recompress-sign-'+target,child_env)
+        run([str(sdk/'build-tools/36.1.0/apksigner'),'sign','--ks',str(key),'--ks-key-alias',alias,'--ks-pass','env:FISHING_SIGNING_PASSWORD','--key-pass','env:FISHING_SIGNING_PASSWORD','--out',str(artifact),str(aligned)],'recompress-sign-'+target,child_env)
         unsigned.unlink(); aligned.unlink()
         artifact.with_suffix('.apk.idsig').unlink(missing_ok=True)
         run([str(sdk/'build-tools/36.1.0/apksigner'),'verify','--verbose','--print-certs',str(artifact)],'verify-'+target,child_env)
