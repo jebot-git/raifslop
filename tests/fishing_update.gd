@@ -6,49 +6,12 @@ func check(ok: bool, label: String) -> void:
 	print("PASS " if ok else "FAIL ", label)
 	if not ok: failures.append(label)
 
-func key(g: Node, pressed: bool) -> void:
-	var event := InputEventKey.new(); event.keycode = KEY_SPACE; event.pressed = pressed
-	g._unhandled_input(event)
-
 func run() -> void:
 	var g = load("res://scenes/main.tscn").instantiate(); root.add_child(g)
 	await create_timer(.4).timeout
 	g.set_process(false); g.motor.set_physics_process(false); g.fishing_feedback.set_process(false)
-	g.head_aimed_casting = false # The VR preference must not affect desktop aim.
 	g._select_location("lakeside", false)
 	await physics_frame
-	g.game.reset(); g._primary_action()
-	check(g.game.state == S.State.READY, "HUD action cannot bypass required casting motion")
-	key(g, true); key(g, false)
-	check(g.game.state == S.State.READY, "Quick SPACE tap cannot cast")
-	var endpoints: Array[Vector3] = []
-	for yaw in [-.65, 0.0, .65]:
-		g.game.reset(); g.rod.rotation = Vector3(.35, yaw, 0)
-		g._update_line()
-		var aim: Vector3 = g._projected_cast_target()
-		check(g.aim_marker.visible and g.aim_marker.global_position.is_equal_approx(aim), "Projected aim marker shows water destination")
-		key(g, true)
-		g.rod.rotation.y += .25; g.rod.rotation.x += .08
-		for i in 8: g._process(.05)
-		check(g.game.state == S.State.READY and g.game.fly.charging, "Normal cast requires backswing before release")
-		check(g.aim_marker.global_position.is_equal_approx(aim), "Space press locks marker despite subsequent aim movement")
-		check(g.rod_visual.rotation.x > 1.0, "Desktop backswing visibly swings the rod")
-		key(g, false)
-		check(g.game.state == S.State.CASTING and g.cast_target.is_equal_approx(aim), "Release casts to projected target")
-		g.game.tick(.8, 0, 0); g._update_line()
-		check(Vector2(g.bobber.position.x, g.bobber.position.z).distance_to(Vector2(aim.x, aim.z)) < .0001, "Bobber lands at marker without horizontal scatter")
-		check(g.game.cast_position.is_equal_approx(aim), "Encounter uses the same water destination")
-		endpoints.append(aim)
-	check(S.Population.sector_at(endpoints[0]) != S.Population.sector_at(endpoints[2]), "Aiming left/right reaches different fish sectors")
-	g.game.reset(); g.rod.rotation = Vector3(.3, 0, 0)
-	var far: Vector3 = g._projected_cast_target()
-	g.rod.rotation.x = .45
-	check(g._projected_cast_target().distance_to(far) > 5.0, "Aim pitch varies cast distance instead of repeating the same spot")
-	var cast_input = S.Fly.new()
-	cast_input.begin_cast(); cast_input.stroke(.2, 2.0)
-	check(cast_input.strokes == 0, "Forward movement alone does not replace the backswing")
-	cast_input.stroke(.2, -1.0); cast_input.stroke(.2, 1.0)
-	check(cast_input.strokes == 1, "Shared tracked back/forward motion arms a cast")
 	for kind in [S.Submerge.PULL, S.Submerge.SLACK]:
 		g.game.reset(); g.game.fish_index = 0; g.game.state = S.State.BITE; g.game.strike()
 		g.game.distance = 12; g.game.next_cue = 100; g.game.next_submerge = 100

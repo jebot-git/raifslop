@@ -19,7 +19,7 @@ func actor(peer:int) -> Dictionary:
  if not session.active or (peer==local_id() and not session.dedicated):
   var g=session.root_game
   if not is_instance_valid(g) or not is_instance_valid(g.get("head")):return {}
-  return {"location":g.current_location,"feet":g.motor.global_position,"head":g.head.global_transform,"left":g.left.global_transform if g.xr else g.head.global_transform,"right":g.right.global_transform if g.xr else g.head.global_transform,"left_valid":not g.xr or g.left.get_has_tracking_data(),"right_valid":not g.xr or g.right.get_has_tracking_data(),"xr":g.xr,"state":g.game.state}
+  return {"location":g.current_location,"feet":g.motor.global_position,"head":g.head.global_transform,"left":g.left.global_transform,"right":g.right.global_transform,"left_valid":g.left.get_has_tracking_data(),"right_valid":g.right.get_has_tracking_data(),"xr":g.xr,"state":g.game.state}
  var data:Dictionary=session.states.get(peer,{})
  for key in ["location","feet","head","left","right","left_valid","right_valid","xr","state"]:
   if not data.has(key):return {}
@@ -64,8 +64,8 @@ func accept(peer:int,command:Dictionary) -> bool:
  var hand_name:String="left" if command.hand==0 else "right"
  if not who[hand_name+"_valid"]:return false
  if command.action=="cooler":
-  var reach:float=.35 if who.xr else 3.2
-  var from:Vector3=who[hand_name].origin if who.xr else who.head.origin
+  var reach:float=.35
+  var from:Vector3=who[hand_name].origin
   if from.distance_to(pose*Sites.COOLER_HANDLE)>reach:return false
   var changed:bool=model.apply(location,peer,command.hand,"cooler",-1)
   if changed:broadcast()
@@ -73,10 +73,10 @@ func accept(peer:int,command:Dictionary) -> bool:
  if command.id<0 or command.id>=10:return false
  var item:Dictionary=model.stations[location].items[command.id]
  if command.action in ["grab","cook","cool"]:
-  var reach:float=.8 if who.xr else 3.2
-  var reach_from:Vector3=who[hand_name].origin if who.xr else who.head.origin
+  var reach:float=.8
+  var reach_from:Vector3=who[hand_name].origin
   if reach_from.distance_to(pose*item.pos)>reach:return false
- if command.action in ["eat","sip"] and who.xr and (command.action=="eat" or item.open):
+ if command.action in ["eat","sip"] and (command.action=="eat" or item.open):
   if who[hand_name].origin.distance_to(who.head.origin)>.45:return false
  var ok:bool=model.apply(location,peer,command.hand,command.action,command.id,command.at)
  if ok:broadcast()

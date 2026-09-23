@@ -203,9 +203,8 @@ func update_player(delta: float) -> void:
 		host.avatar.grounded=host.motor.is_on_floor()
 		host.avatar.tracked_leg_animation=tm.tracked_leg_animation if is_instance_valid(tm) else false
 		host.avatar.apply_tracking(host.motor.global_transform,tm.body if is_instance_valid(tm) else {},tm.face if is_instance_valid(tm) else {})
-		var left_target: Node3D=host.calibrated_hands[0] if host.xr else host.desktop_left
-		if not host.xr and golf.left_handed and not golf.equipment.stowed:left_target=golf.club
-		var right_target: Node3D=host.calibrated_hands[1] if host.xr else host.bbq.desktop_right if is_instance_valid(host.get("bbq")) and host.bbq.holds(1) else host.right if golf.equipment.stowed else golf.club
+		var left_target: Node3D=host.calibrated_hands[0]
+		var right_target: Node3D=host.calibrated_hands[1]
 		var supported:bool=golf.support_hand.update(delta)
 		if supported:
 			if golf.left_handed:right_target=golf.support_hand
@@ -218,7 +217,7 @@ func update_player(delta: float) -> void:
 			host.avatar.xr_pose.body.erase(side+"_elbow")
 			host.avatar.xr_pose.body.erase(side+"_finger_rotations")
 			host.avatar.xr_pose.body[side+"_curls"]=PackedFloat32Array([.8,.8,.8,.8,.8])
-		host.avatar.left_curl=host.left.get_float("grip")*.8 if host.xr else .7
+		host.avatar.left_curl=host.left.get_float("grip")*.8
 		if host.avatar_menu.has_method("update_preview"):host.avatar_menu.update_preview(host.avatar)
 	if is_instance_valid(host.shoulder_radio):
 		if golf.godview.active or golf.menu_open or golf.course_guide.held or golf.club_radial.opened or not golf.focused:host.shoulder_radio.reset()

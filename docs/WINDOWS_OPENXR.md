@@ -44,7 +44,7 @@ and `OpenXRSystemName`. The normal log is at
 `%APPDATA%\Godot\app_userdata\Real AI Fishing\logs\godot.log`. A successful
 instance alone does not prove the headset is rendering: verify the final
 `Real AI Fishing ready | OpenXR` line and the in-headset view. If initialization
-fails, the game falls back to desktop controls; inspect the earlier loader,
+fails, the VR-only client exits with `VR_REQUIRED`; inspect the earlier loader,
 graphics or session error and restart after correcting the runtime/headset setup.
 
 ## Resolved external report

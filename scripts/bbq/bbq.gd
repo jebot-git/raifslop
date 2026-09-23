@@ -21,7 +21,6 @@ var hint: Label3D
 var sizzle: AudioStreamPlayer3D
 var consumed_count := 0
 var was_stowed := false
-var desktop_distance := .65
 var lid_tween: Tween
 var tongs: Node3D
 const TONGS_REST := Transform3D(Basis.IDENTITY,Vector3(-.65,.93,.37))
@@ -289,7 +288,7 @@ func tick(delta: float) -> void:
 	if not active: return
 	var g = game_root
 	if location_id != g.current_location: stop(); return
-	var valid: bool = not g.menu_open and (not g.xr or g.tracking_manager.focused)
+	var valid: bool = not g.menu_open and g.tracking_manager.focused
 	var face: Vector3 = g.head.global_transform * Vector3(0,-.075,-.08)
 	var cooking := false
 	for hand in range(2):
@@ -297,27 +296,24 @@ func tick(delta: float) -> void:
 			grip_down[hand] = true
 			if is_instance_valid(held[hand]): return_to_prep(held[hand]); held[hand] = null
 			continue
-		if g.xr:
-			var controller = g.left if hand == 0 else g.right
-			if not controller.get_has_tracking_data():
-				grip_down[hand] = true
-				if is_instance_valid(held[hand]): return_to_prep(held[hand]); held[hand] = null
-				continue
-			var pose: Transform3D = g.controller_pose(hand)
-			var down: bool = controller.get_float("grip") > (.35 if grip_down[hand] else .55)
-			if down and not grip_down[hand]:
-				var item := nearest(pose.origin)
-				if item: pickup(hand,item,pose)
-				elif pose.origin.distance_to(to_global(PREP+Vector3(0,.15,-.19))) < .20: add_food()
-			# Release uses this frame's tracked pose, including a last-moment wrist turn.
-			if is_instance_valid(held[hand]): held[hand].follow_hand(pose)
-			if not down and grip_down[hand]: release(hand)
-			grip_down[hand] = down
-			if is_instance_valid(held[hand]): held[hand].follow_hand(pose)
-			if held[hand] == tongs:
-				squeeze_tongs(hand,controller.is_button_pressed("trigger_click") or controller.get_float("trigger") > (.35 if tongs.squeezed else .55))
-		elif hand == 1 and is_instance_valid(held[hand]) and valid:
-			held[hand].global_position = g.head.global_transform * Vector3(0,-.12,-desktop_distance)
+		var controller = g.left if hand == 0 else g.right
+		if not controller.get_has_tracking_data():
+			grip_down[hand] = true
+			if is_instance_valid(held[hand]): return_to_prep(held[hand]); held[hand] = null
+			continue
+		var pose: Transform3D = g.controller_pose(hand)
+		var down: bool = controller.get_float("grip") > (.35 if grip_down[hand] else .55)
+		if down and not grip_down[hand]:
+			var item := nearest(pose.origin)
+			if item: pickup(hand,item,pose)
+			elif pose.origin.distance_to(to_global(PREP+Vector3(0,.15,-.19))) < .20: add_food()
+		# Release uses this frame's tracked pose, including a last-moment wrist turn.
+		if is_instance_valid(held[hand]): held[hand].follow_hand(pose)
+		if not down and grip_down[hand]: release(hand)
+		grip_down[hand] = down
+		if is_instance_valid(held[hand]): held[hand].follow_hand(pose)
+		if held[hand] == tongs:
+			squeeze_tongs(hand,controller.is_button_pressed("trigger_click") or controller.get_float("trigger") > (.35 if tongs.squeezed else .55))
 	tongs.animate_jaws(delta)
 	if is_instance_valid(tongs.food): tongs.food.follow_hand(tongs.global_transform)
 	for item in items.duplicate():
@@ -326,35 +322,4 @@ func tick(delta: float) -> void:
 		if item.advance(delta,face,valid): consume(item)
 	if cooking and not sizzle.playing: sizzle.play()
 	elif not cooking: sizzle.stop()
-	g.motor.catch_controls = not g.xr
-
-func desktop_input(event: InputEvent) -> bool:
-	if not active or game_root.xr or game_root.menu_open: return false
-	if not event is InputEventKey or event.echo: return false
-	if event.keycode == KEY_ENTER and held[1] == tongs:
-		squeeze_tongs(1,event.pressed); return true
-	if not event.pressed: return false
-	match event.keycode:
-		KEY_B: stop()
-		KEY_C: toggle_cooler()
-		KEY_N: selected = posmod(selected+1,choices.size()); update_hint()
-		KEY_P: add_food()
-		KEY_ENTER: trigger(1)
-		KEY_F:
-			if is_instance_valid(held[1]): held[1].rotate_object_local(Vector3.FORWARD if held[1] == tongs else Vector3.RIGHT,PI)
-		KEY_E:
-			if is_instance_valid(held[1]): release(1)
-			else:
-				var camera: Transform3D = game_root.head.global_transform
-				var best: Node3D; var nearest_ray := .23
-				for item in items + [tongs]:
-					if not is_instance_valid(item) or not item.is_visible_in_tree() or item.held_hand >= 0: continue
-					var local: Vector3 = camera.affine_inverse()*item.global_position
-					if local.z > 0 or local.length() > 2.5: continue
-					var ray_distance := Vector2(local.x,local.y).length()
-					if ray_distance < nearest_ray: nearest_ray = ray_distance; best = item
-				if best: pickup(1,best,camera)
-		KEY_UP: desktop_distance = clampf(desktop_distance+.10,.10,1.5)
-		KEY_DOWN: desktop_distance = clampf(desktop_distance-.10,.10,1.5)
-		_: return event.keycode not in [KEY_V,KEY_ESCAPE]
-	return true
+	g.motor.catch_controls = false

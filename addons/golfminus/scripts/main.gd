@@ -25,7 +25,6 @@ var origin: XROrigin3D
 var head: Camera3D
 var left: XRController3D
 var right: XRController3D
-var preview_camera: Camera3D
 var xr:=false
 var focused:=true
 var left_handed:=false
@@ -72,8 +71,6 @@ var round_active:=false
 var course_id:="spyglass"
 var tee_kind:="club"
 var aim:=0.0
-var power:=0.0
-var charging:=false
 var status_text:="Choose a landscape to begin."
 var was_moving:=false
 var rest_delay:=0.0
@@ -84,6 +81,7 @@ var world_environment: Environment
 var panorama_material: ShaderMaterial
 var location_sun: DirectionalLight3D
 func _ready() -> void:
+	if not is_instance_valid(host_game) and not preload("res://scripts/xr_startup.gd").require_session(self):return
 	support_hand=preload("res://addons/golfminus/scripts/golf/support_hand.gd").new();support_hand.game=self;add_child(support_hand)
 	bridge=preload("res://addons/golfminus/scripts/golf/activity_bridge.gd").new();bridge.name="ActivityBridge";add_child(bridge)
 	telemetry=preload("res://addons/golfminus/scripts/golf/shot_telemetry.gd").new();add_child(telemetry)
@@ -138,12 +136,10 @@ func _rig() -> void:
 		body=host_game.motor;origin=host_game.origin;head=host_game.head;left=host_game.left;right=host_game.right;xr=host_game.xr
 		head.far=4000
 		body.stick_lock=club_input_active
-		preview_camera=Camera3D.new();preview_camera.far=4000;add_child(preview_camera)
 		left.button_pressed.connect(_left_button);left.button_released.connect(_left_released);right.button_pressed.connect(_right_button);right.button_released.connect(_right_released)
 		return
 	xr_interface=XRServer.find_interface("OpenXR")
-	if xr_interface and DisplayServer.get_name()!="headless" and not "--desktop" in OS.get_cmdline_user_args():
-		xr=xr_interface.is_initialized()
+	xr=xr_interface!=null and xr_interface.is_initialized()
 	if xr:
 		get_viewport().physics_object_picking=false
 		get_viewport().use_xr=true
@@ -153,12 +149,10 @@ func _rig() -> void:
 		if xr_interface.has_signal("session_stopping"):xr_interface.connect("session_stopping",func():focused=false;reset_swing())
 	body=LOCOMOTION.new();add_child(body)
 	origin=XROrigin3D.new();body.add_child(origin)
-	head=XRCamera3D.new() if xr else Camera3D.new();origin.add_child(head);head.far=4000
-	if not xr:head.position.y=1.7
+	head=XRCamera3D.new();origin.add_child(head);head.far=4000
 	left=XRController3D.new();left.tracker=&"left_hand";left.pose=&"grip";origin.add_child(left)
 	right=XRController3D.new();right.tracker=&"right_hand";right.pose=&"grip";origin.add_child(right)
 	body.origin=origin;body.head=head;body.left=left;body.right=right;body.xr=xr;body.stick_lock=club_input_active
-	preview_camera=Camera3D.new();preview_camera.far=4000;preview_camera.fov=60.0;add_child(preview_camera)
 	left.button_pressed.connect(_left_button);left.button_released.connect(_left_released);right.button_pressed.connect(_right_button);right.button_released.connect(_right_released)
 func _ball_visual() -> void:
 	ball_mesh=MeshInstance3D.new();var sphere:=SphereMesh.new();sphere.radius=BALL.RADIUS;sphere.height=BALL.RADIUS*2;sphere.radial_segments=24;sphere.rings=12
@@ -170,20 +164,17 @@ func _ball_visual() -> void:
 	sound=AudioStreamPlayer3D.new();add_child(sound);sound.max_distance=80
 func _ui() -> void:
 	hud=preload("res://addons/golfminus/scripts/hud.gd").new();hud.game=self;hud.size=Vector2(1440,900)
-	if xr:
-		ui_viewport=SubViewport.new();ui_viewport.size=Vector2i(1440,900);ui_viewport.transparent_bg=true;ui_viewport.gui_embed_subwindows=true
-		ui_viewport.render_target_update_mode=SubViewport.UPDATE_ALWAYS;add_child(ui_viewport);ui_viewport.add_child(hud)
-		ui_plane=MeshInstance3D.new();var quad:=QuadMesh.new();quad.size=Vector2(2.3,1.4375);ui_plane.mesh=quad
-		var mat:=StandardMaterial3D.new();mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;mat.albedo_texture=ui_viewport.get_texture();mat.cull_mode=BaseMaterial3D.CULL_DISABLED
-		ui_plane.material_override=mat;add_child(ui_plane)
-		pointer_dot=MeshInstance3D.new();var dot:=SphereMesh.new();dot.radius=.009;dot.height=.018;pointer_dot.mesh=dot
-		var dot_material:=StandardMaterial3D.new();dot_material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;dot_material.albedo_color=Color("f3ca75");pointer_dot.material_override=dot_material;add_child(pointer_dot);pointer_dot.visible=false
-		pointer_laser=MeshInstance3D.new();var beam:=CylinderMesh.new();beam.top_radius=.0012;beam.bottom_radius=.0012;beam.height=1.0;beam.radial_segments=6
-		pointer_laser.mesh=beam;pointer_laser.material_override=dot_material;add_child(pointer_laser);pointer_laser.visible=false
-		if is_instance_valid(host_game):
-			for item in [ui_plane,pointer_dot,pointer_laser]:preload("res://scripts/guide_camera.gd").mark_ui(item)
-	else:
-		var layer:=CanvasLayer.new();add_child(layer);layer.add_child(hud)
+	ui_viewport=SubViewport.new();ui_viewport.size=Vector2i(1440,900);ui_viewport.transparent_bg=true;ui_viewport.gui_embed_subwindows=true
+	ui_viewport.render_target_update_mode=SubViewport.UPDATE_ALWAYS;add_child(ui_viewport);ui_viewport.add_child(hud)
+	ui_plane=MeshInstance3D.new();var quad:=QuadMesh.new();quad.size=Vector2(2.3,1.4375);ui_plane.mesh=quad
+	var mat:=StandardMaterial3D.new();mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;mat.albedo_texture=ui_viewport.get_texture();mat.cull_mode=BaseMaterial3D.CULL_DISABLED
+	ui_plane.material_override=mat;add_child(ui_plane)
+	pointer_dot=MeshInstance3D.new();var dot:=SphereMesh.new();dot.radius=.009;dot.height=.018;pointer_dot.mesh=dot
+	var dot_material:=StandardMaterial3D.new();dot_material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;dot_material.albedo_color=Color("f3ca75");pointer_dot.material_override=dot_material;add_child(pointer_dot);pointer_dot.visible=false
+	pointer_laser=MeshInstance3D.new();var beam:=CylinderMesh.new();beam.top_radius=.0012;beam.bottom_radius=.0012;beam.height=1.0;beam.radial_segments=6
+	pointer_laser.mesh=beam;pointer_laser.material_override=dot_material;add_child(pointer_laser);pointer_laser.visible=false
+	if is_instance_valid(host_game):
+		for item in [ui_plane,pointer_dot,pointer_laser]:preload("res://scripts/guide_camera.gd").mark_ui(item)
 func select_course(id: String) -> void:
 	course_id=id;round_state.start();practice=false;round_active=false
 	load_hole(0);toggle_menu(true)
@@ -216,12 +207,10 @@ func load_hole(index: int) -> void:
 	aim=(model.pin()-ball.position).signed_angle_to(Vector3.FORWARD,Vector3.UP)
 	address_offset=Vector3(INF,INF,INF);address_facing=Vector3.ZERO
 	address_ball()
-	preview_camera.position=model.tee(tee_kind)+Vector3(9,3.2,14)
-	preview_camera.look_at(model.pin()+Vector3(0,1,0))
 	hud.refresh()
 func start_round() -> void:
 	practice=false;round_active=true;round_state.handicap=round_state.local_handicap();round_state.start();load_hole(0);toggle_menu(false)
-	status_text="Hold SPACE to build power, then release."
+	status_text="Hold grip or trigger and swing the club."
 	bridge.activity_started.emit(course_id);_save_preferences();save_progress()
 func save_progress() -> void:
 	if round_active and not practice:
@@ -272,17 +261,13 @@ func toggle_menu(show_menu: bool) -> void:
 	if show_menu and fitting_club:cancel_club_fit()
 	menu_open=show_menu;hud.menu.visible=show_menu;body.blocked=show_menu
 	if is_instance_valid(club):club.visible=not show_menu
-	charging=false;power=0;reset_swing()
-	if xr:
-		_release_pointer()
-		pointer_dot.visible=false
-		ui_plane.visible=show_menu
-		if show_menu:
-			ui_plane.global_basis=Basis(Vector3.UP,atan2(head.global_basis.z.x,head.global_basis.z.z))
-			ui_plane.global_position=head.global_position-ui_plane.global_basis.z*1.9
-	else:
-		preview_camera.current=show_menu
-		head.current=not show_menu
+	reset_swing()
+	_release_pointer()
+	pointer_dot.visible=false
+	ui_plane.visible=show_menu
+	if show_menu:
+		ui_plane.global_basis=Basis(Vector3.UP,atan2(head.global_basis.z.x,head.global_basis.z.z))
+		ui_plane.global_position=head.global_position-ui_plane.global_basis.z*1.9
 	if is_instance_valid(host_activity):host_activity.preserve_mirror()
 	if not show_menu:_save_preferences()
 func set_hand(value: bool, automatic:=false) -> void:
@@ -298,8 +283,7 @@ func set_club(index: int) -> void:
 	if is_instance_valid(club):club.queue_free()
 	var asset:="putter" if club_index==7 else "driver" if club_index<2 else "iron"
 	club=load("res://addons/golfminus/assets/models/%s.glb"%asset).instantiate()
-	if xr:(left if left_handed else right).add_child(club)
-	else:head.add_child(club);club.position=Vector3(.38,-.35,-.65);club.rotation_degrees=Vector3(-20,0,-12)
+	(left if left_handed else right).add_child(club)
 	head_shape=preload("res://addons/golfminus/scripts/golf/club_head.gd").for_club(club_index)
 	physical_head=head_shape.install(club,club_index)
 	_sync_physical_head()
@@ -317,25 +301,20 @@ func address_basis()->Basis:
 	return Basis(direction.cross(Vector3.UP),Vector3.UP,-direction)
 func address_ball() -> void:
 	if ball.moving:return
-	if xr:
-		var direction:Vector3=model.pin()-ball.position;direction.y=0
-		if direction.length_squared()>.0001:aim=direction.signed_angle_to(Vector3.FORWARD,Vector3.UP)
+	var direction:Vector3=model.pin()-ball.position;direction.y=0
+	if direction.length_squared()>.0001:aim=direction.signed_angle_to(Vector3.FORWARD,Vector3.UP)
 	var frame:=address_basis()
 	var offset:=frame*address_offset if address_offset.is_finite() else Vector3.ZERO
 	if not address_offset.is_finite():
 		var spacing:=clampf(.35+float(CLUBS.BAG[club_index].length)*club_reach*.65,.85,1.45)
 		offset=frame*Vector3(spacing if left_handed else -spacing,0,.1)
-	var p: Vector3=ball.position+offset if xr else ball.position+Vector3(0,0,3.0)
+	var p: Vector3=ball.position+offset
 	p.y=model.height(p.x,p.z)+.06
-	if xr:
-		var facing:Vector3=frame*address_facing if address_facing.length_squared()>.01 else -offset.normalized()
-		var current:Vector3=-head.global_basis.z;current.y=0
-		if current.length_squared()<.0001:current=Vector3.UP.cross(head.global_basis.x)
-		if current.length_squared()>.0001:body.turn(current.signed_angle_to(facing,Vector3.UP))
+	var facing:Vector3=frame*address_facing if address_facing.length_squared()>.01 else -offset.normalized()
+	var current:Vector3=-head.global_basis.z;current.y=0
+	if current.length_squared()<.0001:current=Vector3.UP.cross(head.global_basis.x)
+	if current.length_squared()>.0001:body.turn(current.signed_angle_to(facing,Vector3.UP))
 	body.relocate(p)
-	if not xr:
-		origin.rotation=Vector3.ZERO
-		head.look_at(ball.position+aim_direction()*25+Vector3.UP*.3)
 	reset_swing()
 func remember_address(at:Vector3)->void:
 	var offset:=Vector3(at.x-ball.position.x,0,at.z-ball.position.z)
@@ -376,41 +355,6 @@ func _save_preferences() -> void:
 		cfg.set_value("golf","club_fitted_%d"%hand,club_fitted[hand])
 	cfg.set_value("interface","pictograms",ICONS.enabled)
 	cfg.set_value("golf","reach",club_reach);cfg.set_value("golf","left_handed",preferred_left_handed);cfg.save("user://golf_controls.cfg")
-func _input(event: InputEvent) -> void:
-	if is_instance_valid(course_guide) and course_guide.camera_key(event):return
-	if is_instance_valid(host_activity) and is_instance_valid(host_game.get("bbq")) and host_game.bbq.visiting and host_game.bbq.handle_input(event):return
-	if event is InputEventKey and not event.echo:
-		if event.pressed and event.keycode==KEY_V:godview.toggle();return
-		if godview.active:
-			if event.pressed:
-				if event.keycode==KEY_ESCAPE:godview.exit_view()
-				elif event.keycode==KEY_H:godview.reset_view()
-				elif event.keycode==KEY_F:godview.focus_ball()
-			return
-		if event.pressed and event.keycode==KEY_ESCAPE:toggle_menu(not menu_open);return
-		if menu_open:return
-		if event.keycode==KEY_TAB and not xr:
-			if event.pressed:club_radial.toggle()
-			else:club_radial.release()
-			return
-		if club_radial.opened:return
-		if course_guide.held and not xr and event.pressed and event.keycode in [KEY_LEFT,KEY_RIGHT]:
-			course_guide.page(-1 if event.keycode==KEY_LEFT else 1);return
-		if event.keycode==KEY_SPACE and not xr and not equipment.stowed and not course_guide.held:
-			if event.pressed and not ball.moving and not ball.holed:charging=true;power=.025
-			elif not event.pressed and charging:
-				charging=false;strike(aim_direction()*float(CLUBS.BAG[club_index].speed)*power,aim_direction());power=0
-		if event.pressed:
-			match event.keycode:
-				KEY_H:equipment.set_stowed(not equipment.stowed)
-				KEY_J:course_guide.toggle()
-				KEY_T:address_ball()
-				KEY_G:world.grid.visible=not world.grid.visible
-				KEY_N:next_hole()
-				KEY_R:recover_ball()
-				KEY_P:start_practice()
-	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not xr and not menu_open and not club_radial.opened and not godview.active:
-		head.rotate_y(-event.relative.x*.003);head.rotation.x=clampf(head.rotation.x-event.relative.y*.003,-1.25,1.0)
 func _left_button(action:String)->void:_controller_button(action,0)
 func _right_button(action:String)->void:_controller_button(action,1)
 func _controller_button(action:String,hand:int)->void:
@@ -478,7 +422,7 @@ func strike(v: Vector3,face: Vector3,contact:Dictionary={}) -> bool:
 		impact=CLUBS.impact(club_index,v,face,lie,contact)
 		if impact.is_empty():rejection="invalid_or_away_from_face"
 	var diagnostic:Dictionary=contact.duplicate(true)
-	diagnostic.merge({"club":club_index,"club_name":CLUBS.BAG[club_index].name,"lie":lie,"filtered_velocity":v,"face":face,"impact":impact,"source":"vr_render_sweep" if xr else "desktop_charge"},true)
+	diagnostic.merge({"club":club_index,"club_name":CLUBS.BAG[club_index].name,"lie":lie,"filtered_velocity":v,"face":face,"impact":impact,"source":"vr_render_sweep"},true)
 	if not rejection.is_empty():
 		diagnostic.rejection=rejection;diagnostic.accepted=false;telemetry.contact(diagnostic);return false
 	if is_instance_valid(host_activity) and host_activity.intercept_shot(v,face,contact):return false
@@ -530,9 +474,6 @@ func _physics_process(dt: float) -> void:
 	if fitting_club:
 		_update_fit_preview(dt);return
 	if xr and not focused:reset_swing();return
-	if charging:power=minf(1,power+dt*.48)
-	if not xr and not godview.active and not course_guide.held and not ball.moving:
-		aim+=(float(Input.is_key_pressed(KEY_RIGHT))-float(Input.is_key_pressed(KEY_LEFT)))*dt*.38
 	ball.step(dt);ball_mesh.position=ball.position
 	if ball.moving:
 		tick+=1
@@ -546,7 +487,7 @@ func _physics_process(dt: float) -> void:
 		_complete_shot()
 		was_moving=false
 		if ball.hazard:
-			ball.place(round_state.penalty());status_text="Water / out of bounds  ·  +1 stroke  ·  T to address"
+			ball.place(round_state.penalty());status_text="Water / out of bounds  ·  +1 stroke  ·  Club A/X to address"
 		elif ball.holed:
 			if not practice:
 				round_state.complete_hole();round_state.save_result(course_id)

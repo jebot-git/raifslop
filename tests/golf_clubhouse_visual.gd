@@ -16,12 +16,16 @@ func run()->void:
 	for b in a.clubhouse_board.viewport.find_children("*","Button",true,false):
 		if b.text=="Start new solo round":centre=b.get_global_rect().get_center()
 	var hit:Vector3=a.clubhouse_board.to_global(Vector3((centre.x/960-.5)*3,(.5-centre.y/640)*2,0))
-	game.head.look_at(hit,Vector3.UP)
-	await process_frame
-	var click:=InputEventMouseButton.new();click.button_index=MOUSE_BUTTON_LEFT;click.pressed=true;Input.parse_input_event(click)
+	var tracker:=XRControllerTracker.new();tracker.name="clubhouse_visual_right";XRServer.add_tracker(tracker)
+	game.right.tracker=tracker.name;game.right.pose="grip";game.xr=true;game.tracking_manager.focused=true
+	var pose:=Transform3D(game.origin.global_basis.inverse(),game.origin.to_local(hit+Vector3(0,0,1)))
+	for name in ["aim","grip"]:tracker.set_pose(name,pose,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	for i in 4:await process_frame
+	tracker.set_input("trigger_click",true)
 	await process_frame;await process_frame
-	click=InputEventMouseButton.new();click.button_index=MOUSE_BUTTON_LEFT;click.pressed=false;Input.parse_input_event(click)
+	tracker.set_input("trigger_click",false)
 	await process_frame;await process_frame
+	XRServer.remove_tracker(tracker)
 	if a.clubhouse_round!=null:push_error("Wall panel click did not start solo play")
 	else:print("PASS wall-mounted pointer selects solo play")
 	a.golf.course_guide.screen.refresh()

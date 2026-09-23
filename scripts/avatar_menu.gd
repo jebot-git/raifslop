@@ -36,7 +36,6 @@ var can_travel := true
 var library
 var list: ItemList
 var status: Label
-var picker: FileDialog
 var vrm_browser: PanelContainer
 var import_button: Button
 var avatar_actions: HBoxContainer
@@ -111,13 +110,6 @@ func _ready() -> void:
 	turn_mode.text = "Smooth turn"
 	buttons.add_child(turn_mode)
 	turn_mode.toggled.connect(func(on: bool): turn_mode_changed.emit(on))
-	picker = FileDialog.new()
-	picker.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	picker.access = FileDialog.ACCESS_FILESYSTEM
-	picker.filters = PackedStringArray(["*.vrm ; VRM avatar (maximum 25 MB)"])
-	picker.use_native_dialog = true
-	add_child(picker)
-	picker.file_selected.connect(func(path: String): import_requested.emit(path))
 	var browser_layer := CanvasLayer.new(); browser_layer.layer = 50; add_child(browser_layer)
 	var browser_shade := ColorRect.new(); browser_shade.color = Color(0,0,0,.4); browser_shade.mouse_filter = Control.MOUSE_FILTER_STOP
 	browser_layer.add_child(browser_shade); browser_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); browser_shade.hide()
@@ -379,20 +371,15 @@ Each location has its own soundscape.";description.autowrap_mode=TextServer.AUTO
 func _bind_keyboard(node: Node) -> void:
 	if node is LineEdit:
 		node.focus_entered.connect(func():
-			if get_viewport() is SubViewport and XRServer.primary_interface!=null: keyboard.open_for(node))
+			keyboard.open_for(node))
 	for child in node.get_children():_bind_keyboard(child)
 
 func _open_import() -> void:
-	if get_viewport() is SubViewport:
-		keyboard.hide()
-		vrm_browser.open()
-	else:
-		picker.popup_centered_ratio(0.75)
-
+	keyboard.hide()
+	vrm_browser.open()
 func close_overlays() -> void:
 	keyboard.hide()
 	vrm_browser.hide()
-	picker.hide()
 
 var tackle_game
 var tackle_balance: Label

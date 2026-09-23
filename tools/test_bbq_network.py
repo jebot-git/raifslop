@@ -12,7 +12,7 @@ with tempfile.TemporaryDirectory(prefix='raif-bbq-net-') as temp:
    command=['godot','--headless','--xr-mode','off','--path',str(ROOT),'--script','res://tests/bbq_network.gd','--',role,str(port)]
    if role=='server':command+=['--server','--port',str(port)]
    env=dict(os.environ,XDG_DATA_HOME=f'{temp}/{port}-{role}',XDG_CONFIG_HOME=f'{temp}/config')
-   jobs.append((role,subprocess.Popen(command,stdout=stream,stderr=subprocess.STDOUT,env=env),stream,path))
+   jobs.append((role,subprocess.Popen(command + (['--xr-test'] if '--script' in command else []),stdout=stream,stderr=subprocess.STDOUT,env=env),stream,path))
   try:
    launch('server' if dedicated else 'host');time.sleep(1.5)
    if dedicated:launch('leader');time.sleep(1)

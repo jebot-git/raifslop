@@ -22,7 +22,7 @@ def main():
                 if role=='server' and os.environ.get('FISHING_SERVER_BIN'):
                     args=['stdbuf','-oL',os.environ['FISHING_SERVER_BIN'],'--verbose','--','--server','--port',str(port),'--asset-root',str(base/(str(port)+role)/'data'),'--leaderboard-path',str(base/'leaderboard.json')]
                 elif os.environ.get('TEST_VERBOSE'): args.insert(1,'--verbose')
-                process=subprocess.Popen(args,env=env,stdout=stream,stderr=subprocess.STDOUT)
+                process=subprocess.Popen(args + (['--xr-test'] if '--script' in args else []),env=env,stdout=stream,stderr=subprocess.STDOUT)
                 jobs.append((role,process,stream,path))
             try:
                 launch('server' if dedicated else 'host', ['--server','--port',str(port)] if dedicated else [])

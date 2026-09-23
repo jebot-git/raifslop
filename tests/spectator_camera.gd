@@ -38,8 +38,8 @@ func run() -> void:
 		DirAccess.make_dir_recursive_absolute("res://test-results")
 		root.get_texture().get_image().save_png("res://test-results/spectator_desktop.png")
 	else:
-		check(not game.xr and game.spectator == null and game.xr_view == null, "Desktop play allocates no spectator or stereo viewport")
-		check(root.get_camera_3d() == game.head, "Desktop play retains first-person camera")
+		check(not game.xr and game.spectator == null and game.xr_view == null, "Synthetic fixture allocates no native stereo viewport")
+		check(root.get_camera_3d() == game.head, "Synthetic fixture retains XR camera")
 		game.spectator = preload("res://scripts/spectator_camera.gd").new()
 		game.add_child(game.spectator)
 		game.spectator.setup(game)

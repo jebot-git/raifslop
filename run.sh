@@ -6,8 +6,4 @@ if [[ "${1:-}" == "--server" ]]; then
     shift
     exec "$godot_bin" --headless --path "$project_dir" --xr-mode off -- --server "$@"
 fi
-if [[ "${1:-}" == "--desktop" ]]; then
-    shift
-    exec "$godot_bin" --path "$project_dir" --xr-mode off "$@"
-fi
-exec "$godot_bin" --path "$project_dir" "$@"
+exec "$godot_bin" --path "$project_dir" --xr-mode on "$@"

@@ -103,7 +103,7 @@ func update()->void:
 	belt_pose=Transform3D(basis,hip.origin-basis*GRIP_ANCHOR)
 	if game.menu_open or game.fitting_club or game.club_radial.opened or game.godview.active or not game.focused:
 		dock();grip_down=[true,true]
-	elif game.xr:
+	else:
 		for hand in 2:
 			var controller:XRController3D=game.left if hand==0 else game.right
 			var tracked:=controller.get_has_tracking_data()
@@ -123,8 +123,7 @@ func update()->void:
 			if point is Vector3:press_buttons(point)
 			else:reset_touch()
 	if not held:global_transform=belt_pose
-	elif not game.xr:global_transform=game.head.global_transform*Transform3D(Basis.IDENTITY,Vector3(0,-.04,-.48))
-	visible=not game.menu_open and not game.godview.active and (game.xr or held)
+	visible=not game.menu_open and not game.godview.active
 	game.body.catch_controls=held or (game.club_radial.opened or game.godview.active)
 	if held:game.body.turn_reserved=true
 	if held:
@@ -137,7 +136,7 @@ func photo_input_hand()->XRController3D:
 func camera_controls()->Dictionary:
 	var hand_name:="LEFT" if held_hand==0 else "RIGHT"
 	var free_name:="LEFT" if photo_input_hand()==game.left else "RIGHT"
-	return {"toggle":hand_name+(" B/Y: GUIDE" if game.only_one_controller() else " TRIGGER: GUIDE") if game.xr else "C: GUIDE · J: CLOSE", "capture":free_name+" TRIGGER / ›: PHOTO" if game.xr else "SPACE: TAKE PHOTO", "selfie":free_name+" A/X / ‹: SELFIE" if game.xr else "F: SELFIE · RIGHT-DRAG: AIM", "extend":free_name+" STICK ↑/↓: EXTEND" if game.xr else "↑ / ↓: EXTEND / RETRACT"}
+	return {"toggle":hand_name+(" B/Y: GUIDE" if game.only_one_controller() else " TRIGGER: GUIDE"), "capture":free_name+" TRIGGER / ›: PHOTO", "selfie":free_name+" A/X / ‹: SELFIE", "extend":free_name+" STICK ↑/↓: EXTEND"}
 func camera_button(action:String,left_hand:bool)->bool:
 	if not held or not is_instance_valid(photo_camera) or action in ["menu_button","primary_click"]:return false
 	var guide_hand:bool=(0 if left_hand else 1)==held_hand
@@ -148,12 +147,4 @@ func camera_button(action:String,left_hand:bool)->bool:
 	elif action=="ax_button" and (not guide_hand or single and photo_camera.active):photo_camera.toggle_selfie()
 	elif single and guide_hand and action=="by_button" and photo_camera.active:photo_camera.toggle()
 	elif guide_hand and action in ["ax_button","by_button"]:page(1 if action=="ax_button" else -1)
-	return true
-func camera_key(event:InputEvent)->bool:
-	if not held or not is_instance_valid(photo_camera) or not event is InputEventKey or event.echo or not event.pressed:return false
-	match event.keycode:
-		KEY_C:photo_camera.toggle()
-		KEY_F:photo_camera.toggle_selfie()
-		KEY_SPACE:photo_camera.capture()
-		_:return false
 	return true

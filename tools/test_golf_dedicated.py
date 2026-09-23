@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory(prefix='golf-dedicated-') as temp:
  def launch(role,stage=0):
   stream=(logs/f'{role}-{stage}.log').open('w');env=dict(os.environ,XDG_DATA_HOME=f'{temp}/{role}')
   command=[str(args.server),'--headless','--','--port','28977','--bind','127.0.0.1','--leaderboard-path',f'{temp}/records.json'] if role=='server' else [args.godot,'--headless','--xr-mode','off','--path',str(ROOT),'--script','tests/golf_dedicated_client.gd','--',role,'28977']
-  proc=subprocess.Popen(command,env=env,stdout=stream,stderr=subprocess.STDOUT);jobs.append((proc,stream));return proc,stream
+  proc=subprocess.Popen(command + (['--xr-test'] if '--script' in command else []),env=env,stdout=stream,stderr=subprocess.STDOUT);jobs.append((proc,stream));return proc,stream
  def finish(job,role):
   proc,stream=job;proc.wait(timeout=95);stream.close();text=(logs/f'{role}-0.log').read_text()
   if proc.returncode or 'SCRIPT ERROR' in text or 'GOLF_DEDICATED_RESULT' not in text:raise RuntimeError(text)

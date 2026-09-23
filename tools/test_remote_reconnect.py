@@ -24,7 +24,7 @@ def main():
                 stream = log.open('w')
                 env = dict(os.environ, XDG_DATA_HOME=str(data), XDG_CONFIG_HOME=str(data / 'config'))
                 args = ['godot', '--headless', '--xr-mode', 'off', '--path', str(ROOT), '--script', 'res://tests/remote_reconnect.gd', '--', role, options.address, str(options.port), '--asset-root', str(data / 'assets')]
-                jobs.append((role, subprocess.Popen(args, env=env, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT), stream, log))
+                jobs.append((role, subprocess.Popen(args + (['--xr-test'] if '--script' in args else []), env=env, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT), stream, log))
             for role, process, stream, log in jobs:
                 try:
                     process.wait(timeout=80)

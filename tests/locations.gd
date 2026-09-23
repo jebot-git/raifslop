@@ -75,7 +75,7 @@ func run() -> void:
 	g.casting = false
 	g._toggle_avatar_menu()
 	g.avatar_menu.show_locations()
-	check(g.menu_open and g.motor.blocked and g.avatar_menu.locations_page.visible, "Locations share paused desktop/VR menu")
+	check(g.menu_open and g.motor.blocked and g.avatar_menu.locations_page.visible, "Locations share paused VR menu")
 	g.avatar_menu.location_list.select(1)
 	g.avatar_menu._preview_location(1)
 	g.avatar_menu.visit_button.pressed.emit()
@@ -85,7 +85,7 @@ func run() -> void:
 		g._layout_avatar_menu()
 		await process_frame
 	var menu_rect: Rect2 = g.avatar_menu.get_global_rect()
-	check(menu_rect.position.x >= 0 and menu_rect.position.y >= 0 and menu_rect.end.x <= root.get_visible_rect().size.x and menu_rect.end.y <= root.get_visible_rect().size.y, "Menu remains within the desktop viewport")
+	check(menu_rect.position.x >= 0 and menu_rect.position.y >= 0 and menu_rect.end.x <= g.avatar_menu_view.get_visible_rect().size.x and menu_rect.end.y <= g.avatar_menu_view.get_visible_rect().size.y, "Menu remains within the spatial menu viewport")
 	if "--capture" in OS.get_cmdline_user_args(): await capture("res://docs/locations/menu.png")
 	g._toggle_avatar_menu()
 	check(not g.menu_open and not g.motor.blocked, "Closing menu resumes movement")

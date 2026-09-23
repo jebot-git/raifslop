@@ -44,7 +44,7 @@ func run():
 	var compositor:=Compositor.new();compositor.compositor_effects=[effect];g.head.compositor=compositor
 	g._toggle_avatar_menu();await settle()
 	await click(g.avatar_menu.import_button)
-	check(g.avatar_menu.vrm_browser.visible and not g.avatar_menu.picker.visible,"Laser opens headset VRM browser")
+	check(g.avatar_menu.vrm_browser.visible,"Laser opens headset VRM browser")
 	await capture("vrm-browser")
 	g.avatar_menu.close_overlays()
 	await click(g.avatar_menu.pages.together.button)

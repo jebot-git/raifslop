@@ -1,5 +1,5 @@
 extends Node3D
-## Fixed clubhouse wall panel. Desktop centre-ray and VR trigger share one viewport.
+## Fixed clubhouse wall panel. Tracked aim and fingertip touch share one viewport.
 var activity:Node
 var viewport:=SubViewport.new()
 var panel:=MeshInstance3D.new()
@@ -51,10 +51,10 @@ func _process(_dt:float)->void:
 	if not is_instance_valid(activity) or not activity.active:return
 	var g=activity.host
 	var controller:XRController3D=activity.golf.pointer_controller()
-	var pressed:bool=(controller.get_float("trigger")>.6 or controller.is_button_pressed("trigger_click")) if g.xr else Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	var pressed:bool=controller.get_has_tracking_data() and (controller.get_float("trigger")>.6 or controller.is_button_pressed("trigger_click"))
 	if g.menu_open or activity.golf.godview.active:
 		cancel_input();trigger_was_down=pressed;return
-	var ray:Dictionary=preload("res://scripts/menu_ray.gd").sample(g) if g.xr else {"aim_origin":g.head.global_position,"origin":g.head.global_position,"direction":-g.head.global_basis.z}
+	var ray:Dictionary=preload("res://scripts/menu_ray.gd").sample(g)
 	if ray.is_empty():cancel_input();trigger_was_down=pressed;return
 	var origin:=to_local(ray.aim_origin);var direction:Vector3=global_basis.inverse()*ray.direction
 	var hit:=Vector2(-100,-100)

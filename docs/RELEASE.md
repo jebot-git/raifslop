@@ -12,15 +12,15 @@ Download from [GitHub Releases](https://github.com/jebot-git/raifslop/releases).
 See [0.1.14 changes and validation](RELEASE_NOTES_0.1.14.md).
 
 - Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime or
-  `Desktop.sh`. Keep the executable, PCK and shared libraries together.
-- Windows: extract the ZIP and run `VR.cmd` or `Desktop.cmd`; retain the PCK/DLLs.
+  `VR.sh`. Keep the executable, PCK and shared libraries together.
+- Windows: extract the ZIP and run `VR.cmd` or `VR.cmd`; retain the PCK/DLLs.
   See [Windows OpenXR setup and capture troubleshooting](WINDOWS_OPENXR.md) for
   VDXR and SteamVR runtime selection and verification.
 - Quest 3: sideload the signed APK with `adb install -r RealAIFishing-0.1.14-Quest.apk`; launch Real AI Fishing from the headset app library. Controllers remain the supported gameplay input.
 - Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional
   arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`.
   This binary embeds shared server scripts but no visual/audio assets or extensions.
-  Desktop packages also retain their existing server launchers.
+  PC VR packages also retain their existing server launchers.
 
 Multiplayer uses **protocol 11**; update clients and server together. Publishing
 packages does not upgrade an existing live server. Eight slots, direct UDP

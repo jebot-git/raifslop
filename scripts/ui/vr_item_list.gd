@@ -1,20 +1,17 @@
 extends ItemList
 ## Trigger-and-drag owns the list in VR; a stationary release selects a row.
-var vr_mode_override := false
 var pressed := false
 var dragging := false
 var drag_start := Vector2.ZERO
 var initial_scroll := 0.0
 var pressed_row := -1
-func using_vr() -> bool:
- return vr_mode_override or XRServer.primary_interface!=null and XRServer.primary_interface.is_initialized()
 func _process(_delta:float) -> void:
  var bar:=get_v_scroll_bar()
- bar.modulate.a=0.0 if using_vr() else 1.0
- bar.mouse_filter=Control.MOUSE_FILTER_IGNORE if using_vr() else Control.MOUSE_FILTER_STOP
+ bar.modulate.a=0.0
+ bar.mouse_filter=Control.MOUSE_FILTER_IGNORE
  if not is_visible_in_tree():pressed=false;dragging=false
 func _input(event:InputEvent) -> void:
- if not using_vr() or not is_visible_in_tree():return
+ if not is_visible_in_tree():return
  if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT:
   if event.pressed:
    # Do not steal a press from a popup or another control above this list.

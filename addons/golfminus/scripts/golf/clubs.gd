@@ -13,7 +13,7 @@ static func impact(index: int,club_velocity: Vector3,face: Vector3,lie: String,c
 	var shape=preload("res://addons/golfminus/scripts/golf/club_head.gd").for_club(index)
 	var hit:=contact.duplicate()
 	if not hit.has("normal"):
-		# Desktop input is a synthetic centre-face strike through the same solver.
+		# Analytical callers can evaluate a centre-face strike through the same solver.
 		if face.length()<.5:return {}
 		var forward:=face.normalized()
 		var right:=forward.cross(Vector3.UP).normalized()

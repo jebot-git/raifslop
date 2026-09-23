@@ -56,11 +56,11 @@ func _draw()->void:
 	else:_draw_progress()
 	draw_line(Vector2(34,738),Vector2(606,738),Color("49715d"),2)
 	label("%02d / 02"%[guide.page_index+1],Vector2(277,774),23)
-	label("Guide-hand trigger: camera" if g.xr else "C: camera · J: close",Vector2(155,835),20)
+	label("Guide-hand trigger: camera",Vector2(155,835),20)
 	if Icons.enabled:
 		for entry in [["left",Vector2(38,750)],["grip",Vector2(291,788)],["right",Vector2(552,750)]]:draw_texture_rect(Icons.texture(entry[0]),Rect2(entry[1],Vector2(42,42)),false)
-		label(("B" if g.left_handed else "Y") if g.xr else "Left",Vector2(94,780),24)
-		label(("A" if g.left_handed else "X") if g.xr else "Right",Vector2(513,780),24)
+		label(("B" if g.left_handed else "Y"),Vector2(94,780),24)
+		label(("A" if g.left_handed else "X"),Vector2(513,780),24)
 	else:
 		label("‹  MAP / COURSE  ›",Vector2(175,808),23)
 func _draw_map()->void:

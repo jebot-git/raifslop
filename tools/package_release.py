@@ -15,7 +15,7 @@ OUT = BUILD / 'release'
 VERSION = re.search(r'^config/version="([^"]+)"', (ROOT / 'project.godot').read_text(), re.M)[1]
 from release_targets import TARGETS, ANDROID_TARGETS
 parser = argparse.ArgumentParser()
-parser.add_argument('--prototype', action='store_true', help='Package desktop clients and dedicated server only')
+parser.add_argument('--prototype', action='store_true', help='Package PC VR clients and dedicated server only')
 args = parser.parse_args()
 if args.prototype:
     TARGETS = ['Linux', 'Windows', 'Server']
@@ -77,7 +77,9 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
         folder = stage / target
         shutil.copytree(BUILD / target, folder)
         copy_notices(folder)
-        for name, launch_args in [('Desktop', '--xr-mode off'), ('VR', '--xr-mode on --rendering-driver vulkan'),
+        for obsolete in ["Desktop.sh", "Desktop.cmd"]:
+            (folder / obsolete).unlink(missing_ok=True)
+        for name, launch_args in [('VR', '--xr-mode on --rendering-driver vulkan'),
                            ('Server', '--headless --xr-mode off -- --server')]:
             if target == 'Linux':
                 script = folder / (name + '.sh')

@@ -10,7 +10,6 @@ var drag_origin:=Vector2.ZERO
 var drag_scroll:=0
 var drag_pressed:=false
 var dragging:=false
-var vr_mode_override:=false
 var value:=""
 var items: Array=[]
 var prompt:="SELECT"
@@ -30,7 +29,7 @@ func open_popup() -> void:
 	popup.position=trigger.get_global_transform_with_canvas()*Vector2(0,trigger.size.y)
 	popup.position.y=minf(popup.position.y,get_viewport_rect().size.y-popup.size.y*popup.scale.y-8)
 	drag_pressed=false;dragging=false
-	scroll.vertical_scroll_mode=ScrollContainer.SCROLL_MODE_SHOW_NEVER if using_vr() else ScrollContainer.SCROLL_MODE_AUTO
+	scroll.vertical_scroll_mode=ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	popup.show()
 func _input(event: InputEvent) -> void:
 	# Continue a gesture when the ray leaves the pressed row or the popup bounds.
@@ -68,8 +67,6 @@ func update_label() -> void:
 func clear_selection() -> void:
 	value="";popup.hide();update_label()
 
-func using_vr() -> bool:
-	return vr_mode_override or XRServer.primary_interface!=null and XRServer.primary_interface.is_initialized()
 func drag_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT:
 		if event.pressed:

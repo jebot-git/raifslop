@@ -3,8 +3,7 @@
 While ready to cast, tap **right joystick press**, release the click, then point
 **up** to highlight Lure. Rotate the stick to highlight Classic (Fly at rivers)
 on the left or Feeder on the right where available. Return the stick to centre
-to select and close the menu; tap again to cancel. Desktop uses a Tab tap followed
-by Up/Left/Right, then release the direction keys to confirm; another Tab tap cancels. Left X cycles
+to select and close the menu; tap again to cancel. Left X cycles
 three lures; bait names remain the brief permitted textual popup. No additional
 world-space guide text is introduced. Gameplay pictograms remain optional.
 
@@ -72,7 +71,7 @@ ownership, equipped tier, balance, fatigue and line-durability bonuses.
 four held and four folded models. Lure rods have split grips, casting guides,
 a finger trigger, a compact baitcaster and a rotating double-paddle crank. The
 short spindle and tracked grip anchor fit that reel. VR reel-hand snapping and
-desktop/remote hand placement use the selected style's grip anchor.
+remote hand placement use the selected style's grip anchor.
 
 Original Blender assets and packed cork/EVA/lure-scale textures are retained in
 `source/lure_tackle.blend`; `tools/build_lure_tackle.py` reproduces them.

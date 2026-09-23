@@ -45,11 +45,6 @@ func run() -> void:
 		trackers[0].set_input("grip",0.0);await settle();guide.update_device()
 		trackers[0].set_input("grip",1.0);await settle();guide.update_device()
 		check(not guide.held,"Hooked fish blocks hip guide grab in state " + str(state))
-		g.xr=false
-		var key:=InputEventKey.new();key.keycode=KEY_G;key.pressed=true
-		g._unhandled_input(key)
-		check(not guide.held,"Hooked fish blocks desktop guide key in state " + str(state))
-		g.xr=true
 	g.game.state=g.Session.State.READY
 	guide.update_device()
 	check(not guide.held,"Guide requires a fresh grip after the fight")

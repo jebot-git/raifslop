@@ -38,11 +38,11 @@ func run()->void:
 	Icons.enabled=false;a.course_life._process(.01);check(not a.course_life.marker.visible,"Guiding off hides current-hole beacon")
 	Icons.enabled=true;a.course_life._process(.01);check(a.course_life.marker.visible,"Guiding on restores current-hole beacon")
 	await process_frame
-	a.golf.hud.map.prepare()
+	a.golf.course_guide.screen.refresh()
 	var pins_fit:=true
 	for i in 18:
-		if not a.golf.hud.map.rect.grow(1).has_point(a.golf.hud.map.project(a.golf.model.pin_for(i))):pins_fit=false
-	check(pins_fit and a.golf.hud.map.project(a.golf.model.pin_for(0)).distance_to(a.golf.hud.map.project(a.golf.model.pin_for(17)))>1,"Unified minimap includes distinct pins for every hole")
+		if not a.golf.course_guide.screen.map_rect.grow(1).has_point(a.golf.course_guide.screen.project(a.golf.model.pin_for(i))):pins_fit=false
+	check(pins_fit and a.golf.course_guide.screen.project(a.golf.model.pin_for(0)).distance_to(a.golf.course_guide.screen.project(a.golf.model.pin_for(17)))>1,"Unified minimap includes distinct pins for every hole")
 	a.golf.toggle_menu(true)
 	check(g.menu_open and a.settings_open,"Golf opens shared menu")
 	var texts:Array=[]

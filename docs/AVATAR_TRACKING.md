@@ -1,6 +1,6 @@
 # Avatar tracking and calibration
 
-Open **Field station → Tracking** in desktop or VR. The fishing rig now reuses FPSloppa's body tracking, hand sampling, VRM expression binding, eye animation, leg IK and T-pose calibration. Tracked poses and expressions are also shared with other anglers in multiplayer.
+Open **Field station → Tracking** in VR. The fishing rig now reuses FPSloppa's body tracking, hand sampling, VRM expression binding, eye animation, leg IK and T-pose calibration. Tracked poses and expressions are also shared with other anglers in multiplayer.
 
 ## Supported inputs
 
@@ -36,7 +36,7 @@ Protocol version 2 adds bounded body transforms relative to the player's capsule
 
 `tests/hand_tracking.gd` and `tests/tracking_orientation.gd` adapt FPSloppa's controller/joint and orientation tests. `tests/avatar_tracking.gd` covers VRM expression binding, independent fingers, tracked feet, gait fallback, speech decay, eye/face sampling, missing/focus-lost trackers, T-pose detection, recentering and eye-independent casting aim. `tests/network_guards.gd` rejects malformed body/face/finger/viseme data.
 
-`tools/test_multiplayer.py` covers these additional fields in actual dedicated/hosted sessions and late joins. `tools/test_multiplayer_xr.py` uses native simulated Monado stereo, injected body/face/controllers, and a separate desktop client; [stereo](multiplayer_eye0.png) and [desktop](multiplayer_desktop.png) captures show the resulting avatars. These tests do not establish physical tracker accuracy, headset permission behavior or comfort on real hardware.
+`tools/test_multiplayer.py` covers these additional fields in actual dedicated/hosted sessions and late joins. `tools/test_multiplayer_xr.py` uses native simulated Monado stereo, injected body/face/controllers, and a separate synthetic XR client; [stereo](multiplayer_eye0.png) and [desktop](multiplayer_desktop.png) captures show the resulting avatars. These tests do not establish physical tracker accuracy, headset permission behavior or comfort on real hardware.
 
 
 ## September 2026 tracking refresh

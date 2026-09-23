@@ -33,7 +33,7 @@ def main():
                         args += ['--address', options.remote, '--network-metrics']
                     if role == 'server':
                         args += ['--server', '--port', str(port)]
-                    jobs.append((role, subprocess.Popen(args, cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT), stream, log))
+                    jobs.append((role, subprocess.Popen(args + (['--xr-test'] if '--script' in args else []), cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT), stream, log))
                     time.sleep(1)
                 for role, process, stream, log in jobs:
                     try:

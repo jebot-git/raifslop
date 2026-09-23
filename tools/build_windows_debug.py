@@ -23,7 +23,7 @@ def digest(path):
 
 
 def launcher(mode):
-    flags = '--xr-mode on --rendering-driver vulkan' if mode == 'VR' else '--xr-mode off'
+    flags = '--xr-mode on --rendering-driver vulkan'
     return f'''@echo off
 setlocal DisableDelayedExpansion
 pushd "%~dp0"
@@ -101,7 +101,8 @@ def main():
                      'libtwovoip.windows.template_debug.x86_64.dll']:
             if not (out / name).is_file():
                 raise SystemExit(f'Missing debug runtime: {name}')
-        for mode in ['VR', 'Desktop']:
+        (out / 'Desktop.cmd').unlink(missing_ok=True)
+        for mode in ['VR']:
             (out / f'{mode}.cmd').write_bytes(launcher(mode))
         copy_notices(out)
         (out / 'TESTING.txt').write_text('''Real AI Fishing - Windows x86_64 DEBUG / PLAYTEST
@@ -109,13 +110,12 @@ def main():
 Extract the whole ZIP into a writable folder, such as Desktop or Downloads.
 Keep the EXE, PCK and DLLs together. Start through one of these launchers:
   VR.cmd       - OpenXR + Vulkan; connect your headset/runtime first.
-  Desktop.cmd  - Desktop controls, XR disabled.
 
 CLIENT LOGS ARE SAVED BESIDE THE LAUNCHER, NOT IN AN APPDATA LOG FOLDER.
 Every launch creates a new pair; earlier sessions are retained:
   Client-VR-<session>.log          Godot output, errors and gameplay diagnostics
   Client-VR-<session>.console.log  Console output/errors, including startup/exit
-Desktop uses the same names with Desktop in place of VR.
+An initialized OpenXR runtime is required; there are no keyboard/mouse gameplay controls.
 Send BOTH files from the affected run, plus build-manifest.json and a short
 description of what happened. Include headset, controllers, runtime, GPU,
 approximate time, handedness and controller/hip tracking setup.
@@ -126,8 +126,7 @@ their normal location. Use the CMD launchers; double-clicking the EXE bypasses
 the beside-launcher log configuration. An unwritable folder stops the launcher
 instead of silently losing the logs. Failed launches leave the console open.
 
-Extra engine options can be supplied, e.g. Desktop.cmd --debug-collisions.
-For automated headless checks: Desktop.cmd --headless --quit-after 120.
+Extra engine options can be supplied, e.g. VR.cmd --debug-collisions.
 Set RAF_NO_PAUSE=1 in automated environments to avoid the error-exit prompt.
 
 Suggested regression checks:
@@ -154,7 +153,7 @@ headset compatibility or performance.
             'source_sha256': sources,
             'godot': subprocess.check_output([godot, '--version'], text=True).strip(),
             'export_command': command,
-            'logs': 'Beside VR.cmd / Desktop.cmd; unique engine and console files per launch',
+            'logs': 'Beside VR.cmd; unique engine and console files per launch',
             'artifacts': {p.name: digest(p) for p in sorted(out.iterdir()) if p.suffix in {'.exe', '.pck', '.dll'}},
         }
         manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')

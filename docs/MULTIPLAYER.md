@@ -1,6 +1,6 @@
 # Fishing together
 
-Open the avatar menu (**V** on desktop; the existing menu control in VR), then **Together**. Enter a name and use **Host**, or enter the host's IP/hostname and use **Join**. The limit is eight players: eight clients on a dedicated server, or the host plus seven guests for ad-hoc hosting. Everyone can travel independently; choose the same location in the Locations page to see one another and hear nearby speech. The radio reaches anglers in every water. The player list shows each angler's location. Fish Guide entries and personal records stay on each device.
+Open the avatar menu (**right B**), then **Together**. Enter a name and use **Host**, or enter the host's IP/hostname and use **Join**. The limit is eight players: eight clients on a dedicated server, or the host plus seven guests for ad-hoc hosting. Everyone can travel independently; choose the same location in the Locations page to see one another and hear nearby speech. The radio reaches anglers in every water. The player list shows each angler's location. Fish Guide entries and personal records stay on each device.
 
 For a dedicated server, run the project with Godot 4.7.2 and its imported assets:
 
@@ -10,20 +10,20 @@ For a dedicated server, run the project with Godot 4.7.2 and its imported assets
 
 It runs headless without loading the environment, player rig or decoded avatar models. It relays fishing state, verified avatar files and compressed voice. The default bind address is `*`; default port is UDP 24567. Stop with Ctrl+C. The Linux and Windows release archives include headless server launchers using the same executable.
 
-Command-line desktop hosting/joining also works:
+Command-line PC VR hosting/joining also works:
 
 ```bash
-./run.sh --desktop -- --host --port 24567 --name Alex
-./run.sh --desktop -- --join 192.168.1.10 --port 24567 --name Sam
+./run.sh -- --host --port 24567 --name Alex
+./run.sh -- --join 192.168.1.10 --port 24567 --name Sam
 ```
 
-For XR, omit `--desktop`. On a LAN, use the host's LAN address. Internet hosting requires the chosen UDP port through the host's firewall/router, or a reachable dedicated server. There is no matchmaking, discovery, relay service, automatic NAT traversal, password system, or host migration. If the host disconnects, clients return to offline fishing and keep their local records.
+On a LAN, use the host's LAN address. Internet hosting requires the chosen UDP port through the host's firewall/router, or a reachable dedicated server. There is no matchmaking, discovery, relay service, automatic NAT traversal, password system, or host migration. If the host disconnects, clients return to offline fishing and keep their local records.
 
 ## Voice
 
-FPSloppa's TwoVoIP integration supplies 48 kHz mono Opus, 20 ms frames, RNNoise input denoising and positional playback. New profiles default to **Voice activation**. Existing saved voice modes are preserved; **Listen only** and **Push to talk** remain available. Push to talk uses **T** on desktop or **left thumbstick click** in VR; the left grip remains available for fish and Guide inspection. Select the microphone in the multiplayer menu. Select a player to mute/unmute them, or use Mute all. Nearby voice is relayed only between participants at the same location and attenuates with distance (60 m maximum).
+FPSloppa's TwoVoIP integration supplies 48 kHz mono Opus, 20 ms frames, RNNoise input denoising and positional playback. New profiles default to **Voice activation**. Existing saved voice modes are preserved; **Listen only** and **Push to talk** remain available. Push to talk uses **left thumbstick click**; the left grip remains available for fish and Guide inspection. Select the microphone in the multiplayer menu. Select a player to mute/unmute them, or use Mute all. Nearby voice is relayed only between participants at the same location and attenuates with distance (60 m maximum).
 
-FPSloppa’s shoulder radio supplies a second channel to **all anglers on the server**, regardless of water or distance. Hold **B** on desktop. In VR, reach to the **left shoulder**, squeeze grip to take the radio, and hold the **left trigger** to transmit. Release trigger to stop talking; release grip to dock it. While the radio is held, voice activation cannot leak speech onto the nearby channel. The rod remains in the right hand. Radio playback uses FPSloppa’s narrow-band filtering and on/off click cues; existing player mute, Mute all, Listen only, and host voice policy apply. Opening the menu, losing focus or controller tracking releases the radio.
+FPSloppa’s shoulder radio supplies a second channel to **all anglers on the server**, regardless of water or distance. Reach to the **left shoulder**, squeeze grip to take the radio, and hold the **left trigger** to transmit. Release trigger to stop talking; release grip to dock it. While the radio is held, voice activation cannot leak speech onto the nearby channel. The rod remains in the right hand. Radio playback uses FPSloppa’s narrow-band filtering and on/off click cues; existing player mute, Mute all, Listen only, and host voice policy apply. Opening the menu, losing focus or controller tracking releases the radio.
 
 This development build uses **protocol 11**, including shared BBQ ownership/cooking/cooler snapshots, explicit terminal-tackle visibility/positions, server accomplishments and classic/feeder/lure rig selection. Update clients and server together; older clients cannot join. Avatar offer acknowledgements and transfer cancellation/recovery are retained.
 
@@ -43,7 +43,7 @@ Source provenance is recorded in [FPSLOPPA_REUSE.md](FPSLOPPA_REUSE.md). ENet li
 
 ```bash
 python3 tools/test_multiplayer.py
-XDG_DATA_HOME=/tmp/fishing-network-guards ./run.sh --desktop --headless --script res://tests/network_guards.gd
+XDG_DATA_HOME=/tmp/fishing-network-guards godot --path . --xr-mode off --headless --script res://tests/network_guards.gd -- --xr-test
 ```
 
 The integration runner starts real independent ENet processes in isolated save directories: dedicated server plus sender, observer and late joiner; then ad-hoc host plus observer. It checks custom avatar transfer/loading, casts, catch size, hand inspection, release, moving poses, same-location visibility/voice, per-player mute, real Opus decoding and local Guide isolation. Guards additionally exercise malformed poses/species, sequence ordering, voice replay/flood prevention and invalid connection parameters. These are local synthetic tests, not an Internet or physical-headset acceptance test.

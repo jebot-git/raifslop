@@ -19,7 +19,7 @@ func key(menu, label: String):
 		if b.text==label: await click(b,12); return
 	check(false,"Key exists: "+label)
 func check_list_drag(list:ItemList,label:String):
-	list.vr_mode_override=true
+
 	for i in 32:list.add_item("Scroll test %d"%i)
 	list.select(0);list.get_v_scroll_bar().value=0;await settle()
 	var at:Vector2=list.global_position+Vector2(list.size.x*.5,140)
@@ -31,13 +31,12 @@ func run():
 	g.set_process(false);g.motor.set_physics_process(false)
 	view=SubViewport.new();view.size=Vector2i(1000,720);view.render_target_update_mode=SubViewport.UPDATE_ALWAYS;root.add_child(view)
 	var menu=g.avatar_menu; menu.reparent(view); menu.position=Vector2(50,30);menu.size=Vector2(900,656);menu.scale=Vector2.ONE;menu.show()
-	for page in menu.pages.values(): page.view.vr_mode_override=true
 	menu.show_page("avatar");await settle()
 	await check_list_drag(menu.list,"VRM library")
 	menu.refresh();await settle()
 	check(menu.import_button.get_global_rect().end.y<690 and not menu.pages.avatar.view.is_ancestor_of(menu.import_button),"Import action remains visible outside scrolling content")
 	await click(menu.import_button,12)
-	check(menu.vrm_browser.visible and not menu.picker.visible,"Trigger-sized jitter opens in-headset import browser instead of dragging page")
+	check(menu.vrm_browser.visible,"Trigger-sized jitter opens in-headset import browser instead of dragging page")
 	await check_list_drag(menu.vrm_browser.files,"VRM import browser")
 	var turning:bool=menu.turn_mode.button_pressed
 	await click(menu.turn_mode)
@@ -68,7 +67,7 @@ func run():
 	var heading:Control=menu.multiplayer_page.get_child(0)
 	at=heading.get_global_rect().get_center();motion(at);await settle();button(at,true);motion(at-Vector2(0,45),true);await settle();button(at-Vector2(0,45),false);await settle()
 	check(menu.pages.together.view.scroll_vertical>scroll,"Empty page background still supports deliberate drag scrolling")
-	menu.show_page("waters");menu.location_list.vr_mode_override=true;await settle()
+	menu.show_page("waters");await settle()
 	var waters:ItemList=menu.location_list
 	waters.select(0);waters.get_v_scroll_bar().value=0;await settle()
 	var outer_scroll:int=menu.pages.waters.view.scroll_vertical

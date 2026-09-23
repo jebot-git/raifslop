@@ -32,8 +32,8 @@ River Alcove was evaluated as a reference and removed during release cleanup; it
 `tests/locations.gd` covers all locations, texture bounds, persistence, light/water changes, foreground replacement and safe arrival, menu selection, active-cast rejection and journal round trips. Use a separate save directory:
 
 ```bash
-XDG_DATA_HOME=/tmp/fishing-location-tests ./run.sh --desktop --headless --script res://tests/locations.gd
-XDG_DATA_HOME=/tmp/fishing-location-captures ./run.sh --desktop --script res://tests/locations.gd -- --capture
+XDG_DATA_HOME=/tmp/fishing-location-tests godot --path . --xr-mode off --headless --script res://tests/locations.gd -- --xr-test
+XDG_DATA_HOME=/tmp/fishing-location-captures godot --path . --xr-mode off --script res://tests/locations.gd -- --xr-test --capture
 ```
 
 Current foreground captures: [Lakeside](locations/lakeside_foreground.png), [Lake Pier](locations/lake_pier_foreground.png), [Gray Pier](locations/gray_pier_foreground.png), [Bell Park Pier](locations/bell_park_pier_foreground.png). See [validation](VALIDATION.md) for native OpenXR synthetic results and limitations.

@@ -1,5 +1,5 @@
 extends RefCounted
-## Pure simulation shared by tracked VR and desktop input.
+## Pure simulation driven by tracked VR gameplay.
 enum State { READY, CASTING, WAITING, BITE, FIGHT, LANDED, LOST }
 enum Submerge { NONE, PULL, SLACK }
 const SUBMERGE_WARNING := .8

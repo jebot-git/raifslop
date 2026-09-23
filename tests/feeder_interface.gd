@@ -139,19 +139,6 @@ func run():
  check(g.rig_radial.opened and g.rig_radial.choice==2 and g.game.rig==0,"Available style stays highlighted after unavailable option")
  tracker.set_input("primary",Vector2.ZERO);await process_frame;g.rig_radial.update()
  check(not g.rig_radial.opened and g.game.rig==2,"Neutral confirms available style after unavailable option")
- g.xr=false
- var tab:=InputEventKey.new();tab.keycode=KEY_TAB;tab.pressed=true
- g._unhandled_input(tab);tab.pressed=false;g._unhandled_input(tab)
- check(g.rig_radial.opened,"Desktop Tab tap leaves radial open after release")
- var arrow:=InputEventKey.new();arrow.keycode=KEY_LEFT;arrow.pressed=true
- Input.parse_input_event(arrow);Input.flush_buffered_events();g.rig_radial.update()
- check(g.rig_radial.opened and g.game.rig==2,"Desktop arrow highlights without selecting")
- var arrow_release:InputEventKey=arrow.duplicate();arrow_release.pressed=false
- Input.parse_input_event(arrow_release);Input.flush_buffered_events();g.rig_radial.update()
- check(not g.rig_radial.opened and g.game.rig==0,"Desktop arrow release confirms without holding Tab")
- tab.pressed=true;g._unhandled_input(tab);tab.pressed=false;g._unhandled_input(tab)
- tab.pressed=true;g._unhandled_input(tab);tab.pressed=false;g._unhandled_input(tab)
- check(not g.rig_radial.opened,"Second Tab tap cancels desktop radial")
  if "--capture" in OS.get_cmdline_user_args():
   peer.hide();g.game.reset();g._select_location("lakeside",false)
   g.xr=native;g.rod.hide();g.rod_status.hide();g.bobber.hide();g.line_mesh.clear_surfaces()

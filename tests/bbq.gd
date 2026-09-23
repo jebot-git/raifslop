@@ -119,19 +119,17 @@ func run() -> void:
 	g.current_location = "meadow_bend"; bbq.start()
 	check(bbq.choices.size() == 2 and bbq.choices[1].latin == "Salmo trutta", "Changing water replaces local catch menu")
 	check(bbq.items.filter(func(i):return i.kind == "beer").size() == 4,"New location stocks fresh hidden cooler")
-	# Desktop uses the same physical tool pose; Enter is a held clamp input.
+	# Tongs clamp through the tracked trigger; wrist rotation flips the portion.
 	var tool = bbq.tongs
 	var portion = bbq.items[0]
 	portion.position = Vector3(0,1.1,0)
 	var tool_pose := Transform3D(bbq.global_basis,portion.global_position-bbq.global_basis*tool.TIP)
-	check(bbq.pickup(1,tool,tool_pose),"Desktop can hold tongs")
-	var enter := InputEventKey.new(); enter.keycode=KEY_ENTER; enter.pressed=true
-	bbq.desktop_input(enter)
-	check(tool.food==portion and not portion.consumed,"Desktop Enter clamps without consuming")
-	var flip := InputEventKey.new(); flip.keycode=KEY_F; flip.pressed=true
-	bbq.desktop_input(flip); tool.food.follow_hand(tool.global_transform)
-	enter.pressed=false; bbq.desktop_input(enter)
-	check(portion.on_grill and portion.side==1 and bbq.held[1]==tool,"Desktop flip and Enter release put opposite side down")
+	check(bbq.pickup(1,tool,tool_pose),"Tracked hand can hold tongs")
+	bbq.squeeze_tongs(1,true)
+	check(tool.food==portion and not portion.consumed,"Trigger clamps without consuming")
+	tool.rotate_object_local(Vector3.FORWARD,PI);tool.food.follow_hand(tool.global_transform)
+	bbq.squeeze_tongs(1,false)
+	check(portion.on_grill and portion.side==1 and bbq.held[1]==tool,"Wrist flip and trigger release put opposite side down")
 	var beer = bbq.items.filter(func(i):return i.kind=="beer")[0]
 	check(not tool.clamp_item(beer),"Tongs cannot clamp beer")
 	# Face consumption of tong-held food preserves the tool and opens ownership.

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Native Monado stereo session plus a separate desktop multiplayer client."""
+"""Native Monado stereo session plus a separate synthetic multiplayer client."""
 import os,pathlib,subprocess,tempfile,time
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 GODOT=os.environ.get('GODOT_BIN','/home/blux/.local/bin/Godot_v4.7.2-stable_linux.x86_64')
 with tempfile.TemporaryDirectory(prefix='fishing-multiplayer-xr-') as tmp:
     jobs=[]
     try:
-        for role in ['xr','desktop']:
+        for role in ['xr','synthetic']:
             env=dict(os.environ,XDG_DATA_HOME=tmp+'/'+role,XR_RUNTIME_JSON='/usr/share/openxr/1/openxr_monado.json',SIMULATED_ENABLE='1',XRT_COMPOSITOR_FORCE_XCB='1')
             path=pathlib.Path(tmp)/(role+'.log'); stream=path.open('w')
             args=[GODOT,'--path',str(ROOT),'--script','res://tests/multiplayer_xr.gd']
-            if role=='desktop': args+=['--xr-mode','off']
+            if role=='synthetic': args+=['--xr-mode','off']
             args+=['--',role]
-            process=subprocess.Popen(args,env=env,stdout=stream,stderr=subprocess.STDOUT)
+            process=subprocess.Popen(args + (['--xr-test'] if '--script' in args else []),env=env,stdout=stream,stderr=subprocess.STDOUT)
             jobs.append((role,process,stream,path))
             if role=='xr':
                 # First-time shader compilation can exceed a fixed startup delay.

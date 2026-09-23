@@ -1,5 +1,5 @@
 extends Node3D
-## Shared-world BBQ presentation and forgiving VR/desktop interaction.
+## Shared-world BBQ presentation and forgiving VR interaction.
 const Sites=preload("res://scripts/bbq/sites.gd")
 const Icons=preload("res://scripts/ui/pictograms.gd")
 const UI_LAYER=preload("res://scripts/guide_camera.gd").UI_LAYER
@@ -7,7 +7,6 @@ const FOOD_ICONS={"fish_burger":"burger","sausage":"eat","corn":"eat","mushroom"
 const FOOD_SIZE=preload("res://scripts/fish_size.gd")
 const Tongs=preload("res://scripts/bbq/tongs.gd")
 const Model=preload("res://scripts/bbq/model.gd")
-var desktop_right:=Node3D.new()
 var g:Node3D
 var service:Node
 var location:=""
@@ -44,12 +43,11 @@ var splash_age:=0.0
 func setup(root:Node3D) -> void:
  g=root;service=g.network.bbq
  name="ShoreBBQ"
- add_child(desktop_right)
  service.updated.connect(refresh)
  _build_menu()
  var layer:=CanvasLayer.new();layer.layer=110;add_child(layer)
  shade=ColorRect.new();shade.color=Color(0,0,0,0);shade.mouse_filter=Control.MOUSE_FILTER_IGNORE
- layer.add_child(shade);shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ layer.add_child(shade);shade.hide()
  fade_mesh=MeshInstance3D.new();var quad:=QuadMesh.new();quad.size=Vector2(4,4);fade_mesh.mesh=quad;fade_mesh.layers=UI_LAYER
  fade_material=StandardMaterial3D.new();fade_material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;fade_material.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;fade_material.no_depth_test=true;fade_material.albedo_color=Color(0,0,0,0);fade_material.render_priority=127
  fade_mesh.material_override=fade_material;fade_mesh.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;g.head.add_child(fade_mesh);fade_mesh.position=Vector3(0,0,-.11);fade_mesh.visible=false
@@ -234,11 +232,9 @@ func release_all() -> void:
 
 func hand_pose(hand:int,peer:=-1) -> Transform3D:
  if peer<0 or peer==service.local_id():
-  if g.xr:return g.controller_pose(hand)
-  return g.head.global_transform*Transform3D(Basis.IDENTITY,Vector3(-.23 if hand==0 else .23,-.30,-.55))
+  return g.controller_pose(hand)
  var who:Dictionary=service.actor(peer)
  if who.is_empty():return Transform3D.IDENTITY
- if not who.xr:return who.head*Transform3D(Basis.IDENTITY,Vector3(-.23 if hand==0 else .23,-.30,-.55))
  return who.left if hand==0 else who.right
 
 func nearest(at:Vector3,radius:float,food_only:=false) -> int:
@@ -250,20 +246,6 @@ func nearest(at:Vector3,radius:float,food_only:=false) -> int:
   if d<distance:distance=d;result=item.id
  return result
 
-func aimed(food_only:=false) -> int:
- if not is_instance_valid(station):return -1
- var mouse:Vector2=get_viewport().get_mouse_position()
- var ray:Vector3=g.head.project_ray_origin(mouse);var axis:Vector3=g.head.project_ray_normal(mouse)
- var best:=.18;var result:=-1
- for item in service.model.stations[location].items:
-  if item.owner!=0 or item.place=="gone" or (item.kind=="drink" and not service.model.stations[location].cooler_open) or (food_only and item.kind not in Model.FOODS):continue
-  var offset:Vector3=item_nodes[item.id].global_position-ray
-  var along:float=offset.dot(axis)
-  if along<0 or along>3.2:continue
-  var d:float=(offset-axis*along).length()
-  if d<best:best=d;result=item.id
- return result
-
 func use(hand:int,target:int,cool:=false) -> void:
  var id:int=service.model.held(location,service.local_id(),hand)
  if id<0:return
@@ -273,31 +255,8 @@ func use(hand:int,target:int,cool:=false) -> void:
  elif item.kind=="drink":service.request("sip",id,hand)
  elif item.kind in Model.FOODS:service.request("eat",id,hand)
 
-func handle_input(event:InputEvent) -> bool:
- if g.xr or g.menu_open or transitioning or g.fish_guide.held:return false
- if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_B and not (is_instance_valid(g.golf_activity) and g.golf_activity.active):
-  if visiting:return_to_water()
-  else:visit()
-  return true
- if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_H:visit();return true
- if not g.rod_holster.stowed or not is_instance_valid(station) or g.motor.global_position.distance_to(station.global_position)>5:return false
- if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_C:service.request("cooler");return true
- var id:int=service.model.held(location,service.local_id(),1)
- if event is InputEventMouseButton and event.pressed:
-  if event.button_index==MOUSE_BUTTON_RIGHT:
-   if id>=0:service.request("drop",id,1)
-   return true
-  if event.button_index==MOUSE_BUTTON_LEFT:
-   var target:=aimed(id in [6,7])
-   if id<0 and target>=0:service.request("grab",target,1)
-   else:use(1,target)
-   return true
- if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F:use(1,aimed(true),true);return true
- return false
-
 func _process(_delta:float) -> void:
  if not is_instance_valid(g):return
- desktop_right.global_transform=hand_pose(1)
  fade_mesh.visible=g.xr and shade.color.a>.001;fade_material.albedo_color=shade.color
  if location!=g.current_location:select_location()
  if not is_instance_valid(station):return
@@ -330,30 +289,29 @@ func _process(_delta:float) -> void:
  if cooking and not sound.playing:sound.play()
  elif not cooking and sound.playing:sound.stop()
  smoke.emitting=cooking
- var allowed:bool=not g.menu_open and not transitioning and g.rod_holster.stowed and not g.fish_guide.held and not g.shoulder_radio.held and (not g.xr or g.tracking_manager.focused)
+ var allowed:bool=not g.menu_open and not transitioning and g.rod_holster.stowed and not g.fish_guide.held and not g.shoulder_radio.held and g.tracking_manager.focused
  if not allowed:
   if holds(0) or holds(1):release_all()
   grip_down=[true,true];trigger_down=[true,true];hint.visible=false;cooler_icon.visible=false;return
- hovered=aimed() if not g.xr else -1
- if g.xr:
-  for hand in 2:
-   var controller:XRController3D=g.left if hand==0 else g.right
-   var id:int=service.model.held(location,service.local_id(),hand)
-   if not controller.get_has_tracking_data():
-    if id>=0:service.request("drop",id,hand)
-    grip_down[hand]=true;trigger_down[hand]=true;continue
-   var grip:bool=controller.get_float("grip")>(.35 if grip_down[hand] else .55)
-   var trigger:bool=controller.get_float("trigger")>.55 or controller.is_button_pressed("trigger_click")
-   var hand_transform:=hand_pose(hand)
-   var at:Vector3=hand_transform.origin-hand_transform.basis.z*(.22 if id in [6,7] else 0)
-   var target:=nearest(at,.25 if id in [6,7] else .19,id in [6,7])
-   if target>=0:hovered=target
-   if grip and not grip_down[hand] and id<0 and target>=0:service.request("grab",target,hand)
-   if not grip and grip_down[hand] and id>=0:service.request("drop",id,hand)
-   if trigger and not trigger_down[hand]:
-    if id>=0:use(hand,target)
-    elif controller.global_position.distance_to(station.to_global(Sites.COOLER_HANDLE))<.3:service.request("cooler",-1,hand)
-   grip_down[hand]=grip;trigger_down[hand]=trigger
+ hovered=-1
+ for hand in 2:
+  var controller:XRController3D=g.left if hand==0 else g.right
+  var id:int=service.model.held(location,service.local_id(),hand)
+  if not controller.get_has_tracking_data():
+   if id>=0:service.request("drop",id,hand)
+   grip_down[hand]=true;trigger_down[hand]=true;continue
+  var grip:bool=controller.get_float("grip")>(.35 if grip_down[hand] else .55)
+  var trigger:bool=controller.get_float("trigger")>.55 or controller.is_button_pressed("trigger_click")
+  var hand_transform:=hand_pose(hand)
+  var at:Vector3=hand_transform.origin-hand_transform.basis.z*(.22 if id in [6,7] else 0)
+  var target:=nearest(at,.25 if id in [6,7] else .19,id in [6,7])
+  if target>=0:hovered=target
+  if grip and not grip_down[hand] and id<0 and target>=0:service.request("grab",target,hand)
+  if not grip and grip_down[hand] and id>=0:service.request("drop",id,hand)
+  if trigger and not trigger_down[hand]:
+   if id>=0:use(hand,target)
+   elif controller.global_position.distance_to(station.to_global(Sites.COOLER_HANDLE))<.3:service.request("cooler",-1,hand)
+  grip_down[hand]=grip;trigger_down[hand]=trigger
  var nearby:bool=g.head.global_position.distance_to(station.global_position)<3.5
  hint.visible=Icons.enabled and nearby;cooler_icon.visible=Icons.enabled and nearby
  if hint.visible:

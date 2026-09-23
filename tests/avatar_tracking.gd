@@ -15,7 +15,7 @@ func run():
 	var frame: Transform3D=game.motor.global_transform
 	var body={"left_curls":PackedFloat32Array([0,1,0,0,0]),"right_curls":PackedFloat32Array([0,0,0,0,0])}
 	avatar.apply_tracking(frame,body,{"look":Vector2(.1,.05),"blink":Vector2(.5,.2),"gaze":true,"lids":true})
-	avatar.update_targets(game.head,game.desktop_left,game.rod,game.motor.position.y,Vector3.ZERO,.016)
+	avatar.update_targets(game.head,game.reel_hand_target,game.rod,game.motor.position.y,Vector3.ZERO,.016)
 	avatar.solver._process_modification_with_delta(.016)
 	var index:=sk.find_bone("LeftIndexProximal");var middle:=sk.find_bone("LeftMiddleProximal")
 	check(not sk.get_bone_pose_rotation(index).is_equal_approx(sk.get_bone_rest(index).basis.get_rotation_quaternion()),"Individual index curl reaches skeleton")
@@ -30,10 +30,10 @@ func run():
 	var planted: Vector3=sk.to_global(sk.get_bone_global_pose(foot).origin)
 	body.left_foot=Transform3D(Basis.IDENTITY,frame.affine_inverse()*(planted+Vector3.UP*.22))
 	avatar.apply_tracking(frame,body,{})
-	avatar.update_targets(game.head,game.desktop_left,game.rod,game.motor.position.y,Vector3.ZERO,.016)
+	avatar.update_targets(game.head,game.reel_hand_target,game.rod,game.motor.position.y,Vector3.ZERO,.016)
 	avatar.solver._process_modification_with_delta(.016)
 	check(sk.to_global(sk.get_bone_global_pose(foot).origin).y>planted.y+.12,"Tracked foot overrides procedural floor plant")
-	avatar.apply_tracking(frame,{},{}); avatar.update_targets(game.head,game.desktop_left,game.rod,game.motor.position.y,Vector3(1,0,0),.2)
+	avatar.apply_tracking(frame,{},{}); avatar.update_targets(game.head,game.reel_hand_target,game.rod,game.motor.position.y,Vector3(1,0,0),.2)
 	avatar.solver._process_modification_with_delta(.2)
 	check(avatar.speed>0 and avatar.phase>0,"Fallback gait advances with locomotion")
 	game.head.rotation.y=.6;avatar.rotation.y=.6
@@ -46,7 +46,7 @@ func run():
 		expected[id]=Basis(Vector3.UP,.6)*reference
 		oriented[row[0]]=Transform3D(Basis(Vector3.UP,.6),frame.affine_inverse()*sk.to_global(sk.get_bone_global_rest(id).origin))
 	avatar.apply_tracking(frame,oriented,{})
-	avatar.update_targets(game.head,game.desktop_left,game.rod,game.motor.position.y,Vector3.ZERO,.016)
+	avatar.update_targets(game.head,game.reel_hand_target,game.rod,game.motor.position.y,Vector3.ZERO,.016)
 	avatar.solver._process_modification_with_delta(.016)
 	for id in expected:
 		var actual: Basis=sk.global_basis.orthonormalized()*sk.get_bone_global_pose(id).basis.orthonormalized()

@@ -7,9 +7,6 @@ func check(ok: bool, label: String) -> void:
 	print("PASS " if ok else "FAIL ", label)
 	if not ok: failures.append(label)
 func _initialize() -> void: run.call_deferred()
-func key(game, code: Key) -> void:
-	var event := InputEventKey.new(); event.pressed = true; event.keycode = code
-	game._unhandled_input(event)
 func run() -> void:
 	var game = load("res://scenes/main.tscn").instantiate(); root.add_child(game)
 	await create_timer(.3).timeout
@@ -17,23 +14,22 @@ func run() -> void:
 	var guide = game.fish_guide
 	var photo = guide.photo_camera
 	check(is_instance_valid(photo.camera) and photo.view.render_target_update_mode == SubViewport.UPDATE_DISABLED, "Camera allocates no ongoing render while inactive")
-	key(game, KEY_G); key(game, KEY_C)
-	check(guide.held and photo.active, "Guide keyboard shortcut opens camera")
+	guide.held=true;game._left_button("trigger_click")
+	check(guide.held and photo.active, "Guide trigger opens camera")
 	photo.update_pose()
-	check(photo.camera.global_transform.is_equal_approx(game.head.global_transform), "Desktop lens follows center of viewpoint")
+	check(photo.camera.global_transform.is_equal_approx(guide.global_transform * Photo.lens_pose(false)), "Lens follows physical guide")
 	check(photo.camera.cull_mask & Photo.UI_LAYER == 0 and game.head.cull_mask & Photo.UI_LAYER != 0, "Photo hides UI layer while player view retains it")
 	check(guide.device.find_children("*", "MeshInstance3D", true, false).all(func(n): return n.layers == Photo.UI_LAYER), "Entire guide excluded from photo to prevent recursive screens")
 	check(photo.view.world_3d == game.get_world_3d() and photo.view.get_parent() != game.hud.get_parent(), "Photo shares scenery but has no main HUD canvas")
-	key(game, KEY_F)
+	game._right_pressed("ax_button")
 	check(photo.selfie and photo.camera.cull_mask == 5, "Selfie includes complete avatar layer")
-	var target: Vector3 = game.head.global_position - Vector3.UP * .3
-	check((-photo.camera.global_basis.z).dot((target-photo.camera.global_position).normalized()) > .99, "Selfie lens faces angler")
+	check((-photo.camera.global_basis.z).dot(guide.global_basis.z) > .99, "Selfie lens faces guide front")
 	var previous: int = game.game.state
 	if DisplayServer.get_name() == "headless":
-		key(game, KEY_SPACE)
+		game._right_pressed("trigger_click")
 		check(not photo.busy and photo.status.contains("renderer"), "Unavailable renderer reports failure without becoming stuck")
 	check(game.game.state == previous, "Camera shutter never casts or releases fish")
-	key(game, KEY_C); key(game, KEY_C)
+	game._left_button("trigger_click");game._left_button("trigger_click")
 	game.xr = true
 	game.left.global_transform = Transform3D(Basis.from_euler(Vector3(.1, .4, 0)), game.head.global_position + Vector3(-.3, -.2, -.3))
 	photo.selfie = false; photo.update_pose()

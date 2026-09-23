@@ -5,7 +5,6 @@ var game_root: Node3D
 var stowed := false
 var grip_was_down := false
 var belt_pose := Transform3D.IDENTITY
-var desktop_pose := Transform3D.IDENTITY
 
 func update_holster() -> void:
 	var g = game_root
@@ -32,23 +31,20 @@ func set_stowed(value: bool) -> bool:
 		g.motor.catch_controls=false;g.escape_offset=Vector3.ZERO
 	stowed=value
 	if stowed:
-		desktop_pose=g.rod.transform
 		g.rod.reparent(g)
 		g.rod.global_transform=belt_pose
 	else:
 		if is_instance_valid(g.bbq):g.bbq.release_all()
-		g.rod.reparent(g.right if g.xr else g.origin)
+		g.rod.reparent(g.right)
 		g.rod.top_level=g.xr
-		if g.xr:
-			var grip: Variant=g.avatar.hand_grip_pose() if is_instance_valid(g.avatar) else null
-			g.rod.global_transform=(grip if grip is Transform3D else g.controller_pose(1))*HELD_POSE
-		else: g.rod.transform=desktop_pose
+		var grip: Variant=g.avatar.hand_grip_pose() if is_instance_valid(g.avatar) else null
+		g.rod.global_transform=(grip if grip is Transform3D else g.controller_pose(1))*HELD_POSE
 	g.rod_visual.set_folded(stowed)
 	g.rod.show()
 	g.casting=false;g.peak_speed=0;g.velocity=Vector3.ZERO;g.tracking_was_valid=false
 	g.reel_tracker.engaged=false;g.reel_tracker.angular_delta=0;g.fight_input.reset()
 	g.fishing_feedback.reel_rate=0
-	g.last_tip=g.origin.to_local(g.tip.global_position) if g.xr else g.tip.global_position
+	g.last_tip=g.origin.to_local(g.tip.global_position)
 	g.game.message="Rod stashed · right hip + grip to pick up." if stowed else "Rod ready · hold trigger, sweep back then forward, release."
 	g._update_line()
 	g.hud.queue_redraw()

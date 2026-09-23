@@ -37,16 +37,16 @@ func allowed()->bool:
 	if game.godview.active or game.menu_open or game.fitting_club or game.course_guide.held or game.ball.moving or not game.focused:return false
 	if is_instance_valid(game.host_activity) and game.host_activity.settings_open:return false
 	if is_instance_valid(game.host_game) and is_instance_valid(game.host_game.shoulder_radio) and game.host_game.shoulder_radio.held:return false
-	return not game.xr or game.pointer_controller().get_has_tracking_data()
+	return game.pointer_controller().get_has_tracking_data()
 func axis()->Vector2:
-	return game.pointer_controller().get_vector2("primary") if game.xr else Vector2(float(Input.is_key_pressed(KEY_RIGHT))-float(Input.is_key_pressed(KEY_LEFT)),float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN)))
+	return game.pointer_controller().get_vector2("primary")
 func open()->bool:
 	if opened or not allowed():return false
 	opened=true;choice=-1;armed=axis().length()<.2
 	global_transform=game.head.global_transform*Transform3D(Basis.IDENTITY,Vector3(0,-.1,-.8));show()
 	view.render_target_update_mode=SubViewport.UPDATE_ALWAYS;canvas.queue_redraw()
 	game.body.radial_open=true;game.body.turn_reserved=true;game.body.catch_controls=true
-	game.charging=false;game.power=0;game.reset_swing()
+	game.reset_swing()
 	return true
 func point(input:Vector2)->void:
 	if input.length()<.2:armed=true

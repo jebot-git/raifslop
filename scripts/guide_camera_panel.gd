@@ -6,7 +6,7 @@ static func draw(screen:Control,guide)->void:
 	screen.label("FIELD CAMERA", Vector2(34, 65), 42, Color("a9dfb2"))
 	screen.label("SELFIE STICK" if photo.selfie else "LOOK THROUGH THE LENS", Vector2(36, 112), 26)
 	screen.draw_texture_rect(photo.view.get_texture(), Rect2(20, 170, 600, 337.5), false)
-	var extension_hint:String="RIGHT STICK ↑/↓: EXTEND / RETRACT" if guide.game_root.xr else "↑ / ↓: EXTEND / RETRACT"
+	var extension_hint:String="RIGHT STICK ↑/↓: EXTEND / RETRACT"
 	screen.label(controls.get("extend",extension_hint) if photo.selfie else "1920 × 1080 · UI-free photo", Vector2(36, 555), 23 if photo.selfie else 27)
 	var words: PackedStringArray = photo.status.split(" ")
 	var line := ""
@@ -16,7 +16,7 @@ static func draw(screen:Control,guide)->void:
 			screen.label(line, Vector2(36, y), 20); y += 26; line = ""
 		line += word + " "
 	screen.label(line, Vector2(36, y), 20)
-	screen.label(controls.get("capture","PRESS › / RIGHT TRIGGER: PHOTO" if guide.game_root.xr else "SPACE: TAKE PHOTO"), Vector2(36, 735), 25)
-	screen.label(controls.get("selfie","PRESS ‹ / RIGHT A: SELFIE ON/OFF" if guide.game_root.xr else "F: SELFIE ON/OFF · MIDDLE-DRAG: AIM"), Vector2(36, 777), 23)
-	screen.label(controls.get("toggle","LEFT TRIGGER: GUIDE" if guide.game_root.xr else "C: GUIDE · G: CLOSE"), Vector2(36, 819), 23)
+	screen.label(controls.get("capture","PRESS › / RIGHT TRIGGER: PHOTO"), Vector2(36, 735), 25)
+	screen.label(controls.get("selfie","PRESS ‹ / RIGHT A: SELFIE ON/OFF"), Vector2(36, 777), 23)
+	screen.label(controls.get("toggle","LEFT TRIGGER: GUIDE"), Vector2(36, 819), 23)
 

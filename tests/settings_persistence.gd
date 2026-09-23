@@ -22,8 +22,6 @@ func run():
 		g._select_location("lake_pier",false)
 		g.game.tackle.shekels=432;g.game.tackle.owned.assign([0,1]);g.game.tackle.equipped=1
 		if "--window-close" in args:g.notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
-		elif "--escape" in args:
-			var key:=InputEventKey.new();key.keycode=KEY_ESCAPE;key.pressed=true;g._unhandled_input(key)
 		else:g.avatar_menu.quit_button.pressed.emit()
 		await create_timer(2).timeout
 		push_error("Exit path failed to quit");quit(1);return

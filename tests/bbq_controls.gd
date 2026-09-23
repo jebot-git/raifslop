@@ -60,11 +60,9 @@ func run() -> void:
  check(g.fish_guide.photo_camera.active,"Camera mode opens at the shared BBQ")
  check(not a.holds(0) and not a.holds(1),"Opening guide returns BBQ props")
  check(items[1].cook[0]>heat,"Guide use does not stop shared cooking")
- g.xr=false
- var click:=InputEventMouseButton.new();click.button_index=MOUSE_BUTTON_LEFT;click.pressed=true
- var c:=InputEventKey.new();c.keycode=KEY_C;c.pressed=true
- check(not a.handle_input(click) and not a.handle_input(c),"Guide camera receives mouse and camera-key inputs")
- g.fish_guide.photo_camera.toggle();g.fish_guide.held=false;g.xr=true
+ g._right_pressed("ax_button")
+ check(g.fish_guide.photo_camera.selfie,"Guide keeps controller camera input during BBQ")
+ g.fish_guide.photo_camera.toggle();g.fish_guide.held=false
  # Reacquire a utensil before focus loss so this also tests ownership cleanup.
  trackers[0].set_input("grip",0.0);pose(0,site*items[6].pos);await settle()
  trackers[0].set_input("grip",1.0);await settle()

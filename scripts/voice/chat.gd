@@ -102,13 +102,12 @@ func can_transmit() -> bool:
 	# Fishing's tracking flag can stay false while the menu, Guide or holster
 	# bypasses rod updates. Like FPSloppa, voice follows XR focus independently
 	# of controller tracking and resumes as soon as focus returns.
-	return game.active and not game.dedicated and game.voice_enabled and game.players.has(multiplayer.get_unique_id()) and (not game.root_game.xr or game.root_game.tracking_manager.focused)
+	return game.active and not game.dedicated and game.voice_enabled and game.players.has(multiplayer.get_unique_id()) and game.root_game.tracking_manager.focused
 
 func push_to_talk() -> bool:
 	if radio_channel():return true
 	if radio_held():return false
-	if game.root_game.xr: return game.root_game.left.is_button_pressed("primary_click")
-	return Input.is_physical_key_pressed(KEY_T) and not game.root_game.menu_open
+	return game.root_game.left.get_has_tracking_data() and game.root_game.left.is_button_pressed("primary_click")
 
 func radio_held() -> bool:
 	return is_instance_valid(game.root_game.get("shoulder_radio")) and game.root_game.shoulder_radio.held
@@ -126,9 +125,7 @@ func wants_transmit() -> bool:
 	return mode>0 and can_transmit() and (radio_channel() or not radio_held() and (push_to_talk() if mode==1 else hangover>0))
 
 func _process(delta: float) -> void:
-	if not game.dedicated and not game.root_game.xr:
-		set_radio(Input.is_physical_key_pressed(KEY_B) and not game.root_game.menu_open)
-	elif radio_active and not can_transmit():set_radio(false)
+	if radio_active and not can_transmit():set_radio(false)
 	for id in streams.keys():
 		var state: Dictionary=streams[id]
 		if not game.players.has(id) or not state.radio and not game.same_location(multiplayer.get_unique_id(),id) or game.clock-state.last_time>2:remove_stream(id);continue

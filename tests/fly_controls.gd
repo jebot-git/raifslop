@@ -35,7 +35,7 @@ func run()->void:
    pose(0,g.origin.to_local(g.crank.to_global(g.rod_visual.crank_grip_position())))
    trackers[0].set_input(input,1.0);await settle()
    check(g.reel_tracker.engaged and not g.game.fly.strip_engaged,location+": "+input+" grabs fly reel without grabbing loose line")
-   check(g.avatar.left_target==g.desktop_left and g.desktop_left.global_position.distance_to(g.crank.to_global(g.rod_visual.crank_grip_position()))<.001,"Offhand snaps to the smaller fly crank")
+   check(g.avatar.left_target==g.reel_hand_target and g.reel_hand_target.global_position.distance_to(g.crank.to_global(g.rod_visual.crank_grip_position()))<.001,"Offhand snaps to the smaller fly crank")
    var before:float=g.crank.rotation.x
    var raw_rod:Transform3D=g.right.transform*g.rod_holster.HELD_POSE
    var a:float=g.reel_tracker.previous_angle+.16

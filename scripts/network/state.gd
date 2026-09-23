@@ -16,22 +16,22 @@ static func capture(root: Node, serial: int) -> Dictionary:
 	# otherwise. Protocol 5 also carries exact tackle visibility and lure position.
 	var tackle_active:bool=root.game.state in [Fish.State.READY,Fish.State.CASTING,Fish.State.WAITING,Fish.State.BITE,Fish.State.FIGHT]
 	var result:Dictionary={"user_height":root.tracking_manager.user_height if is_instance_valid(root.tracking_manager) else 1.65,"golf_club":-1,"golf_stowed":false,"body":body,"face":root.tracking_manager.face if is_instance_valid(root.tracking_manager) else {},"visemes":root.network.voice.mouth_pose(root.multiplayer.get_unique_id()),"serial":serial,"location":root.current_location,"head":root.head.global_transform,
-		"left":root.bbq.hand_pose(0) if is_instance_valid(root.bbq) and root.bbq.holds(0) else (root.left.global_transform if root.xr and not root.reel_tracker.engaged else root.desktop_left.global_transform),
-		"right":root.bbq.hand_pose(1) if is_instance_valid(root.bbq) and root.bbq.holds(1) else (root.right.global_transform if root.xr else root.rod.global_transform),
+		"left":root.bbq.hand_pose(0) if is_instance_valid(root.bbq) and root.bbq.holds(0) else (root.reel_hand_target.global_transform if root.reel_tracker.engaged else root.left.global_transform),
+		"right":root.bbq.hand_pose(1) if is_instance_valid(root.bbq) and root.bbq.holds(1) else (root.right.global_transform),
 		"rod_tier":root.game.tackle.equipped,"reel_angle":fposmod(root.crank.rotation.x,TAU),"rod":root.rod.global_transform,"fish":root.fish_display.global_transform,
 		"feet":root.motor.global_position,"motion":root.motor.last_motion,"tip":root.rod_visual.to_global(root.rod_visual.quiver.end) if root.game.is_feeder_fishing() else root.tip.global_position,
 		"bobber":root.bobber.global_position,"mouth":root.fish_display.to_global(root._catch_mouth()),
 		"bait_position":root.rod_status.bait_visual.global_position,"bobber_visible":tackle_active and root.bobber.is_visible_in_tree(),"bait_visible":tackle_active and root.rod_status.bait_visual.is_visible_in_tree(),
 		"target":root.cast_target,"state":int(root.game.state),"rig":int(root.game.rig),"bait":root.game.bait,"species":root.game.fish_index,
 		"length":size,"caught":root.fish_display.visible,"in_hand":root.catch_in_hand if root.game.state==Fish.State.LANDED else root.game.is_fly_fishing() and root.game.fly.strip_engaged,"xr":root.xr,
-		"left_valid":not root.xr or root.left.get_has_tracking_data(),"right_valid":not root.xr or root.right.get_has_tracking_data(),
+		"left_valid":root.left.get_has_tracking_data(),"right_valid":root.right.get_has_tracking_data(),
 		"curl":root.avatar.left_curl if is_instance_valid(root.avatar) else 0.0}
 	if is_instance_valid(root.get("golf_activity")) and root.golf_activity.active:
 		var g=root.golf_activity.golf
 		result.golf_club=g.club_index;result.golf_stowed=g.equipment.stowed;result.state=0;result.rig=0;result.bait=0;result.caught=false;result.in_hand=false
 		result.bobber_visible=false;result.bait_visible=false
 		result.rod=g.club.global_transform.orthonormalized()
-		result.right=root.bbq.hand_pose(1) if root.bbq.holds(1) else root.right.global_transform if root.xr else g.club.global_transform.orthonormalized()
+		result.right=root.bbq.hand_pose(1) if root.bbq.holds(1) else root.right.global_transform
 		result.tip=g.club.global_position;result.bobber=g.ball.position
 		if g.support_hand.engaged:
 			# Transmit the resolved visual grip, as with the fishing reel. The

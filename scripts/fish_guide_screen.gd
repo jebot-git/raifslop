@@ -44,8 +44,8 @@ func _draw() -> void:
 	label("PERSONAL BEST" if entry.discovered else "NOT CAUGHT YET", Vector2(46, 663), 24)
 	label("%.1f cm" % entry.length if entry.discovered else "—", Vector2(370, 692), 37, Color("b9f0c0"))
 	label("ENTRY %02d / %02d" % [guide.selected + 1, rows.size()], Vector2(36, 747), 25)
-	label("FINGER: ‹ › PAGES · LEFT TRIGGER: CAMERA" if guide.game_root.xr else "C: CAMERA · ← →: BROWSE", Vector2(36, 782), 22)
-	label("RELEASE GRIP: RETURN TO BELT" if guide.game_root.xr else "G: CLOSE GUIDE", Vector2(36, 819), 21)
+	label("FINGER: ‹ › PAGES · LEFT TRIGGER: CAMERA", Vector2(36, 782), 22)
+	label("RELEASE GRIP: RETURN TO BELT", Vector2(36, 819), 21)
 
 func wrapped(text:String,at:Vector2,size_:int,line_height:int)->void:
 	var line:=""
@@ -85,5 +85,5 @@ func _draw_status() -> void:
 			text_size -= 1
 		label(value, Vector2(36, y + 44), text_size, Color("a9dfb2"))
 	label("%02d / %02d SPECIES FOUND" % [guide.entries.size(), guide.Session.SPECIES.size()], Vector2(36, 730), 27)
-	label("FINGER: ‹ › COLLECTION" if guide.game_root.xr else "← →: COLLECTION", Vector2(36, 782), 25)
-	label("LEFT TRIGGER: CAMERA" if guide.game_root.xr else "C: CAMERA · G: CLOSE", Vector2(36, 819), 23)
+	label("FINGER: ‹ › COLLECTION", Vector2(36, 782), 25)
+	label("LEFT TRIGGER: CAMERA", Vector2(36, 819), 23)

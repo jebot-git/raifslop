@@ -17,10 +17,6 @@ radial menu reserves right-stick turning until the stick returns to centre;
 left-stick push-to-talk remains available. It closes without selecting on tracking
 loss, menu opening or offhand-device use. Active casts, bites, fights and landed
 catches cannot change rigs. The selected rig is saved in player preferences.
-Desktop uses a **Tab** tap to open, then **Left/Right/Up** to highlight; releasing
-the direction keys selects and closes the menu.
-Tap Tab again to cancel.
-
 Cast normally and let the cage sink. Settling depth is an authored per-location
 value, varied by fishing-grid row (roughly 0.9–2.8 m); this is a lightweight
 presentation model, not measured bathymetry. Reeling lifts the empty cage and

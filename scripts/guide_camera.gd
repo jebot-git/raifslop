@@ -71,35 +71,13 @@ func update_pose() -> void:
 	camera.far=game.head.far
 	# The guide has its own grip rotation. Controller -Z now points along the
 	# handle, so using the controller pose puts the lens on the device's edge.
-	if game.xr:
-		camera.global_transform = guide.global_transform * lens_pose(selfie)
-		if selfie:
-			var base:=camera.global_position
-			camera.global_position=constrain_extension(base,base+camera.global_basis.z*selfie_extension)
-			effective_extension=base.distance_to(camera.global_position)
-		camera.cull_mask = 5 if selfie else 3
-		camera.fov = 90 if selfie else 65
-		camera.environment = game.head.environment
-		camera.attributes = game.head.attributes
-		return
-	var source: Transform3D = game.head.global_transform
-	camera.fov = 65
+	camera.global_transform = guide.global_transform * lens_pose(selfie)
 	if selfie:
-		var target: Vector3 = game.head.global_position - Vector3.UP * 0.3
-		var desired := source.origin - source.basis.z * (1.5+selfie_extension) + Vector3.UP * 0.15
-		# Keep the extended lens on this side of solid scenery.
-		var query := PhysicsRayQueryParameters3D.create(target, desired, 1)
-		if game.motor is CollisionObject3D: query.exclude = [game.motor.get_rid()]
-		var hit: Dictionary = game.get_world_3d().direct_space_state.intersect_ray(query)
-		if not hit.is_empty(): desired = hit.position + hit.normal * 0.08
-		if desired.distance_to(target) < 0.15: desired = target + source.basis.z * 0.2
-		camera.global_position = desired
-		var direction := (target - desired).normalized()
-		camera.look_at(target, Vector3.RIGHT if absf(direction.dot(Vector3.UP)) > 0.98 else Vector3.UP)
-		camera.cull_mask = 5
-	else:
-		camera.global_transform = source
-		camera.cull_mask = 3
+		var base:=camera.global_position
+		camera.global_position=constrain_extension(base,base+camera.global_basis.z*selfie_extension)
+		effective_extension=base.distance_to(camera.global_position)
+	camera.cull_mask = 5 if selfie else 3
+	camera.fov = 90 if selfie else 65
 	camera.environment = game.head.environment
 	camera.attributes = game.head.attributes
 
@@ -130,12 +108,9 @@ func adjust_selfie(axis:float,delta:float)->void:
 func sample_selfie_input(delta:float)->void:
 	var game=guide.game_root
 	var axis:=0.0
-	if game.xr:
-		if not game.tracking_manager.focused or not game.right.get_has_tracking_data() or not game.left.get_has_tracking_data():return
-		var controller:XRController3D=guide.photo_input_hand() if guide.has_method("photo_input_hand") else game.right
-		axis=controller.get_vector2("primary").y
-	else:
-		axis=float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN))
+	if not game.tracking_manager.focused or not game.right.get_has_tracking_data() or not game.left.get_has_tracking_data():return
+	var controller:XRController3D=guide.photo_input_hand() if guide.has_method("photo_input_hand") else game.right
+	axis=controller.get_vector2("primary").y
 	adjust_selfie(axis,delta)
 
 static func lens_pose(front: bool) -> Transform3D:

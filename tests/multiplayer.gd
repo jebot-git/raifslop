@@ -51,7 +51,7 @@ func run() -> void:
 			var enc:=Fixture.encoder()
 			for frame in range(430):
 				game.head.position.x=.4+sin(frame*.03)*.2
-				game.desktop_left.position=Vector3(-.3,1.3,-.2)
+				game.reel_hand_target.position=Vector3(-.3,1.3,-.2)
 				game.rod.rotation.y=sin(frame*.03)*.3
 				game.motor.last_motion=Vector3(.5,0,0)
 				game.tracking_manager.body={"hips":Transform3D(Basis(Vector3.UP,.3),Vector3(0,.92,0)),"left_foot":Transform3D(Basis.IDENTITY,Vector3(-.13,.3,0)),"left_curls":PackedFloat32Array([0,.2,.4,.6,.8])}

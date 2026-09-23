@@ -58,6 +58,7 @@ func run():
  var g=load("res://scenes/main.tscn").instantiate();root.add_child(g)
  await create_timer(.4).timeout
  g.set_process(false);g.motor.set_physics_process(false)
+ g.head.position=Vector3(0,1.65,.65);g.head.rotation.x=-.08;g.head_aimed_casting=true
  for id in ["meadow_bend","boulder_run"]:
   g.game.reset();check(g._select_location(id,false),"River travel "+id)
   await physics_frame
@@ -68,6 +69,7 @@ func run():
   var shrubs=g.foreground.get_node("LayeredRiverShrubs")
   check(shrubs.get_meta("instances")>50 and g.foreground.has_node("RiverAlders"),"River has layered realistic vegetation groups")
   check(shrubs.get_meta("layer_depth_separation")>.2,"Shrub layers have real depth separation")
+  g.head.look_at(Vector3(8,g.water_level,-12),Vector3.UP)
   g.game.select_bait(1);g.rod_status.update_bait();g._cast(12);g._update_line()
   check(g.game.state==S.State.CASTING,"River bank allows real cast "+g.game.message)
   check(g.bobber.visible and g.bobber.scale.x<.4,"Nymph uses small strike indicator")
@@ -101,11 +103,6 @@ func run():
    g.game.tick(.02,rate,0);g._constrain_river_fish(.02)
   check(g.game.state==S.State.LANDED,"Fish can be landed within river boundaries: "+g.game.message)
   g.game.reset();g.game.select_bait(0);g._update_line()
-  var press:=InputEventKey.new();press.keycode=KEY_SPACE;press.pressed=true
-  g._unhandled_input(press);g.game.fly.stroke(.6,0)
-  check(g.game.fly.charging and g.game.state==S.State.READY,"Desktop backcast charges on space press")
-  var release:=InputEventKey.new();release.keycode=KEY_SPACE;release.pressed=false;g._unhandled_input(release)
-  check(g.game.state==S.State.CASTING,"Desktop release sends fly into channel")
   g.game.reset();g._update_line()
   check(not g.bobber.visible,"Dry fly does not show conventional float")
  g.game.reset();g._select_location("lakeside",false);g._update_line()

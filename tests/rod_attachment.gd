@@ -13,10 +13,8 @@ func run() -> void:
 	var g=load("res://scenes/main.tscn").instantiate();root.add_child(g)
 	await create_timer(.4).timeout
 	g.set_process(false);g.motor.set_physics_process(false)
-	var desktop_pose: Transform3D=g.rod.global_transform
-	await process_frame;await process_frame
-	check(g.rod.global_transform.is_equal_approx(desktop_pose),"Desktop rod remains the IK input without attachment feedback")
 	g.xr=true;g.rod.reparent(g.right);g.rod.top_level=true
+	g.head.position=Vector3(0,1.65,.65) # Explicit synthetic headset pose.
 	g.motor.position=Vector3(2,.2,-3);g.head.rotation.y=.65
 	g.left.position=Vector3(-.3,1.2,-.3)
 	for path in g.avatars.DEFAULTS:

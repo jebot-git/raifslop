@@ -5,11 +5,10 @@ A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. Freshwate
 Open `project.godot` in Godot 4.7.2 and press F6/F5, or launch:
 
 ```bash
-./run.sh --desktop   # Keyboard/mouse practice, even with a simulated XR runtime installed
 ./run.sh             # OpenXR; start your headset's PC VR runtime first
 ```
 
-Set `GODOT_BIN` to your engine executable on another machine. The project uses Mobile/Vulkan rendering and a saved OpenXR default action map. Compatibility rendering on the development machine failed stereo shader compilation; use Mobile for VR. If no OpenXR interface initializes, the game falls back to desktop controls. A simulated runtime may initialize without usable controllers; use `--desktop` in that case.
+Set `GODOT_BIN` to your engine executable on another machine. The project uses Mobile/Vulkan rendering and a saved OpenXR default action map. Compatibility rendering on the development machine failed stereo shader compilation; use Mobile for VR. The client requires an initialized OpenXR runtime and tracked VR input. If OpenXR initialization fails, startup exits with a `VR_REQUIRED` error; no keyboard/mouse gameplay mode is available. Dedicated servers remain headless.
 
 Windows uses native OpenXR with the selected runtime, including VDXR or SteamVR
 OpenXR. See [Windows setup, runtime logs and capture troubleshooting](docs/WINDOWS_OPENXR.md).
@@ -20,29 +19,29 @@ Catches now earn **shekels** based on species rarity and specimen size. Open **F
 
 ## Controls
 
-| Action | VR (Touch-style names) | Desktop |
-|---|---|---|
-| Walk / strafe | Left thumbstick; head-relative | WASD |
-| Turn | Right thumbstick; 30° snap by default | Q / E |
-| Look around | Headset tracking | Middle mouse drag |
-| Avatar, locations & movement menu | Right B; point right controller and press trigger | V or click Avatar & Locations |
-| Choose bait | Left X cycles while ready | 1–6 or click a bait |
-| Cast | Aim at the water marker; hold right trigger, sweep back then forward, release | Right-drag to aim; hold Space for the backswing, then release |
-| Set hook | Lift rod sharply during the 1.8-second bite window | Space |
-| Reel | Hold left grip or trigger near the reel; hand snaps to the handle; circle to wind | Hold R or left mouse; add Shift to wind faster |
-| Counter a fish | Sweep rod left/right or lift as prompted | Left / Right / Up arrow |
-| Aim | Move/rotate the right controller, full 6DoF | Right mouse drag |
-| Field Guide | Left grip near lower handle at left hip; release to dock; unavailable during bites/fights | G to open/close; unavailable during bites/fights |
-| Guide camera / shutter / selfie | While held: left trigger / right trigger / right A | While open: C / Space / F |
-| Extend / retract selfie camera | Right stick up / down while selfie camera is active | Up / Down arrows |
-| Browse Field Guide | Physically press ‹ / ›, left X/Y, or either joystick while holding | Left/right arrows |
-| Inspect caught fish | Hold left grip to bring fish to left hand; release grip to hang it from rod | Automatic display |
-| Rotate caught fish | Either joystick: spin around vertical axis | Automatic rotation |
-| Release / retry | Left trigger while holding fish with grip; Right A / left Y also work | Space or button |
-| Server leaderboard | Right B → Leaderboard | V → Leaderboard |
-| Quit | Right B → Quit game | Escape or menu Quit game |
+| Action | VR (Touch-style names) |
+|---|---|
+| Walk / strafe | Left thumbstick; head-relative |
+| Turn | Right thumbstick; 30° snap by default |
+| Look around | Headset tracking |
+| Avatar, locations & movement menu | Right B; point right controller and press trigger |
+| Choose bait | Left X cycles while ready |
+| Cast | Aim at the water marker; hold right trigger, sweep back then forward, release |
+| Set hook | Lift rod sharply during the 1.8-second bite window |
+| Reel | Hold left grip or trigger near the reel; hand snaps to the handle; circle to wind |
+| Counter a fish | Sweep rod left/right or lift as prompted |
+| Aim | Move/rotate the right controller, full 6DoF |
+| Field Guide | Left grip near lower handle at left hip; release to dock; unavailable during bites/fights |
+| Guide camera / shutter / selfie | While held: left trigger / right trigger / right A |
+| Extend / retract selfie camera | Right stick up / down while selfie camera is active |
+| Browse Field Guide | Physically press ‹ / ›, left X/Y, or either joystick while holding |
+| Inspect caught fish | Hold left grip to bring fish to left hand; release grip to hang it from rod |
+| Rotate caught fish | Either joystick: spin around vertical axis |
+| Release / retry | Left trigger while holding fish with grip; Right A / left Y also work |
+| Server leaderboard | Right B → Leaderboard |
+| Quit | Right B → Quit game |
 
-VR casting defaults to projecting the **center of the headset view** onto the water; eye gaze does not steer it. Turn off **Controls → Head-aimed casting** to cast using only the motion controller: the forward swing sets direction and its speed sets distance. The setting saves immediately. The water marker previews the landing destination, within a 5–24 metre reach; in controller-only mode it appears after a valid back/forward swing. Hold the trigger, sweep the rod back then forward, and release. Desktop uses a held Space backswing and release, with right-drag controlling the marker. Aiming at real ground rejects the cast; invisible player barriers and underwater fish clearance do not block water-surface aiming. Under **Controls → Controller alignment**, adjust and save each controller’s position and rotation offsets. [Casting comfort, fish boundaries and guide discovery](docs/FISHING_COMFORT.md).
+VR casting defaults to projecting the **center of the headset view** onto the water; eye gaze does not steer it. Turn off **Controls → Head-aimed casting** to cast using only the motion controller: the forward swing sets direction and its speed sets distance. The setting saves immediately. The water marker previews the landing destination, within a 5–24 metre reach; in controller-only mode it appears after a valid back/forward swing. Hold the trigger, sweep the rod back then forward, and release. Aiming at real ground rejects the cast; invisible player barriers and underwater fish clearance do not block water-surface aiming. Under **Controls → Controller alignment**, adjust and save each controller’s position and rotation offsets. [Casting comfort, fish boundaries and guide discovery](docs/FISHING_COMFORT.md).
 
 In VR, landed fish hang head-up below the rod tip on the line. Hold left grip to grasp the string 8 cm above the fish’s mouth; lift your hand to inspect the fish hanging beneath it; releasing grip returns it to the rod. The fish stays vertical and head-up in both positions, regardless of hand tilt. While holding the fish, either joystick spins it around the vertical axis at up to about 103°/s; stick walking and turning pause only during hand inspection. A fish hanging from the rod leaves locomotion available. Press left trigger while gripping the fish to release it, or use Right A / left Y. Physical room-scale movement remains available.
 
@@ -60,7 +59,7 @@ A handheld **Field Guide** shows uncaught species as unnamed question marks with
 
 Each location has its own walkable floor, obstacles and protected water edges. Photographed gravel, concrete and timber textures give the authored geometry local surface detail. The boat stays stationary for VR comfort. See [foregrounds](docs/FOREGROUNDS.md) for images and dimensions. A capsule handles ground and obstacle collision; room-scale head offsets update the capsule without doubling physical movement. Movement speed is 2 m/s. Snap turns pivot about the head; enable **Smooth turn** in the avatar menu for continuous 75°/s turning. Opening the menu pauses both movement and fishing.
 
-New profiles start with **SharkPerson**, the bundled CC0 avatar by Polygonal Mind. Existing avatar selections are preserved. Choose SharkPerson, **Vita**, or **Victoria Rubin**, or use **Import .vrm** to select a local avatar. The Godot VRM 2.0.1 plugin supports VRM 0.x and 1.0 humanoids at runtime. In VR, **Import .vrm** opens a folder browser inside the headset, with Home, Downloads, Up and an editable path. Select a folder or VRM and press Open. Desktop mode uses the OS file picker. Bundled/cached avatars are directly selectable through the in-world VR panel.
+New profiles start with **SharkPerson**, the bundled CC0 avatar by Polygonal Mind. Existing avatar selections are preserved. Choose SharkPerson, **Vita**, or **Victoria Rubin**, or use **Import .vrm** to select a local avatar. The Godot VRM 2.0.1 plugin supports VRM 0.x and 1.0 humanoids at runtime. In VR, **Import .vrm** opens a folder browser inside the headset, with Home, Downloads, Up and an editable path. Select a folder or VRM and press Open. Bundled/cached avatars are directly selectable through the in-world VR panel.
 
 The hard limit is **25,000,000 bytes per VRM**, including embedded textures. Files above the limit are rejected before model decoding/caching; the cached copy and every subsequent load are checked again. Use self-contained binary VRMs with embedded textures and a humanoid skeleton. Imports and downloaded models share the external `data/vrm/` folder beside the desktop executable (`res://data/vrm/` in the editor, app external files on Android). Drop VRMs there before launch or use Import VRM / VRM folder. `--asset-root PATH` overrides the data root. Older avatar caches are copied across without deleting originals, and the equipped selection persists in `user://avatar.cfg`. Rejected models do not replace the active avatar.
 
@@ -92,7 +91,7 @@ The perch uses an attributed third-party model; carp and pike currently use simp
 - Eight native 8K waterside panoramas with animated water and walkable foregrounds, including a rocky coast and walkable sunrise beach. [Coastal locations](docs/COASTAL_LOCATIONS.md) have distinct marine rosters with twelve [marine species](docs/MARINE_EXPANSION.md) and saltwater baits.
 - Room-scale tracked head and controller poses; rod follows the right hand. Off-hand reeling is measured in rod-local coordinates so moving the rod does not itself turn the crank. Tracking loss pauses the simulation; re-grabs and tracking jumps reset the reel sample.
 - Bite timing, directional responses, fish runs, stamina, line tension, win/loss/retry and local catch persistence. Audio and controller vibration mark bites and successful counters.
-- A world-space VR menu, handheld guide status, a separate desktop interface, collision-based free locomotion, and selectable runtime VRM avatars with visible hands.
+- A world-space VR menu, handheld guide status, collision-based free locomotion, and selectable runtime VRM avatars with visible hands.
 
 The panorama has rotational scenery only: it does not acquire 6DoF parallax when the player moves. The cove, quay, boardwalk, boat, rod and water are actual 3D geometry. This is a hybrid scene, not a full reconstruction of a surveyed fishing spot. Gaussian splat rendering, skeletal fish animation, bendable rod physics, fish ecology and real-headset performance tuning are future work. Textured fish models are included. Quest 3 standalone performance has passed physical device testing. “AI” is the project name; fish behavior is local rule-based simulation, with no external AI service.
 
@@ -106,7 +105,7 @@ The game takes inspiration from Real VR Fishing's broad bait/timing/tension/gest
 godot --headless --path . --xr-mode off --script res://tests/run_tests.gd
 godot --headless --path . --xr-mode off --script res://tests/avatar_locomotion.gd
 XDG_DATA_HOME=/tmp/real-fishing-species godot --headless --path . --xr-mode off --script res://tests/fish_species.gd
-XDG_DATA_HOME=/tmp/fishing-locations ./run.sh --desktop --headless --script res://tests/locations.gd
+XDG_DATA_HOME=/tmp/fishing-locations godot --headless --xr-mode off --path . --script res://tests/locations.gd -- --xr-test
 godot --headless --path . --xr-mode off --quit-after 30
 ```
 
@@ -118,7 +117,7 @@ Meta avatar option research: [Quest and PC feasibility](docs/META_AVATARS_FEASIB
 
 ## Multiplayer and voice
 
-Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**T** / **left stick click**) remain available. Voice is positional within each location. Hold **B**, or grab the left-shoulder radio and hold its trigger in VR, to talk to all waters. Multiplayer requires matching protocol-14 server and clients.
+Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**left stick click**) remain available. Voice is positional within each location. Grab the left-shoulder radio and hold its trigger to talk to all waters. Multiplayer requires matching protocol-14 server and clients.
 
 Run `./run.sh --server --port 24567` for a headless dedicated server. LAN/Internet connections use direct UDP; Internet hosts need port forwarding or a reachable server. See [setup, controls and limitations](docs/MULTIPLAYER.md) and [FPSloppa code reuse](docs/FPSLOPPA_REUSE.md).
 
@@ -128,7 +127,7 @@ The **Tracking** tab enables FPSloppa-derived body tracking (native XR, Vive rol
 
 ## Field station menu and ambience
 
-Open the menu with **V** on desktop or **right B** in VR. Seven tabs—**Avatar**, **Waters**, **Tackle**, **Together**, **Tracking**, **Sound**, and **Controls**—share a pine-green, cream and brass field-station theme. FPSloppa-derived selectors and drag scrolling work inside the VR panel; focusing a connection text field opens a controller-operated keyboard.
+Open the menu with **right B**. Seven tabs—**Avatar**, **Waters**, **Tackle**, **Together**, **Tracking**, **Sound**, and **Controls**—share a pine-green, cream and brass field-station theme. FPSloppa-derived selectors and drag scrolling work inside the VR panel; focusing a connection text field opens a controller-operated keyboard.
 
 Each location has a distinct 128-second water, bird and wind soundscape. Travel crossfades the surroundings over two seconds; occasional timber creaks have a position in the pier or boat scene. **Sound** controls environment volume and mute independently of voice chat. Preferences persist locally. See [sources, preparation and checks](docs/PRESENTATION.md).
 
@@ -142,7 +141,7 @@ All eight photographed foregrounds use baked sky/bounce lighting, static sun sha
 
 ## Release downloads
 
-This release provides Windows, Linux, Quest standalone and a separate Linux dedicated-server package on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). Desktop archives include VR, desktop and dedicated-server launchers. Quest 3 standalone performance passed device testing; hand-tracking controls remain in planning. See [release and build instructions](docs/RELEASE.md).
+This release provides Windows, Linux, Quest standalone and a separate Linux dedicated-server package on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). PC archives include VR and dedicated-server launchers. Quest 3 standalone performance passed device testing; hand-tracking controls remain in planning. See [release and build instructions](docs/RELEASE.md).
 
 Pico standalone builds are retired from future releases following a reported startup crash on standard Pico 4 (black screen, then immediate exit). Pico OS 6 support is a future goal only, pending suitable hardware and direct testing; current Pico compatibility is not claimed. Historical release artifacts remain available.
 
@@ -174,7 +173,7 @@ rosters. [Sources, rebuild instructions and captures](docs/COASTAL_EXPANSION.md)
 
 ## Quiet interface, manual and server records
 
-The [HTML manual](docs/MANUAL.html) covers VR/desktop controls, pictograms, fly
+The [HTML manual](docs/MANUAL.html) covers VR controls, pictograms, fly
 fishing, the Field Guide and multiplayer. Outside menus and the Guide, VR text
 is limited to selected bait and catch name/length/weight. Small rod-mounted
 symbols, line colour, sound and haptics carry casting and fight feedback.
@@ -191,11 +190,11 @@ fly presentations. Proposed species remain gated by location and habitat.
 
 ### Cage feeder rig
 
-Tap **right joystick press** to open the selector, then point left/right/up to select classic tackle, feeder or lure and close it. Holding the click is unnecessary; tap again to cancel. The feeder uses a sinking cage filled with the selected bait and a flexible quiver tip. Earthworm, sweetcorn, maggots and bread target local coarse species across four lakes and Meadow Bend. Desktop: tap **Tab**, then Left/Right/Up to select; tap Tab again to cancel. [Methods, habitat distribution, assets and validation](docs/FEEDER_FISHING.md).
+Tap **right joystick press** to open the selector, then point left/right/up to select classic tackle, feeder or lure and close it. Holding the click is unnecessary; tap again to cancel. The feeder uses a sinking cage filled with the selected bait and a flexible quiver tip. Earthworm, sweetcorn, maggots and bread target local coarse species across four lakes and Meadow Bend. [Methods, habitat distribution, assets and validation](docs/FEEDER_FISHING.md).
 
 ### Lure rig and tackle tiers
 
-Select **Lure** with right joystick press + up (desktop Tab + Up). Left X cycles an inline spinner (casting spoon at sea), paddle-tail jig and diving minnow. Twitch the rod left/right or reel slowly to attract fish; leaving the lure still reduces attraction. Lift on a strike. All ten locations use suitable subsets of their fish rosters. Each of the four tackle tiers has matching classic, fly, feeder and casting models, folded models and reel handles; purchases and fight bonuses apply across styles. [Lure methods, progression, assets and validation](docs/LURE_FISHING.md).
+Select **Lure** with right joystick press + up. Left X cycles an inline spinner (casting spoon at sea), paddle-tail jig and diving minnow. Twitch the rod left/right or reel slowly to attract fish; leaving the lure still reduces attraction. Lift on a strike. All ten locations use suitable subsets of their fish rosters. Each of the four tackle tiers has matching classic, fly, feeder and casting models, folded models and reel handles; purchases and fight bonuses apply across styles. [Lure methods, progression, assets and validation](docs/LURE_FISHING.md).
 
 ### Expanded fish roster
 
@@ -203,7 +202,7 @@ The catalogue now has **40 species**, including huchen and ragged-tooth shark pr
 
 ### Waterside BBQ
 
-Open **Menu → BBQ** (or **B** on desktop) for a cookout with fish caught at the current water and fish burgers. Grip food, turn your wrist, and release onto the grill to flip it. Eat with the holding-hand trigger or by bringing food to your mouth. Beer starts inside the closed cooler: trigger its lid, grip a can, and trigger once to open it; drink at your mouth or press again. [Controls, assets, and validation](docs/BBQ.md).
+Open **Menu → BBQ** for a cookout with fish caught at the current water and fish burgers. Grip food, turn your wrist, and release onto the grill to flip it. Eat with the holding-hand trigger or by bringing food to your mouth. Beer starts inside the closed cooler: trigger its lid, grip a can, and trigger once to open it; drink at your mouth or press again. [Controls, assets, and validation](docs/BBQ.md).
 
 ## Golf integration branch
 

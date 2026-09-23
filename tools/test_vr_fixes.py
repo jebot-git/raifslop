@@ -10,7 +10,7 @@ SUITES = sys.argv[1:] or ['run_tests', 'hand_tracking', 'tracking_orientation', 
 if len(sys.argv) == 1: SUITES.extend(['bbq', 'bbq_controllers', 'bbq_model', 'bbq_food_art', 'bbq_visit', 'bbq_scene'])
 failures = []
 if len(sys.argv) == 1: SUITES.extend(['rod_attachment', 'radio', 'water_wildlife', 'fly_fishing', 'fish_jumps', 'coastal_locations', 'shore_transitions', 'gameplay_recording'])
-if len(sys.argv) == 1: SUITES.extend(['hip_tracking', 'golf_courses', 'golf_course_lanes', 'golf_loading', 'golf_attachment', 'golf_head_contact', 'golf_physics_review', 'golf_surface_alignment', 'golf_vr_input', 'golf_controls_feedback'])
+if len(sys.argv) == 1: SUITES.extend(['hip_tracking', 'golf_courses', 'golf_course_lanes', 'golf_loading', 'golf_attachment', 'golf_head_contact', 'golf_physics_review', 'golf_surface_alignment', 'golf_vr_input', 'golf_controls_feedback', 'vr_only'])
 if len(sys.argv) == 1: SUITES.extend(['cast_tolerance', 'cast_direction', 'tracked_cast', 'fish_population', 'fishing_update', 'fly_controls', 'fly_reel_penalty', 'empty_retrieve', 'shore_retrieval', 'pier_cleat', 'hdr_bake_compression'])
 if len(sys.argv) == 1: SUITES.extend(['fishing_comfort', 'aim_water_grid', 'marine_species', 'fight_mechanics', 'avatar_image_failure', 'avatar_recovery', 'fight_recovery', 'scenery_repairs'])
 if len(sys.argv) == 1: SUITES.extend(['avatar_viewpoint', 'feeder_fishing', 'feeder_interface', 'feeder_nibbles', 'lure_fishing', 'lure_interface', 'fish_species', 'bbq_controls'])
@@ -21,7 +21,7 @@ for suite in SUITES:
     log = OUT / (suite + '.log')
     try:
         with log.open('w') as stream:
-            result = subprocess.run(['godot', '--headless', '--verbose', '--path', str(ROOT), '--xr-mode', 'off', '--script', f'res://tests/{suite}.gd', '--', '--asset-root', str(data / 'assets'), '--photos-root', str(data / 'pictures')], cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=120)
+            result = subprocess.run(['godot', '--headless', '--verbose', '--path', str(ROOT), '--xr-mode', 'off', '--script', f'res://tests/{suite}.gd', '--', '--xr-test', '--asset-root', str(data / 'assets'), '--photos-root', str(data / 'pictures')], cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=120)
         errors = [line for line in log.read_text(errors='replace').splitlines() if 'SCRIPT ERROR:' in line or line.startswith('ERROR:') or line.startswith('FAIL ')]
         passed = result.returncode == 0 and not errors
         print(('PASS ' if passed else 'FAIL ') + suite, flush=True)

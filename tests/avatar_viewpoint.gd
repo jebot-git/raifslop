@@ -18,7 +18,7 @@ func run():
    for pitch in [0.0,.6,1.55,1.59,-.6]:
     g.head.position=position;g.head.rotation=Vector3(pitch,.7,.12)
     rig.apply_tracking(g.motor.global_transform,{},{})
-    rig.update_targets(g.head,g.desktop_left,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
+    rig.update_targets(g.head,g.reel_hand_target,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
     rig.solver._process_modification_with_delta(.02)
     check(rig.viewpoint_position().distance_to(g.head.global_position)<.001,"Avatar eyes follow headset: "+path)
     var shoulder:=sk.to_global(sk.get_bone_global_pose(sk.find_bone("RightUpperArm")).origin)
@@ -30,7 +30,7 @@ func run():
   g.head.position=Vector3(0,1.4,0);g.head.rotation=Vector3(.4,.7,0)
   var hips:=Transform3D(Basis(Vector3.UP,.3),Vector3(0,.72,0))
   rig.apply_tracking(g.motor.global_transform,{"hips":hips},{})
-  rig.update_targets(g.head,g.desktop_left,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
+  rig.update_targets(g.head,g.reel_hand_target,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
   rig.solver._process_modification_with_delta(.02)
   check(rig.viewpoint_position().distance_to(g.head.global_position)<.001,"Tracked hips retain headset viewpoint")
   var expected:Vector3=(g.motor.global_transform*rig.fit_tracked_hips(hips)).origin
@@ -43,7 +43,7 @@ func run():
    for pitch in [-.6,.6]:
     g.head.rotation.x=pitch
     rig.apply_tracking(g.motor.global_transform,body,{})
-    rig.update_targets(g.head,g.desktop_left,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
+    rig.update_targets(g.head,g.reel_hand_target,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
     rig.solver._process_modification_with_delta(.02)
     var chest:=sk.find_bone("Chest")
     if chest>=0:
@@ -60,7 +60,7 @@ func run():
    g.head.position=Vector3(lean,rig.standing_height,0);g.head.rotation=Vector3.ZERO
    hips=Transform3D(Basis.IDENTITY,g.motor.to_local(g.head.global_position-Vector3.UP*.65))
    rig.apply_tracking(g.motor.global_transform,{"hips":hips},{})
-   rig.update_targets(g.head,g.desktop_left,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
+   rig.update_targets(g.head,g.reel_hand_target,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
    rig.solver._process_modification_with_delta(.02)
    var spine:=sk.find_bone("Spine")
    var delta_rotation:Quaternion=sk.get_bone_rest(spine).basis.get_rotation_quaternion().inverse()*sk.get_bone_pose_rotation(spine)

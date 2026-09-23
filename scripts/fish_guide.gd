@@ -290,27 +290,24 @@ func update_device() -> void:
 	# The handle is at hip height, screen faces outward, and the body hangs below it.
 	var holster_basis := facing * Basis(Vector3.FORWARD, Vector3.DOWN, Vector3.LEFT)
 	belt_transform = Transform3D(holster_basis, belt - holster_basis * GRIP_ANCHOR)
-	if g.xr:
-		var tracked: bool = g.left.get_has_tracking_data()
-		var down: bool = tracked and g.left.get_float("grip") > 0.55
-		if held and not down: dock()
-		if not held and can_grab() and down and not grip_was_down and not g.menu_open and not (is_instance_valid(g.shoulder_radio) and g.shoulder_radio.held) and g.controller_pose(0).origin.distance_to(dock_grip_position()) < 0.22:
-			held = true
-			screen.queue_redraw()
-		grip_was_down = down
-		if held:
-			# Fixed grip-relative pose: the player can naturally turn the screen over.
-			global_transform = g.controller_pose(0) * Transform3D(GRIP_BASIS, GRIP_OFFSET)
-			if not is_instance_valid(g.avatar): update_touch()
-			if not photo_camera.active:
-				var axes: Vector2 = g.left.get_vector2("primary") + g.right.get_vector2("primary")
-				var axis: float = axes.x if absf(axes.x) >= absf(axes.y) else axes.y
-				if absf(axis) > 0.65 and not stick_latched:
-					page(1 if axis > 0 else -1)
-					stick_latched = true
-				if absf(axis) < 0.25: stick_latched = false
-			else:stick_latched=false
-		else: global_transform = belt_transform
-	else:
-		global_transform = g.head.global_transform * Transform3D(Basis.IDENTITY, Vector3(0, -0.04, -0.48)) if held else belt_transform
-	visible = g.xr or held
+	var tracked: bool = g.left.get_has_tracking_data()
+	var down: bool = tracked and g.left.get_float("grip") > 0.55
+	if held and not down: dock()
+	if not held and can_grab() and down and not grip_was_down and not g.menu_open and not (is_instance_valid(g.shoulder_radio) and g.shoulder_radio.held) and g.controller_pose(0).origin.distance_to(dock_grip_position()) < 0.22:
+		held = true
+		screen.queue_redraw()
+	grip_was_down = down
+	if held:
+		# Fixed grip-relative pose: the player can naturally turn the screen over.
+		global_transform = g.controller_pose(0) * Transform3D(GRIP_BASIS, GRIP_OFFSET)
+		if not is_instance_valid(g.avatar): update_touch()
+		if not photo_camera.active:
+			var axes: Vector2 = g.left.get_vector2("primary") + g.right.get_vector2("primary")
+			var axis: float = axes.x if absf(axes.x) >= absf(axes.y) else axes.y
+			if absf(axis) > 0.65 and not stick_latched:
+				page(1 if axis > 0 else -1)
+				stick_latched = true
+			if absf(axis) < 0.25: stick_latched = false
+		else:stick_latched=false
+	else: global_transform = belt_transform
+	visible = true

@@ -4,6 +4,7 @@ var failures:Array=[]
 var g
 var net
 var role:String
+var trackers:Array[XRControllerTracker]=[]
 func _initialize() -> void:run.call_deferred()
 func check(ok:bool,message:String) -> void:
  print("PASS " if ok else "FAIL ",message)
@@ -16,6 +17,16 @@ func wait_for(fn:Callable,seconds:=12.0) -> bool:
  return false
 func item(id:int) -> Dictionary:
  return net.bbq.model.stations.get("fish_hoek_beach",{}).get("items",[])[id] if net.bbq.model.stations.has("fish_hoek_beach") else {"owner":-1,"place":"missing","cook":[0.0,0.0]}
+func request(action:String,id:=-1,hand:=1,at:=Vector3.ZERO) -> void:
+ # Network tests supply tracked hand poses; no desktop reach or fake hand path.
+ if action!="start":
+  var where:Vector3=g.head.global_position
+  var state:Dictionary=net.bbq.model.stations.get("fish_hoek_beach",{})
+  if action=="cooler":where=Sites.pose("fish_hoek_beach")*Sites.COOLER_HANDLE
+  elif action not in ["eat","sip"] and id>=0 and not state.is_empty():where=Sites.pose("fish_hoek_beach")*state.items[id].pos
+  trackers[hand].set_pose("grip",Transform3D(Basis.IDENTITY,g.origin.to_local(where)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+  await create_timer(.2).timeout
+ net.bbq.request(action,id,hand,at)
 func run() -> void:
  var args:=OS.get_cmdline_user_args();role=args[0]
  g=load("res://scenes/main.tscn").instantiate();root.add_child(g);net=g.network
@@ -30,6 +41,13 @@ func run() -> void:
   g.set_process(false);g.motor.set_physics_process(false);g.fishing_feedback.set_process(false)
   g.game.reset();g._select_location("fish_hoek_beach",false);g.bbq.select_location()
   g.rod_holster.set_stowed(true);g.motor.relocate(Sites.arrival("fish_hoek_beach"));g.head.rotation=Vector3(-.2,0,0)
+  g.bbq.set_process(false)
+  g.head.position=Vector3(0,1.65,0)
+  for hand in 2:
+   var tracker:=XRControllerTracker.new();tracker.name="bbq_network_"+str(hand);XRServer.add_tracker(tracker);trackers.append(tracker)
+   var controller:XRController3D=g.left if hand==0 else g.right;controller.tracker=tracker.name;controller.pose="grip"
+   tracker.set_pose("grip",Transform3D(Basis.IDENTITY,Vector3(0,1.2,0)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+  g.xr=true;g.tracking_manager.focused=true;g.tracking_manager.calibration_pending=false
   var journal:Array=g.game.journal.duplicate(true)
   net.display_name=role;net.voice.set_mode(0)
   if role=="host":net.host(int(args[1]))
@@ -37,39 +55,39 @@ func run() -> void:
   check(await wait_for(func():return net.active and net.players.size()>=2),"Prototype protocol handshake")
   await create_timer(.3).timeout
   if role in ["leader","host"]:
-   net.bbq.request("start")
+   await request("start")
    check(await wait_for(func():return net.bbq.model.stations.has("fish_hoek_beach")),"Shared kit arrives")
-   net.bbq.request("cooler")
-   net.bbq.request("grab",6,1)
+   await request("cooler")
+   await request("grab",6,1)
    check(await wait_for(func():return item(6).owner==net.bbq.local_id()),"Client receives utensil ownership")
-   net.bbq.request("cook",0,1,Vector3(0,1,0))
+   await request("cook",0,1,Vector3(0,1,0))
    check(await wait_for(func():return item(0).place=="grill" and item(0).cook[0]>.02),"Host advances cooking independently")
    check(await wait_for(func():return item(1).place=="grill"),"Second cook acquired tongs before menu test")
    g._toggle_avatar_menu();await create_timer(.7).timeout
    check(item(0).cook[0]>.025,"Opening a menu does not pause shared cooking")
    g._toggle_avatar_menu()
-   net.bbq.request("grab",6,1);await create_timer(.3).timeout
-   net.bbq.request("cook",0,1);await create_timer(.5).timeout
-   net.bbq.request("cook",0,1)
+   await request("grab",6,1);await create_timer(.3).timeout
+   await request("cook",0,1);await create_timer(.5).timeout
+   await request("cook",0,1)
    check(await wait_for(func():return item(0).place in ["served","hand","gone"]),"Serving synchronizes")
    await create_timer(8).timeout
   elif role=="observer":
    check(await wait_for(func():return item(6).owner>0),"Observer sees first cook")
-   net.bbq.request("start")
+   await request("start")
    var first:int=item(6).owner
-   net.bbq.request("grab",6,1);await create_timer(.4).timeout
+   await request("grab",6,1);await create_timer(.4).timeout
    print("OWNERSHIP_CHECK ",first," → ",item(6).owner," self ",net.bbq.local_id())
    check(item(6).owner==first,"Simultaneous grab cannot steal tongs")
    check(net.bbq.model.stations.size()==1 and g.bbq.item_nodes.size()==10,"Repeated starts keep one shared station and inventory")
-   net.bbq.request("grab",7,1)
+   await request("grab",7,1)
    check(await wait_for(func():return item(7).owner==net.bbq.local_id()),"Observer joins with second tongs")
-   net.bbq.request("cook",1,1)
+   await request("cook",1,1)
    check(await wait_for(func():return item(1).place=="grill"),"Second player cooks independently")
-   net.bbq.request("drop",7,1)
+   await request("drop",7,1)
    check(await wait_for(func():return item(0).place=="served"),"Observer sees served food")
-   net.bbq.request("grab",0,1)
+   await request("grab",0,1)
    check(await wait_for(func():return item(0).owner==net.bbq.local_id()),"Observer can take another cook's serving")
-   net.bbq.request("eat",0,1)
+   await request("eat",0,1)
    check(await wait_for(func():return item(0).place=="gone"),"Eating is synchronized")
    await create_timer(5).timeout
   else:
@@ -81,4 +99,5 @@ func run() -> void:
  print("BBQ_NETWORK_RESULT ",role," ",JSON.stringify(failures))
  net.leave()
  for p in g.find_children("*","AudioStreamPlayer",true,false):p.stop()
+ for tracker in trackers:XRServer.remove_tracker(tracker)
  g.queue_free();await process_frame;await create_timer(.3).timeout;quit(0 if failures.is_empty() else 1)

@@ -62,6 +62,8 @@ func run() -> void:
 	await create_timer(.4).timeout
 	g.set_process(false); g.motor.set_physics_process(false); g.fishing_feedback.set_process(false)
 	g._select_location("lakeside", false); g.game.reset()
+	# Explicit synthetic HMD pose; client startup no longer invents a desktop eye height.
+	g.head.position = Vector3(0,1.65,.65)
 	g.head.rotation.x = -.15
 	for side in 2:
 		var tracker := XRControllerTracker.new(); tracker.name = "casting_test_" + str(side)
@@ -145,7 +147,7 @@ func run() -> void:
 		for i in 3:await process_frame
 		g._process(.016)
 		check(g.reel_tracker.engaged,"Left " + input + " grabs nearby reel")
-		check(g.avatar.left_target==g.desktop_left and g.desktop_left.global_position.distance_to(g.crank.to_global(Vector3(-.035,.08,0)))<.001,"Offhand snaps to the actual crank handle")
+		check(g.avatar.left_target==g.reel_hand_target and g.reel_hand_target.global_position.distance_to(g.crank.to_global(Vector3(-.035,.08,0)))<.001,"Offhand snaps to the actual crank handle")
 		var still_angle: float=g.crank.rotation.x
 		g._process(.016)
 		check(is_equal_approx(g.crank.rotation.x,still_angle),"Visual snap cannot generate free reeling")

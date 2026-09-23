@@ -15,7 +15,7 @@ with tempfile.TemporaryDirectory(prefix='golf-network-') as temp:
    path=out/(role+'.log');stream=path.open('w')
    command=[args.godot,'--headless','--xr-mode','off','--path',str(args.host),'--script',str(root/'tests/golf_network.gd'),'--',role,'28973']
    env=dict(os.environ,XDG_DATA_HOME=f'{temp}/{role}')
-   jobs.append((role,subprocess.Popen(command,stdout=stream,stderr=subprocess.STDOUT,env=env),stream,path))
+   jobs.append((role,subprocess.Popen(command + (['--xr-test'] if '--script' in command else []),stdout=stream,stderr=subprocess.STDOUT,env=env),stream,path))
    time.sleep(.8)
   for role,proc,stream,path in jobs:
    try:proc.wait(timeout=65)

@@ -44,7 +44,7 @@ func toggle():
  if opened:close()
  else:open()
 func selection_axis()->Vector2:
- return game_root.right.get_vector2("primary") if game_root.xr else Vector2(float(Input.is_key_pressed(KEY_RIGHT))-float(Input.is_key_pressed(KEY_LEFT)),float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN)))
+ return game_root.right.get_vector2("primary")
 func point(axis:Vector2):
  choice=-1
  if axis.length()>.45:

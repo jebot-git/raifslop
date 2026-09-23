@@ -47,18 +47,8 @@ func run() -> void:
 	for i in range(12): await process_frame
 	g.game.reset()
 	for i in range(Session.BAITS.size()):
-		var event := InputEventKey.new()
-		event.keycode = KEY_1 + i
-		event.pressed = true
-		g._unhandled_input(event)
-		check(g.game.bait == i, "Desktop hotkey selects " + Session.BAITS[i])
-		g.game.select_bait((i + 1) % Session.BAITS.size())
-		var click := InputEventMouseButton.new()
-		click.pressed = true
-		click.button_index = MOUSE_BUTTON_LEFT
-		click.position = g.hud.bait_rect(i).get_center() * g.hud.scale_factor
-		g.hud._gui_input(click)
-		check(g.game.bait == i, "Mouse tile selects " + Session.BAITS[i])
+		g._select_bait(i)
+		check(g.game.bait == i, "Bait selection supports " + Session.BAITS[i])
 	g.game.select_bait(0)
 	for i in range(Session.BAITS.size()):
 		g._left_button("ax_button")

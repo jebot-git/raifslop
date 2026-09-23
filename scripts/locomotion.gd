@@ -65,7 +65,7 @@ func relocate(spawn: Vector3) -> void:
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(head): return
-	if blocked or (xr and (not tracking_focused or (not right.get_has_tracking_data() and not (single_controller_controls and left.get_has_tracking_data())))):
+	if blocked or not tracking_focused or (not right.get_has_tracking_data() and not (single_controller_controls and left.get_has_tracking_data())):
 		velocity = Vector3.ZERO
 		last_motion = Vector3.ZERO
 		previous_head = Vector3(INF, INF, INF)
@@ -96,16 +96,12 @@ func _physics_process(delta: float) -> void:
 	previous_head = head.position if hips_tracked else Vector3(INF, INF, INF)
 	var stick := Vector2.ZERO
 	var turn_axis := 0.0
-	if xr:
-		if left.get_has_tracking_data(): stick = deadzone(left.get_vector2("primary"))
-		if right.get_has_tracking_data(): turn_axis = right.get_vector2("primary").x
-		if single_controller_controls and left.get_has_tracking_data()!=right.get_has_tracking_data():
-			var only:=left if left.get_has_tracking_data() else right
-			var input:=deadzone(only.get_vector2("primary"))
-			stick=Vector2(0,input.y);turn_axis=only.get_vector2("primary").x
-	else:
-		stick = Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_W)) - float(Input.is_physical_key_pressed(KEY_S))).limit_length()
-		turn_axis = float(Input.is_physical_key_pressed(KEY_E)) - float(Input.is_physical_key_pressed(KEY_Q))
+	if left.get_has_tracking_data(): stick = deadzone(left.get_vector2("primary"))
+	if right.get_has_tracking_data(): turn_axis = right.get_vector2("primary").x
+	if single_controller_controls and left.get_has_tracking_data()!=right.get_has_tracking_data():
+		var only:=left if left.get_has_tracking_data() else right
+		var input:=deadzone(only.get_vector2("primary"))
+		stick=Vector2(0,input.y);turn_axis=only.get_vector2("primary").x
 	if stick_lock.is_valid() and stick_lock.call():stick_release_pending=true
 	elif stick_release_pending and stick.length()<.2 and absf(turn_axis)<.2:stick_release_pending=false
 	if catch_controls or stick_release_pending:
@@ -113,7 +109,7 @@ func _physics_process(delta: float) -> void:
 		turn_axis = 0.0
 		velocity = Vector3.ZERO
 	if turn_reserved:
-		if not radial_open and absf(turn_axis)<.2 and (not xr or (right.get_vector2("primary").length()<.2 and not right.is_button_pressed("primary_click"))):turn_reserved=false
+		if not radial_open and absf(turn_axis)<.2 and (right.get_vector2("primary").length()<.2 and not right.is_button_pressed("primary_click")):turn_reserved=false
 		turn_axis=0
 	apply_turn_input(turn_axis, delta)
 	var forward := -head.global_basis.z

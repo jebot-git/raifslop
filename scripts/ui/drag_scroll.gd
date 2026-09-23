@@ -4,14 +4,11 @@ var pressed := false
 var dragging := false
 var start := Vector2.ZERO
 var initial := 0
-var vr_mode_override := false
 func _ready() -> void:
 	scroll_deadzone = 100000
 	horizontal_scroll_mode = SCROLL_MODE_DISABLED
 	vertical_scroll_mode = SCROLL_MODE_AUTO
 func _gui_input(event: InputEvent) -> void:
-	var vr := vr_mode_override or XRServer.primary_interface != null and XRServer.primary_interface.is_initialized()
-	if not vr: return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		# Only background events bubble here. Controls and overlays own their presses.
 		var hovered := get_viewport().gui_get_hovered_control()

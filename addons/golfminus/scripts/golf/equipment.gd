@@ -34,14 +34,11 @@ func set_stowed(value: bool) -> void:
 	if game.fitting_club:game.cancel_club_fit()
 	if not value and is_instance_valid(game.course_guide):game.course_guide.dock()
 	stowed=value
-	game.charging=false;game.power=0;game.reset_swing()
+	game.reset_swing()
 	if not is_instance_valid(game.club):return
-	game.club.reparent(game if stowed else (game.left if game.left_handed else game.right) if game.xr else game.head)
+	game.club.reparent(game if stowed else (game.left if game.left_handed else game.right))
 	if stowed:game.club.global_transform=Transform3D(belt_pose.basis.scaled(Vector3.ONE*.65),belt_pose.origin)
-	elif game.xr:game._update_club_pose()
-	else:
-		game.club.transform=Transform3D.IDENTITY
-		game.club.position=Vector3(.38,-.35,-.65);game.club.rotation_degrees=Vector3(-20,0,-12)
+	else:game._update_club_pose()
 	game.club.visible=not game.menu_open
 	game.status_text="Club stashed · grip at your striking-hand hip to retrieve." if stowed else "Club ready."
 	game.telemetry.record("club_stowed",{"stowed":stowed})

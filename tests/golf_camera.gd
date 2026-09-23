@@ -6,8 +6,6 @@ func check(ok:bool,label:String)->void:
 	checks+=1;print("PASS " if ok else "FAIL ",label)
 	if not ok:failures.append(label)
 func _initialize()->void:run.call_deferred()
-func key(g,code:Key)->void:
-	var event:=InputEventKey.new();event.pressed=true;event.keycode=code;g._input(event)
 func run()->void:
 	var host=load("res://scenes/main.tscn").instantiate();root.add_child(host)
 	await create_timer(.5).timeout
@@ -36,11 +34,11 @@ func run()->void:
 	check(photo.view.world_3d==host.get_world_3d(),"Golf photo shares live course and avatar world")
 	guide.toggle()
 	check(guide.held,"Guide and camera available at clubhouse")
-	key(golf,KEY_C);photo.update_pose()
+	golf._left_button("trigger_click");photo.update_pose()
 	check(photo.active and guide.page_index==0,"Camera toggles without losing map page")
 	check(guide.find_children("*","VisualInstance3D",true,false).all(func(n):return n.layers==Photo.UI_LAYER),"Guide excluded from photos and mirror without recursive screens")
 	check(photo.camera.far==host.head.far,"Photo covers full course distance")
-	key(golf,KEY_F)
+	golf._right_button("ax_button")
 	check(photo.selfie and photo.camera.cull_mask==5,"Selfie includes complete avatar")
 	photo.adjust_selfie(1,.1)
 	check(photo.selfie_extension>0,"Selfie extension remains available")
@@ -82,7 +80,7 @@ func run()->void:
 		if FileAccess.file_exists(photo.last_path):
 			var image:=Image.load_from_file(photo.last_path);check(image.get_size()==Vector2i(1920,1080),"Photo preserves Fishing capture resolution")
 	else:
-		key(golf,KEY_SPACE);check(photo.status.contains("renderer") and not golf.charging,"Shutter never starts a golf swing")
+		golf._right_button("trigger_click");check(photo.status.contains("renderer") and not golf.ball.moving,"Shutter never starts a golf swing")
 	guide.dock();host.golf_activity.leave();await process_frame
 	check(host.fish_guide.photo_camera==fishing_photo,"Returning to Fishing retains original camera service")
 	if native:check(root.get_camera_3d()==mirror.camera and host.xr_view.get_camera_3d()==host.head,"Returning to Fishing retains mirror and headset cameras")

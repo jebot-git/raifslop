@@ -13,8 +13,6 @@ var menu_scroll: ScrollContainer
 var stats: Label
 var club_text: Label
 var message: Label
-var power: ProgressBar
-var map: Control
 var score: Label
 var course_title: Label
 var tee_choice: OptionButton
@@ -58,18 +56,13 @@ func _ready() -> void:
 	course_title=label(v,"DALKEY LINKS",16,Style.BRASS)
 	stats=label(v,"HOLE 01     PAR 4     308 m",22)
 	tag=label(v,"CLUB TEES  ·  STROKE PLAY",13,Style.MUTED)
-	var map_panel:=panel(Vector2(1220,90),Vector2(184,310))
-	map_panel.visible=not game.xr
-	var mv:=VBoxContainer.new();map_panel.add_child(mv);label(mv,"YARDAGE BOOK",12,Style.BRASS)
-	map=preload("res://addons/golfminus/scripts/golf/hole_map.gd").new();map.game=game;map.custom_minimum_size=Vector2(145,242);mv.add_child(map)
 	var bottom:=panel(Vector2(32,678),Vector2(460,184))
 	var bv:=VBoxContainer.new();bottom.add_child(bv)
 	club_text=label(bv,"DRIVER",25)
-	power=ProgressBar.new();power.custom_minimum_size=Vector2(400,12);power.show_percentage=false;bv.add_child(power)
 	message=label(bv,"",16,Style.BRASS)
-	text_hints.append(label(bv,"Grip/trigger: swing, lock movement · release: walk" if game.xr else "SPACE: swing · TAB + arrows: club bag · H: stash · J: guide",14,Style.MUTED))
-	text_hints.append(label(bv,"Other hip + grip: hole / course tracker" if game.xr else "T: address · G: grid · ESC: field station",14,Style.MUTED))
-	guidance(bv,[["swing","Grip / trigger" if game.xr else "Space","Hold either to swing and lock stick movement"],["stash","Hip" if game.xr else "H","Grip at striking-hand hip to stash or retrieve"],["bag","Club-hand click" if game.xr else "Tab","Click to open; point then centre to select. Click again to close"],["godview","Other click" if game.xr else "V","Toggle Godview"],["menu","B" if game.xr else "Esc","Open field station"]])
+	text_hints.append(label(bv,"Grip/trigger: swing, lock movement · release: walk",14,Style.MUTED))
+	text_hints.append(label(bv,"Other hip + grip: hole / course tracker",14,Style.MUTED))
+	guidance(bv,[["swing","Grip / trigger","Hold either to swing and lock stick movement"],["stash","Hip","Grip at striking-hand hip to stash or retrieve"],["bag","Club-hand click","Click to open; point then centre to select. Click again to close"],["godview","Other click","Toggle Godview"],["menu","B","Open field station"]])
 	score=label(self,"",18);score.position=Vector2(560,818)
 	menu=panel(Vector2(395,76),Vector2(670,768))
 	var shell:=VBoxContainer.new();shell.add_theme_constant_override("separation",12);menu.add_child(shell)
@@ -117,8 +110,7 @@ func _ready() -> void:
 	button(box,"Godview · course & shot trajectory",func():game.godview.enter())
 	button(box,"Hole / course tracker",func():
 		game.toggle_menu(false)
-		if game.xr:game.status_text="Grab the tracker at your non-striking-hand hip."
-		else:game.course_guide.toggle())
+		game.status_text="Grab the tracker at your non-striking-hand hip.")
 	analytics_button=button(box,"Start local swing capture",func():game.toggle_analytics())
 	game.telemetry.capture_changed.connect(func(active):analytics_button.text="Save capture" if active else "Record swings")
 	var footer:=HBoxContainer.new();shell.add_child(footer)
@@ -127,7 +119,7 @@ func _ready() -> void:
 	menu_content=footer
 	show_page("courses")
 	text_hints.append(label(box,"VR: grip/trigger locks movement for swing • release to walk\nClub hand A/X: address • B/Y: menu • stick click: bag\nPoint then centre to equip; click again to close • Other stick click: Godview",14,Style.MUTED))
-	guidance(box,[["ball","Club A/X" if game.xr else "T","Address ball"],["grid","Other trigger" if game.xr else "G","Green grid"],["course","Other hip" if game.xr else "J","Hole and course tracker"],["godview","Other click" if game.xr else "V","Course and shot overview"]])
+	guidance(box,[["ball","Club A/X","Address ball"],["grid","Other trigger","Green grid"],["course","Other hip","Hole and course tracker"],["godview","Other click","Course and shot overview"]])
 	refresh_icons()
 	refresh()
 func _register_page(id:String,title:String)->VBoxContainer:
@@ -151,11 +143,9 @@ func refresh() -> void:
 	var wind: Vector3=m.wind()
 	tag.text="%s   ·   WIND %.1f m/s"%[m.hole.name.to_upper(),wind.length()]
 	club_text.text="%s   /   %s"%[game.CLUBS.BAG[game.club_index].name.to_upper(),m.lie(game.ball.position.x,game.ball.position.z).to_upper()]
-	power.value=game.power*100
 	message.text=game.status_text
 	score.text="STROKES  %d    |    COMPLETED  %d / 18    |    TOTAL  %d"%[game.round_state.strokes,game.round_state.scores.size(),game.round_state.total()]
 	play_button.text="BEGIN ROUND AT %s   →"%m.course.name.to_upper()
-	map.queue_redraw()
 
 func show_scorecard() -> void:
 	var dialog:=AcceptDialog.new();dialog.title=game.model.course.name+" · Scorecard"

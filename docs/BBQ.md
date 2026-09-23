@@ -9,7 +9,6 @@ The station uses the new grill, prep board, cooler, hinged lid, cans and animate
 - **VR:** grip near a prop to take it; release grip to return it. With tongs, trigger near food to grill, flip, then serve. A/X moves grilling food to a cooler free grate position. Each side cooks separately and eventually chars.
 - **Food:** take a serving and trigger near your mouth to eat. Other players can take food you serve or put down.
 - **Cooler:** trigger near the lid to open or close it. Grip a can, trigger to open, then trigger near your mouth to sip. Cooler state is shared.
-- **Desktop:** H visits; B visits or returns. Click a prop to take it, then click food while holding tongs to grill, flip or serve. Right-click returns the held prop. C toggles the cooler; F moves food to a cooler grate position. Middle-mouse drag looks around.
 - **Camera:** the guide remains available during BBQ use. Opening it returns held BBQ props and gives its camera the controls; shared cooking continues.
 
 World prompts use the same outlined mint pictograms as fishing and radio prompts. They show the relevant grip, tool, cooking, serving or drinking action, respect the guiding-icon setting, and are excluded from guide photos. There are no floating textual instructions or title signs.

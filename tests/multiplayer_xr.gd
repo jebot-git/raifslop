@@ -49,9 +49,9 @@ func run() -> void:
 		game.network.display_name="XR angler"; game.network.host(28570)
 	else:
 		game.head.rotation.y=PI
-		game.desktop_left.position=Vector3(-.25,1.3,.3)
-		game.network.display_name="Desktop angler"; game.network.join("127.0.0.1",28570)
-	check(await wait_for(func(): return game.network.players.size()==2),"XR and desktop connected")
+		game.reel_hand_target.position=Vector3(-.25,1.3,.3)
+		game.network.display_name="Synthetic angler"; game.network.join("127.0.0.1",28570)
+	check(await wait_for(func(): return game.network.players.size()==2),"Native and synthetic XR clients connected")
 	game.game.state=game.Session.State.LANDED; game.game.fish_index=6
 	game.game.journal.append({"length":63.0}); game._show_fish()
 	if xr_role: game._update_catch(0)
@@ -87,7 +87,7 @@ func run() -> void:
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://docs/multiplayer_desktop.png")
 	await create_timer(2).timeout
-	print("MULTIPLAYER_XR_RESULT ","xr" if xr_role else "desktop"," ",failures)
+	print("MULTIPLAYER_XR_RESULT ","xr" if xr_role else "synthetic"," ",failures)
 	game.network.leave()
 	for tracker in controllers: XRServer.remove_tracker(tracker)
 	for tracker in extra_trackers: XRServer.remove_tracker(tracker)

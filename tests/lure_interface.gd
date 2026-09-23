@@ -72,9 +72,9 @@ func run():
     g.game.reset()
  var invalid=Wire.capture(g,checks);invalid.bait=3;check(not Wire.valid(invalid),"Wire rejects fourth lure")
  invalid=Wire.capture(g,checks);invalid.rig=3;check(not Wire.valid(invalid),"Wire rejects unsupported rig")
- # The live avatar target follows the selected style, on desktop and in VR.
- g.xr=false;g._update_avatar(.02)
- check(g.desktop_left.global_position.distance_to(g.crank.to_global(g.rod_visual.crank_grip_position()))<.001,"Desktop hand uses selected reel anchor")
+ # The snapped reel-hand target follows the selected style.
+ g._update_reel_hand()
+ check(g.reel_hand_target.global_position.distance_to(g.crank.to_global(g.rod_visual.crank_grip_position()))<.001,"Reel hand uses selected reel anchor")
  g.xr=true;g.tracking_manager.calibration_pending=false
  g.game.reset();g._select_location("lakeside",false);g._select_rig(2)
  trackers[1].set_input("primary",Vector2.ZERO)
@@ -134,7 +134,7 @@ func run():
   for i in 3:await process_frame
   g._process(.02)
   check(g.reel_tracker.engaged,"Tracked offhand grabs casting reel using "+input)
-  check(g.desktop_left.global_position.distance_to(g.crank.to_global(g.rod_visual.crank_grip_position()))<.001,"VR hand snaps to casting paddle")
+  check(g.reel_hand_target.global_position.distance_to(g.crank.to_global(g.rod_visual.crank_grip_position()))<.001,"VR hand snaps to casting paddle")
   var before:float=g.crank.rotation.x
   var angle:float=g.reel_tracker.previous_angle+.16
   var raw_rod:Transform3D=g.right.transform*g.rod_holster.HELD_POSE

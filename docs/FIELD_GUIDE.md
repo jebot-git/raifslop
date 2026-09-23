@@ -6,8 +6,6 @@ An original orange-and-green fish catalogue device sits at the VR player's left 
 
 While holding it, use **left X / Y** or **either joystick** to browse unlocked species. Sticks advance one page per deflection; return them to centre before paging again. The casing's buttons are visual features; navigation uses controller inputs. Fishing timers and stick locomotion pause during inspection. The guide has priority over holding a caught fish, which stays hanging on the rod. Physical headset and hand motion still work.
 
-On desktop, **G** opens/closes a close-up of the same 3D device; **left/right arrows** browse and **Escape** closes it. The fishing HUD is hidden during inspection.
-
 ## Collection and records
 
 Each first catch unlocks its common name, scientific name, basic description, a species-specific profile silhouette, and a **personal best length in centimetres**. Only a strictly longer specimen updates that species' record. Equal and smaller catches leave the entry unchanged. Fish weight remains in the catch journal; the guide's size comparison uses length, not weight.
@@ -39,8 +37,8 @@ No reference photographs, external icon sets or existing game branding were copi
 Use isolated saves for these tests:
 
 ```bash
-XDG_DATA_HOME=/tmp/guide-tests ./run.sh --desktop --headless --script res://tests/fish_guide.gd
-XDG_DATA_HOME=/tmp/guide-captures ./run.sh --desktop --script res://tests/fish_guide.gd -- --capture
+XDG_DATA_HOME=/tmp/guide-tests godot --path . --xr-mode off --headless --script res://tests/fish_guide.gd -- --xr-test
+XDG_DATA_HOME=/tmp/guide-captures godot --path . --xr-mode off --script res://tests/fish_guide.gd -- --xr-test --capture
 XR_RUNTIME_JSON=/usr/share/openxr/1/openxr_monado.json SIMULATED_ENABLE=1 XRT_COMPOSITOR_FORCE_XCB=1 XDG_DATA_HOME=/tmp/guide-xr ./run.sh --script res://tests/fish_guide_xr.gd
 ```
 
@@ -48,26 +46,26 @@ Captures: [device screen](field_guide_screen.png), [desktop device](field_guide_
 
 ## Field camera and selfie mode
 
-The guide now includes a live camera preview and saves **1920 × 1080 PNG photos** without the HUD, menus, guide device or multiplayer name labels. Photos use a separate mono camera in both desktop and VR; the player's normal interface stays intact. Rods, fish, avatars and scenery remain in the photograph.
+The guide now includes a live camera preview and saves **1920 × 1080 PNG photos** without the HUD, menus, guide device or multiplayer name labels. Photos use a separate mono camera in the VR player and spectator mirror; the player's normal interface stays intact. Rods, fish, avatars and scenery remain in the photograph.
 
-| Action while holding the guide | Desktop | VR |
-|---|---|---|
-| Switch collection / camera | C | Left trigger |
-| Take photo | Space | Right trigger |
-| Toggle selfie camera | F | Right A |
-| Extend / retract selfie camera | Up / Down arrows | Right stick up / down |
-| Aim forward camera | Middle-drag viewpoint | Move and rotate left hand |
-| Close / dock | G or Escape | Release left grip |
+| Action while holding the guide | VR |
+|---|---|
+| Switch collection / camera | Left trigger |
+| Take photo | Right trigger |
+| Toggle selfie camera | Right A |
+| Extend / retract selfie camera | Right stick up / down |
+| Aim forward camera | Move and rotate left hand |
+| Close / dock | Release left grip |
 
-Forward mode follows the desktop viewpoint or the guide’s rear lens in VR. VR selfie mode starts at the guide’s front lens and includes the full avatar. Push the right stick up to extend the capture point away from the group, or down to bring it closer. The extension follows the guide’s aiming direction, moves at up to 1 metre per second, and stops at 3 metres beyond the lens. A small spherical sweep keeps the extended lens clear of solid scenery. Releasing the stick holds the framing; a dead zone prevents drift. Adjustment pauses during tracking loss, menu use and photo capture.
+Forward mode follows the guide’s rear lens. VR selfie mode starts at the guide’s front lens and includes the full avatar. Push the right stick up to extend the capture point away from the group, or down to bring it closer. The extension follows the guide’s aiming direction, moves at up to 1 metre per second, and stops at 3 metres beyond the lens. A small spherical sweep keeps the extended lens clear of solid scenery. Releasing the stick holds the framing; a dead zone prevents drift. Adjustment pauses during tracking loss, menu use and photo capture.
 
-Desktop selfie mode starts 1.5 metres in front of the viewpoint and faces the angler; Up/Down adds or removes up to 3 metres of extension. Scenery limits the reach. The selected extension lasts for the session, and the rear camera keeps its normal position. Camera controls do not cast, release catches or change bait. Collection navigation remains available after leaving camera mode.
+Camera controls do not cast, release catches or change bait. Collection navigation remains available after leaving camera mode.
 
-Files are saved locally in your operating system’s Pictures folder, inside `Real AI Fishing` (for example `~/Pictures/Real AI Fishing` on Linux). Android saves new photos to the Pictures collection through MediaStore. `--photos-root PATH` overrides the destination for desktop tests. Each filename includes a timestamp and unique suffix. The guide confirms successful saves and reports failures. Photos are never uploaded or sent to other players. Forward/selfie choice lasts for the current session.
+Files are saved locally in your operating system’s Pictures folder, inside `Real AI Fishing` (for example `~/Pictures/Real AI Fishing` on Linux). Android saves new photos to the Pictures collection through MediaStore. `--photos-root PATH` overrides the destination for capture tests. Each filename includes a timestamp and unique suffix. The guide confirms successful saves and reports failures. Photos are never uploaded or sent to other players. Forward/selfie choice lasts for the current session.
 
 Preview rendering is limited to 640 × 360 at approximately 10 Hz while the camera is held. It stops when docked or in collection mode. Full resolution renders only for the shutter; repeated shutter input is ignored while saving. UI exclusion uses a dedicated render layer, so photography does not toggle shared world visibility or put the guide's preview inside itself.
 
-Camera validation: 14 headless control/layer checks, 18 real Vulkan capture checks, 27 existing desktop guide checks, and 36 native Monado guide/camera checks passed. Native tests use two synthetic tracked controllers and actual stereo rendering, not a physical headset. The existing OpenXR shutdown/spatial-disconnect/profile-RID warnings remain. Captures: [forward photo](guide_camera_forward.png), [selfie](guide_camera_selfie.png), [native VR selfie](guide_camera_selfie_xr.png), [guide camera display](guide_camera_screen.png).
+Camera validation: 14 headless control/layer checks, 18 real Vulkan capture checks, 27 historical guide checks, and 36 native Monado guide/camera checks passed. Native tests use two synthetic tracked controllers and actual stereo rendering, not a physical headset. The existing OpenXR shutdown/spatial-disconnect/profile-RID warnings remain. Captures: [forward photo](guide_camera_forward.png), [selfie](guide_camera_selfie.png), [native VR selfie](guide_camera_selfie_xr.png), [guide camera display](guide_camera_screen.png).
 
 
 ## Rod feedback and recovery

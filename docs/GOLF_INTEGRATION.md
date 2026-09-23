@@ -20,7 +20,7 @@ python3 tools/test_server_leaderboard.py
 
 The golf test starts two clients, tests cross-hole presence and clubhouse BBQ, rejects malformed commands, completes 18-hole rounds, retires players, then restarts the server and checks persisted rankings (22 checks). The existing fishing test verifies catch records, duplicate rejection and persistence after reconnect/restart. The merged-scene social test covers 25 menu, equipment, turn, radio/avatar identity, BBQ and retirement checks.
 
-## Desktop builds
+## PC VR builds
 
 Linux and Windows exports are available locally under `builds/Integration`; they are excluded from Git. Use `run-test.sh` or `run-test.cmd` for verbose logging. Linux was smoke-tested locally with a successful exit; forced headless shutdown reports a retained Fishing lake ambience Ogg resource. No script errors were observed. The Windows runtime has not been tested on Windows.
 
@@ -32,10 +32,20 @@ The existing BBQ and Waters menu entries cover activity changes. Golf retains Re
 
 Handicap is an **in-game estimate**, not an official WHS Handicap Index: these reconstructed courses use par as rating, slope 113 and length-ranked stroke allocation unless authored stroke indices are available. Saved rounds retain recent differentials, with the best-eight-of-twenty method and reduced-record adjustments; old best scores seed legacy profiles. New profiles receive provisional handicap 54. Net double bogey is par + 2 + allocated handicap strokes. The guide and competition board show handicap; the board also shows net totals. Offline and server records retain handicap history in their existing persistence files. Reference: https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/world-handicap-system-usga-golf-faqs/faqs---what-is-the-maximum-hole-score-.html
 
-Validation for this update: `tests/golf_clubhouse_rules.gd` covers scoring/lobby rules; `tests/golf_social.gd` covers scene transitions, map bounds, guiding, equipment and solo caps; `tools/test_golf_network.py` exercises three-process ENet turns, timeout, reconnect and radio; `tools/test_golf_dedicated.py` tests the exported server through complete rounds and restart. `tests/golf_clubhouse_visual.gd` captures the mounted panel and tests its desktop pointing interaction.
+Validation for this update: `tests/golf_clubhouse_rules.gd` covers scoring/lobby rules; `tests/golf_social.gd` covers scene transitions, map bounds, guiding, equipment and solo caps; `tools/test_golf_network.py` exercises three-process ENet turns, timeout, reconnect and radio; `tools/test_golf_dedicated.py` tests the exported server through complete rounds and restart. `tests/golf_vr_input.gd` tests tracked aim, trigger and fingertip interaction with the mounted panel.
 
 ## Guide camera and VR desktop mirror
 
-The golf guide retains Fishing’s photo preview, shutter, selfie lens, extension and 1920×1080 PNG saving, including at the clubhouse. The course map remains its first page. In VR, the guide-hand trigger switches between camera and tracker; the free-hand trigger takes a photo and A/X switches the selfie lens. Desktop controls are C for camera, Space for shutter, F for selfie and arrow keys for extension. Golf photos use the shared photo directory with a `golf_` filename prefix.
+The golf guide retains Fishing’s photo preview, shutter, selfie lens, extension and 1920×1080 PNG saving, including at the clubhouse. The course map remains its first page. In VR, the guide-hand trigger switches between camera and tracker; the free-hand trigger takes a photo and A/X switches the selfie lens. Golf photos use the shared photo directory with a `golf_` filename prefix.
 
 PC VR keeps the third-person desktop mirror and separate tracked headset viewport when entering golf, opening menus and returning to Fishing. Godview continues hiding the avatar. `tests/golf_camera.gd` checks the integrated camera; pass `-- --native-xr` with a simulated OpenXR runtime to also check mirror ownership and Godview visibility.
+
+## VR-only client
+
+Keyboard/mouse gameplay, desktop HUDs, flat-screen menus, native avatar file dialogs and desktop launchers are removed. OpenXR initialization is required for client startup; loss of controller tracking never enables keyboard controls. PC VR retains the third-person mirror, and the guide retains controller-operated photography. Dedicated servers still start with `--headless --xr-mode off -- --server`.
+
+Automated scene scripts can use `--headless --xr-mode off --script tests/<test>.gd -- --xr-test` in a debug engine. This explicit fixture creates XR camera/controller nodes for synthetic tracking; it supplies no desktop gameplay controls. Use a simulated OpenXR runtime for actual stereo/mirror rendering checks.
+
+Validation: VR-only input/startup checks; 92 golf control checks; 97 guide-camera checks; 13 tracked menu/wall input checks; 32 virtual-keyboard/menu checks; 66 tracked-casting checks; 25 BBQ controller checks; 37 integrated golf/social checks; 342 fishing simulation checks; dedicated-server startup; BBQ dedicated and player-hosted multiplayer. Native Monado simulation passed 27 golf-camera/mirror/Godview checks and saved a 1920×1080 photograph. Godot still reports its existing OpenXR teardown/spatial-disconnect/profile-RID warnings after the native test exits. Physical headset and Windows runtime testing were not performed for this change.
+
+The broader species-distribution test retains one pre-existing failure (`Every local species reachable`); running the unchanged pre-change sampling logic reproduces it. Desktop-only assertions in older scene tests were removed or replaced by explicit tracked poses and VR actions.

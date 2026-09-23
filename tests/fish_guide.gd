@@ -35,6 +35,13 @@ func run() -> void:
 	root.add_child(g)
 	current_scene = g
 	for i in range(12): await process_frame
+	g.set_process(false);g.motor.set_physics_process(false)
+	var trackers:Array[XRControllerTracker]=[]
+	for hand in 2:
+		var tracker:=XRControllerTracker.new();tracker.name="guide_test_"+str(hand);XRServer.add_tracker(tracker);trackers.append(tracker)
+		var controller:XRController3D=g.left if hand==0 else g.right;controller.tracker=tracker.name;controller.pose="grip"
+		tracker.set_pose("grip",Transform3D(Basis.IDENTITY,Vector3(-.3 if hand==0 else .3,1.2,-.3)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	await process_frame
 	g.game.journal.clear()
 	g.fish_guide.entries.clear()
 	g.game.state = Session.State.BITE
@@ -50,15 +57,7 @@ func run() -> void:
 	g.game.journal.clear()
 	g._load_journal()
 	check(is_equal_approx(g.fish_guide.entries["Sander lucioperca"].length, best), "Device record survives disk save/load")
-	var event := InputEventKey.new()
-	event.keycode = KEY_G
-	event.pressed = true
-	g._unhandled_input(event)
-	g._process(0.05)
-	check(g.fish_guide.held and g.fish_guide.visible and not g.hud.visible, "Desktop G opens physical device for inspection")
-	g._unhandled_input(event)
-	g._process(0.05)
-	check(not g.fish_guide.held and not g.fish_guide.visible and g.hud.visible, "G closes device and restores HUD")
+	# Physical grabbing/docking is covered by vr_interactions.gd.
 	g.fish_guide.ingest(Session.SPECIES)
 	g.fish_guide.page(-1)
 	check(g.fish_guide.selected == Session.SPECIES.size() - 1, "Previous page wraps to final species")
@@ -75,6 +74,7 @@ func run() -> void:
 	g.audio.stream = null
 	await process_frame
 	print("Field guide tests: %d checks, %d failures" % [checks, failures])
+	for tracker in trackers:XRServer.remove_tracker(tracker)
 	g.queue_free()
 	await process_frame
 	await create_timer(.3).timeout

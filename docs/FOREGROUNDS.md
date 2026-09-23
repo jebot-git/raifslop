@@ -29,7 +29,7 @@ Rebuild with Blender’s Python interpreter:
 
 ```bash
 blender --background --python tools/build_foregrounds.py
-./run.sh --desktop --headless --editor --import --quit
+godot --path . --xr-mode off --headless --editor --import --quit
 ```
 
 Blender MCP was used to procure textures and execute this builder. Meshes are batched by material, UVs use metre-scaled repetition, and textures are embedded in GLBs. Normal Godot play does not require Blender. Future export presets must include `assets/models/locations/manifest.json` as a non-resource file.
@@ -37,8 +37,8 @@ Blender MCP was used to procure textures and execute this builder. Meshes are ba
 ## Validation
 
 ```bash
-XDG_DATA_HOME=/tmp/fishing-foregrounds ./run.sh --desktop --headless --script res://tests/foregrounds.gd
-XDG_DATA_HOME=/tmp/fishing-foreground-captures ./run.sh --desktop --script res://tests/foregrounds.gd -- --capture
+XDG_DATA_HOME=/tmp/fishing-foregrounds godot --path . --xr-mode off --headless --script res://tests/foregrounds.gd -- --xr-test
+XDG_DATA_HOME=/tmp/fishing-foreground-captures godot --path . --xr-mode off --script res://tests/foregrounds.gd -- --xr-test --capture
 ```
 
 The suite walks the player to each water edge, checks collision holds, verifies arrival floors and model replacement, tests travel from the far shore into the boat, checks the tapered bow, and tests current-location fall recovery. Native stereo/controller coverage uses `tests/locations_xr.gd`. See [validation results](VALIDATION.md).

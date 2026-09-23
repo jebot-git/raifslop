@@ -40,7 +40,7 @@ var menu_last_position := Vector2.ZERO
 var menu_filtered_position := Vector2(-1, -1)
 var menu_mouse_down := false
 var avatar_loading := false
-var desktop_left: Node3D
+var reel_hand_target: Node3D
 var catch_label: Label3D
 var cast_anchor := Vector3.ZERO
 var aim_marker: MeshInstance3D
@@ -80,7 +80,6 @@ var cast_aim_target := Vector3.ZERO
 var cast_aim_anchor := Vector3.ZERO
 var cast_swing_axis := Vector3.FORWARD
 var cast_motion = preload("res://scripts/cast_motion.gd").new()
-var desktop_cast_extensions := 0
 var cast_last_tip := Vector3.ZERO
 var cast_sample_us := 0
 var cast_trace:Array[Dictionary]=[]
@@ -114,6 +113,7 @@ func _ready() -> void:
 	if server_only:
 		_start_network()
 		return
+	if not preload("res://scripts/xr_startup.gd").require_session(self):return
 	_build_environment()
 	get_tree().auto_accept_quit = false
 	_build_rig()
@@ -153,7 +153,7 @@ func _ready() -> void:
 	bbq=preload("res://scripts/bbq/activity.gd").new();add_child(bbq);bbq.setup(self)
 	golf_activity = preload("res://addons/golfminus/scripts/golf/fishing_host.gd").new()
 	add_child(golf_activity); golf_activity.setup(self)
-	print("Real AI Fishing ready | ", "OpenXR" if xr else "Desktop", " | panorama + location foreground loaded")
+	print("Real AI Fishing ready | ", "OpenXR" if xr else "XR test fixture", " | panorama + location foreground loaded")
 
 func material(color: Color, metal := 0.0) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -248,7 +248,7 @@ func _build_rig() -> void:
 	xr = interface != null and interface.is_initialized()
 	# Log the application API, selected runtime and renderer for support reports.
 	var xr_info := {
-		"api": "OpenXR" if xr else "Desktop",
+		"api": "OpenXR" if xr else "XR test fixture",
 		"initialized": xr,
 		"rendering_driver": RenderingServer.get_current_rendering_driver_name(),
 		"rendering_method": RenderingServer.get_current_rendering_method(),
@@ -256,10 +256,6 @@ func _build_rig() -> void:
 	if xr:
 		xr_info.merge(interface.get_system_info())
 	print("XR_STARTUP ", JSON.stringify(xr_info))
-	if not xr and "--xr-mode" in OS.get_cmdline_args():
-		var mode_index := OS.get_cmdline_args().find("--xr-mode")
-		if mode_index + 1 < OS.get_cmdline_args().size() and OS.get_cmdline_args()[mode_index + 1] == "on":
-			push_warning("OpenXR did not initialize; using desktop controls. Select an active OpenXR runtime (VDXR or SteamVR on Windows), connect the headset, and restart. See the earlier OpenXR errors in this log.")
 	# PC VR renders stereo into a dedicated viewport, leaving the window mono.
 	# Standalone headsets retain their single XR output without a spectator pass.
 	if xr and not OS.has_feature("android"):
@@ -277,14 +273,9 @@ func _build_rig() -> void:
 	origin = XROrigin3D.new()
 	origin.name = "XROrigin3D"
 	motor.add_child(origin)
-	if xr:
-		get_viewport().use_xr = xr_view == null
-		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
-		head = XRCamera3D.new()
-	else:
-		head = Camera3D.new()
-		head.position = Vector3(0, 1.65, 0.65)
-		head.rotation.x = -0.08
+	get_viewport().use_xr = xr and xr_view == null
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	head = XRCamera3D.new()
 	origin.add_child(head)
 	head.current = true
 	head.cull_mask = 3
@@ -309,19 +300,15 @@ func _build_rig() -> void:
 	motor.left = left
 	motor.right = right
 	motor.xr = xr
-	desktop_left = Node3D.new()
-	origin.add_child(desktop_left)
+	reel_hand_target = Node3D.new()
+	origin.add_child(reel_hand_target)
 
 func _build_rod() -> void:
 	rod = Node3D.new()
 	rod.name = "FishingRod"
-	if xr:
-		right.add_child(rod)
-	else:
-		origin.add_child(rod)
-		rod.position = Vector3(0.30, 1.43, 0.30)
+	right.add_child(rod)
 	rod.rotation.x = 0.35
-	if xr: rod.top_level = true
+	rod.top_level = true
 	rod_visual = preload("res://scripts/rod_visual.gd").new()
 	rod.add_child(rod_visual)
 	rod_visual.equip(game.tackle.equipped)
@@ -340,19 +327,8 @@ func _build_rod() -> void:
 func _build_ui() -> void:
 	hud = HUD.new()
 	hud.game = game
-	hud.vr_mode = xr
-	if xr:
-		# Retain the shared HUD state for gameplay; VR has no floating HUD surface.
-		add_child(hud)
-		hud.hide()
-	else:
-		var layer := CanvasLayer.new()
-		add_child(layer)
-		layer.add_child(hud)
-	hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	hud.bait_selected.connect(func(index: int): _select_bait(index))
-	hud.action_pressed.connect(_primary_action)
-	hud.avatar_requested.connect(_toggle_avatar_menu)
+	add_child(hud)
+	hud.hide()
 	catch_label = preload("res://scripts/catch_label.gd").new()
 	catch_label.game_root = self
 	add_child(catch_label)
@@ -518,7 +494,7 @@ func _right_released(button: String) -> void:
 func _primary_action() -> void:
 	match game.state:
 		Session.State.READY:
-			game.message = "Hold trigger, sweep back then forward, and release." if xr else "Hold SPACE for the backswing, then release to cast."
+			game.message = "Hold trigger, sweep back then forward, and release."
 		Session.State.WAITING, Session.State.BITE:
 			game.strike()
 		Session.State.LANDED, Session.State.LOST:
@@ -529,7 +505,7 @@ func _primary_action() -> void:
 			_update_line()
 
 func _cast_direction() -> Vector3:
-	var direction := -head.global_basis.z if xr else -rod.global_basis.z
+	var direction := -head.global_basis.z
 	if xr and not head_aimed_casting:
 		direction = preload("res://scripts/cast_motion.gd").controller_axis(controller_pose(1) * rod_holster.HELD_POSE)
 	direction.y = 0
@@ -544,7 +520,7 @@ func _tracked_cast_tip() -> Vector3:
 func _strike_tip() -> Vector3:
 	# Feeder strikes follow the physical rod, without avatar lag or quiver knocks.
 	if xr and game.is_feeder_fishing():return _tracked_cast_tip()
-	return origin.to_local(tip.global_position) if xr else tip.global_position
+	return origin.to_local(tip.global_position)
 
 func _sample_cast_swing(delta: float) -> void:
 	# Avatar IK can damp/lag the rendered tip. Cast from actual controller
@@ -669,9 +645,8 @@ func _begin_cast() -> void:
 	cast_motion = preload("res://scripts/cast_motion.gd").new()
 	cast_trace.clear()
 	casting = true
-	cast_last_tip = _tracked_cast_tip() if xr else Vector3.ZERO
+	cast_last_tip = _tracked_cast_tip()
 	cast_sample_us = Time.get_ticks_usec()
-	desktop_cast_extensions=0
 	game.fly.begin_cast(game.is_fly_fishing())
 
 func _projected_cast_target() -> Vector3:
@@ -687,11 +662,6 @@ func _projected_cast_target() -> Vector3:
 	if casting: return cast_aim_target
 	var ray_origin := head.global_position
 	var ray := -head.global_basis.z
-	if not xr:
-		# Desktop right-drag controls yaw and downward aim independently of the
-		# animated backswing. The initial rod pose aims about twelve metres out.
-		var pitch := clampf(rod.rotation.x - .23, .045, 1.2)
-		ray = Basis(Vector3.UP, rod.global_rotation.y) * Vector3(0, -sin(pitch), -cos(pitch))
 	var hit = Plane(Vector3.UP, water_level + .05).intersects_ray(ray_origin, ray)
 	if hit == null:
 		# A level/upward view has a valid far cast; overhand preparation often
@@ -748,61 +718,6 @@ func _cast(_power: float) -> void:
 	escape_offset = Vector3.ZERO
 	fishing_feedback.cast_swish()
 
-func _unhandled_input(event: InputEvent) -> void:
-	if is_instance_valid(golf_activity) and golf_activity.active: return
-	if is_instance_valid(bbq) and bbq.handle_input(event):return
-	if not xr and event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_J and not menu_open:
-			rod_holster.set_stowed(not rod_holster.stowed)
-			return
-		if event.keycode == KEY_G and not menu_open:
-			fish_guide.held = not fish_guide.held and fish_guide.can_grab()
-			fish_guide.screen.queue_redraw()
-			return
-		if fish_guide.held:
-			if event.keycode == KEY_C: fish_guide.photo_camera.toggle()
-			elif event.keycode == KEY_SPACE: fish_guide.photo_camera.capture()
-			elif event.keycode == KEY_F: fish_guide.photo_camera.toggle_selfie()
-			elif event.keycode == KEY_LEFT: fish_guide.page(-1)
-			elif event.keycode == KEY_RIGHT: fish_guide.page(1)
-			elif event.keycode == KEY_ESCAPE: fish_guide.dock()
-			return
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_V:
-		_toggle_avatar_menu()
-		return
-	if menu_open:
-		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE: _toggle_avatar_menu()
-		return
-	if not xr and event is InputEventKey and event.keycode==KEY_TAB and not event.echo:
-		if event.pressed:rig_radial.toggle()
-		return
-	if rig_radial.opened:return
-	if not xr and game.state==Session.State.READY and not rod_holster.stowed and event is InputEventKey and event.keycode==KEY_SPACE and not event.echo:
-		if event.pressed:
-			_begin_cast()
-		elif game.fly.charging:
-			game.fly.charging=false
-			if game.fly.charge_age>=.2:_cast(game.fly.cast_power())
-			else:game.message="Hold SPACE briefly for the backcast, then release forward."
-			casting = false
-		return
-	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_SPACE: _primary_action()
-			KEY_1: _select_bait(0)
-			KEY_2: _select_bait(1)
-			KEY_3: _select_bait(2)
-			KEY_4: _select_bait(3)
-			KEY_5: _select_bait(4)
-			KEY_6: _select_bait(5)
-			KEY_ESCAPE: _quit_game()
-	if not xr and not rod_holster.stowed and event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-		rod.rotation.y = clampf(rod.rotation.y - event.relative.x * 0.004, -0.8, 0.8)
-		rod.rotation.x = clampf(rod.rotation.x - event.relative.y * 0.004, -0.3, 1.2)
-	if not xr and event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_MIDDLE):
-		motor.turn(-event.relative.x * 0.003)
-		head.rotation.x = clampf(head.rotation.x - event.relative.y * 0.003, -1.0, 0.75)
-
 func _update_tracking_warning(delta: float) -> void:
 	# Focus loss is a compositor pause, not evidence of lost controllers.
 	# Refresh before menu/guide/holster early returns so a stale warning clears.
@@ -831,15 +746,10 @@ func _process(delta: float) -> void:
 	rig_radial.update()
 	_update_tracking_warning(delta)
 	rod_visual.visible = true
-	rod.visible = rod_holster.stowed or not xr or right.get_has_tracking_data()
+	rod.visible = rod_holster.stowed or right.get_has_tracking_data()
 	catch_in_hand = _catch_grip_active()
-	motor.catch_controls = fish_guide.held or catch_in_hand or (is_instance_valid(bbq) and (bbq.holds(0) or bbq.holds(1)) and not xr)
-	if not xr: hud.visible = not menu_open and not fish_guide.held
+	motor.catch_controls = fish_guide.held or catch_in_hand
 	time += delta
-	if not xr:
-		var backswing: float = 1.35 * smoothstep(0.0, .3, game.fly.charge_age) if game.fly.charging else 0.0
-		rod_visual.rotation.x = move_toward(rod_visual.rotation.x, backswing, delta * 7.0)
-		tip.position = rod_visual.basis * Vector3(0, 0, -1.68)
 	if fish_display.visible: catch_twitch.tick(delta)
 	_update_avatar(delta)
 	if avatar_loading: return
@@ -871,76 +781,61 @@ func _process(delta: float) -> void:
 		return
 	gesture_cooldown = maxf(0.0, gesture_cooldown - delta)
 	var reel := 0.0
-	if xr:
-		# The offhand commonly leaves the cameras during a backswing. It is
-		# required for fighting/reeling, but cannot cancel a one-handed cast.
-		var tracked: bool = right.get_has_tracking_data() and (left.get_has_tracking_data() or game.state in [Session.State.READY, Session.State.CASTING]) and (not is_instance_valid(tracking_manager) or tracking_manager.focused)
-		rod.visible = right.get_has_tracking_data()
-		if not tracked:
-			game.fly.charging=false;game.fly.release_strip(true)
-			fight_input.reset()
-			tracking_was_valid = false
-			casting = false
-			reel_tracker.engaged = false
-			if game.state == Session.State.LANDED and fish_display.visible:
-				_update_catch(delta)
-				_update_line()
-			hud.queue_redraw()
-			return
-		if not tracking_was_valid:
-			last_tip = _strike_tip()
-			tracking_was_valid = true
-		# Locomotion is not a fishing gesture. Use origin-local tracked motion.
-		velocity = origin.global_basis * ((_strike_tip() - last_tip) / maxf(delta, 0.001))
-		if casting:
-			_sample_cast_swing(delta)
-		var tracked_rod: Transform3D = controller_local_pose(1) * rod_holster.HELD_POSE
-		var reel_pos := tracked_rod.affine_inverse() * controller_local_pose(0).origin - crank.position
-		if reel_tracker.engaged:
-			reel = reel_tracker.sample(reel_pos + reel_tracking_offset, _reel_grab_pressed(), delta, game.is_fly_fishing())
-		else:
-			# Acquire the visible handle, then measure raw relative tracking only.
-			var visible_reel_pos := rod.to_local(controller_pose(0).origin) - crank.position
-			reel = reel_tracker.sample(visible_reel_pos, _reel_grab_pressed(), delta, game.is_fly_fishing())
-			if reel_tracker.engaged: reel_tracking_offset = visible_reel_pos - reel_pos
-		if game.is_fly_fishing():
-			# Sample current tracking input; cached IK attachments are for rendering.
-			# Head motion and locomotion must not become a strip through solver lag.
-			var strip_rate:float=_sample_fly_strip(delta)
-			# The handle and loose line are separate grips; only one owns the hand.
-			if not reel_tracker.engaged: reel=strip_rate
-			var raw_tip:Vector3=(controller_local_pose(1)*preload("res://scripts/rod_holster.gd").HELD_POSE)*Vector3(0,0,-1.68)
-			var mend:int=game.fly.sample_mend(raw_tip,origin.global_basis,delta,game.state==Session.State.WAITING)
-			if mend!=0:_mend_fly(mend)
-		if velocity.y > 0.9 and (game.state == Session.State.BITE or (game.is_feeder_fishing() and game.state==Session.State.WAITING and game.feeder.nibbling)):
-			game.strike()
-		if game.state == Session.State.FIGHT:
-			var facing := Basis(Vector3.UP,atan2(head.global_basis.z.x,head.global_basis.z.z))
-			var direction := fight_input.sample(game.cue,origin.global_basis.inverse()*(tip.global_position-head.global_position),origin.global_basis.inverse()*facing, -rod.global_basis.z.y)
-			game.gesture(direction)
-			if game.jump_time>0.0:
-				game.tug(fight_input.sample_tug(game.jump_count,game.cue,origin.global_basis.inverse()*(tip.global_position-head.global_position),delta,origin.global_basis.inverse()*facing))
-		else: fight_input.reset()
+	# The offhand commonly leaves the cameras during a backswing. It is
+	# required for fighting/reeling, but cannot cancel a one-handed cast.
+	var tracked: bool = right.get_has_tracking_data() and (left.get_has_tracking_data() or game.state in [Session.State.READY, Session.State.CASTING]) and (not is_instance_valid(tracking_manager) or tracking_manager.focused)
+	rod.visible = right.get_has_tracking_data()
+	if not tracked:
+		game.fly.charging=false;game.fly.release_strip(true)
+		fight_input.reset()
+		tracking_was_valid = false
+		casting = false
+		reel_tracker.engaged = false
+		if game.state == Session.State.LANDED and fish_display.visible:
+			_update_catch(delta)
+			_update_line()
+		hud.queue_redraw()
+		return
+	if not tracking_was_valid:
+		last_tip = _strike_tip()
+		tracking_was_valid = true
+	# Locomotion is not a fishing gesture. Use origin-local tracked motion.
+	velocity = origin.global_basis * ((_strike_tip() - last_tip) / maxf(delta, 0.001))
+	if casting:
+		_sample_cast_swing(delta)
+	var tracked_rod: Transform3D = controller_local_pose(1) * rod_holster.HELD_POSE
+	var reel_pos := tracked_rod.affine_inverse() * controller_local_pose(0).origin - crank.position
+	if reel_tracker.engaged:
+		reel = reel_tracker.sample(reel_pos + reel_tracking_offset, _reel_grab_pressed(), delta, game.is_fly_fishing())
 	else:
-		if game.fly.charging:
-			game.fly.stroke(delta,0)
-			if game.is_fly_fishing():
-				var extensions := mini(8, int(maxf(0, game.fly.charge_age-.5)/.5))
-				while desktop_cast_extensions < extensions:
-					_extend_fly_cast();desktop_cast_extensions+=1
-		if game.is_fly_fishing() and game.state==Session.State.WAITING:
-			if Input.is_action_just_pressed("ui_left"):_mend_fly(-1)
-			elif Input.is_action_just_pressed("ui_right"):_mend_fly(1)
-		reel = (1.8 if Input.is_key_pressed(KEY_SHIFT) else 1.0) if Input.is_key_pressed(KEY_R) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) else 0.0
-		game.gesture(0 if Input.is_key_pressed(KEY_LEFT) else 1 if Input.is_key_pressed(KEY_RIGHT) else 2 if Input.is_key_pressed(KEY_UP) else -1)
-		if game.jump_time>0:
-			game.tug(0 if Input.is_action_just_pressed("ui_left") else 1 if Input.is_action_just_pressed("ui_right") else -1)
+		# Acquire the visible handle, then measure raw relative tracking only.
+		var visible_reel_pos := rod.to_local(controller_pose(0).origin) - crank.position
+		reel = reel_tracker.sample(visible_reel_pos, _reel_grab_pressed(), delta, game.is_fly_fishing())
+		if reel_tracker.engaged: reel_tracking_offset = visible_reel_pos - reel_pos
+	if game.is_fly_fishing():
+		# Sample current tracking input; cached IK attachments are for rendering.
+		# Head motion and locomotion must not become a strip through solver lag.
+		var strip_rate:float=_sample_fly_strip(delta)
+		# The handle and loose line are separate grips; only one owns the hand.
+		if not reel_tracker.engaged: reel=strip_rate
+		var raw_tip:Vector3=(controller_local_pose(1)*preload("res://scripts/rod_holster.gd").HELD_POSE)*Vector3(0,0,-1.68)
+		var mend:int=game.fly.sample_mend(raw_tip,origin.global_basis,delta,game.state==Session.State.WAITING)
+		if mend!=0:_mend_fly(mend)
+	if velocity.y > 0.9 and (game.state == Session.State.BITE or (game.is_feeder_fishing() and game.state==Session.State.WAITING and game.feeder.nibbling)):
+		game.strike()
+	if game.state == Session.State.FIGHT:
+		var facing := Basis(Vector3.UP,atan2(head.global_basis.z.x,head.global_basis.z.z))
+		var direction := fight_input.sample(game.cue,origin.global_basis.inverse()*(tip.global_position-head.global_position),origin.global_basis.inverse()*facing, -rod.global_basis.z.y)
+		game.gesture(direction)
+		if game.jump_time>0.0:
+			game.tug(fight_input.sample_tug(game.jump_count,game.cue,origin.global_basis.inverse()*(tip.global_position-head.global_position),delta,origin.global_basis.inverse()*facing))
+	else: fight_input.reset()
 	# Retrieval accepts either winding direction; the handle follows the actual hand.
-	crank.rotation.x += reel_tracker.angular_delta if xr else 0.0 if game.is_fly_fishing() else reel * TAU * delta
+	crank.rotation.x += reel_tracker.angular_delta
 	if xr and reel_tracker.engaged and is_instance_valid(avatar):
 		_update_reel_hand()
-		avatar.left_target = desktop_left
-		avatar.xr_pose.left = avatar.render_frame.affine_inverse() * desktop_left.global_transform
+		avatar.left_target = reel_hand_target
+		avatar.xr_pose.left = avatar.render_frame.affine_inverse() * reel_hand_target.global_transform
 		avatar.xr_pose.body.erase("left_hand")
 		avatar.xr_pose.body.erase("left_curls")
 		avatar.left_curl = .8
@@ -1006,11 +901,7 @@ func _catch_grip_active() -> bool:
 
 func _update_catch(delta: float) -> void:
 	catch_in_hand = _catch_grip_active()
-	motor.catch_controls = fish_guide.held or catch_in_hand or (is_instance_valid(bbq) and (bbq.holds(0) or bbq.holds(1)) and not xr)
-	if not xr:
-		fish_display.global_position = head.global_position - head.global_basis.z * 1.1 - Vector3.UP * 0.08
-		fish_display.rotation = Vector3(0, time * 0.35, 0)
-		return
+	motor.catch_controls = fish_guide.held or catch_in_hand
 	var stick := Vector2.ZERO
 	if catch_in_hand:
 		for controller in [left, right]:
@@ -1095,7 +986,7 @@ func _sample_lure_motion(delta:float)->float:
 	if not game.is_lure_fishing() or game.state!=Session.State.WAITING:
 		game.lure.reset_motion();return 0.0
 	# Raw controller input avoids a feedback loop through the solved avatar hand.
-	var input_tip:Vector3=(controller_local_pose(1)*rod_holster.HELD_POSE)*Vector3(0,0,-1.68) if xr else origin.to_local(tip.global_position)
+	var input_tip:Vector3=(controller_local_pose(1)*rod_holster.HELD_POSE)*Vector3(0,0,-1.68)
 	var direction:Vector3=origin.global_basis.inverse()*(game.cast_position-game.retrieve_origin)
 	direction.y=0
 	var facing:=Basis.looking_at(direction.normalized()) if direction.length_squared()>.001 else Basis.IDENTITY
@@ -1284,40 +1175,33 @@ func _build_avatar_menu() -> void:
 	avatar_menu = AvatarMenu.new()
 	avatar_menu.library = avatars
 	avatar_menu.size = Vector2(900, 650)
-	if xr:
-		avatar_menu_view = SubViewport.new()
-		avatar_menu_view.size = Vector2i(1000, 720)
-		avatar_menu_view.transparent_bg = true
-		avatar_menu_view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-		add_child(avatar_menu_view)
-		avatar_menu_view.add_child(avatar_menu)
-		avatar_menu.position = Vector2(50, 30)
-		var quad := QuadMesh.new()
-		quad.size = Vector2(1.8, 1.296)
-		var mat := StandardMaterial3D.new()
-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mat.albedo_texture = avatar_menu_view.get_texture()
-		avatar_panel = mesh_node(quad, self, Vector3.ZERO, mat)
-		avatar_panel.visible = false
-		var sphere := SphereMesh.new()
-		sphere.radius = 0.009
-		sphere.height = 0.018
-		menu_pointer = mesh_node(sphere, self, Vector3.ZERO, material(Color("9fdfbd")))
-		menu_pointer.visible = false
-		var beam := CylinderMesh.new()
-		beam.top_radius = .0012; beam.bottom_radius = .0012; beam.height = 1.0; beam.radial_segments = 6
-		var beam_material := material(Color("9fdfbd"))
-		beam_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		menu_laser = mesh_node(beam, self, Vector3.ZERO, beam_material)
-		menu_laser.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		if is_instance_valid(menu_laser): menu_laser.hide()
-	else:
-		var layer := CanvasLayer.new()
-		layer.layer = 3
-		add_child(layer)
-		layer.add_child(avatar_menu)
-		avatar_menu.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	avatar_menu_view = SubViewport.new()
+	avatar_menu_view.size = Vector2i(1000, 720)
+	avatar_menu_view.transparent_bg = true
+	avatar_menu_view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child(avatar_menu_view)
+	avatar_menu_view.add_child(avatar_menu)
+	avatar_menu.position = Vector2(50, 30)
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1.8, 1.296)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_texture = avatar_menu_view.get_texture()
+	avatar_panel = mesh_node(quad, self, Vector3.ZERO, mat)
+	avatar_panel.visible = false
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.009
+	sphere.height = 0.018
+	menu_pointer = mesh_node(sphere, self, Vector3.ZERO, material(Color("9fdfbd")))
+	menu_pointer.visible = false
+	var beam := CylinderMesh.new()
+	beam.top_radius = .0012; beam.bottom_radius = .0012; beam.height = 1.0; beam.radial_segments = 6
+	var beam_material := material(Color("9fdfbd"))
+	beam_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	menu_laser = mesh_node(beam, self, Vector3.ZERO, beam_material)
+	menu_laser.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if is_instance_valid(menu_laser): menu_laser.hide()
 	avatar_menu.visible = false
 	avatar_menu.selected.connect(_select_avatar)
 	avatar_menu.import_requested.connect(_import_avatar)
@@ -1429,7 +1313,7 @@ func _select_location(id: String, persist := true) -> bool:
 	if not Session.rig_supported(game.rig,id):game.rig=Session.Rig.CLASSIC
 	game.bait=clampi(game.bait,0,game.bait_count()-1)
 	game.fly.reset()
-	game.message="Hold trigger: sweep back, forward, release. Strip with left grip; mend upstream." if xr and game.is_fly_fishing() else "Hold SPACE briefly, release to cast. R strips line; LEFT mends upstream." if game.is_fly_fishing() else "Choose your bait, then cast into open water."
+	game.message="Hold trigger: sweep back, forward, release. Strip with left grip; mend upstream." if game.is_fly_fishing() else "Choose your bait, then cast into open water."
 	if is_instance_valid(rod_status): rod_status.update_bait()
 	hud.location_mood = entry.mood
 	hud.queue_redraw()
@@ -1460,23 +1344,15 @@ func _toggle_avatar_menu() -> void:
 		avatar_menu.refresh_locations(current_location, game.state == Session.State.READY)
 	casting = false
 	reel_tracker.engaged = false
-	if xr:
-		avatar_panel.visible = menu_open
-		menu_pointer.visible = menu_open
-		if is_instance_valid(menu_laser): menu_laser.hide()
-		if menu_open:
-			var facing := Basis(Vector3.UP, atan2(head.global_basis.z.x, head.global_basis.z.z))
-			avatar_panel.global_transform = Transform3D(facing, head.global_position - facing.z * 1.8)
-	else:
-		hud.visible = not menu_open
+	avatar_panel.visible = menu_open
+	menu_pointer.visible = menu_open
+	if is_instance_valid(menu_laser): menu_laser.hide()
+	if menu_open:
+		var facing := Basis(Vector3.UP, atan2(head.global_basis.z.x, head.global_basis.z.z))
+		avatar_panel.global_transform = Transform3D(facing, head.global_position - facing.z * 1.8)
 
 func _layout_avatar_menu() -> void:
 	avatar_menu.size = Vector2(900, 656)
-	if not xr:
-		var viewport_size := get_viewport().get_visible_rect().size
-		var fit := minf(1.0, minf(viewport_size.x / 960.0, viewport_size.y / 716.0))
-		avatar_menu.scale = Vector2.ONE * fit
-		avatar_menu.position = (viewport_size - avatar_menu.size * fit) * 0.5
 
 func _select_avatar(path: String) -> void:
 	if avatar_loading: return
@@ -1542,22 +1418,20 @@ func _reel_grab_pressed() -> bool:
 
 func _update_reel_hand() -> void:
 	# Visual IK target only: reel speed continues to use the real controller.
-	desktop_left.global_basis = rod.global_basis
-	desktop_left.global_position = crank.to_global(rod_visual.crank_grip_position())
+	reel_hand_target.global_basis = rod.global_basis
+	reel_hand_target.global_position = crank.to_global(rod_visual.crank_grip_position())
 
 func _update_avatar(delta: float) -> void:
 	if xr and not _reel_grab_pressed(): reel_tracker.engaged = false
 	if xr and not is_instance_valid(avatar) and not rod_holster.stowed:
 		rod.global_transform = controller_pose(1) * rod_holster.HELD_POSE
-	if not xr:
-		_update_reel_hand()
 	if is_instance_valid(avatar):
 		avatar.grounded = motor.is_on_floor()
 		avatar.tracked_leg_animation = tracking_manager.tracked_leg_animation if is_instance_valid(tracking_manager) else false
 		avatar.apply_tracking(motor.global_transform, tracking_manager.body if is_instance_valid(tracking_manager) else {}, tracking_manager.face if is_instance_valid(tracking_manager) else {})
-		var right_hand:Node3D=calibrated_hands[1] if xr else (bbq.desktop_right if is_instance_valid(bbq) and bbq.holds(1) else rod)
-		avatar.update_targets(head, calibrated_hands[0] if xr else desktop_left, right_hand, motor.global_position.y, motor.last_motion, delta)
-		avatar.left_curl = left.get_float("grip") * 0.8 if xr else 0.7
+		var right_hand:Node3D=calibrated_hands[1]
+		avatar.update_targets(head, calibrated_hands[0], right_hand, motor.global_position.y, motor.last_motion, delta)
+		avatar.left_curl = left.get_float("grip") * 0.8
 		avatar_menu.update_preview(avatar)
 
 func _pointer_position() -> Vector2:
