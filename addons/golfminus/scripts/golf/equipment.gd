@@ -9,10 +9,8 @@ func hip_pose(side: float) -> Transform3D:
 	var facing:=Basis(Vector3.UP,atan2(game.head.global_basis.z.x,game.head.global_basis.z.z))
 	var hip:=Vector3(game.head.global_position.x,maxf(game.body.global_position.y+.55,game.head.global_position.y-.70),game.head.global_position.z)
 	if is_instance_valid(game.host_game):
-		var tracking=game.host_game.tracking_manager
-		if is_instance_valid(tracking) and tracking.body.has("hips"):
-			var hips:Transform3D=game.body.global_transform*tracking.body.hips
-			hip=hips.origin;facing=Basis(Vector3.UP,atan2(hips.basis.z.x,hips.basis.z.z))
+		var mount := preload("res://scripts/tracking/hip_mount.gd").pose(game.head, game.body, game.host_game.tracking_manager)
+		hip = mount.origin; facing = mount.basis
 	return Transform3D(facing,hip+facing*Vector3(side*.29,0,-.02))
 
 func update() -> void:

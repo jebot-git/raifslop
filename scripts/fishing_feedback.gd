@@ -209,19 +209,18 @@ func _process(delta: float) -> void:
    splash_wait=1.1
   elif splash_wait<=0 and g.submerge==S.Submerge.NONE:
    splash(surface.global_position);splash_wait=randf_range(1.0,1.5) if g.is_running() or g.cue>=0 else randf_range(2.0,2.8)
- elif g.is_lure_fishing() and g.state==S.State.WAITING and g.lure.action>.01:
-  # Worked tackle disturbs the surface even though the lure itself is below
-  # it. Follow its actual lateral/retrieve position, never the rod or marker.
+ elif g.is_lure_fishing() and g.state==S.State.WAITING and g.lure.twitch_wake>0:
+  # Only an accepted twitch makes this pulse; steady retrieval has no
+  # twitch ripples. Follow the lure, not the rod or cast marker.
   surface.show();surface.global_position=game_root.bobber.global_position
   surface.scale=Vector3.ONE*.35
   surface.global_position.y=game_root.water_level+.045
-  var twitching:bool=g.lure.twitch_wake>0
-  var heading:Vector3=g.lure.twitch_heading if twitching else g.retrieve_origin-g.cast_position
+  var heading:Vector3=g.lure.twitch_heading
   heading.y=0;heading=heading.normalized()
   water_fx.set_shader_parameter("heading",Vector2(heading.x,heading.z))
-  water_fx.set_shader_parameter("directional",twitching or reel_rate>.03)
+  water_fx.set_shader_parameter("directional",true)
   water_fx.set_shader_parameter("burst",false)
-  water_fx.set_shader_parameter("strength",clampf(g.lure.action*.65/(1.0+g.lure.depth*.5),0,.75))
+  water_fx.set_shader_parameter("strength",clampf(g.lure.twitch_wake/g.lure.TWITCH_WAKE_SECONDS*.65/(1.0+g.lure.depth*.5),0,.75))
   water_fx.set_shader_parameter("clock",clock)
  elif burst_age<1.8:
   burst_age+=delta;surface.show();water_fx.set_shader_parameter("burst",true);water_fx.set_shader_parameter("clock",burst_age);water_fx.set_shader_parameter("strength",1.0)

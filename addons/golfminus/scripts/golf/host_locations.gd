@@ -2,9 +2,13 @@ extends RefCounted
 static var cached:Dictionary={}
 static var shared_courses:Dictionary={}
 const Model=preload("res://addons/golfminus/scripts/golf/course_model.gd")
+const Courses=preload("res://addons/golfminus/scripts/golf/catalog.gd")
 static func location(course:String,hole:int)->String:return "golf_%s_%02d"%[course,hole]
 static func clubhouse(course:String)->String:return "golf_%s_clubhouse"%course
-static func is_clubhouse(value:String)->bool:return value in [clubhouse("spyglass"),clubhouse("pebble"),clubhouse("dalkey"),clubhouse("alpine")]
+static func is_clubhouse(value:String)->bool:
+	for course in Courses.ALL:
+		if value==clubhouse(course):return true
+	return false
 static func same_world(a:String,b:String)->bool:
 	if a==b:return true
 	if not valid(a) or not valid(b):return false
@@ -18,7 +22,7 @@ static func same_world(a:String,b:String)->bool:
 static func valid(value:String)->bool:
 	if is_clubhouse(value):return true
 	var parts:=value.split("_")
-	return parts.size()==3 and parts[0]=="golf" and parts[1] in ["spyglass","pebble","dalkey","alpine"] and parts[2].is_valid_int() and int(parts[2])>=0 and int(parts[2])<18 and value==location(parts[1],int(parts[2]))
+	return parts.size()==3 and parts[0]=="golf" and parts[1] in Courses.ALL and parts[2].is_valid_int() and int(parts[2])>=0 and int(parts[2])<18 and value==location(parts[1],int(parts[2]))
 static func surface(model:RefCounted,x:float,z:float)->float:
 	if model.connected:
 		var x0:=floorf(x/2)*2;var z0:=floorf(z/2)*2

@@ -18,7 +18,7 @@ func send_pose(course:bool,serial:int)->void:
  var schema=load("res://scripts/network/state.gd")
  var location:String="golf_spyglass_clubhouse" if course else "lakeside"
  var at:Vector3=load("res://scripts/bbq/sites.gd").arrival(location)
- var data:Dictionary={"serial":serial,"location":location,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"state":0,"bait":0,"species":0,"rod_tier":0,"rig":0,"length":10.0,"curl":0.0,"reel_angle":0.0,"golf_club":0 if course else -1,"golf_stowed":course}
+ var data:Dictionary={"user_height":1.78,"serial":serial,"location":location,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"state":0,"bait":0,"species":0,"rod_tier":0,"rig":0,"length":10.0,"curl":0.0,"reel_angle":0.0,"golf_club":0 if course else -1,"golf_stowed":course}
  for key in schema.TRANSFORMS:data[key]=Transform3D(Basis.IDENTITY,at+Vector3(0,1.7,0))
  for key in schema.VECTORS:data[key]=at
  for key in ["caught","in_hand","xr","bobber_visible","bait_visible"]:data[key]=false

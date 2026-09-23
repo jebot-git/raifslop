@@ -86,6 +86,8 @@ func calibrate(t_pose: bool=false) -> void:
 	var targets:={"hips":Vector3(0,.92,0),"chest":Vector3(0,1.35,0),"left_foot":Vector3(-.13,.08,0),"right_foot":Vector3(.13,.08,0),"left_knee":Vector3(-.13,.5,-.03),"right_knee":Vector3(.13,.5,-.03),"left_elbow":Vector3(-.4,1.05,0),"right_elbow":Vector3(.4,1.05,0)}
 	if t_pose:
 		targets.left_elbow=Vector3(-.42,1.35,0);targets.right_elbow=Vector3(.42,1.35,0)
+	var height:float=rig.get("user_height") if rig.get("user_height")!=null else 1.65
+	for key in targets:targets[key]*=height/1.65
 	corrections.clear()
 	var head: Transform3D=rig.origin.transform*rig.head.transform if rig.get("head") else Transform3D.IDENTITY
 	var facing:=Transform3D(Basis(Vector3.UP,head.basis.get_euler().y),Vector3(head.origin.x,0,head.origin.z))
@@ -150,7 +152,12 @@ func sample() -> Dictionary:
 					pose.origin*=XRServer.world_scale
 					pose.basis=preload("res://scripts/tracking/body_basis.gd").native_to_facing(key,pose.basis)*native_corrections.get(tracker.name,{}).get(key,Basis.IDENTITY)
 					if key in ["hips","chest"] and not native_corrections.get(tracker.name,{}).has(key):
-						pose.basis = safe_native_torso(tracker, pose.basis, Transform3D(rig.head.basis,rig.head.position/XRServer.world_scale))
+						# Learn bridge sensor axes once. Rebuilding this from the head
+						# every frame makes a hip tracker turn whenever the player looks.
+						var facing := safe_native_torso(tracker, pose.basis, Transform3D(rig.head.basis,rig.head.position/XRServer.world_scale))
+						if not native_corrections.has(tracker.name): native_corrections[tracker.name] = {}
+						native_corrections[tracker.name][key] = pose.basis.inverse() * facing
+						pose.basis = facing
 					result[key]=rig.origin.transform*pose
 			# A tracked lower leg must drive the endpoint too, not just the knee
 			# bend hint of a foot that remains planted by procedural walking.
@@ -169,6 +176,12 @@ func sample() -> Dictionary:
 					inferred.origin.y=maxf(inferred.origin.y,rig.origin.position.y+.03*XRServer.world_scale)
 					result[foot]=inferred
 		for key in raw:
+			if key == "hips" and not corrections.has(key):
+				# A waist-only setup need not wait for full-body T-pose calibration.
+				# Preserve its measured position and learn only its neutral facing.
+				var head_basis: Basis = rig.origin.basis * rig.head.basis
+				var facing := Basis(Vector3.UP, atan2(head_basis.z.x, head_basis.z.z))
+				corrections[key] = Transform3D(raw[key].basis.inverse() * facing, Vector3.ZERO)
 			if corrections.has(key): result[key]=raw[key]*corrections[key]
 	hand_sources.clear()
 	for side in ["left","right"]:

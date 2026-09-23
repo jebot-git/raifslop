@@ -137,6 +137,7 @@ func _process(delta: float) -> void:
 			var value=target.body[key]
 			body[key]=rendered.get("body",{}).get(key,value).interpolate_with(value,blend) if value is Transform3D else value
 		rendered.body=body
+		avatar.set_user_height(target.user_height)
 		avatar.apply_tracking(Transform3D(Basis.IDENTITY,rendered.feet),body,target.face)
 		if not target.face.has("mouth"): avatar.mouth.speak(target.visemes)
 		avatar.left_curl=target.curl

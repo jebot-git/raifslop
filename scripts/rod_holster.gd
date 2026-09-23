@@ -9,11 +9,9 @@ var desktop_pose := Transform3D.IDENTITY
 
 func update_holster() -> void:
 	var g = game_root
-	var facing := Basis(Vector3.UP, atan2(g.head.global_basis.z.x,g.head.global_basis.z.z))
-	var hip := Vector3(g.head.global_position.x,maxf(g.motor.global_position.y+.55,g.head.global_position.y-.70),g.head.global_position.z)
-	if is_instance_valid(g.tracking_manager) and g.tracking_manager.body.has("hips"):
-		var hips: Transform3D = g.motor.global_transform*g.tracking_manager.body.hips
-		hip=hips.origin;facing=Basis(Vector3.UP,atan2(hips.basis.z.x,hips.basis.z.z))
+	var mount := preload("res://scripts/tracking/hip_mount.gd").pose(g.head, g.motor, g.tracking_manager)
+	var facing := mount.basis
+	var hip := mount.origin
 	belt_pose=Transform3D(facing*Basis(Vector3.RIGHT,-PI/2),hip+facing*Vector3(.29,0,-.02))
 	if stowed: g.rod.global_transform=belt_pose
 	if not g.xr: return

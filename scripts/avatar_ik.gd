@@ -30,7 +30,7 @@ func _process_modification_with_delta(_delta: float) -> void:
 	if rest.is_empty():
 		for i in range(sk.get_bone_count()): rest[i] = sk.get_bone_global_rest(i)
 	# AnimationPlayer owns hip breathing / gait bob. Reset solved bones each frame.
-	for name in ["Hips","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot","LeftShoulder","RightShoulder","LeftUpperArm","LeftLowerArm","RightUpperArm","RightLowerArm","LeftHand","RightHand","Head","Chest","UpperChest"]:
+	for name in ["Hips","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot","LeftShoulder","RightShoulder","LeftUpperArm","LeftLowerArm","RightUpperArm","RightLowerArm","LeftHand","RightHand","Head","Neck","Spine","Chest","UpperChest"]:
 		var index := bone(sk,name)
 		if index>=0:
 			sk.set_bone_pose_rotation(index,sk.get_bone_rest(index).basis.get_rotation_quaternion())
@@ -64,15 +64,32 @@ func _process_modification_with_delta(_delta: float) -> void:
 		var head_index:=bone(sk,"Head")
 		var head_target:Transform3D=rig.tracking_transform()*rig.xr_pose.head
 		orient(sk,head_index,head_target.basis*reference_basis(sk,head_index))
-		# Estimated bodies follow the eyes. With FBT, the pelvis and torso belong
-		# to the body trackers: translating Chest to fit the eyes stretches or
-		# collapses the seated torso and moves both shoulder roots. Fit only the
-		# head in that case; never change the tracking origin or tracked pelvis.
-		var anchor:=head_index if body.has("hips") else hips
+		if body.has("hips") and bone(sk,"Spine")>=0 and bone(sk,"Neck")>=0 and bone(sk,"Chest")>=0:
+			# Bend the torso toward the headset while keeping Head and Neck at
+			# their authored offsets. Translating Head alone buries it in the
+			# collar when tracked pelvis/torso proportions differ from the VRM.
+			var neck:=bone(sk,"Neck")
+			var neck_target:Vector3=sk.to_global(sk.get_bone_global_pose(neck).origin)+head_target.origin-rig.viewpoint_position()
+			# Torso joints are not a limb hinge: a two-bone knee/elbow frame can
+			# add 180 degrees of axial roll at near-straight extension. Bend
+			# the spine by its shortest arc, preserving the pelvis's twist.
+			var spine:=bone(sk,"Spine")
+			var base:=sk.get_bone_global_pose(spine).origin
+			var before:=sk.get_bone_global_pose(neck).origin-base
+			var desired:=sk.to_local(neck_target)-base
+			if before.length_squared()>.0001 and desired.length_squared()>.0001:
+				rotate_bone_toward(sk,spine,before,desired)
+			if body.has("chest"):
+				orient(sk,bone(sk,"Chest"),rig.tracking_transform().basis*body.chest.basis*reference_basis(sk,bone(sk,"Chest")))
+			orient(sk,head_index,head_target.basis*reference_basis(sk,head_index))
+		# Any unreachable residual is carried by the torso root, including the
+		# shoulders, instead of shortening or stretching the neck.
+		var anchor:=(bone(sk,"Spine") if bone(sk,"Spine")>=0 else head_index) if body.has("hips") else hips
 		var correction:Vector3=sk.global_basis.inverse()*(head_target.origin-rig.viewpoint_position())
 		var anchor_parent:=sk.get_bone_parent(anchor)
 		if anchor_parent>=0:correction=sk.get_bone_global_pose(anchor_parent).basis.inverse()*correction
 		sk.set_bone_pose_position(anchor,sk.get_bone_pose_position(anchor)+correction)
+
 	for side in ["Left","Right"]:
 		var sign_x := -1.0 if side=="Left" else 1.0
 		var foot_idx := bone(sk,side+"Foot")
@@ -98,6 +115,10 @@ func _process_modification_with_delta(_delta: float) -> void:
 		if body.has(side.to_lower()+"_knee"):
 			knee_world=(rig.tracking_transform()*body[side.to_lower()+"_knee"]).origin
 			knee_world+=rig.global_basis*rig.gait.offsets[side.to_lower()]*rig.gait.assist_weight*.5
+			# A nearly straight tracked knee does not define a reliable bend
+			# plane. Millimetres of noise must not rotate the thigh 180 degrees.
+			var fallback:Vector3=leg_pole(body,side.to_lower(),hip_world,rig.tracking_transform()) if body.has("hips") else hip_world-rig.global_basis.z*.65
+			knee_world=stable_knee_pole(hip_world,foot_world,knee_world,fallback)
 		solve(sk,side+"UpperLeg",side+"LowerLeg",side+"Foot",foot_world,knee_world)
 		var foot_parent := sk.get_bone_parent(foot_idx)
 		sk.set_bone_pose_rotation(foot_idx,((sk.get_bone_global_pose(foot_parent).basis.inverse() if foot_parent>=0 else Basis.IDENTITY)*rest[foot_idx].basis).get_rotation_quaternion())
@@ -245,6 +266,22 @@ func reference_basis(sk: Skeleton3D,index: int) -> Basis:
 static func controller_hand_basis(left_hand: bool) -> Basis:
 	var sign_side:=1.0 if left_hand else -1.0
 	return Basis(Vector3.BACK*sign_side,Vector3.DOWN,Vector3.RIGHT*sign_side)
+
+static func stable_knee_pole(hip:Vector3,foot:Vector3,knee:Vector3,fallback:Vector3)->Vector3:
+	var axis:Vector3=(foot-hip).normalized()
+	var measured:Vector3=knee-hip
+	measured-=axis*measured.dot(axis)
+	var anatomical:Vector3=fallback-hip
+	anatomical-=axis*anatomical.dot(axis)
+	if anatomical.length_squared()<.0001:return fallback
+	# Blend out the noisy straight-leg region; meaningful bends keep their
+	# measured knee plane. Signed rotation avoids a zero-vector at opposition.
+	var weight:=smoothstep(.025,.08,measured.length())
+	if weight<=0:return fallback
+	var direction:=anatomical.normalized()
+	if measured.length_squared()>.000001:
+		direction=direction.rotated(axis,direction.signed_angle_to(measured.normalized(),axis)*weight)
+	return hip+direction*.65
 
 static func leg_pole(body: Dictionary,side: String,hip: Vector3,frame: Transform3D) -> Vector3:
 	var pelvis:Basis=frame.basis*body.hips.basis

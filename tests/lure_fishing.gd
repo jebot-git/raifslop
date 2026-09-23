@@ -57,19 +57,32 @@ func _initialize():
   var before:float=g.timer
   g.tick(.05,0,0,false,-1)
   check(g.cast_position.x<0 and g.timer<before,"Left twitch moves lure left and advances bite timer")
+  var left_at:Vector3=g.cast_position
   g.tick(.05,0,0,false,1)
-  check(absf(g.cast_position.x)<.001,"Right twitch moves lure back right")
+  check(g.cast_position.x>left_at.x+.2 and g.cast_position.z>left_at.z,"Right twitch moves lure right and slightly toward the angler")
  lure.reset()
  check(lure.sample_motion(Vector3.ZERO,Basis.IDENTITY,.02)==0,"First tracking sample cannot twitch")
- check(lure.sample_motion(Vector3(.04,0,0),Basis.IDENTITY,.02)>1,"Physical sideways rod motion is sampled")
- check(lure.sample_motion(Vector3(.04,0,0),Basis(Vector3.UP,.7),.02)==0,"Turning view alone cannot twitch")
+ check(lure.sample_motion(Vector3(.08,0,0),Basis.IDENTITY,.02)>1,"Physical sideways rod motion is sampled")
+ check(lure.sample_motion(Vector3(.08,0,0),Basis(Vector3.UP,.7),.02)==0,"Turning view alone cannot twitch")
  check(lure.sample_motion(Vector3(3,0,0),Basis.IDENTITY,.02)==0,"Tracking teleport cannot twitch")
+ # A single excursion cannot be milked for repeated twitches while held out.
+ lure.reset();lure.sample_motion(Vector3.ZERO,Basis.IDENTITY,.02)
+ var speed:float=lure.sample_motion(Vector3(.12,0,0),Basis.IDENTITY,.02)
+ var start:=Vector3(0,0,-20)
+ var moved:Vector3=lure.move_sideways(start,Vector3.ZERO,speed,.02)
+ check(moved.distance_to(start)>.3,"One twitch produces noticeable lure travel")
+ for at in [.18,.25,.20,.10]:
+  check(lure.sample_motion(Vector3(at,0,0),Basis.IDENTITY,.02)==0,"Further motion away from neutral cannot retrigger")
+ check(lure.sample_motion(Vector3(.02,.25,0),Basis.IDENTITY,.02)==0 and not lure.twitch_ready,"Rod must return near neutral in height too")
+ check(lure.sample_motion(Vector3(.02,0,0),Basis.IDENTITY,.02)==0,"Return near neutral rearms without twitching")
+ check(lure.move_sideways(moved,Vector3.ZERO,0,.2).is_equal_approx(moved),"Rod recovery does not undo lure travel")
+ check(lure.sample_motion(Vector3(-.12,0,0),Basis.IDENTITY,.02)<-1,"Fresh opposite twitch works after neutral recovery")
  for yaw in [0.0,PI/2,-.8]:
   for sign in [-1.0,1.0]:
    lure.reset()
    var outward:=Basis(Vector3.UP,yaw)*Vector3(0,0,-20)
    lure.move_sideways(outward,Vector3.ZERO,sign*2,.02)
-   var side:Vector3=outward.normalized().cross(Vector3.UP)*sign
+   var side:Vector3=(outward.normalized().cross(Vector3.UP)*sign-outward.normalized()*.35).normalized()
    check(lure.twitch_heading.dot(side)>.999,"Wake follows signed twitch for every cast bearing")
    lure.work(.02,0,0,1,false,sign*2)
    check(lure.twitch_wake>0,"Twitch wake survives release briefly")

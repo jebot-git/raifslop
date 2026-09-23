@@ -15,7 +15,7 @@ func until(test:Callable,seconds:=20.0)->bool:
 func _initialize()->void:run.call_deferred()
 func pose(location:String,serial:int,offset:=Vector3.ZERO)->void:
  var at:Vector3=preload("res://scripts/bbq/sites.gd").arrival(location)+offset
- var data:Dictionary={"serial":serial,"location":location,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"state":0,"bait":0,"species":0,"rod_tier":0,"rig":0,"length":10.0,"curl":0.0,"reel_angle":0.0,"golf_club":0,"golf_stowed":true}
+ var data:Dictionary={"user_height":1.78,"serial":serial,"location":location,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"state":0,"bait":0,"species":0,"rod_tier":0,"rig":0,"length":10.0,"curl":0.0,"reel_angle":0.0,"golf_club":0,"golf_stowed":true}
  for key in Net.State.TRANSFORMS:data[key]=Transform3D(Basis.IDENTITY,at+Vector3.UP*1.7)
  for key in Net.State.VECTORS:data[key]=at
  for key in ["caught","in_hand","xr","bobber_visible","bait_visible"]:data[key]=false
@@ -34,6 +34,9 @@ func run()->void:
   check(net.golf.board.spyglass.all(func(r):return r.best==18 and r.rounds==1),"Both full scorecards persist exactly once")
  else:
   var join_rejected:Array=[]
+  var waiting_seen:=[false]
+  net.golf.changed.connect(func():
+   if not net.golf.view.is_empty() and not net.golf.view.get("started",false):waiting_seen[0]=true)
   net.golf.result.connect(func(action,accepted):
    if action=="join" and not accepted:join_rejected.append(true))
   pose("golf_spyglass_clubhouse",1,Vector3(40,0,0))
@@ -44,7 +47,9 @@ func run()->void:
   await create_timer(.3).timeout
   net.golf.request("join",{"course":"spyglass","mode":"competition"})
   check(await until(func():return not net.golf.view.is_empty() and net.golf.view.roster.size()==2),"Two identities join one dedicated golf game")
-  check(not net.golf.view.started,"Competition waits at clubhouse")
+  # The organiser may start between this client's roster polls; retain the
+  # preceding lobby snapshot instead of asserting against the latest state.
+  check(waiting_seen[0],"Competition waits at clubhouse")
   if net.golf.view.owner:net.golf.request("start")
   check(await until(func():return net.golf.view.started),"Clubhouse organiser starts competition")
   pose("golf_spyglass_clubhouse" if role=="B" else "golf_spyglass_05",3)

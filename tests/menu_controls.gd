@@ -99,6 +99,12 @@ func run():
 	check(g.origin.global_basis.is_equal_approx(Basis(Vector3.UP,deg_to_rad(-45))*before),"Snap uses selected angle once per stick deflection")
 	g.motor.apply_turn_input(0,.02);g.motor.apply_turn_input(1,.02)
 	check(g.origin.global_basis.is_equal_approx(Basis(Vector3.UP,deg_to_rad(-90))*before),"Centering rearms the next snap")
+	menu.pages.controls.view.ensure_control_visible(menu.head_aimed_casting); await settle()
+	await click(menu.head_aimed_casting)
+	cfg.load("user://player.cfg")
+	check(not g.head_aimed_casting and not cfg.get_value("controls", "head_aimed_casting", true), "Head-aimed casting can be disabled and saved through a pointer click")
+	await click(menu.head_aimed_casting)
+	check(g.head_aimed_casting, "Head-aimed casting can be re-enabled through a pointer click")
 	var offset: HSlider = menu.calibration_sliders[6]
 	menu.pages.controls.view.ensure_control_visible(offset.get_parent()); await settle()
 	await click(offset.get_parent().get_child(2))

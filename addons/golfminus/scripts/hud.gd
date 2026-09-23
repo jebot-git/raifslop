@@ -18,8 +18,9 @@ var map: Control
 var score: Label
 var course_title: Label
 var tee_choice: OptionButton
-var hand_choice: OptionButton
+var hand_choice: CheckButton
 var length_slider: HSlider
+var attachment_controls:VBoxContainer
 var play_button: Button
 var analytics_button: Button
 var tag: Label
@@ -66,9 +67,9 @@ func _ready() -> void:
 	club_text=label(bv,"DRIVER",25)
 	power=ProgressBar.new();power.custom_minimum_size=Vector2(400,12);power.show_percentage=false;bv.add_child(power)
 	message=label(bv,"",16,Style.BRASS)
-	text_hints.append(label(bv,"Grip: swing · hip + grip: stash / retrieve" if game.xr else "SPACE: swing · TAB + arrows: club bag · H: stash · J: guide",14,Style.MUTED))
+	text_hints.append(label(bv,"Grip/trigger: swing, lock movement · release: walk" if game.xr else "SPACE: swing · TAB + arrows: club bag · H: stash · J: guide",14,Style.MUTED))
 	text_hints.append(label(bv,"Other hip + grip: hole / course tracker" if game.xr else "T: address · G: grid · ESC: field station",14,Style.MUTED))
-	guidance(bv,[["swing","Grip" if game.xr else "Space","Hold grip and swing"],["stash","Hip" if game.xr else "H","Grip at striking-hand hip to stash or retrieve"],["bag","R click" if game.xr else "Tab","Hold, point and release to select club"],["godview","L click" if game.xr else "V","Toggle Godview"],["menu","B" if game.xr else "Esc","Open field station"]])
+	guidance(bv,[["swing","Grip / trigger" if game.xr else "Space","Hold either to swing and lock stick movement"],["stash","Hip" if game.xr else "H","Grip at striking-hand hip to stash or retrieve"],["bag","Club-hand click" if game.xr else "Tab","Click to open; point then centre to select. Click again to close"],["godview","Other click" if game.xr else "V","Toggle Godview"],["menu","B" if game.xr else "Esc","Open field station"]])
 	score=label(self,"",18);score.position=Vector2(560,818)
 	menu=panel(Vector2(395,76),Vector2(670,768))
 	var shell:=VBoxContainer.new();shell.add_theme_constant_override("separation",12);menu.add_child(shell)
@@ -78,18 +79,20 @@ func _ready() -> void:
 	var box:=_register_page("courses","Courses")
 	label(box,"T H E   C L U B H O U S E",14,Style.BRASS)
 	label(box,"A little closer to the outdoors.",30)
-	label(box,"Two landscapes. Thirty-six holes. Your next round.",17,Style.MUTED)
-	button(box,"01   SPYGLASS HILL     ·     Monterey Peninsula",func():game.select_course("spyglass"))
-	button(box,"02   PEBBLE BEACH     ·     California coast",func():game.select_course("pebble"))
+	label(box,"Four courses. Seventy-two holes. Your next round.",17,Style.MUTED)
+	for id in preload("res://addons/golfminus/scripts/golf/catalog.gd").ACTIVE:
+		button(box,preload("res://addons/golfminus/scripts/golf/catalog.gd").NAMES[id],game.select_course.bind(id))
 	box=_register_page("controls","Controls")
 	var row:=HBoxContainer.new();row.add_theme_constant_override("separation",14);box.add_child(row)
 	tee_choice=OptionButton.new();for t in ["Club tees","Forward tees","Back tees"]:tee_choice.add_item(t)
 	row.add_child(tee_choice);tee_choice.item_selected.connect(func(i):game.tee_kind=["club","forward","back"][i])
-	hand_choice=OptionButton.new();hand_choice.add_item("Right handed");hand_choice.add_item("Left handed");row.add_child(hand_choice)
-	hand_choice.item_selected.connect(func(i):game.set_hand(i==1))
+	hand_choice=CheckButton.new();hand_choice.text="Left-handed swing";row.add_child(hand_choice)
+	hand_choice.toggled.connect(game.set_hand)
 	label(box,"VR club reach  ·  adjust until the head rests on the turf",14,Style.MUTED)
 	length_slider=HSlider.new();length_slider.min_value=.35;length_slider.max_value=1.6;length_slider.step=.01;length_slider.value=1.0;box.add_child(length_slider)
-	length_slider.value_changed.connect(func(v):game.club_reach=v;game.reset_swing())
+	length_slider.custom_minimum_size.y=46
+	length_slider.value_changed.connect(game.set_club_reach)
+	attachment_controls=preload("res://addons/golfminus/scripts/golf/attachment_controls.gd").new();attachment_controls.game=game;box.add_child(attachment_controls)
 	button(box,"Preview club angle & reach from address pose",func():game.begin_club_fit())
 	button(box,"Undo last accepted fit",func():game.undo_club_fit())
 	button(box,"Reverse fitted club face",func():game.flip_club_face())
@@ -123,8 +126,8 @@ func _ready() -> void:
 	button(footer,"Return to course",func():game.toggle_menu(false))
 	menu_content=footer
 	show_page("courses")
-	text_hints.append(label(box,"VR: hold grip and swing • A: address ball • B: clubhouse\nHold right stick click: club bag; point + release to equip • Left trigger: green grid\nLeft stick click: Godview · overview of hole and actual shot",14,Style.MUTED))
-	guidance(box,[["ball","A" if game.xr else "T","Address ball"],["grid","L trigger" if game.xr else "G","Green grid"],["course","Other hip" if game.xr else "J","Hole and course tracker"],["godview","L click" if game.xr else "V","Course and shot overview"]])
+	text_hints.append(label(box,"VR: grip/trigger locks movement for swing • release to walk\nClub hand A/X: address • B/Y: menu • stick click: bag\nPoint then centre to equip; click again to close • Other stick click: Godview",14,Style.MUTED))
+	guidance(box,[["ball","Club A/X" if game.xr else "T","Address ball"],["grid","Other trigger" if game.xr else "G","Green grid"],["course","Other hip" if game.xr else "J","Hole and course tracker"],["godview","Other click" if game.xr else "V","Course and shot overview"]])
 	refresh_icons()
 	refresh()
 func _register_page(id:String,title:String)->VBoxContainer:

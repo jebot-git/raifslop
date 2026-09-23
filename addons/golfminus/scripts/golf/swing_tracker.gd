@@ -14,10 +14,16 @@ func sample(head:Vector3,ball:Vector3,dt:float,active:bool)->Dictionary:
 func sample_pose(pose:Transform3D,shape:RefCounted,ball:Vector3,dt:float,active:bool,ball_velocity:=Vector3.ZERO)->Dictionary:
 	cooldown=maxf(0,cooldown-dt)
 	last_sample={"dt_s":dt,"head":pose.origin,"ball":ball,"active":active,"status":"inactive"}
-	if not active or not is_finite(dt) or dt<=0 or dt>.05 or not ball.is_finite() or not ball_velocity.is_finite() or not pose.origin.is_finite() or not pose.basis.is_finite() or absf(pose.basis.determinant())<.01:
+	if not is_finite(dt) or dt<=0 or dt>.05 or not ball.is_finite() or not ball_velocity.is_finite() or not pose.origin.is_finite() or not pose.basis.is_finite() or absf(pose.basis.determinant())<.01:
 		last_sample.status="invalid_interval" if dt<=0 or dt>.05 else "inactive"
 		reset();return {}
 	pose.basis=pose.basis.orthonormalized()
+	if not active:
+		# Keep tracking a known pose while the grip is released. Arming should
+		# not impose a fresh 150 ms blind interval on a short chip or putt.
+		previous_pose=pose;previous=pose.origin;valid=true
+		filtered_velocity=Vector3.ZERO;filtered_angular=Vector3.ZERO
+		return {}
 	if not valid:previous_pose=pose;previous=pose.origin;valid=true;last_sample.status="priming";return {}
 	var raw:Vector3=(pose.origin-previous_pose.origin)/dt
 	var rotation:Quaternion=pose.basis.get_rotation_quaternion()*previous_pose.basis.get_rotation_quaternion().inverse()
@@ -34,11 +40,16 @@ func sample_pose(pose:Transform3D,shape:RefCounted,ball:Vector3,dt:float,active:
 	if cooldown>0:return {}
 	var hit:Dictionary=shape.sweep(start,pose,ball,ball_velocity*dt)
 	if hit.is_empty():return {}
-	if hit.get("initial_overlap",false):last_sample.status="initial_overlap";return {}
+	if not hit.has("normal"):last_sample.status="invalid_contact";return {}
 	# Closing is checked at the actual contact point, including head rotation.
 	var raw_point:Vector3=raw+angular.cross(hit.contact-hit.head_center)
 	if (raw_point-ball_velocity).dot(hit.normal)<=.03:return {}
+	var velocity:=filtered_velocity;var spin:=filtered_angular
+	# A just-reversed chip can be entering the mesh while the low-pass history
+	# still points away. Use the measured sweep in that case, not a rejected hit.
+	if (velocity+spin.cross(hit.contact-hit.head_center)-ball_velocity).dot(hit.normal)<=.03:
+		velocity=raw;spin=angular
 	cooldown=.8;last_sample.status="contact"
-	hit.merge({"velocity":filtered_velocity,"raw_velocity":raw,"angular_velocity":filtered_angular,"raw_angular_velocity":angular,"ball_velocity":ball_velocity},true)
+	hit.merge({"velocity":velocity,"raw_velocity":raw,"angular_velocity":spin,"raw_angular_velocity":angular,"ball_velocity":ball_velocity},true)
 	last_sample.merge(hit,true)
 	return hit

@@ -14,6 +14,7 @@ func run() -> void:
 	var g = load("res://scenes/main.tscn").instantiate(); root.add_child(g)
 	await create_timer(.4).timeout
 	g.set_process(false); g.motor.set_physics_process(false); g.fishing_feedback.set_process(false)
+	g.head_aimed_casting = false # The VR preference must not affect desktop aim.
 	g._select_location("lakeside", false)
 	await physics_frame
 	g.game.reset(); g._primary_action()

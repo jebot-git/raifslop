@@ -15,7 +15,7 @@ static func capture(root: Node, serial: int) -> Dictionary:
 	# The existing in_hand flag describes the catch when landed, or the fly line
 	# otherwise. Protocol 5 also carries exact tackle visibility and lure position.
 	var tackle_active:bool=root.game.state in [Fish.State.READY,Fish.State.CASTING,Fish.State.WAITING,Fish.State.BITE,Fish.State.FIGHT]
-	var result:Dictionary={"golf_club":-1,"golf_stowed":false,"body":body,"face":root.tracking_manager.face if is_instance_valid(root.tracking_manager) else {},"visemes":root.network.voice.mouth_pose(root.multiplayer.get_unique_id()),"serial":serial,"location":root.current_location,"head":root.head.global_transform,
+	var result:Dictionary={"user_height":root.tracking_manager.user_height if is_instance_valid(root.tracking_manager) else 1.65,"golf_club":-1,"golf_stowed":false,"body":body,"face":root.tracking_manager.face if is_instance_valid(root.tracking_manager) else {},"visemes":root.network.voice.mouth_pose(root.multiplayer.get_unique_id()),"serial":serial,"location":root.current_location,"head":root.head.global_transform,
 		"left":root.bbq.hand_pose(0) if is_instance_valid(root.bbq) and root.bbq.holds(0) else (root.left.global_transform if root.xr and not root.reel_tracker.engaged else root.desktop_left.global_transform),
 		"right":root.bbq.hand_pose(1) if is_instance_valid(root.bbq) and root.bbq.holds(1) else (root.right.global_transform if root.xr else root.rod.global_transform),
 		"rod_tier":root.game.tackle.equipped,"reel_angle":fposmod(root.crank.rotation.x,TAU),"rod":root.rod.global_transform,"fish":root.fish_display.global_transform,
@@ -33,9 +33,19 @@ static func capture(root: Node, serial: int) -> Dictionary:
 		result.rod=g.club.global_transform.orthonormalized()
 		result.right=root.bbq.hand_pose(1) if root.bbq.holds(1) else root.right.global_transform if root.xr else g.club.global_transform.orthonormalized()
 		result.tip=g.club.global_position;result.bobber=g.ball.position
+		if g.support_hand.engaged:
+			# Transmit the resolved visual grip, as with the fishing reel. The
+			# stationary controller must not pull the remote arm back off the club.
+			var side:String="right" if g.left_handed else "left"
+			result[side]=g.support_hand.global_transform
+			result[side+"_valid"]=true
+			for suffix in ["_hand","_elbow"]:body.erase(side+suffix)
+			body[side+"_curls"]=PackedFloat32Array([.8,.8,.8,.8,.8])
+			if side=="left":result.curl=.8
 	return result
 static func valid(data: Dictionary) -> bool:
-	if data.size()!=34: return false
+	if data.size()!=35: return false
+	if not (data.get("user_height") is float or data.get("user_height") is int) or not is_finite(data.user_height) or data.user_height<.6 or data.user_height>2.3:return false
 	if not data.get("golf_club") is int or data.golf_club < -1 or data.golf_club>7 or not data.get("golf_stowed") is bool:return false
 	if preload("res://addons/golfminus/scripts/golf/host_locations.gd").valid(str(data.get("location",""))) != (data.golf_club>=0):return false
 	if not data.get("body") is Dictionary or not data.get("face") is Dictionary: return false

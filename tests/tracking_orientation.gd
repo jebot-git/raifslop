@@ -51,6 +51,12 @@ func run():
  XRServer.add_tracker(native_tracker)
  var initial:Transform3D=tracking.sample().hips
  check(initial.basis.y.dot(Vector3.UP)>.99,"Uncalibrated sideways bridge torso uses measured upright body direction")
+ rig.head.rotation.y = 1.2
+ check(tracking.sample().hips.basis.is_equal_approx(initial.basis), "Looking around cannot steer an uncalibrated bridge hip tracker")
+ var rotated_hip := Basis(Vector3.UP, .6) * Basis.from_euler(Vector3(PI/2,.4,0))
+ native_tracker.set_joint_transform(XRBodyTracker.JOINT_HIPS, Transform3D(rotated_hip, Vector3(0,.9,0)))
+ check(tracking.sample().hips.basis.is_equal_approx(Basis(Vector3.UP, .6) * initial.basis), "Bridge hip facing follows the sensor's rotation")
+ rig.head.rotation = Vector3.ZERO
  tracking.calibrate()
  check(tracking.sample().hips.basis.is_equal_approx(Basis.IDENTITY) and tracking.sample().hips.origin.is_equal_approx(Vector3(0,.9,0)),"Native bridge calibration corrects orientation without shifting measured joints")
  native_tracker.set_joint_flags(XRBodyTracker.JOINT_LEFT_LOWER_LEG,XRBodyTracker.JOINT_FLAG_POSITION_VALID|XRBodyTracker.JOINT_FLAG_ORIENTATION_VALID)

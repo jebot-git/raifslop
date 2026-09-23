@@ -29,9 +29,18 @@ var preview_camera: Camera3D
 var xr:=false
 var focused:=true
 var left_handed:=false
+var preferred_left_handed:=false
+var fit_accept_held:=[false,false]
+var support_hand:Node3D
 var club_reach:=1.0
+var club_offsets:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
+var club_controller_mount:=[false,false]
 var club_rotations:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
 var club_head_rotations:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
+var club_fitted:=[false,false]
+var address_offset:=Vector3(INF,INF,INF) # Shot-local stance, not a world offset.
+var address_facing:=Vector3.ZERO
+var controller_fallback_time:=0.0
 var fitting_club:=false
 var fit_session=preload("res://addons/golfminus/scripts/golf/fit_session.gd").new()
 var fit_preview:Node3D
@@ -75,9 +84,10 @@ var world_environment: Environment
 var panorama_material: ShaderMaterial
 var location_sun: DirectionalLight3D
 func _ready() -> void:
+	support_hand=preload("res://addons/golfminus/scripts/golf/support_hand.gd").new();support_hand.game=self;add_child(support_hand)
 	bridge=preload("res://addons/golfminus/scripts/golf/activity_bridge.gd").new();bridge.name="ActivityBridge";add_child(bridge)
 	telemetry=preload("res://addons/golfminus/scripts/golf/shot_telemetry.gd").new();add_child(telemetry)
-	if OS.has_feature("test_build"):
+	if OS.has_feature("test_build") or "--vr-test-capture" in OS.get_cmdline_user_args():
 		print("Golf Minus test build | ",Engine.get_version_info().string," | ",OS.get_name()," | logs: ",ProjectSettings.globalize_path("user://logs"))
 		if telemetry.start_capture():print("Golf analytics capture: ",ProjectSettings.globalize_path(telemetry.path))
 		else:push_error("Could not open test-build analytics capture")
@@ -93,16 +103,20 @@ func _ready() -> void:
 		body.smooth_turn=bool(cfg.get_value("controls","smooth_turn",false))
 		body.smooth_turn_speed=clampf(float(cfg.get_value("controls","smooth_turn_speed",75.0)),30,360)
 		body.snap_turn_angle=clampf(float(cfg.get_value("controls","snap_turn_angle",30.0)),15,90)
-	club_reach=clampf(float(cfg.get_value("golf","reach",1.0)),.35,1.6);left_handed=bool(cfg.get_value("golf","left_handed",false))
+	club_reach=clampf(float(cfg.get_value("golf","reach",1.0)),.35,1.6);left_handed=bool(cfg.get_value("golf","left_handed",false));preferred_left_handed=left_handed
 	for hand in 2:
+		var offset=cfg.get_value("golf","club_offset_%d"%hand,Vector3.ZERO)
+		if offset is Vector3 and offset.is_finite():club_offsets[hand]=offset.clamp(-Vector3.ONE,Vector3.ONE)
+		club_controller_mount[hand]=bool(cfg.get_value("golf","club_controller_mount_%d"%hand,false))
 		var value=cfg.get_value("golf","club_rotation_%d"%hand,Vector3.ZERO)
 		if value is Vector3 and value.is_finite():club_rotations[hand]=value
 		value=cfg.get_value("golf","club_head_rotation_%d"%hand,Vector3.ZERO)
 		if value is Vector3 and value.is_finite():club_head_rotations[hand]=value
+		club_fitted[hand]=bool(cfg.get_value("golf","club_fitted_%d"%hand,club_rotations[hand].length_squared()>.001 or club_head_rotations[hand].length_squared()>.001))
 	_ui()
 	fit_preview=preload("res://addons/golfminus/scripts/golf/fit_preview.gd").new();add_child(fit_preview)
-	select_course("spyglass")
-	hud.length_slider.value=club_reach;hud.hand_choice.select(1 if left_handed else 0)
+	if not is_instance_valid(host_game):select_course("spyglass")
+	hud.length_slider.set_value_no_signal(club_reach);hud.hand_choice.set_pressed_no_signal(preferred_left_handed)
 	if xr:call_deferred("_initial_xr_menu")
 func _initial_xr_menu() -> void:
 	# The first tracked camera pose arrives after nodes enter the scene tree.
@@ -123,8 +137,9 @@ func _rig() -> void:
 	if is_instance_valid(host_game):
 		body=host_game.motor;origin=host_game.origin;head=host_game.head;left=host_game.left;right=host_game.right;xr=host_game.xr
 		head.far=4000
+		body.stick_lock=club_input_active
 		preview_camera=Camera3D.new();preview_camera.far=4000;add_child(preview_camera)
-		left.button_pressed.connect(_left_button);right.button_pressed.connect(_right_button);right.button_released.connect(_right_released)
+		left.button_pressed.connect(_left_button);left.button_released.connect(_left_released);right.button_pressed.connect(_right_button);right.button_released.connect(_right_released)
 		return
 	xr_interface=XRServer.find_interface("OpenXR")
 	if xr_interface and DisplayServer.get_name()!="headless" and not "--desktop" in OS.get_cmdline_user_args():
@@ -142,9 +157,9 @@ func _rig() -> void:
 	if not xr:head.position.y=1.7
 	left=XRController3D.new();left.tracker=&"left_hand";left.pose=&"grip";origin.add_child(left)
 	right=XRController3D.new();right.tracker=&"right_hand";right.pose=&"grip";origin.add_child(right)
-	body.origin=origin;body.head=head;body.left=left;body.right=right;body.xr=xr
+	body.origin=origin;body.head=head;body.left=left;body.right=right;body.xr=xr;body.stick_lock=club_input_active
 	preview_camera=Camera3D.new();preview_camera.far=4000;preview_camera.fov=60.0;add_child(preview_camera)
-	left.button_pressed.connect(_left_button);right.button_pressed.connect(_right_button);right.button_released.connect(_right_released)
+	left.button_pressed.connect(_left_button);left.button_released.connect(_left_released);right.button_pressed.connect(_right_button);right.button_released.connect(_right_released)
 func _ball_visual() -> void:
 	ball_mesh=MeshInstance3D.new();var sphere:=SphereMesh.new();sphere.radius=BALL.RADIUS;sphere.height=BALL.RADIUS*2;sphere.radial_segments=24;sphere.rings=12
 	ball_mesh.mesh=sphere
@@ -182,7 +197,7 @@ func load_hole(index: int) -> void:
 		material.sky_top_color=Color("5384a1");material.sky_horizon_color=Color("bdced0");material.ground_horizon_color=Color("bdced0");sky.sky_material=material;world_environment.sky=sky
 	else:
 		var sky:=Sky.new();sky.sky_material=panorama_material;world_environment.sky=sky
-	panorama_material.set_shader_parameter("panorama",load("res://addons/golfminus/assets/panoramas/%s_8k.hdr"%model.course.panorama))
+		panorama_material.set_shader_parameter("panorama",load("res://addons/golfminus/assets/panoramas/%s_8k.hdr"%model.course.panorama))
 	if FileAccess.file_exists("res://addons/golfminus/assets/textures/lighting/profiles.json"):
 		var profiles: Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://addons/golfminus/assets/textures/lighting/profiles.json"))
 		if profiles.has(course_id):
@@ -199,6 +214,7 @@ func load_hole(index: int) -> void:
 	set_club(0)
 	trail_points.clear();trail.mesh=null
 	aim=(model.pin()-ball.position).signed_angle_to(Vector3.FORWARD,Vector3.UP)
+	address_offset=Vector3(INF,INF,INF);address_facing=Vector3.ZERO
 	address_ball()
 	preview_camera.position=model.tee(tee_kind)+Vector3(9,3.2,14)
 	preview_camera.look_at(model.pin()+Vector3(0,1,0))
@@ -223,7 +239,24 @@ func start_practice() -> void:
 	practice=true;round_active=false;round_state.start();load_hole(0)
 	var p: Vector3=model.pin()+Vector3(0,0,6);p.y=model.height(p.x,p.z)+BALL.RADIUS
 	ball.place(p);set_club(7);toggle_menu(false);address_ball();status_text="Putting practice  ·  six metres to the cup."
+func pointer_controller()->XRController3D:
+	var preferred:XRController3D=left if left_handed else right
+	return preferred if preferred.get_has_tracking_data() else (right if left_handed else left)
+func only_one_controller()->bool:
+	return xr and left.get_has_tracking_data()!=right.get_has_tracking_data()
+func _update_controller_hand(dt:float)->void:
+	if not xr or not focused or ball.moving or fitting_club or menu_open:return
+	var striking:=left if left_handed else right
+	var other:=right if left_handed else left
+	var preferred:XRController3D=left if preferred_left_handed else right
+	var restore_preference:bool=left_handed!=preferred_left_handed and preferred.get_has_tracking_data()
+	if restore_preference or not striking.get_has_tracking_data() and other.get_has_tracking_data():
+		controller_fallback_time+=minf(dt,.05)
+		if controller_fallback_time>=1.0:
+			set_hand(preferred_left_handed if restore_preference else not left_handed,true);controller_fallback_time=0
+	else:controller_fallback_time=0
 func _process(_delta:float) -> void:
+	_update_controller_hand(_delta)
 	godview.update(_delta);club_radial.update();equipment.update();course_guide.update()
 	if telemetry.enabled:
 		var state:Dictionary={"focused":focused,"left_tracked":left.get_has_tracking_data(),"right_tracked":right.get_has_tracking_data(),"menu_open":menu_open,"fitting":fitting_club,"club":club_index}
@@ -252,10 +285,13 @@ func toggle_menu(show_menu: bool) -> void:
 		head.current=not show_menu
 	if is_instance_valid(host_activity):host_activity.preserve_mirror()
 	if not show_menu:_save_preferences()
-func set_hand(value: bool) -> void:
+func set_hand(value: bool, automatic:=false) -> void:
 	club_radial.close()
 	if fitting_club:cancel_club_fit()
-	left_handed=value;reset_swing();set_club(club_index)
+	left_handed=value;support_hand.reset();reset_swing();set_club(club_index)
+	if not automatic:
+		preferred_left_handed=value;address_offset=Vector3(INF,INF,INF);address_facing=Vector3.ZERO
+		hud.hand_choice.set_pressed_no_signal(value);_save_preferences()
 func set_club(index: int) -> void:
 	if fitting_club:cancel_club_fit()
 	club_index=posmod(index,CLUBS.BAG.size())
@@ -276,15 +312,39 @@ func reset_swing() -> void:
 	swing.reset()
 	if is_instance_valid(origin):last_origin_basis=origin.global_basis
 func aim_direction() -> Vector3:return Vector3(sin(aim),0,-cos(aim))
+func address_basis()->Basis:
+	var direction:=aim_direction()
+	return Basis(direction.cross(Vector3.UP),Vector3.UP,-direction)
 func address_ball() -> void:
 	if ball.moving:return
-	var p: Vector3=ball.position+Vector3(-.70 if not left_handed else .70,0,.10) if xr else ball.position+Vector3(0,0,3.0)
+	if xr:
+		var direction:Vector3=model.pin()-ball.position;direction.y=0
+		if direction.length_squared()>.0001:aim=direction.signed_angle_to(Vector3.FORWARD,Vector3.UP)
+	var frame:=address_basis()
+	var offset:=frame*address_offset if address_offset.is_finite() else Vector3.ZERO
+	if not address_offset.is_finite():
+		var spacing:=clampf(.35+float(CLUBS.BAG[club_index].length)*club_reach*.65,.85,1.45)
+		offset=frame*Vector3(spacing if left_handed else -spacing,0,.1)
+	var p: Vector3=ball.position+offset if xr else ball.position+Vector3(0,0,3.0)
 	p.y=model.height(p.x,p.z)+.06
+	if xr:
+		var facing:Vector3=frame*address_facing if address_facing.length_squared()>.01 else -offset.normalized()
+		var current:Vector3=-head.global_basis.z;current.y=0
+		if current.length_squared()<.0001:current=Vector3.UP.cross(head.global_basis.x)
+		if current.length_squared()>.0001:body.turn(current.signed_angle_to(facing,Vector3.UP))
 	body.relocate(p)
 	if not xr:
 		origin.rotation=Vector3.ZERO
 		head.look_at(ball.position+aim_direction()*25+Vector3.UP*.3)
 	reset_swing()
+func remember_address(at:Vector3)->void:
+	var offset:=Vector3(at.x-ball.position.x,0,at.z-ball.position.z)
+	if offset.length()>=.55 and offset.length()<=2.0:
+		address_offset=address_basis().inverse()*offset
+		# Looking down at the ball must not make yaw indeterminate.
+		var facing:Vector3=-head.global_basis.z;facing.y=0
+		address_facing=address_basis().inverse()*(facing.normalized() if facing.length_squared()>.01 else -offset.normalized())
+
 func release_borrowed_rig() -> void:
 	godview.exit_view()
 	club_radial.close()
@@ -292,6 +352,7 @@ func release_borrowed_rig() -> void:
 	_complete_shot("activity_exit")
 	reset_swing()
 	if left.button_pressed.is_connected(_left_button):left.button_pressed.disconnect(_left_button)
+	if left.button_released.is_connected(_left_released):left.button_released.disconnect(_left_released)
 	if right.button_pressed.is_connected(_right_button):right.button_pressed.disconnect(_right_button)
 	if right.button_released.is_connected(_right_released):right.button_released.disconnect(_right_released)
 	if is_instance_valid(club):club.get_parent().remove_child(club);club.queue_free()
@@ -308,10 +369,13 @@ func _save_preferences() -> void:
 		calibration.save_config(cfg)
 		for key in ["smooth_turn","smooth_turn_speed","snap_turn_angle"]:cfg.set_value("controls",key,body.get(key))
 	for hand in 2:
+		cfg.set_value("golf","club_offset_%d"%hand,club_offsets[hand])
+		cfg.set_value("golf","club_controller_mount_%d"%hand,club_controller_mount[hand])
 		cfg.set_value("golf","club_rotation_%d"%hand,club_rotations[hand])
 		cfg.set_value("golf","club_head_rotation_%d"%hand,club_head_rotations[hand])
+		cfg.set_value("golf","club_fitted_%d"%hand,club_fitted[hand])
 	cfg.set_value("interface","pictograms",ICONS.enabled)
-	cfg.set_value("golf","reach",club_reach);cfg.set_value("golf","left_handed",left_handed);cfg.save("user://golf_controls.cfg")
+	cfg.set_value("golf","reach",club_reach);cfg.set_value("golf","left_handed",preferred_left_handed);cfg.save("user://golf_controls.cfg")
 func _input(event: InputEvent) -> void:
 	if is_instance_valid(course_guide) and course_guide.camera_key(event):return
 	if is_instance_valid(host_activity) and is_instance_valid(host_game.get("bbq")) and host_game.bbq.visiting and host_game.bbq.handle_input(event):return
@@ -326,7 +390,7 @@ func _input(event: InputEvent) -> void:
 		if event.pressed and event.keycode==KEY_ESCAPE:toggle_menu(not menu_open);return
 		if menu_open:return
 		if event.keycode==KEY_TAB and not xr:
-			if event.pressed:club_radial.open()
+			if event.pressed:club_radial.toggle()
 			else:club_radial.release()
 			return
 		if club_radial.opened:return
@@ -347,52 +411,50 @@ func _input(event: InputEvent) -> void:
 				KEY_P:start_practice()
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not xr and not menu_open and not club_radial.opened and not godview.active:
 		head.rotate_y(-event.relative.x*.003);head.rotation.x=clampf(head.rotation.x-event.relative.y*.003,-1.25,1.0)
-func _left_button(action: String) -> void:
-	if course_guide.camera_button(action,true):return
-	if is_instance_valid(host_activity) and is_instance_valid(host_game.get("bbq")) and host_game.bbq.holds(0) and action!="menu_button":
-		if action=="ax_button":host_game.bbq.use(0,host_game.bbq.hovered,true)
-		return
-	if action=="primary_click":godview.toggle();return
-	if godview.active and action!="menu_button":
-		if action=="ax_button":godview.reset_view()
-		elif action=="by_button":godview.exit_view()
-		return
-	if action=="menu_button":toggle_menu(not menu_open);return
-	if menu_open or club_radial.opened:return
-	if course_guide.held:
-		if action=="ax_button":course_guide.page(1)
-		elif action=="by_button":course_guide.page(-1)
-		return
-	if fitting_club:_fit_button(action,left_handed);return
-	if action=="trigger_click" and not menu_open:world.grid.visible=not world.grid.visible
-func _right_button(action: String) -> void:
-	if course_guide.camera_button(action,false):return
-	if is_instance_valid(host_activity) and is_instance_valid(host_game.get("bbq")) and host_game.bbq.holds(1) and action!="by_button":
-		if action=="ax_button":host_game.bbq.use(1,host_game.bbq.hovered,true)
-		return
-	if godview.active:
-		if action=="by_button":godview.exit_view()
-		elif action=="ax_button":godview.focus_ball()
-		return
-	if action=="primary_click":club_radial.open();return
-	if club_radial.opened:
-		if action=="by_button":club_radial.close()
-		return
+func _left_button(action:String)->void:_controller_button(action,0)
+func _right_button(action:String)->void:_controller_button(action,1)
+func _controller_button(action:String,hand:int)->void:
+	if action=="ax_button" and fit_accept_held[hand]:return
+	var striking:bool=hand==(0 if left_handed else 1)
+	var controller:XRController3D=left if hand==0 else right
+	if fitting_club:_fit_button(action,striking);return
 	if is_instance_valid(host_activity) and host_activity.settings_open:
-		if action=="by_button":host_activity.close_settings()
+		if action=="trigger_click" and pointer_controller()==controller:host_game._menu_click(true)
+		elif action in ["menu_button","by_button"]:host_activity.close_settings()
 		return
-	if course_guide.held:
-		if action=="ax_button":course_guide.page(1)
-		elif action=="by_button":course_guide.page(-1)
+	if course_guide.camera_button(action,hand==0):return
+	if is_instance_valid(host_activity) and is_instance_valid(host_game.get("bbq")) and host_game.bbq.holds(hand) and action not in ["menu_button","by_button"]:
+		if action=="ax_button":host_game.bbq.use(hand,host_game.bbq.hovered,true)
 		return
-	if fitting_club:_fit_button(action,not left_handed);return
-	if action=="by_button":toggle_menu(not menu_open);return
+	var club_controls:bool=striking or only_one_controller()
+	if godview.active:
+		if action in ["by_button","menu_button"] or action=="primary_click" and not club_controls:godview.exit_view()
+		elif action=="ax_button":
+			if club_controls:godview.focus_ball()
+			else:godview.reset_view()
+		return
+	if action=="primary_click":
+		if club_controls:club_radial.toggle()
+		else:godview.toggle()
+		return
+	if club_radial.opened:
+		if action in ["by_button","menu_button"]:club_radial.close()
+		return
+	if action=="menu_button" or club_controls and action=="by_button":toggle_menu(not menu_open);return
 	if menu_open:return
-	if action=="ax_button":
+	if club_controls and action=="ax_button":
 		if ball.holed:next_hole()
 		else:address_ball()
-func _right_released(action:String)->void:
-	if action=="primary_click":club_radial.release()
+	elif not club_controls and action=="trigger_click":
+		if not support_hand.update(0):world.grid.visible=not world.grid.visible
+func _left_released(action:String)->void:_controller_released(action,0)
+func _right_released(action:String)->void:_controller_released(action,1)
+func _controller_released(action:String,hand:int)->void:
+	if action=="ax_button":fit_accept_held[hand]=false
+	if is_instance_valid(host_activity) and host_activity.settings_open:
+		var controller:XRController3D=left if hand==0 else right
+		if action=="trigger_click" and pointer_controller()==controller:host_game._menu_click(false)
+
 func toggle_analytics()->void:
 	if telemetry.enabled:
 		telemetry.stop_capture();status_text="Local swing capture saved."
@@ -421,6 +483,7 @@ func strike(v: Vector3,face: Vector3,contact:Dictionary={}) -> bool:
 		diagnostic.rejection=rejection;diagnostic.accepted=false;telemetry.contact(diagnostic);return false
 	if is_instance_valid(host_activity) and host_activity.intercept_shot(v,face,contact):return false
 	if ball.launch(impact.velocity,impact.spin):
+		if xr:remember_address(head.global_position)
 		round_active=not practice;round_state.shot(ball.position);trail_points.clear();trail_points.append(ball.position);was_moving=true;rest_delay=0
 		status_text="Ball in flight";_impact_audio(float(impact.normal_speed_m_s))
 		if xr:(left if left_handed else right).trigger_haptic_pulse("haptic",0,clampf(float(impact.normal_speed_m_s)/45,.12,.8),.045,0)
@@ -496,6 +559,13 @@ func _physics_process(dt: float) -> void:
 			if model.lie(ball.position.x,ball.position.z)=="green":set_club(7)
 		save_progress()
 	_draw_aim();hud.refresh()
+func club_input_active()->bool:
+	if not xr or not focused or menu_open or fitting_club or godview.active or club_radial.opened or equipment.stowed or course_guide.held:return false
+	var controller:XRController3D=left if left_handed else right
+	return controller.get_has_tracking_data() and (maxf(controller.get_float("grip"),controller.get_float("trigger"))>.55 or controller.is_button_pressed("trigger_click") or controller.is_button_pressed("grip_click"))
+func club_collision_enabled()->bool:
+	return club_input_active() and not ball.moving
+
 func _swing() -> void:
 	var now:=Time.get_ticks_usec()
 	var dt:float=(now-last_swing_us)/1000000.0 if last_swing_us>0 else 0.0
@@ -505,12 +575,15 @@ func _swing() -> void:
 	var controller:=left if left_handed else right
 	var tip:=_update_club_pose()
 	if dt<=0:return
-	var active: bool=controller.get_has_tracking_data() and controller.get_float("grip")>.55 and not ball.moving and body.last_motion.length()<.2
+	var active: bool=club_collision_enabled() and body.last_motion.length()<.2
+	if not controller.get_has_tracking_data():swing.reset();return
 	var sample: Dictionary=swing.sample_pose(physical_head.global_transform,head_shape,ball.position,dt,active,ball.velocity)
 	var observation:Dictionary=swing.last_sample.duplicate(true)
-	observation.merge({"monotonic_us":now,"club":club_index,"face":-physical_head.global_basis.z.normalized(),"grip":controller.get_float("grip"),"tracked":controller.get_has_tracking_data(),"focused":focused,"body_speed_m_s":body.last_motion.length(),"menu_open":menu_open,"fitting":fitting_club},true)
-	if not active:observation.inactive_reason="tracking_lost" if not controller.get_has_tracking_data() else "grip_released" if controller.get_float("grip")<=.55 else "ball_moving" if ball.moving else "locomotion"
+	observation.merge({"monotonic_us":now,"club":club_index,"face":-physical_head.global_basis.z.normalized(),"grip":controller.get_float("grip"),"trigger":controller.get_float("trigger"),"tracked":controller.get_has_tracking_data(),"focused":focused,"body_speed_m_s":body.last_motion.length(),"menu_open":menu_open,"fitting":fitting_club},true)
+	if not active:observation.inactive_reason="tracking_lost" if not controller.get_has_tracking_data() else "grip_and_trigger_released" if not club_input_active() else "ball_moving" if ball.moving else "locomotion"
 	telemetry.sample_swing(observation)
+	# Walking or an in-flight ball is not an unarmed address pose to retain.
+	if not active and (body.last_motion.length()>=.2 or ball.moving):swing.reset()
 	var state:String=observation.get("status","")
 	if active and state=="invalid_interval":status_text="Swing paused: tracking update gap. Wait for smooth tracking; no need to refit."
 	if state!=last_swing_state and state in ["discontinuity","invalid_interval","inactive","priming"]:
@@ -554,22 +627,69 @@ func _pointer_beam(start:Vector3,end:Vector3) -> void:
 	var up:=segment.normalized()
 	var axis:=Vector3.RIGHT if absf(up.dot(Vector3.UP))>.99 else up.cross(Vector3.UP).normalized()
 	pointer_laser.visible=true;pointer_laser.global_transform=Transform3D(Basis(axis,segment,axis.cross(up)),start+segment*.5)
+func club_grip_pose(hand:int)->Transform3D:
+	return calibration.pose(hand)*Transform3D(Basis.IDENTITY,club_offsets[hand])
+func set_club_attachment(hand:int,field:String,axis:int,value:float)->void:
+	if hand not in [0,1] or axis<0 or axis>2 or not is_finite(value):return
+	if fitting_club:cancel_club_fit()
+	match field:
+		"offset":club_offsets[hand][axis]=clampf(value,-1,1)
+		"rotation":club_rotations[hand][axis]=clampf(value,-180,180)
+		"head":
+			club_head_rotations[hand]=head_correction(hand)
+			club_head_rotations[hand][axis]=clampf(value,-180,180);club_fitted[hand]=true
+		"mounted":club_controller_mount[hand]=value!=0
+		_:return
+	_attachment_changed()
+func reset_club_attachment(hand:int)->void:
+	if hand not in [0,1]:return
+	if fitting_club:cancel_club_fit()
+	club_offsets[hand]=Vector3.ZERO;club_rotations[hand]=Vector3.ZERO;club_head_rotations[hand]=Vector3.ZERO
+	club_fitted[hand]=false;club_controller_mount[hand]=false
+	_attachment_changed()
+func set_club_reach(value:float)->void:
+	if not is_finite(value):return
+	club_reach=clampf(value,.35,1.6);_attachment_changed()
+func _attachment_changed()->void:
+	reset_swing();swing.cooldown=.8
+	if xr and is_instance_valid(club) and not equipment.stowed:_update_club_pose()
+	hud.length_slider.set_value_no_signal(club_reach)
+	_save_preferences()
+	if is_instance_valid(hud.attachment_controls):hud.attachment_controls.refresh()
 func _update_club_pose()->Vector3:
 	var hand:=0 if left_handed else 1
 	var rotation:Vector3=club_rotations[hand]
 	var reach:float=club_reach
 	if fitting_club and not fit_session.candidate.is_empty():
 		rotation=fit_session.candidate.rotation;reach=fit_session.candidate.reach
-	club.transform=calibration.pose(hand)*Transform3D(Basis.from_euler(rotation*PI/180.0),Vector3.ZERO)
+	club.transform=club_grip_pose(hand)*Transform3D(Basis.from_euler(rotation*PI/180.0),Vector3.ZERO)
 	var length:float=1.13 if club_index<2 else .86 if club_index==7 else .93
 	club.scale=Vector3(reach,reach*float(CLUBS.BAG[club_index].length)/length,reach)
+	apply_club_palm()
 	_sync_physical_head()
 	return physical_head.global_position
+func apply_club_palm()->void:
+	if equipment.stowed:return
+	club.global_position=club_world_grip_pose().origin
+func club_world_grip_pose()->Transform3D:
+	var hand:=0 if left_handed else 1
+	var controller:XRController3D=left if left_handed else right
+	var pose:Transform3D=controller.global_transform*club_grip_pose(hand)
+	if club_controller_mount[hand] or not is_instance_valid(host_game):return pose
+	var grip=host_game.avatar.hand_grip_pose(left_handed)
+	if grip is Transform3D:pose.origin=grip.origin+(controller.global_basis*calibration.pose(hand).basis)*club_offsets[hand]
+	return pose
+func head_correction(hand:int)->Vector3:
+	if club_fitted[hand]:return club_head_rotations[hand]
+	# Nominal lie angle gives the shaft its lean while the face sits upright.
+	# Auto-fitting preserves this offset; manual face controls may replace it.
+	var lean:float=[32.0,31.0,29.0,27.0,26.0,26.0,26.0,20.0][club_index]
+	return Vector3(0,0,lean if hand==0 else -lean)
 func _sync_physical_head()->void:
 	if not is_instance_valid(physical_head):return
 	var length:float=1.13 if club_index<2 else .86 if club_index==7 else .93
 	# Reach changes the shaft, not head size, loft, mass or contact geometry.
-	var correction:Vector3=club_head_rotations[0 if left_handed else 1]
+	var correction:Vector3=head_correction(0 if left_handed else 1)
 	if fitting_club and not fit_session.candidate.is_empty():correction=fit_session.candidate.get("head_rotation",Vector3.ZERO)
 	physical_head.global_transform=Transform3D(club.global_basis.orthonormalized()*Basis.from_euler(correction*PI/180.0)*Basis(Vector3.RIGHT,head_shape.loft),club.to_global(Vector3(.055,-length,0)))
 func begin_club_fit() -> void:
@@ -577,48 +697,58 @@ func begin_club_fit() -> void:
 	club_radial.close()
 	if not xr:status_text="Club fitting requires tracked VR controllers.";return
 	if ball.moving:status_text="Wait for the ball to stop before fitting.";return
+	if only_one_controller():set_hand(left.get_has_tracking_data(),true)
 	toggle_menu(false)
 	course_guide.dock();equipment.set_stowed(false)
-	fit_session.begin(club_reach,club_rotations,0 if left_handed else 1,club_head_rotations)
+	fit_session.begin(club_reach,club_rotations,0 if left_handed else 1,club_head_rotations,club_fitted)
 	fitting_club=true;body.blocked=true;reset_swing();fit_clearance_elapsed=1.0
 	status_text="Hold your natural address pose. Press trigger once, then hold steady."
 func _fit_button(action:String,striking_hand:bool)->void:
+	if action=="primary_click":fit_session.axis=posmod(fit_session.axis+1,3);return
 	if striking_hand:
 		match action:
 			"trigger_click":finish_club_fit()
-			"ax_button":accept_club_fit()
+			"ax_button":
+				fit_accept_held[0 if left_handed else 1]=true
+				accept_club_fit()
 			"by_button":cancel_club_fit()
 	else:
 		match action:
 			"ax_button":fit_session.axis=posmod(fit_session.axis+1,3)
 			"trigger_click":
-				if not fit_session.candidate.is_empty():fit_session.candidate.rotation=preload("res://addons/golfminus/scripts/golf/club_fit.gd").flip_face(fit_session.candidate.rotation,float(CLUBS.BAG[club_index].length))
+				if not fit_session.candidate.is_empty():fit_session.candidate.head_rotation=(Basis.from_euler(fit_session.candidate.get("head_rotation",Vector3.ZERO)*PI/180)*Basis(Vector3.UP,PI)).get_euler()*180/PI
 func _update_fit_preview(dt:float)->void:
 	var controller:=left if left_handed else right
 	var other:=right if left_handed else left
 	var tracked:=focused and controller.get_has_tracking_data()
-	fit_session.sample_pose(controller.global_transform*calibration.pose(0 if left_handed else 1),dt,tracked)
+	fit_session.sample_pose(club_world_grip_pose(),dt,tracked)
 	if fit_session.capture_requested and not fit_session.stable_pose().is_empty():_capture_stable_club_fit()
-	if tracked and other.get_has_tracking_data():
-		var stick:=other.get_vector2("primary")
-		fit_session.adjust(stick.x*12.0*dt if absf(stick.x)>.3 else 0.0,stick.y*.08*dt if absf(stick.y)>.3 else 0.0)
+	if tracked:
+		var stick:=controller.get_vector2("primary")
+		if other.get_has_tracking_data() and other.get_vector2("primary").length()>stick.length():stick=other.get_vector2("primary")
+		if absf(stick.x)>.3 or absf(stick.y)>.3:
+			if fit_session.candidate.is_empty():
+				var hand:=0 if left_handed else 1
+				fit_session.stage({"reach":club_reach,"rotation":club_rotations[hand],"head_rotation":head_correction(hand),"target":ball.position-aim_direction()*.075})
+			fit_session.adjust(stick.x*35.0*dt if absf(stick.x)>.3 else 0.0,stick.y*.15*dt if absf(stick.y)>.3 else 0.0)
 	var tip:=_update_club_pose()
 	var target:Vector3=ball.position-aim_direction()*.075 if fit_session.candidate.is_empty() else fit_session.candidate.target
 	var text:="Hold natural address pose\nPress trigger once, then hold steady"
 	if fit_session.capture_requested:text="Capturing when steady · %.0f%%\nKeep your address pose; no need to press again"%minf(100,fit_session.stable_seconds/.4*100)
 	if not fit_session.candidate.is_empty():
-		text="PREVIEW · not saved\nHead to marker: %.1f cm · reach %.2f m\nTrigger: recapture · %s: accept · %s: cancel\nOther stick: %s / reach · %s: change axis\nOther trigger: reverse face"%[tip.distance_to(target)*100,float(CLUBS.BAG[club_index].length)*float(fit_session.candidate.reach),"X" if left_handed else "A","Y" if left_handed else "B",["yaw","pitch","roll"][fit_session.axis],"A" if left_handed else "X"]
+		text="PREVIEW · not saved\nHead to marker: %.1f cm · reach %.2f m\nTrigger: recapture · %s: accept · %s: cancel\nEither stick: head %s / reach · stick click: axis\nOther trigger: reverse face"%[tip.distance_to(target)*100,float(CLUBS.BAG[club_index].length)*float(fit_session.candidate.reach),"X" if left_handed else "A","Y" if left_handed else "B",["yaw","pitch","roll"][fit_session.axis]]
 	if ICONS.enabled:
 		text="PREVIEW · not saved\nHead offset %.1f cm · reach %.2f m"%[tip.distance_to(target)*100,float(CLUBS.BAG[club_index].length)*float(fit_session.candidate.reach)] if not fit_session.candidate.is_empty() else "HOLD ADDRESS POSE"
-	if ICONS.enabled and not fit_session.candidate.is_empty():text+="\n%s / reach · other %s: axis"%[["Yaw","Pitch","Roll"][fit_session.axis],"A" if left_handed else "X"]
-	fit_preview.prompts.show_entries([["capture","L trigger" if left_handed else "R trigger"],["accept","X" if left_handed else "A"],["cancel","Y" if left_handed else "B"],["fit","Other stick"],["orbit","Other trigger"]])
+	if ICONS.enabled and not fit_session.candidate.is_empty():text+="\nHead %s / reach · either stick; click: axis"%[["yaw","pitch","roll"][fit_session.axis]]
+	fit_preview.prompts.show_entries([["capture","L trigger" if left_handed else "R trigger"],["accept","X" if left_handed else "A"],["cancel","Y" if left_handed else "B"],["fit","Either stick"],["orbit","Stick click: axis"]])
 	if not fit_session.candidate.is_empty():
 		fit_clearance_elapsed+=dt
 		if fit_clearance_elapsed>=.1:
 			fit_live_clearance=preload("res://addons/golfminus/scripts/golf/club_fit.gd").clearance(physical_head.global_transform,head_shape,world.surface_height)
 			fit_clearance_elapsed=0.0
 		var gap:=fit_live_clearance
-		text+="\nSole clearance: %.1f cm · face loft %.1f°"%[gap*100,rad_to_deg(asin(clampf((-physical_head.global_basis.z).y,-1,1)))]
+		var ground_up:Vector3=preload("res://addons/golfminus/scripts/golf/club_fit.gd").ground_normal(physical_head.global_position,world.surface_height)
+		text+="\nSole clearance: %.1f cm · loft to ground %.1f° (club %.0f°)"%[gap*100,rad_to_deg(asin(clampf((-physical_head.global_basis.z).dot(ground_up),-1,1))),rad_to_deg(head_shape.loft)]
 		if gap<0:text+=" · head below turf; return to address pose"
 	if fit_session.capture_requested:text="Waiting for steady address · %.0f%%\n"%minf(100,fit_session.stable_seconds/.4*100)+text
 	if not tracked:text="Tracking unavailable · fit paused\n"+text
@@ -638,15 +768,18 @@ func _capture_stable_club_fit()->void:
 	fit_session.capture_requested=false
 	var hand:=0 if left_handed else 1
 	var fit_direction:Vector3=preload("res://addons/golfminus/scripts/golf/club_fit.gd").address_direction(aim_direction(),-head.global_basis.z)
-	var fit:Dictionary=preload("res://addons/golfminus/scripts/golf/club_fit.gd").solve_grounded(stable.pose,ball.position,fit_direction,float(CLUBS.BAG[club_index].length),head_shape,world.surface_height)
+	var fit:Dictionary=preload("res://addons/golfminus/scripts/golf/club_fit.gd").solve_grounded(stable.pose,ball.position,fit_direction,float(CLUBS.BAG[club_index].length),head_shape,world.surface_height,head_correction(hand))
 	if not fit_session.stage(fit):status_text="Address is out of reach. Move closer to the ball, then press trigger.";return
+	fit_session.candidate.address_position=head.global_position
 	telemetry.record("fit_preview",{"candidate":fit,"hand":hand})
 	status_text="Sole fitted above turf. Check the preview, then accept to save."
 
 func _apply_fit(values:Dictionary)->void:
 	club_reach=values.reach;club_rotations.assign(values.rotations)
 	club_head_rotations.assign(values.get("head_rotations",[Vector3.ZERO,Vector3.ZERO]))
+	club_fitted.assign(values.get("fitted",[true,true]))
 	hud.length_slider.set_value_no_signal(club_reach)
+	hud.attachment_controls.refresh()
 	reset_swing();swing.cooldown=.8
 func accept_club_fit()->void:
 	var controller:=left if left_handed else right
@@ -656,10 +789,11 @@ func accept_club_fit()->void:
 		var solver=preload("res://addons/golfminus/scripts/golf/club_fit.gd")
 		var pose:Transform3D=solver.head_pose(fit_session.candidate.capture_grip,fit_session.candidate,float(CLUBS.BAG[club_index].length),head_shape)
 		var gap:float=solver.clearance(pose,head_shape,world.surface_height)
-		if (-pose.basis.z).y<-.035:
-			status_text="Face points into the ground at address. Adjust pitch or recapture before saving.";return
+		# Validate mesh clearance, not a world-space face pitch: fitting must
+		# preserve the rigid head/shaft relation selected by the player.
 		if gap<-.001 or gap>.04:
 			status_text="Adjusted sole is %.1f cm from turf. Adjust reach or recapture before saving."%(gap*100);return
+	if fit_session.candidate.has("address_position"):remember_address(fit_session.candidate.address_position)
 	var values:Dictionary=fit_session.accept()
 	if values.is_empty():return
 	telemetry.record("fit_accepted",values)
@@ -682,9 +816,11 @@ func undo_club_fit()->void:
 	_apply_fit(values);_save_preferences();status_text="Previous club fit restored."
 func flip_club_face() -> void:
 	var hand:=0 if left_handed else 1
-	fit_session.undo_state={"reach":club_reach,"rotations":club_rotations.duplicate(),"head_rotations":club_head_rotations.duplicate()}
-	club_rotations[hand]=preload("res://addons/golfminus/scripts/golf/club_fit.gd").flip_face(club_rotations[hand],float(CLUBS.BAG[club_index].length))
+	fit_session.undo_state={"reach":club_reach,"rotations":club_rotations.duplicate(),"head_rotations":club_head_rotations.duplicate(),"fitted":club_fitted.duplicate()}
+	club_head_rotations[hand]=(Basis.from_euler(head_correction(hand)*PI/180)*Basis(Vector3.UP,PI)).get_euler()*180/PI
+	club_fitted[hand]=true
 	toggle_menu(false);reset_swing();swing.cooldown=.8;_save_preferences()
+	hud.attachment_controls.refresh()
 	status_text="Club face reversed; grip and head position preserved."
 func _draw_aim() -> void:
 	aim_mesh.visible=not godview.active and not ball.moving and not ball.holed

@@ -1,6 +1,6 @@
 # Casting, controller alignment and shoreline fights
 
-VR casting follows the **center of the headset view**. The temporary hand-based aiming change has been reverted; wrist movement and eye gaze do not steer the marker. The swing axis is again the head’s horizontal facing direction. Trigger-down locks the target while the player swings back and forward. Desktop right-drag aiming remains available; both modes keep the 5–24 metre reach and reject blocked water.
+VR casting defaults to the **center of the headset view**. With **Field station → Controls → Head-aimed casting** on, trigger-down locks the water target while the player swings back and forward; wrist movement and eye gaze do not steer the marker. Turn it off to use only the calibrated motion controller: the measured backswing and reversal identify the gesture, the measured forward tip travel sets heading, and peak horizontal tip speed sets distance. The marker appears after a valid swing and follows its measured destination. Looking around or holding the trigger longer does not change the result. Follow-through preserves the strongest measured forward speed instead of adding a fixed distance. The preference saves immediately and restores on restart. Desktop right-drag aiming remains available; all modes keep the 5–24 metre reach and reject blocked water.
 
 **Field station → Controls → Controller alignment** offers independent left/right X, Y and Z offsets (±20 cm), and pitch, yaw and roll (±60°), with sliders and large minus/plus buttons. Offsets are local to each grip: X right, Y up, Z toward the player. Settings apply to tracked avatar grips, casting, rod/reel/line interaction and held items, save immediately in `user://player.cfg`, and have a reset button. Changing alignment clears cast/reel motion history so the adjustment cannot create a fishing gesture. The runtime's separate menu pointer pose remains authoritative for UI pointing.
 
@@ -36,7 +36,7 @@ Physical controller alignment, headset comfort and headset performance still req
 
 ## Aim restoration and Secluded Cove water check
 
-The casting gesture implementation (`cast_motion.gd`), its travel/speed tolerances (`fly_fishing.gd`) and rod animation (`rod_visual.gd`) are unchanged. Controller alignment still applies to grip poses, with identity defaults. Frozen targets, required back/forward swings, trigger release, desktop backswing, fly extensions and 5–24 metre reach remain in place.
+The head-aimed gesture retains its travel/speed tolerances (`fly_fishing.gd`) and rod animation (`rod_visual.gd`). Completed swings no longer depend on a wrist-angle or release-timing gate. Level/upward head aim projects to the 24 m far target rather than failing to intersect the water. Controller alignment still applies to grip poses, with identity defaults. Frozen targets, required back/forward swings, trigger release, desktop backswing, fly extensions and 5–24 metre reach remain in place.
 
 The cove’s panorama protection previously reduced front-water animation to a small photographic blend. A local cove coverage region now renders the actual water across the playable mouth while fading into the distant photograph and preserving opaque shore geometry. Missing background depth no longer participates in the shallow-sand fade.
 

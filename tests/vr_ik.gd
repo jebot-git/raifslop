@@ -69,6 +69,19 @@ func run() -> void:
 				var hip:Vector3=sk.to_global(sk.get_bone_global_pose(sk.find_bone(side+"UpperLeg")).origin)
 				var knee:Vector3=sk.to_global(sk.get_bone_global_pose(sk.find_bone(side+"LowerLeg")).origin)
 				check((knee-hip).dot(-yaw.z)>-.015,entry.title+" "+side+" knee bends toward pelvis forward at yaw "+str(angle))
+		# Native knee positions can jitter across the hip-to-ankle line while
+		# standing. Both sides must retain the forward bend plane and skin roll.
+		var previous:Dictionary={}
+		for jitter in [-.003,0.0,.003]:
+			pose.head=Transform3D(Basis.IDENTITY,Vector3(0,1.65,0))
+			pose.body={"hips":Transform3D(Basis.IDENTITY,Vector3(0,.92,0)),"left_foot":Transform3D(Basis.IDENTITY,Vector3(-.13,.08,0)),"right_foot":Transform3D(Basis.IDENTITY,Vector3(.13,.08,0)),"left_knee":Transform3D(Basis.IDENTITY,Vector3(-.13,.5,jitter)),"right_knee":Transform3D(Basis.IDENTITY,Vector3(.13,.5,jitter))}
+			avatar.xr_pose=pose;avatar.solver._process_modification_with_delta(.016)
+			for side in ["Left","Right"]:
+				for part in ["UpperLeg","LowerLeg"]:
+					var name_here:String=side+part
+					var actual:Quaternion=avatar.skeleton.get_bone_global_pose(avatar.skeleton.find_bone(name_here)).basis.orthonormalized().get_rotation_quaternion()
+					if previous.has(name_here):check(previous[name_here].angle_to(actual)<deg_to_rad(10),entry.title+" "+name_here+" does not twist as a straight tracked knee jitters")
+					previous[name_here]=actual
 		avatar.free()
 	body.free()
 

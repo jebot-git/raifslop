@@ -5,6 +5,7 @@ const RADIUS := .021335
 const AREA := PI*RADIUS*RADIUS
 const GRAVITY := Vector3(0,-9.80665,0)
 const SURFACES := {"green":[.25,.55],"fringe":[.30,.85],"fairway":[.42,1.8],"rough":[.23,2.5],"sand":[.10,4.5]}
+const SLIDING_FRICTION := {"green":.20,"fringe":.25,"fairway":.30,"rough":.45,"sand":.60}
 var position := Vector3.ZERO
 var velocity := Vector3.ZERO
 var spin := Vector3.ZERO
@@ -36,12 +37,15 @@ func acceleration(v: Vector3,w: Vector3,wind: Vector3) -> Vector3:
 	var relative := v-wind
 	var speed := relative.length()
 	if speed<.01: return GRAVITY
-	var ratio := RADIUS*w.length()/speed
+	# Rifle spin (parallel to the airflow) produces no Magnus lift. Normalizing
+	# the cross product while using total spin gave near-rifle shots full lift.
+	var transverse_spin:=w-relative*(w.dot(relative)/(speed*speed))
+	var ratio := RADIUS*transverse_spin.length()/speed
 	var cd := .23+.07*clampf(ratio,0,1)
-	var lift := w.cross(relative).normalized()*.5*1.225*AREA*minf(.30,ratio*1.6)*speed*speed/MASS
+	var lift := transverse_spin.cross(relative).normalized()*.5*1.225*AREA*minf(.30,ratio*1.6)*speed*speed/MASS
 	return GRAVITY-relative*(.5*1.225*AREA*cd*speed/MASS)+lift
 func step(delta: float) -> void:
-	if not moving: return
+	if not moving or not is_finite(delta) or delta<=0: return
 	var count := maxi(1,ceili(delta*360))
 	var dt := delta/count
 	for i in count:
@@ -58,14 +62,27 @@ func _substep(dt: float) -> void:
 		var slope := GRAVITY-normal*GRAVITY.dot(normal)
 		velocity -= normal*velocity.dot(normal)
 		var resistance: float = props[1]
-		if velocity.length()<.025 and slope.length()<resistance:
-			velocity=Vector3.ZERO
-		else:
+		var arm:Vector3=-normal*RADIUS
+		var slip:=velocity+spin.cross(arm)
+		if slip.length()>.002:
+			# A skid exchanges translation and rotation through friction. Do not
+			# erase landing backspin, or create rolling energy from a sliding ball.
 			velocity+=slope*dt
-			velocity=velocity.move_toward(Vector3.ZERO,resistance*dt)
+			slip=velocity+spin.cross(arm)
+			var friction:Vector3=-slip.normalized()*minf(slip.length()/3.5,float(SLIDING_FRICTION.get(surface,.3))*absf(GRAVITY.dot(normal))*dt)
+			velocity+=friction
+			spin+=arm.cross(friction)*2.5/(RADIUS*RADIUS)
+		else:
+			# I = 2/5 mr²: rolling acceleration down a slope is 5/7 g sin(theta).
+			var acceleration_downhill:=slope*(5.0/7.0)
+			if velocity.length()<.025 and acceleration_downhill.length()<resistance:
+				velocity=Vector3.ZERO
+			else:
+				velocity+=acceleration_downhill*dt
+				velocity=velocity.move_toward(Vector3.ZERO,resistance*dt)
+			spin=normal.cross(velocity)/RADIUS+normal*spin.dot(normal)*exp(-3*dt)
 		position+=velocity*dt
 		position.y=model.height(position.x,position.z)+RADIUS
-		spin=normal.cross(velocity)/RADIUS
 	else:
 		grounded=false
 		# Midpoint integration keeps carry stable across 72/90/120 Hz headset rates.
@@ -109,7 +126,7 @@ func _substep(dt: float) -> void:
 		position=cup-Vector3(0,.09,0);velocity=Vector3.ZERO;moving=false;holed=true;stop_reason="holed";return
 	if surface in ["water","out"] and position.y<=height+.12:
 		hazard=true;moving=false;velocity=Vector3.ZERO;stop_reason=surface;return
-	if grounded and velocity.length()<.025: rest_time+=dt
+	if grounded and velocity.length()<.025 and (velocity+spin.cross(-normal*RADIUS)).length()<.025: rest_time+=dt
 	else: rest_time=0
 	if rest_time>.35: moving=false;velocity=Vector3.ZERO;stop_reason="rest"
 	# A numerical fail-safe produces a playable lie, never an endless flight.

@@ -44,6 +44,9 @@ func run() -> void:
 		expanded.caught = true
 		expanded.length = game.game.SPECIES[index].length
 		check(schema.valid(expanded), "New species catch accepted by network schema: " + game.game.SPECIES[index].name)
+	for height in [NAN,INF,.2,4.0]:
+		var bad_height:Dictionary=schema.capture(game,20);bad_height.user_height=height
+		check(not schema.valid(bad_height),"Invalid remote user height rejected")
 	var invalid: Dictionary=schema.capture(game,20); invalid.body={"left_curls":PackedFloat32Array([0,0,NAN,0,0])}
 	check(not schema.valid(invalid),"Non-finite finger curl rejected")
 	invalid=schema.capture(game,20); invalid.body={"hips":Transform3D(Basis.IDENTITY,Vector3(100,0,0))}

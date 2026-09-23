@@ -20,9 +20,12 @@ func to_world(point:Vector3,hole:int)->Vector3:return poses[hole]*point
 func to_hole(point:Vector3,hole:int)->Vector3:return inverses[hole]*point
 func hole_bounds(course:Dictionary,hole:int,margin:=40.0)->Rect2:
 	if course.holes[hole].routing.has("path"):
-		var route:Array=course.holes[hole].routing.path
+		var routing:Dictionary=course.holes[hole].routing
+		var route:Array=routing.get("play_path",routing.path)
 		var box:=Rect2(Vector2(route[0][0],route[0][1]),Vector2.ZERO)
 		for p in route:box=box.expand(Vector2(p[0],p[1]))
+		for branch in routing.get("tee_paths",{}).values():
+			for p in branch:box=box.expand(Vector2(p[0],p[1]))
 		return box.grow(margin)
 	var length:float=course.holes[hole].length
 	var result:=Rect2()

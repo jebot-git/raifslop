@@ -2,10 +2,14 @@ extends RefCounted
 ## Render from the fingertip, but aim from the runtime's stable pointer pose.
 static func sample(game) -> Dictionary:
 	if not game.xr or not game.tracking_manager.focused: return {}
-	var controller_valid: bool = game.right.get_has_tracking_data()
-	var hand := XRServer.get_tracker("/user/hand_tracker/right") as XRHandTracker
+	var controller:XRController3D=game.right if game.right.get_has_tracking_data() or not game.left.get_has_tracking_data() else game.left
+	var activity=game.get("golf_activity")
+	if is_instance_valid(activity) and activity.active and is_instance_valid(activity.golf):controller=activity.golf.pointer_controller()
+	var right_hand:bool=controller==game.right
+	var controller_valid: bool = controller.get_has_tracking_data()
+	var hand := XRServer.get_tracker("/user/hand_tracker/right" if right_hand else "/user/hand_tracker/left") as XRHandTracker
 	var tip: Variant = null
-	var direction: Vector3 = -game.right.global_basis.z
+	var direction: Vector3 = -controller.global_basis.z
 	var source := "avatar"
 	# Controller-inferred finger joints bend with trigger input; they are not aim.
 	if hand and hand.has_tracking_data and hand.hand_tracking_source != XRHandTracker.HAND_TRACKING_SOURCE_CONTROLLER and (hand.hand_tracking_source == XRHandTracker.HAND_TRACKING_SOURCE_UNOBSTRUCTED or not controller_valid):
@@ -21,12 +25,12 @@ static func sample(game) -> Dictionary:
 				source = "native"
 	if tip == null:
 		if not controller_valid: return {}
-		tip = game.avatar.index_touch_position() if is_instance_valid(game.avatar) else null
+		tip = game.avatar.index_touch_position() if right_hand and is_instance_valid(game.avatar) else null
 		if not tip is Vector3 or not tip.is_finite():
-			tip = game.right.to_global(Vector3(.02,.01,-.085))
+			tip = controller.to_global(Vector3(.02,.01,-.085))
 			source = "estimated"
-	var aim_origin: Vector3 = tip if source == "native" else game.right.global_position
-	var tracker := XRServer.get_tracker(game.right.tracker) as XRPositionalTracker
+	var aim_origin: Vector3 = tip if source == "native" else controller.global_position
+	var tracker := XRServer.get_tracker(controller.tracker) as XRPositionalTracker
 	if tracker and tracker.has_pose("aim"):
 		var aim := tracker.get_pose("aim")
 		if aim.has_tracking_data:
@@ -34,5 +38,5 @@ static func sample(game) -> Dictionary:
 			aim_origin = pose.origin
 			direction = -pose.basis.z
 	elif source != "native":
-		aim_origin = game.right.global_position
+		aim_origin = controller.global_position
 	return {"origin":tip,"aim_origin":aim_origin,"direction":direction.normalized(),"source":source}

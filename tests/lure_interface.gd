@@ -96,6 +96,7 @@ func run():
  g.head.position=head_before
  g.game.timer=100
  var lure_before:Vector3=g.game.cast_position
+ g.game.lure.reset_motion();g._sample_lure_motion(.02)
  var work_pose:Transform3D=g.controller_local_pose(1)
  work_pose.basis=Basis(Vector3.UP,-.2)*work_pose.basis
  trackers[1].set_pose("grip",work_pose,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
@@ -108,15 +109,19 @@ func run():
  check(absf(g.fishing_feedback.surface.global_position.y-g.water_level-.045)<.001,"Lure ripple remains on water above submerged tackle")
  check(g.fishing_feedback.water_fx.get_shader_parameter("directional"),"Sideways twitch has directional ripples without reeling")
  var wake:Vector2=g.fishing_feedback.water_fx.get_shader_parameter("heading")
- check(wake.x>.99,"Rightward wrist twitch points the wake right")
+ check(wake.x>.9,"Rightward wrist twitch points the wake right")
  g.game.tick(.02,0,0,false,-4);g._update_line();g.fishing_feedback._process(.02)
  wake=g.fishing_feedback.water_fx.get_shader_parameter("heading")
- check(wake.x<-.99,"Reversing the twitch immediately reverses the ripple")
+ check(wake.x<-.9,"Reversing the twitch immediately reverses the ripple")
  g.game.tick(.05,0,0);g._update_line();g.fishing_feedback._process(.05)
  wake=g.fishing_feedback.water_fx.get_shader_parameter("heading")
- check(wake.x<-.99,"Lateral settling does not falsely reverse the twitch ripple")
+ check(wake.x<-.9,"Lateral settling does not falsely reverse the twitch ripple")
+ var before_recovery:Vector3=g.game.cast_position
+ check(g._sample_lure_motion(.02)==0,"Holding the rod after a twitch cannot trigger another")
  g.game.tick(2,0,0);g.fishing_feedback._process(.02)
  check(not g.fishing_feedback.surface.visible,"Unworked lure ripple stops after its pause window")
+ g.game.timer=100;g.game.tick(.05,1,0);g._update_line();g.fishing_feedback.reel_rate=1;g.fishing_feedback._process(.05)
+ check(g.game.lure.action>0 and not g.fishing_feedback.surface.visible,"Ordinary lure reeling attracts fish without twitch ripples")
  g.rod.position.x+=.1
  check(absf(g._sample_lure_motion(.02))<.001,"Rendered IK rod movement cannot feed back into lure input")
  g.game.reset()

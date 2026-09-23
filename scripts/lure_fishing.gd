@@ -22,7 +22,8 @@ var pause_window:=0.0
 var pause_action:=0.0
 var previous_lift:=0.0
 var sampled:=false
-var sideways:=0.0
+var neutral_tip:=Vector3.ZERO
+var twitch_ready:=true
 var previous_tip:=Vector3.ZERO
 var tip_sampled:=false
 const TWITCH_WAKE_SECONDS:=.4
@@ -30,6 +31,7 @@ var twitch_heading:=Vector3.ZERO
 var twitch_wake:=0.0
 func reset_motion()->void:
  tip_sampled=false
+ twitch_ready=true
  sampled=false
  twitch_heading=Vector3.ZERO;twitch_wake=0.0
 func sample_motion(tracked_tip:Vector3,facing:Basis,delta:float)->float:
@@ -38,7 +40,17 @@ func sample_motion(tracked_tip:Vector3,facing:Basis,delta:float)->float:
  previous_tip=tracked_tip
  var valid:=tip_sampled and delta>0 and delta<=.1 and travel.length()<maxf(.6,delta*35.0)
  tip_sampled=true
- return travel.dot(facing.x)/delta if valid else 0.0
+ if not valid:
+  neutral_tip=tracked_tip;twitch_ready=true;return 0.0
+ var excursion:float=(tracked_tip-neutral_tip).dot(facing.x)
+ # Returning the rod is recovery, not a second twitch in the opposite direction.
+ if not twitch_ready:
+  if tracked_tip.distance_to(neutral_tip)<.05:twitch_ready=true
+  return 0.0
+ var speed:float=travel.dot(facing.x)/delta
+ if absf(excursion)<.06 or absf(speed)<.35 or speed*excursion<=0:return 0.0
+ twitch_ready=false
+ return clampf(speed,-6,6)
 static func supported(id:String)->bool:return POOLS.has(id)
 static func preferred(bait:int,id:String)->Array:
  var result:Array=[]
@@ -46,7 +58,7 @@ static func preferred(bait:int,id:String)->Array:
   if index in PREFERENCES.get(bait,[]):result.append(index)
  return result
 func reset()->void:
- depth=0;action=0;pause_window=0;pause_action=0;previous_lift=0;sideways=0;reset_motion()
+ depth=0;action=0;pause_window=0;pause_action=0;previous_lift=0;reset_motion()
 func work(delta:float,reel:float,lift:float,bait:int,river:bool,side_speed:float=0.0)->float:
  twitch_wake=maxf(0,twitch_wake-delta)
  var rate:=clampf(reel,0,2)
@@ -68,17 +80,13 @@ func work(delta:float,reel:float,lift:float,bait:int,river:bool,side_speed:float
   action=minf(1.5,action+lateral*1.1+(twitch*.25 if bait in [1,2] else 0.0))
   pause_action=action
  return action
-func move_sideways(at:Vector3,anchor:Vector3,side_speed:float,delta:float)->Vector3:
+func move_sideways(at:Vector3,anchor:Vector3,side_speed:float,_delta:float)->Vector3:
  var outward:=at-anchor;outward.y=0
- if outward.length_squared()<.001:return at
- # The line settles after each twitch so a previous pull cannot permanently
- # pin the tackle at the lateral limit. Wrist rotation also works the lure.
- var next:=clampf(sideways+clampf(side_speed,-8,8)*delta*1.5,-.9,.9) if absf(side_speed)>.08 else move_toward(sideways,0,delta*.45)
+ if outward.length_squared()<.001 or absf(side_speed)<.35:return at
+ # One accepted rod excursion makes a distinct short dart, including a
+ # little retrieval. Recovery does not undo the lure's travelled distance.
+ var travel:=minf(clampf(.2+absf(side_speed)*.1,.2,.8),outward.length()*.5)
  var side:=outward.normalized().cross(Vector3.UP)
- if absf(side_speed)>.08:
-  # Preserve the signed, world-space twitch independently of the subsequent
-  # settling motion; a settling line must not show a new opposite twitch.
-  twitch_heading=side*signf(side_speed);twitch_wake=TWITCH_WAKE_SECONDS
- var moved:=at+side*(next-sideways)
- sideways=next
- return moved
+ var movement:Vector3=(side*signf(side_speed)-outward.normalized()*.35)*travel
+ twitch_heading=movement.normalized();twitch_wake=TWITCH_WAKE_SECONDS
+ return at+movement

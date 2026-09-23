@@ -96,7 +96,23 @@ func run():
 	game.game.state=game.Session.State.CASTING
 	check(not game.tracking_manager.recenter(),"Recenter cannot turn an active cast into a gesture")
 	game.game.state=game.Session.State.READY;game.tracking_manager.seated=true;game.head.position.y=1.1
-	check(game.tracking_manager.recenter() and absf(game.head.global_position.y-anchor.y-1.65)<.01,"Seated calibration translates height while preserving reach scale")
+	check(game.tracking_manager.recenter() and absf(game.head.global_position.y-anchor.y-1.1)<.01 and XRServer.world_scale==1.0,"Seated recenter preserves actual height and metre scale")
+	var height_before:float=game.tracking_manager.user_height
+	game.tracking_manager.seated=false;game.tracking_manager.height_confirmed=false;game.tracking_manager.height_measured=false
+	game.head.position.y=1.42
+	for i in 40:game.tracking_manager._sample_height(.05)
+	check(absf(game.tracking_manager.user_height-1.42)<.001,"Stable physical eye height sizes the avatar")
+	game.head.position.y=.9
+	for i in 40:game.tracking_manager._sample_height(.05)
+	check(absf(game.tracking_manager.user_height-1.42)<.001,"Crouching never shrinks a measured avatar")
+	game.head.position.y=1.8
+	for i in 40:game.tracking_manager._sample_height(.05)
+	check(absf(game.tracking_manager.user_height-1.8)<.001,"Standing after seated startup corrects provisional height")
+	game.tracking_manager.measure_height()
+	game.head.position.y=1.9
+	for i in 40:game.tracking_manager._sample_height(.05)
+	check(absf(game.tracking_manager.user_height-1.8)<.001,"Explicit height measurement stays fixed")
+	game.tracking_manager.user_height=height_before;game.tracking_manager.apply_user_height()
 	# A body T-pose must not rebase the room or silently resize physical motion.
 	game.tracking_manager.seated=false
 	game.head.position=Vector3(.25,1.55,-.2);game.head.rotation=Vector3(0,.3,0)

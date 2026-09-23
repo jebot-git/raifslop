@@ -73,6 +73,7 @@ var hud: Control
 var last_tip := Vector3.ZERO
 var velocity := Vector3.ZERO
 var casting := false
+var head_aimed_casting := true
 var controller_calibration = preload("res://scripts/controller_calibration.gd").new()
 var calibrated_hands: Array[Node3D] = []
 var cast_aim_target := Vector3.ZERO
@@ -81,6 +82,8 @@ var cast_swing_axis := Vector3.FORWARD
 var cast_motion = preload("res://scripts/cast_motion.gd").new()
 var desktop_cast_extensions := 0
 var cast_last_tip := Vector3.ZERO
+var cast_sample_us := 0
+var cast_trace:Array[Dictionary]=[]
 var peak_speed := 0.0
 var time := 0.0
 var cast_target := Vector3(0, -0.35, -12)
@@ -366,6 +369,8 @@ func _load_player_preferences() -> void:
 	preload("res://scripts/ui/pictograms.gd").enabled = symbols if symbols is bool else true
 	controller_calibration.load_config(cfg)
 	_apply_controller_calibration()
+	var head_aim = cfg.get_value("controls", "head_aimed_casting", true)
+	head_aimed_casting = head_aim if head_aim is bool else true
 	var smooth = cfg.get_value("controls", "smooth_turn", false)
 	motor.smooth_turn = smooth if smooth is bool else false
 	var speed = cfg.get_value("controls","smooth_turn_speed",75.0)
@@ -393,6 +398,7 @@ func _save_player_preferences() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("interface", "pictograms", preload("res://scripts/ui/pictograms.gd").enabled)
 	controller_calibration.save_config(cfg)
+	cfg.set_value("controls", "head_aimed_casting", head_aimed_casting)
 	cfg.set_value("controls", "smooth_turn", motor.smooth_turn)
 	cfg.set_value("controls", "smooth_turn_speed", motor.smooth_turn_speed)
 	cfg.set_value("controls", "snap_turn_angle", motor.snap_turn_angle)
@@ -414,6 +420,7 @@ func _save_user_settings() -> void:
 func _quit_game() -> void:
 	if quitting: return
 	quitting = true
+	if is_instance_valid(golf_activity):golf_activity.cancel_loading()
 	avatar_menu.quit_button.disabled = true
 	set_process(false)
 	motor.set_physics_process(false)
@@ -495,11 +502,17 @@ func _right_released(button: String) -> void:
 		if button == "trigger_click": _menu_click(false)
 		return
 	if button == "trigger_click" and casting:
+		# Input can release before this frame's process callback samples the pose.
+		if xr and right.get_has_tracking_data() and tracking_manager.focused:
+			_sample_cast_swing((Time.get_ticks_usec()-cast_sample_us)/1000000.0)
+		var measured_strokes:int=game.fly.strokes
 		game.fly.charging = false
 		if game.fly.strokes > 0 and cast_motion.release_allowed(controller_local_pose(1) * rod_holster.HELD_POSE, head.position.y, cast_swing_axis) and right.get_has_tracking_data() and tracking_manager.focused:
 			_cast(game.fly.cast_power())
 		else:
 			game.message = "Hold trigger, sweep back then forward, and release."
+		print("CAST_RESULT ",JSON.stringify({"monotonic_us":Time.get_ticks_usec(),"strokes":measured_strokes,"back_m":cast_motion.stroke_back,"forward_m":cast_motion.stroke_forward,"raised":cast_motion.raised,"head_aim":head_aimed_casting,"launched":game.state==Session.State.CASTING,"swing":cast_motion.swing_travel,"swing_speed_m_s":cast_motion.swing_speed,"axis":cast_swing_axis,"message":game.message}))
+		if not cast_trace.is_empty():print("CAST_TRACE ",JSON.stringify(cast_trace))
 		casting = false
 
 func _primary_action() -> void:
@@ -516,8 +529,9 @@ func _primary_action() -> void:
 			_update_line()
 
 func _cast_direction() -> Vector3:
-	# Preserve the original head-relative casting gesture axis.
 	var direction := -head.global_basis.z if xr else -rod.global_basis.z
+	if xr and not head_aimed_casting:
+		direction = preload("res://scripts/cast_motion.gd").controller_axis(controller_pose(1) * rod_holster.HELD_POSE)
 	direction.y = 0
 	if direction.length() < 0.1:
 		direction = -origin.global_basis.z
@@ -538,10 +552,19 @@ func _sample_cast_swing(delta: float) -> void:
 	var at := _tracked_cast_tip()
 	var movement := at - cast_last_tip
 	cast_last_tip = at
+	cast_sample_us = Time.get_ticks_usec()
 	if delta <= 0.0 or delta > .1 or not movement.is_finite() or movement.length() > maxf(.5, delta * 35.0):
 		# Ignore discontinuities, retaining an already completed gesture.
 		return
-	var travel: float = cast_motion.sample(movement, controller_local_pose(1) * rod_holster.HELD_POSE, head.position.y, cast_swing_axis, game.fly.strokes > 0)
+	var pose: Transform3D = controller_local_pose(1) * rod_holster.HELD_POSE
+	var travel: float
+	if head_aimed_casting:
+		travel = cast_motion.sample(movement, pose, head.position.y, cast_swing_axis, game.fly.strokes > 0)
+	else:
+		travel = cast_motion.sample_controller(movement, delta, pose, cast_swing_axis, game.fly.strokes > 0)
+	if "--vr-test-capture" in OS.get_cmdline_user_args():
+		cast_trace.append({"us":cast_sample_us,"dt":delta,"tip":[at.x,at.y,at.z],"movement":[movement.x,movement.y,movement.z],"travel":travel,"raised":cast_motion.raised,"forward_m":cast_motion.stroke_forward,"back_m":cast_motion.stroke_back,"strokes":game.fly.strokes})
+		if cast_trace.size()>360:cast_trace.pop_front()
 	var speed := travel / delta
 	peak_speed = maxf(peak_speed, maxf(0.0, speed))
 	var previous_strokes: int = game.fly.strokes
@@ -554,6 +577,7 @@ func _sample_cast_swing(delta: float) -> void:
 		cast_motion.retreat=0.0
 
 func _extend_fly_cast() -> void:
+	if xr and not head_aimed_casting: return
 	if not casting or not game.is_fly_fishing() or not cast_aim_target.is_finite(): return
 	var offset := cast_aim_target - cast_aim_anchor
 	var candidate := cast_aim_anchor + offset.normalized() * minf(24.0, offset.length() + 2.0)
@@ -634,6 +658,7 @@ func _configure_fishing_grid(id: String) -> void:
 
 func _casting_anchor() -> Vector3:
 	var at := rod.global_position
+	if xr and not head_aimed_casting: at = controller_pose(1).origin
 	return Vector3(at.x, water_level + .05, at.z)
 
 func _begin_cast() -> void:
@@ -642,11 +667,22 @@ func _begin_cast() -> void:
 	cast_aim_anchor = _casting_anchor()
 	cast_swing_axis = origin.global_basis.inverse() * _cast_direction()
 	cast_motion = preload("res://scripts/cast_motion.gd").new()
+	cast_trace.clear()
 	casting = true
+	cast_last_tip = _tracked_cast_tip() if xr else Vector3.ZERO
+	cast_sample_us = Time.get_ticks_usec()
 	desktop_cast_extensions=0
 	game.fly.begin_cast(game.is_fly_fishing())
 
 func _projected_cast_target() -> Vector3:
+	if xr and not head_aimed_casting:
+		# There is no headset target to lock; preview the measured forward swing.
+		if not casting or game.fly.strokes == 0 or cast_motion.swing_travel.length_squared() < .000001:
+			return Vector3(INF, INF, INF)
+		var direction: Vector3 = origin.global_basis * cast_motion.swing_travel
+		direction.y = 0.0
+		if direction.length_squared()<.000001:return Vector3(INF,INF,INF)
+		return cast_aim_anchor + direction.normalized() * cast_motion.swing_distance()
 	# Trigger-down freezes both the visible marker and the release destination.
 	if casting: return cast_aim_target
 	var ray_origin := head.global_position
@@ -657,7 +693,12 @@ func _projected_cast_target() -> Vector3:
 		var pitch := clampf(rod.rotation.x - .23, .045, 1.2)
 		ray = Basis(Vector3.UP, rod.global_rotation.y) * Vector3(0, -sin(pitch), -cos(pitch))
 	var hit = Plane(Vector3.UP, water_level + .05).intersects_ray(ray_origin, ray)
-	if hit == null: return Vector3(INF, INF, INF)
+	if hit == null:
+		# A level/upward view has a valid far cast; overhand preparation often
+		# raises the gaze before trigger-down.
+		var forward := Vector3(ray.x,0,ray.z)
+		if forward.length_squared()<.001: return Vector3(INF,INF,INF)
+		return _casting_anchor()+forward.normalized()*24.0
 	var anchor := _casting_anchor()
 	var offset: Vector3 = hit - anchor
 	if offset.length_squared() < .001: return Vector3(INF, INF, INF)
@@ -669,7 +710,8 @@ func _cast_target_valid(target: Vector3) -> bool:
 	if not target.is_finite() or cast_water_boundary.blocked(target, .05): return false
 	var space := get_world_3d().direct_space_state
 	# A visible target must be in open water, not inside a deck, rock or bank.
-	var sight := PhysicsRayQueryParameters3D.create(head.global_position,target,1,cast_barriers)
+	var sight_origin := controller_pose(1).origin if xr and not head_aimed_casting else head.global_position
+	var sight := PhysicsRayQueryParameters3D.create(sight_origin,target,1,cast_barriers)
 	var surface := PhysicsRayQueryParameters3D.create(target+Vector3.UP*4.0,target,1,cast_barriers)
 	return space.intersect_ray(sight).is_empty() and space.intersect_ray(surface).is_empty()
 
@@ -691,7 +733,7 @@ func _cast(_power: float) -> void:
 	if game.state != Session.State.READY or rod_holster.stowed: return
 	var endpoint := _projected_cast_target()
 	if not _cast_target_valid(endpoint):
-		game.message = "Aim at open water until the casting marker appears."
+		game.message = "Swing toward open water, then release the trigger." if xr and not head_aimed_casting else "Aim at open water until the casting marker appears."
 		return
 	fish_safe_position = endpoint
 	boundary_landing_direction = Vector3(INF, INF, INF)
@@ -1284,6 +1326,11 @@ func _build_avatar_menu() -> void:
 	avatar_menu.pictograms_toggle.button_pressed=preload("res://scripts/ui/pictograms.gd").enabled
 	avatar_menu.pictograms_toggle.toggled.connect(func(enabled:bool): preload("res://scripts/ui/pictograms.gd").enabled=enabled;hud.queue_redraw();_save_player_preferences())
 	avatar_menu.turn_mode.button_pressed = motor.smooth_turn
+	avatar_menu.head_aimed_casting.button_pressed = head_aimed_casting
+	avatar_menu.head_aimed_casting.toggled.connect(func(enabled: bool):
+		head_aimed_casting = enabled
+		casting = false; game.fly.charging = false
+		_save_player_preferences())
 	avatar_menu.turn_mode_changed.connect(func(enabled: bool): motor.smooth_turn = enabled; _save_player_preferences())
 	avatar_menu.smooth_turn_speed.value=motor.smooth_turn_speed
 	avatar_menu.snap_turn_angle.value=motor.snap_turn_angle
@@ -1298,6 +1345,7 @@ func _panorama_texture(entry: Dictionary) -> Texture2D:
 	return ResourceLoader.load(entry.panorama, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
 
 func _select_location(id: String, persist := true) -> bool:
+	if is_instance_valid(golf_activity):golf_activity.cancel_loading()
 	if is_instance_valid(golf_activity) and golf_activity.active:
 		golf_activity.leave()
 		if golf_activity.active:return false
@@ -1443,9 +1491,9 @@ func _select_avatar(path: String) -> void:
 	if model:
 		var candidate := AvatarRig.new()
 		candidate.name = "PlayerAvatar"
-		# FPSloppa normalizes the model independently of the current headset pose.
-		# Loading while seated, crouching, or reconnecting must not shrink the body.
-		candidate.standing_height = AvatarRig.Scale.HEAD_HEIGHT
+		# Use the saved physical height; avatar changes while crouched cannot
+		# remeasure the user or resize the tracking world.
+		candidate.standing_height = tracking_manager.user_height if is_instance_valid(tracking_manager) else AvatarRig.Scale.HEAD_HEIGHT
 		candidate.add_child(model)
 		add_child(candidate)
 		if candidate.configure(model):

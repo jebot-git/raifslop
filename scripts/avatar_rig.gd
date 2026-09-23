@@ -49,6 +49,7 @@ var movement := Vector3.ZERO
 var phase := 0.0
 var viewpoint_offset:=Vector3.ZERO
 var body_yaw:=0.0
+var rest_eye_height:=Scale.HEAD_HEIGHT
 
 
 static func find_skeleton(node: Node) -> Skeleton3D:
@@ -93,6 +94,8 @@ func configure(root: Node3D) -> bool:
 	# stale toes and skin helper offsets otherwise tear vertices out of the mesh.
 	skeleton.reset_bone_poses()
 	_setup_viewpoint()
+	rest_eye_height=(skeleton_transform*skeleton.get_bone_global_rest(skeleton.find_bone("Head"))*viewpoint_offset).y
+	set_user_height(standing_height)
 	solver = IK.new()
 	skeleton.add_child(solver)
 	solver.setup(self)
@@ -104,6 +107,15 @@ func configure(root: Node3D) -> bool:
 	add_to_group("fishing_avatar_rigs")
 	preload("res://scripts/client_diagnostics.gd").stage("avatar_rig",diagnostic_started)
 	return true
+
+func set_user_height(height:float) -> void:
+	standing_height=clampf(height,.6,2.3)
+	if not is_instance_valid(model) or rest_eye_height<.1:return
+	var factor:=standing_height/rest_eye_height
+	model.scale*=factor;model.position*=factor
+	neutral_hip_height*=factor
+	for side in neutral_foot_heights:neutral_foot_heights[side]*=factor
+	rest_eye_height=standing_height
 
 func strip_extras(node: Node) -> void:
 	if node is VRMSecondary:
@@ -153,7 +165,6 @@ func tracking_transform() -> Transform3D:
 	return render_frame
 
 func fit_tracked_hips(pose: Transform3D) -> Transform3D:
-	pose.origin.y += neutral_hip_height - Scale.HIP_HEIGHT
 	return pose
 
 func fit_tracked_foot(side: String, pose: Transform3D) -> Transform3D:

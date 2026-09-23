@@ -4,6 +4,16 @@ var tee_kind:="club"
 var flag: Node3D
 var grid: MeshInstance3D
 var occupied:Array[Rect2]=[]
+var staging:=false
+var staged_collisions:Array[Dictionary]=[]
+func stage_collision(body:CollisionObject3D)->void:
+	if not staging:return
+	staged_collisions.append({"body":body,"layer":body.collision_layer,"mask":body.collision_mask})
+	body.collision_layer=0;body.collision_mask=0
+func activate_staged()->void:
+	for entry in staged_collisions:
+		if is_instance_valid(entry.body):entry.body.collision_layer=entry.layer;entry.body.collision_mask=entry.mask
+	staged_collisions.clear();staging=false;visible=true;process_mode=Node.PROCESS_MODE_INHERIT
 const COLORS := {"fairway":Color("557044"),"green":Color("66854c"),"fringe":Color("4d683a"),"rough":Color("72704b"),"sand":Color("d2c198"),"water":Color("aa9f77"),"out":Color("737354")}
 func build(m: RefCounted) -> void:
 	model=m
@@ -94,10 +104,12 @@ func _leaf_tree(variant: int) -> Node3D:
 	return tree
 func _prop_collision(prop: Node3D) -> void:
 	for mesh in prop.find_children("*","MeshInstance3D",true,false):
-		if str(mesh.name).begins_with("Visual_"):continue
-		mesh.create_trimesh_collision()
-		for child in mesh.get_children():
-			if child is StaticBody3D:child.collision_layer=5
+		prop_mesh_collision(mesh)
+func prop_mesh_collision(mesh:MeshInstance3D)->void:
+	if str(mesh.name).begins_with("Visual_"):return
+	mesh.create_trimesh_collision()
+	for child in mesh.get_children():
+		if child is StaticBody3D:child.collision_layer=5;stage_collision(child)
 func sweep_ball(from: Vector3,to: Vector3) -> Dictionary:
 	return get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(from,to,4))
 func _grass(rng: RandomNumberGenerator) -> void:
@@ -216,3 +228,4 @@ func ground_pavilion(prop:Node3D)->void:
 	if foundation.get_active_material(0) is StandardMaterial3D:stone=foundation.get_active_material(0).duplicate()
 	stone.cull_mode=BaseMaterial3D.CULL_DISABLED
 	var skirt:=mesh_node(st.commit(),Vector3.ZERO,stone);skirt.name="PavilionGroundSupport";skirt.create_trimesh_collision();skirt.get_child(0).collision_layer=5
+	stage_collision(skirt.get_child(0))

@@ -13,7 +13,7 @@ func run() -> void:
  g.set_process(false);g.motor.set_physics_process(false);g.fishing_feedback.set_process(false)
  var model:Node3D=g.avatar.model
  var body_bounds:AABB=model.transform*model.get_meta(preload("res://scripts/avatar_rest_bounds.gd").CACHE_KEY)
- check(absf(body_bounds.size.y-Scale.BODY_HEIGHT)<.001 and is_equal_approx(Scale.BODY_HEIGHT,1.70),"Loaded avatar body is 170 cm; eye reference is separate")
+ check(absf(g.avatar.rest_eye_height-g.avatar.standing_height)<.001,"Loaded avatar fits measured eye height")
  for index in S.SPECIES.size():
   var species:Dictionary=S.SPECIES[index]
   g.game.fish_index=index;g.game.journal=[{"length":species.length*1.13}]
@@ -40,7 +40,7 @@ func run() -> void:
    g.xr=true;g._update_catch(0)
    var mouth:Vector3=g.fish_display.to_global(Vector3(g.catch_bounds.end.x,0,0))
    var tail:Vector3=g.fish_display.to_global(Vector3(g.catch_bounds.position.x,0,0))
-   check(absf(mouth.distance_to(tail)/body_bounds.size.y-expected/1.70)<.0001,"Attached catch/avatar ratio remains physical at XR scale "+str(world_scale))
+   check(absf(mouth.distance_to(tail)/body_bounds.size.y-expected/body_bounds.size.y)<.0001,"Attached catch/avatar ratio remains physical at XR scale "+str(world_scale))
    g.xr=false
  XRServer.world_scale=1.0
  var twitch=g.catch_twitch

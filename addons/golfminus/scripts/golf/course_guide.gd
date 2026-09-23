@@ -8,7 +8,8 @@ var device:Node3D
 var photo_camera:Node
 var game:Node3D
 var held:=false
-var grip_was_down:=true
+var held_hand:=-1
+var grip_down:=[true,true]
 var stick_latched:=false
 var page_index:=0
 var belt_pose:=Transform3D.IDENTITY
@@ -47,13 +48,14 @@ func page(direction:int)->void:
 	if is_instance_valid(photo_camera) and photo_camera.active:return
 	page_index=posmod(page_index+direction,2);refresh()
 func dock()->void:
-	held=false;stick_latched=false;reset_touch()
+	held=false;held_hand=-1;stick_latched=false;reset_touch()
 	viewport.render_target_update_mode=SubViewport.UPDATE_DISABLED
 	if is_instance_valid(photo_camera):photo_camera.view.render_target_update_mode=SubViewport.UPDATE_DISABLED
-func toggle()->void:
+func toggle(hand:=-1)->void:
 	if game.menu_open or game.fitting_club or (game.club_radial.opened or game.godview.active):return
 	held=not held
 	if held:
+		held_hand=hand if hand>=0 else (1 if game.left_handed else 0)
 		page_index=0;reset_touch();game.equipment.set_stowed(true)
 		if is_instance_valid(game.host_game) and is_instance_valid(game.host_game.bbq):game.host_game.bbq.release_all()
 	game.reset_swing();refresh()
@@ -82,7 +84,7 @@ func press_buttons(point:Vector3)->void:
 		button_nodes[i].position.z=BUTTON_CENTERS[i].z-(.010 if button_down[i] else .006)
 	previous_touch=local
 func touch_position()->Variant:
-	var hand:=0 if game.left_handed else 1
+	var hand:=1-held_hand if held_hand>=0 else (0 if game.left_handed else 1)
 	var source:="controller"
 	var point:Variant=null
 	var tracker=XRServer.get_tracker("/user/hand_tracker/left" if hand==0 else "/user/hand_tracker/right") as XRHandTracker
@@ -99,15 +101,20 @@ func update()->void:
 	var hip:Transform3D=game.equipment.hip_pose(1.0 if game.left_handed else -1.0)
 	var basis:=hip.basis*Basis(Vector3.FORWARD,Vector3.DOWN,Vector3.LEFT)
 	belt_pose=Transform3D(basis,hip.origin-basis*GRIP_ANCHOR)
-	if game.menu_open or game.fitting_club or (game.club_radial.opened or game.godview.active) or not game.focused:dock();grip_was_down=true
+	if game.menu_open or game.fitting_club or game.club_radial.opened or game.godview.active or not game.focused:
+		dock();grip_down=[true,true]
 	elif game.xr:
-		var controller:XRController3D=game.right if game.left_handed else game.left
-		var down:=controller.get_has_tracking_data() and controller.get_float("grip")>.55
-		if held and not down:dock()
-		var pose:Transform3D=controller.global_transform*game.calibration.pose(1 if game.left_handed else 0)
-		if down and not grip_was_down and pose.origin.distance_to(hip.origin)<.22:toggle()
-		grip_was_down=down if controller.get_has_tracking_data() else true
+		for hand in 2:
+			var controller:XRController3D=game.left if hand==0 else game.right
+			var tracked:=controller.get_has_tracking_data()
+			var down:=tracked and controller.get_float("grip")>(.35 if grip_down[hand] else .55)
+			var pose:Transform3D=controller.global_transform*game.calibration.pose(hand)
+			if held and held_hand==hand and not down:dock()
+			if not held and down and not grip_down[hand] and pose.origin.distance_to(hip.origin)<.24:toggle(hand)
+			grip_down[hand]=down if tracked else true
 		if held:
+			var controller:XRController3D=game.left if held_hand==0 else game.right
+			var pose:Transform3D=controller.global_transform*game.calibration.pose(held_hand)
 			global_transform=pose*Transform3D(GRIP_BASIS,-(GRIP_BASIS*GRIP_ANCHOR))
 			var axis:=controller.get_vector2("primary").x
 			if absf(axis)>.65 and not stick_latched:page(1 if axis>0 else -1);stick_latched=true
@@ -124,16 +131,22 @@ func update()->void:
 		refresh_elapsed+=get_process_delta_time()
 		if refresh_elapsed>=.1:refresh();refresh_elapsed=0
 
-func photo_input_hand()->XRController3D:return game.left if game.left_handed else game.right
+func photo_input_hand()->XRController3D:
+	var free:XRController3D=game.right if held_hand==0 else game.left
+	return free if free.get_has_tracking_data() else (game.left if held_hand==0 else game.right)
 func camera_controls()->Dictionary:
-	return {"toggle":("RIGHT" if game.left_handed else "LEFT")+" TRIGGER: GUIDE" if game.xr else "C: GUIDE · J: CLOSE", "capture":("LEFT" if game.left_handed else "RIGHT")+" TRIGGER / ›: PHOTO" if game.xr else "SPACE: TAKE PHOTO", "selfie":("LEFT X" if game.left_handed else "RIGHT A")+" / ‹: SELFIE" if game.xr else "F: SELFIE · RIGHT-DRAG: AIM", "extend":("LEFT" if game.left_handed else "RIGHT")+" STICK ↑/↓: EXTEND" if game.xr else "↑ / ↓: EXTEND / RETRACT"}
+	var hand_name:="LEFT" if held_hand==0 else "RIGHT"
+	var free_name:="LEFT" if photo_input_hand()==game.left else "RIGHT"
+	return {"toggle":hand_name+(" B/Y: GUIDE" if game.only_one_controller() else " TRIGGER: GUIDE") if game.xr else "C: GUIDE · J: CLOSE", "capture":free_name+" TRIGGER / ›: PHOTO" if game.xr else "SPACE: TAKE PHOTO", "selfie":free_name+" A/X / ‹: SELFIE" if game.xr else "F: SELFIE · RIGHT-DRAG: AIM", "extend":free_name+" STICK ↑/↓: EXTEND" if game.xr else "↑ / ↓: EXTEND / RETRACT"}
 func camera_button(action:String,left_hand:bool)->bool:
 	if not held or not is_instance_valid(photo_camera) or action in ["menu_button","primary_click"]:return false
-	var guide_hand:bool=left_hand!=game.left_handed
+	var guide_hand:bool=(0 if left_hand else 1)==held_hand
+	var single:bool=game.only_one_controller()
 	if action=="trigger_click":
-		if guide_hand:photo_camera.toggle()
+		if guide_hand and not (single and photo_camera.active):photo_camera.toggle()
 		else:photo_camera.capture()
-	elif action=="ax_button" and not guide_hand:photo_camera.toggle_selfie()
+	elif action=="ax_button" and (not guide_hand or single and photo_camera.active):photo_camera.toggle_selfie()
+	elif single and guide_hand and action=="by_button" and photo_camera.active:photo_camera.toggle()
 	elif guide_hand and action in ["ax_button","by_button"]:page(1 if action=="ax_button" else -1)
 	return true
 func camera_key(event:InputEvent)->bool:

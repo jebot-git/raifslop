@@ -77,8 +77,13 @@ func _draw_map()->void:
 			var end:=project(m.pin_for(i));var start:=project(m.tee_for(i))
 			if m.course.holes[i].get("routing",{}).has("path"):
 				var path:=PackedVector2Array()
-				for p in m.course.holes[i].routing.path:path.append(project(Vector3(p[0],0,p[1])))
+				var routing:Dictionary=m.course.holes[i].routing
+				for p in routing.get("play_path",routing.path):path.append(project(Vector3(p[0],0,p[1])))
 				draw_polyline(path,Color("7aa489"),1,true)
+				for branch in routing.get("tee_paths",{}).values():
+					var connector:=PackedVector2Array()
+					for p in branch:connector.append(project(Vector3(p[0],0,p[1])))
+					if connector.size()>1:draw_polyline(connector,Color("7aa489"),1,true)
 			else:draw_line(start,end,Color("7aa489"),1,true)
 			draw_string(font,end+Vector2(3,-3),str(i+1),HORIZONTAL_ALIGNMENT_LEFT,-1,15,Color("f6d888") if i==m.index else Color("dcecd7"))
 	var ball:=project(g.ball.position);var pin:=project(m.pin())

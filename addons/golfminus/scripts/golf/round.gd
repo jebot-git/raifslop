@@ -49,10 +49,14 @@ func save_progress(course_id: String,tee: String,ball: RefCounted) -> Error:
 	cfg.set_value("round","last_safe",last_safe);cfg.set_value("round","penalties",penalties);cfg.set_value("round","finished",finished)
 	for key in ["position","velocity","spin","origin","moving","holed","hazard","grounded","carry","peak","air_time","rest_time"]:cfg.set_value("ball",key,ball.get(key))
 	return cfg.save(progress_path)
+func discard_progress(course_id:String)->void:
+	var cfg:=ConfigFile.new()
+	if cfg.load(progress_path)==OK and cfg.get_value("round","course","")==course_id:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(progress_path))
 func read_progress() -> ConfigFile:
 	var cfg:=ConfigFile.new()
 	if cfg.load(progress_path)!=OK:return null
-	if not cfg.get_value("round","course","") in ["spyglass","pebble","dalkey","alpine"]:return null
+	if not cfg.get_value("round","course","") in preload("res://addons/golfminus/scripts/golf/catalog.gd").ALL:return null
 	var hs=cfg.get_value("round","hole",-1)
 	var ss=cfg.get_value("round","scores",[])
 	if not hs is int or hs<0 or hs>17 or not ss is Array or (ss.size()!=hs and ss.size()!=hs+1):return null

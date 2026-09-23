@@ -283,12 +283,9 @@ func update_device() -> void:
 	if held and not can_grab(): dock()
 	if held: screen.queue_redraw()
 	var g = game_root
-	var facing := Basis(Vector3.UP, atan2(g.head.global_basis.z.x, g.head.global_basis.z.z))
-	var belt := Vector3(g.head.global_position.x, maxf(g.motor.global_position.y + 0.55, g.head.global_position.y - 0.70), g.head.global_position.z)
-	if is_instance_valid(g.tracking_manager) and g.tracking_manager.body.has("hips"):
-		var hips: Transform3D = g.motor.global_transform * g.tracking_manager.body.hips
-		belt = hips.origin
-		facing = Basis(Vector3.UP, atan2(hips.basis.z.x, hips.basis.z.z))
+	var mount := preload("res://scripts/tracking/hip_mount.gd").pose(g.head, g.motor, g.tracking_manager)
+	var facing := mount.basis
+	var belt := mount.origin
 	belt += facing * Vector3(-0.24, 0, -0.02)
 	# The handle is at hip height, screen faces outward, and the body hangs below it.
 	var holster_basis := facing * Basis(Vector3.FORWARD, Vector3.DOWN, Vector3.LEFT)

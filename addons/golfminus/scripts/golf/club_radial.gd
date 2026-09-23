@@ -1,5 +1,5 @@
 extends Node3D
-## Fishing interaction: hold right stick click, point, release; neutral cancels.
+## Tap to open/cancel; point to highlight and return to centre to equip.
 const Icons=preload("res://addons/golfminus/scripts/golf/pictograms.gd")
 var game:Node3D
 var opened:=false
@@ -26,7 +26,7 @@ class Dial extends Control:
 		if Icons.enabled:
 			draw_texture_rect(Icons.texture("accept" if menu.choice>=0 else "cancel"),Rect2(center-Vector2(32,45),Vector2(64,64)),false)
 		else:draw_string(ThemeDB.fallback_font,center+Vector2(-100,-8),"CLUB BAG",HORIZONTAL_ALIGNMENT_CENTER,200,24,Color("e7c884"))
-		draw_string(ThemeDB.fallback_font,center+Vector2(-100,24),("Release" if menu.choice>=0 else "Centre") if Icons.enabled else ("Release to equip" if menu.choice>=0 else "Centre to cancel"),HORIZONTAL_ALIGNMENT_CENTER,200,17,Color("e5e4d0"))
+		draw_string(ThemeDB.fallback_font,center+Vector2(-100,24),("Centre to equip" if menu.choice>=0 else "Click to close"),HORIZONTAL_ALIGNMENT_CENTER,200,17,Color("e5e4d0"))
 func setup(g:Node3D)->void:
 	game=g;add_child(view);view.size=Vector2i(640,640);view.transparent_bg=true;view.render_target_update_mode=SubViewport.UPDATE_DISABLED
 	canvas=Dial.new();canvas.menu=self;canvas.size=Vector2(640,640);view.add_child(canvas)
@@ -37,9 +37,9 @@ func allowed()->bool:
 	if game.godview.active or game.menu_open or game.fitting_club or game.course_guide.held or game.ball.moving or not game.focused:return false
 	if is_instance_valid(game.host_activity) and game.host_activity.settings_open:return false
 	if is_instance_valid(game.host_game) and is_instance_valid(game.host_game.shoulder_radio) and game.host_game.shoulder_radio.held:return false
-	return not game.xr or game.right.get_has_tracking_data()
+	return not game.xr or game.pointer_controller().get_has_tracking_data()
 func axis()->Vector2:
-	return game.right.get_vector2("primary") if game.xr else Vector2(float(Input.is_key_pressed(KEY_RIGHT))-float(Input.is_key_pressed(KEY_LEFT)),float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN)))
+	return game.pointer_controller().get_vector2("primary") if game.xr else Vector2(float(Input.is_key_pressed(KEY_RIGHT))-float(Input.is_key_pressed(KEY_LEFT)),float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN)))
 func open()->bool:
 	if opened or not allowed():return false
 	opened=true;choice=-1;armed=axis().length()<.2
@@ -49,7 +49,6 @@ func open()->bool:
 	game.charging=false;game.power=0;game.reset_swing()
 	return true
 func point(input:Vector2)->void:
-	choice=-1
 	if input.length()<.2:armed=true
 	if armed and input.length()>.45:
 		choice=posmod(roundi(atan2(input.x,input.y)/(TAU/8)),8)
@@ -63,10 +62,18 @@ func close(confirm:=false)->void:
 	# Leave turn reservation until the right stick returns to centre.
 	game.reset_swing()
 	if confirm and valid and selected>=0 and selected!=game.club_index:game.set_club(selected)
+func toggle()->void:
+	if opened:close()
+	else:open()
 func release()->void:
-	if not opened:return
-	point(axis());close(true)
+	# Releasing the opening click never selects or dismisses the menu.
+	pass
 func update()->void:
 	if not opened:return
 	if not allowed():close();return
-	point(axis())
+	var input:=axis()
+	if not armed:
+		if input.length()<.2:armed=true
+		return
+	if input.length()<.2 and choice>=0:close(true)
+	elif input.length()>.45:point(input)

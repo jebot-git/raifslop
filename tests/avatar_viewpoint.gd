@@ -48,14 +48,27 @@ func run():
     var chest:=sk.find_bone("Chest")
     if chest>=0:
      check(sk.get_bone_pose_position(chest).is_equal_approx(sk.get_bone_rest(chest).origin),"FBT seated torso retains its length instead of being translated by eye alignment: "+path)
+    for bone_name in ["Head","Neck"]:
+     var index:=sk.find_bone(bone_name)
+     if index>=0:check(sk.get_bone_pose_position(index).is_equal_approx(sk.get_bone_rest(index).origin),"Tracked head and neck retain authored lengths: "+path)
     expected=(g.motor.global_transform*rig.fit_tracked_hips(hips)).origin
     check(sk.to_global(sk.get_bone_global_pose(sk.find_bone("Hips")).origin).distance_to(expected)<.001,"Seated pelvis stays on its tracked target")
     check(rig.viewpoint_position().distance_to(g.head.global_position)<.001,"Seated head still follows the headset")
     check(g.origin.global_transform.is_equal_approx(origin_before),"Avatar fitting cannot move tracking origin")
+  # A straight tracked torso has no limb hinge and must not acquire axial roll.
+  for lean in [-.01,0.0,.01]:
+   g.head.position=Vector3(lean,rig.standing_height,0);g.head.rotation=Vector3.ZERO
+   hips=Transform3D(Basis.IDENTITY,g.motor.to_local(g.head.global_position-Vector3.UP*.65))
+   rig.apply_tracking(g.motor.global_transform,{"hips":hips},{})
+   rig.update_targets(g.head,g.desktop_left,g.rod,g.motor.global_position.y,Vector3.ZERO,.02)
+   rig.solver._process_modification_with_delta(.02)
+   var spine:=sk.find_bone("Spine")
+   var delta_rotation:Quaternion=sk.get_bone_rest(spine).basis.get_rotation_quaternion().inverse()*sk.get_bone_pose_rotation(spine)
+   check(delta_rotation.angle_to(Quaternion.IDENTITY)<deg_to_rad(50),"Near-straight torso bends without a 180-degree axial flip: "+path)
  var locations=preload("res://scripts/locations.gd")
  for index in g.Session.SPECIES.size():
   var hint:Dictionary=g.fish_guide.discovery_hint(index)
   for id in g.Session.LOCATION_SPECIES:
    if index in g.Session.species_for_location(id):check(locations.find_location(id).name in hint.waters,"Guide uses Waters catalog names")
- g.queue_free();await process_frame
+ g.ambience.stop();g.queue_free();await process_frame;await create_timer(.3).timeout
  print("AVATAR_VIEWPOINT_RESULT ",failures);quit(0 if failures.is_empty() else 1)

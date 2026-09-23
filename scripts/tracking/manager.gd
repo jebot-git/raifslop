@@ -13,6 +13,11 @@ var calibration_pending := true
 var startup_pose_time := 0.0
 var startup_settle_frames := 0
 var seated := false
+var user_height := Scale.HEAD_HEIGHT
+var height_measured := false
+var height_confirmed := false
+var height_candidate := 0.0
+var height_stable_time := 0.0
 var expressions_enabled := true
 var tracked_leg_animation := false
 var calibration_notice_time := 0.0
@@ -31,6 +36,9 @@ func setup(root: Node) -> void:
 	add_child(eyes); eyes.setup(self)
 	var config:=ConfigFile.new()
 	if config.load("user://tracking.cfg")==OK:
+		user_height=clampf(float(config.get_value("pose","user_eye_height",Scale.HEAD_HEIGHT)),.6,2.3)
+		height_measured=config.has_section_key("pose","user_eye_height")
+		height_confirmed=bool(config.get_value("pose","height_confirmed",false))
 		seated=bool(config.get_value("pose","seated",false))
 		expressions_enabled=bool(config.get_value("pose","expressions",true))
 		tracked_leg_animation=bool(config.get_value("pose","tracked_leg_animation",false))
@@ -51,6 +59,7 @@ func controller(node_name: String, tracker_name: String, pose_name: String) -> X
 	return node
 func clear_samples() -> void:
 	body.clear(); face.clear(); t_pose_detector.reset()
+	if is_instance_valid(root_game): root_game.motor.tracked_hip = null
 	if is_instance_valid(root_game): root_game.hud.calibration_message=""
 func sample(delta: float) -> void:
 	var xr := XRServer.find_interface("OpenXR") as OpenXRInterface
@@ -74,7 +83,11 @@ func sample(delta: float) -> void:
 	root_game.motor.tracking_focused=focused and (not root_game.xr or (not calibration_pending and startup_settle_frames==0))
 	if not root_game.xr or not focused or not head_tracked():
 		clear_samples(); return
+	_sample_height(delta)
 	body=preload("res://scripts/tracking/poses.gd").validate_body(tracking.sample())
+	# Store in tracking-origin space so physics can consume the same sample
+	# twice without counting its room-scale translation twice.
+	root_game.motor.tracked_hip = origin.transform.affine_inverse() * body.hips if body.has("hips") else null
 	face=eyes.sample() if expressions_enabled else {}
 	var allowed: bool=not seated and _activity_allows_calibration() and left.get_has_tracking_data() and right.get_has_tracking_data() and tracking.enabled
 	var detected := t_pose_detector.sample(head.transform,left.position,right.position,delta,allowed)
@@ -99,14 +112,11 @@ func recenter() -> bool:
 		return false
 	if not head_tracked() or head.position.y<.3: message="Head tracking is unavailable"; return false
 	calibration_pending=false
-	# FPSloppa height calibration: standing scale or seated height translation.
-	if seated:
-		var physical_height:=head.position.y/XRServer.world_scale
-		XRServer.world_scale=1.0
-		origin.position.y=clampf(Scale.HEAD_HEIGHT-physical_height,-.5,1.4)
-	else:
-		XRServer.world_scale=Scale.world_scale(XRServer.world_scale,head.position.y)
-		origin.position.y=0
+	# Runtime poses stay in real metres. Avatar size follows the measured user,
+	# never the reverse; recentering while crouched must not resize either.
+	XRServer.world_scale=1.0
+	origin.position.y=0
+	apply_user_height()
 	var yaw:=atan2(head.global_basis.z.x,head.global_basis.z.z)
 	root_game.motor.turn(-yaw)
 	var offset: Vector3=head.global_position-root_game.motor.global_position; offset.y=0
@@ -120,10 +130,35 @@ func recenter() -> bool:
 	root_game.last_tip=root_game._strike_tip()
 	message="Recentered · recalibrate body trackers in your new pose"
 	return true
+func _sample_height(delta:float) -> void:
+	if height_confirmed or seated:return
+	var measured:=head.position.y/XRServer.world_scale
+	if measured<.6 or measured>2.3:return
+	if absf(measured-height_candidate)>.025:
+		height_candidate=measured;height_stable_time=0;return
+	height_stable_time+=minf(delta,.05)
+	if height_stable_time<1.0:return
+	# The first stable pose supplies a provisional height. A later standing
+	# pose can raise it; crouching and sitting never shrink a measured body.
+	if not height_measured or height_candidate>user_height+.025:
+		user_height=height_candidate;height_measured=true;apply_user_height();save()
+
+func measure_height() -> void:
+	if not root_game.xr or not focused or not head_tracked() or not _activity_allows_calibration():
+		message="Stand straight with tracking active before measuring height";return
+	user_height=clampf(head.position.y/XRServer.world_scale,.6,2.3)
+	height_measured=true;height_confirmed=true;apply_user_height();save()
+	message="Standing eye height measured: %.2f m"%user_height
+
+func apply_user_height() -> void:
+	if is_instance_valid(root_game.get("avatar")):root_game.avatar.set_user_height(user_height)
+
 func save() -> void:
 	var config:=ConfigFile.new(); config.load("user://tracking.cfg")
 	config.set_value("pose","seated",seated); config.set_value("pose","expressions",expressions_enabled); config.set_value("pose","body",tracking.enabled)
 	config.set_value("pose","tracked_leg_animation",tracked_leg_animation)
+	if height_measured:config.set_value("pose","user_eye_height",user_height)
+	config.set_value("pose","height_confirmed",height_confirmed)
 	var error:=config.save("user://tracking.cfg")
 	if error!=OK:push_warning("Cannot save tracking settings: "+error_string(error))
 

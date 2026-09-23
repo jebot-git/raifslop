@@ -3,7 +3,7 @@ func _initialize()->void:run.call_deferred()
 func run()->void:
 	var game=load("res://scenes/main.tscn").instantiate();root.add_child(game)
 	await create_timer(1).timeout
-	game.golf_activity.join_course("spyglass")
+	await game.golf_activity.join_course("spyglass")
 	await create_timer(2).timeout
 	var a=game.golf_activity
 	game.motor.set_physics_process(false)
@@ -14,7 +14,7 @@ func run()->void:
 	root.get_texture().get_image().save_png("res://test-results/clubhouse-arrival.png")
 	var centre:=Vector2.ZERO
 	for b in a.clubhouse_board.viewport.find_children("*","Button",true,false):
-		if b.text=="Play solo":centre=b.get_global_rect().get_center()
+		if b.text=="Start new solo round":centre=b.get_global_rect().get_center()
 	var hit:Vector3=a.clubhouse_board.to_global(Vector3((centre.x/960-.5)*3,(.5-centre.y/640)*2,0))
 	game.head.look_at(hit,Vector3.UP)
 	await process_frame

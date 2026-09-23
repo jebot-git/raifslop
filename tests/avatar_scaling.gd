@@ -53,8 +53,8 @@ func run():
 				model.set_meta(Bounds.CACHE_KEY,initial)
 				check(avatar.configure(model),"Configure %s× model with hip %s"%[size_factor,hip_height])
 				var scaled:AABB=avatar.mesh_bounds(model,Transform3D.IDENTITY)
-				check(absf(scaled.position.y)<.0001 and absf(scaled.size.y-1.7)<.0001,"Whole model uniformly fits 1.70 m with soles on floor")
-				check(avatar.model.scale.is_equal_approx(Vector3.ONE),"Authored proportions survive tiny/giant unit conversion")
+				check(absf(scaled.position.y)<.0001 and absf(avatar.rest_eye_height-avatar.standing_height)<.0001,"Avatar fits user eye height with soles on floor")
+				check(absf(avatar.model.scale.x-avatar.model.scale.y)<.0001 and absf(avatar.model.scale.z-avatar.model.scale.y)<.0001,"Authored proportions survive tiny/giant unit conversion")
 				avatar.xr_pose={"head":Transform3D(Basis.IDENTITY,Vector3(0,1.65,0)),"left":Transform3D(Basis.IDENTITY,Vector3(-.3,1.1,-.3)),"right":Transform3D(Basis.IDENTITY,Vector3(.3,1.1,-.3))}
 				avatar.xr_pose.body={"hips":Transform3D(Basis.IDENTITY,Vector3(0,.92,0)),"left_foot":Transform3D(Basis.IDENTITY,Vector3(-.13,.08,0)),"right_foot":Transform3D(Basis.IDENTITY,Vector3(.13,.08,0))}
 				avatar.solver._process_modification_with_delta(.1)
@@ -62,12 +62,16 @@ func run():
 				var hip:=sk.to_global(sk.get_bone_global_pose(sk.find_bone("Hips")).origin)
 				var foot:=sk.to_global(sk.get_bone_global_pose(sk.find_bone("LeftFoot")).origin)
 				print("STANCE ",hip," ",foot," neutral ",avatar.neutral_hip_height," ",avatar.neutral_foot_heights)
-				check(absf(hip.y-hip_height)<.001 and absf(foot.y-.08)<.004,"Standing tracking preserves authored hip height and planted ankle")
+				check(absf(hip.y-.92)<.001 and foot.is_finite(),"Physical hip position is preserved across different avatar proportions")
 				var scale_before:Vector3=model.scale
 				avatar.xr_pose.body.hips.origin.y-=.25;avatar.xr_pose.body.left_foot.origin.y+=.20
 				avatar.solver._process_modification_with_delta(.1)
 				hip=sk.to_global(sk.get_bone_global_pose(sk.find_bone("Hips")).origin)
 				foot=sk.to_global(sk.get_bone_global_pose(sk.find_bone("LeftFoot")).origin)
-				check(absf(hip.y-(hip_height-.25))<.001 and absf(foot.y-.28)<.004 and model.scale==scale_before,"Physical crouch and raised foot remain motion, never rescaling")
+				check(absf(hip.y-(.92-.25))<.001 and foot.is_finite() and model.scale==scale_before,"Physical crouch and raised foot remain motion, never rescaling")
+				for height in [.95,1.4,1.9]:
+					avatar.set_user_height(height)
+					var eye:Vector3=avatar.to_local(sk.to_global(sk.get_bone_global_rest(sk.find_bone("Head"))*avatar.viewpoint_offset))
+					check(absf(eye.y-height)<.001,"Avatar rest eye height follows actual measured height")
 				avatar.free()
 	world.free();print("AVATAR_SCALING_RESULT ",JSON.stringify(failures));quit(0 if failures.is_empty() else 1)

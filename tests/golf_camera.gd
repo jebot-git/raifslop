@@ -17,12 +17,21 @@ func run()->void:
 		push_error("Native simulated PC VR did not start");quit(1);return
 	var fishing_photo=host.fish_guide.photo_camera
 	var mirror=host.spectator
-	host.golf_activity.join_course("spyglass")
+	await host.golf_activity.join_course("spyglass")
 	await process_frame
 	var golf=host.golf_activity.golf
 	golf.set_process(false);golf.set_physics_process(false);host.motor.set_physics_process(false)
 	var guide=golf.course_guide
 	var photo=guide.photo_camera
+	host.tracking_manager.body={"hips":Transform3D(Basis(Vector3.UP,.7),Vector3(0,.95,0))}
+	golf.equipment.update();guide.update()
+	var belt_before:Transform3D=golf.equipment.belt_pose
+	var guide_before:Transform3D=guide.belt_pose
+	var head_before:Transform3D=host.head.transform
+	host.head.rotation.y+=1.0;host.head.position.z-=.3
+	golf.equipment.update();guide.update()
+	check(golf.equipment.belt_pose.is_equal_approx(belt_before) and guide.belt_pose.is_equal_approx(guide_before),"Golf club and course guide follow hip tracker instead of head turning or leaning")
+	host.head.transform=head_before;host.tracking_manager.body.clear()
 	check(is_instance_valid(photo) and photo.get_script()==Photo,"Golf reuses Fishing photo service")
 	check(photo.view.world_3d==host.get_world_3d(),"Golf photo shares live course and avatar world")
 	guide.toggle()
@@ -41,11 +50,11 @@ func run()->void:
 	check(photo.selfie,"Free-hand A toggles selfie")
 	golf._left_button("trigger_click");guide.page(1)
 	check(not photo.active and guide.page_index==1,"Map and scorecard remain usable after camera")
-	golf.left_handed=true
+	guide.dock();golf.left_handed=true;guide.toggle(1)
 	golf._right_button("trigger_click")
 	check(photo.active,"Left-handed guide uses right trigger")
 	photo.selfie=false;golf._left_button("ax_button")
-	check(photo.selfie and guide.photo_input_hand()==golf.left,"Left-handed photo and extension use free hand")
+	check(photo.selfie and guide.held_hand==1,"Left-handed photo and extension use free hand")
 	golf.left_handed=false
 	if native:
 		check(root.get_camera_3d()==mirror.camera and host.xr_view.get_camera_3d()==host.head,"Clubhouse keeps third-person window and tracked stereo camera")

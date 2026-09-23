@@ -1,10 +1,11 @@
 extends RefCounted
 const Handicap=preload("res://addons/golfminus/scripts/golf/handicap.gd")
+const Courses=preload("res://addons/golfminus/scripts/golf/catalog.gd")
 ## Nested in Fishing's existing player records, saved by its atomic leaderboard writer.
 static func valid(data:Variant)->bool:
-	if not data is Dictionary or data.size()>4:return false
+	if not data is Dictionary or data.size()>Courses.ALL.size():return false
 	for course in data:
-		if course not in ["spyglass","pebble","dalkey","alpine"] or not data[course] is Dictionary:return false
+		if course not in Courses.ALL or not data[course] is Dictionary:return false
 		var row:Dictionary=data[course]
 		for field in ["rounds","forfeits","best","last"]:
 			var n=row.get(field)
@@ -37,7 +38,7 @@ static func finish(records:Dictionary,key:String,course:String,scores:Array,coun
 	return true
 static func snapshot(records:Dictionary)->Dictionary:
 	var result:Dictionary={}
-	for course in ["spyglass","pebble","dalkey","alpine"]:
+	for course in Courses.ALL:
 		var rows:Array=[]
 		for record in records.values():
 			var stats:Dictionary=record.get("golf",{}).get(course,{})

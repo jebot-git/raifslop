@@ -1,5 +1,5 @@
 extends CharacterBody3D
-## Collision capsule follows the tracked head horizontally; the tracking origin
+## Collision capsule follows tracked hips (head when unavailable); the tracking origin
 ## absorbs room-scale offsets so physical steps are not counted twice.
 const WALK_SPEED := 2.0
 var origin: XROrigin3D
@@ -7,7 +7,10 @@ var head: Camera3D
 var left: XRController3D
 var right: XRController3D
 var xr := false
+var single_controller_controls := false
 var blocked := false
+var stick_lock:Callable
+var stick_release_pending:=false
 var turn_reserved:=false
 var radial_open:=false
 var tracking_focused := true
@@ -20,6 +23,9 @@ var capsule := CapsuleShape3D.new()
 var shape := CollisionShape3D.new()
 var last_motion := Vector3.ZERO
 var safe_spawn := Vector3(0, 0.02, 0.65)
+var tracked_hip: Variant = null # Transform3D in tracking-origin coordinates.
+var head_shape := CollisionShape3D.new()
+var previous_head := Vector3(INF, INF, INF)
 
 func _ready() -> void:
 	name = "PlayerBody"
@@ -32,6 +38,8 @@ func _ready() -> void:
 	shape.shape = capsule
 	shape.position.y = 0.825
 	add_child(shape)
+	var sphere := SphereShape3D.new(); sphere.radius = .12
+	head_shape.shape = sphere; head_shape.disabled = true; add_child(head_shape)
 
 static func deadzone(value: Vector2) -> Vector2:
 	var magnitude := value.length()
@@ -53,30 +61,54 @@ func relocate(spawn: Vector3) -> void:
 	velocity = Vector3.ZERO
 	last_motion = Vector3.ZERO
 	safe_spawn = spawn
+	previous_head = Vector3(INF, INF, INF)
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(head): return
-	if blocked or (xr and (not tracking_focused or not right.get_has_tracking_data())):
+	if blocked or (xr and (not tracking_focused or (not right.get_has_tracking_data() and not (single_controller_controls and left.get_has_tracking_data())))):
 		velocity = Vector3.ZERO
 		last_motion = Vector3.ZERO
+		previous_head = Vector3(INF, INF, INF)
 		return
 	var height := clampf(head.global_position.y - global_position.y, 0.65, 2.1)
 	capsule.height = height
 	shape.position.y = height * 0.5
-	var room_step := head.global_position - global_position
+	var hips_tracked := xr and tracked_hip is Transform3D
+	head_shape.disabled = not hips_tracked
+	head_shape.position = to_local(head.global_position)
+	var anchor: Vector3 = origin.to_global(tracked_hip.origin) if hips_tracked else head.global_position
+	var room_step := anchor - global_position
 	room_step.y = 0.0
 	if room_step.length() > 0.001:
 		move_and_collide(room_step)
 		origin.global_position -= room_step
+	head_shape.position = to_local(head.global_position)
+	if hips_tracked and previous_head.is_finite():
+		# Sweep only the head through the lean. A low rail never intersects it;
+		# a tall wall still blocks even a large one-frame tracking movement.
+		var from := origin.to_global(previous_head)
+		var motion := head.global_position - from
+		var query := PhysicsShapeQueryParameters3D.new()
+		query.shape = head_shape.shape; query.transform = Transform3D(Basis.IDENTITY, from)
+		query.motion = motion; query.collision_mask = collision_mask; query.exclude = [get_rid()]
+		var fractions := get_world_3d().direct_space_state.cast_motion(query)
+		if fractions[0] < 1.0: global_position -= motion * (1.0 - fractions[0])
+	previous_head = head.position if hips_tracked else Vector3(INF, INF, INF)
 	var stick := Vector2.ZERO
 	var turn_axis := 0.0
 	if xr:
 		if left.get_has_tracking_data(): stick = deadzone(left.get_vector2("primary"))
 		if right.get_has_tracking_data(): turn_axis = right.get_vector2("primary").x
+		if single_controller_controls and left.get_has_tracking_data()!=right.get_has_tracking_data():
+			var only:=left if left.get_has_tracking_data() else right
+			var input:=deadzone(only.get_vector2("primary"))
+			stick=Vector2(0,input.y);turn_axis=only.get_vector2("primary").x
 	else:
 		stick = Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_W)) - float(Input.is_physical_key_pressed(KEY_S))).limit_length()
 		turn_axis = float(Input.is_physical_key_pressed(KEY_E)) - float(Input.is_physical_key_pressed(KEY_Q))
-	if catch_controls:
+	if stick_lock.is_valid() and stick_lock.call():stick_release_pending=true
+	elif stick_release_pending and stick.length()<.2 and absf(turn_axis)<.2:stick_release_pending=false
+	if catch_controls or stick_release_pending:
 		stick = Vector2.ZERO
 		turn_axis = 0.0
 		velocity = Vector3.ZERO

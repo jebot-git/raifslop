@@ -124,7 +124,7 @@ def audit(path):
     expected_panoramas = {str(p.relative_to(ROOT)) for p in (ROOT / "assets/environment/locations").glob("*_8k.hdr")}
     expected_panoramas.update(str(p.relative_to(ROOT)) for p in (ROOT/'addons/golfminus/assets/panoramas').glob('*_8k.hdr'))
     assert set(panoramas) == expected_panoramas, panoramas
-    for course in ['spyglass', 'pebble']:
+    for course in ['spyglass', 'pebble', 'cypress', 'poppy']:
         for required in [f'addons/golfminus/courses/{course}.json', *[f'addons/golfminus/assets/course_data/{course}/{file}' for file in ['height.bin', 'lies.bin', 'outlines.json']]]:
             assert required in names and pack.size(required)>0, ('Missing golf course data', required)
     result = {'artifact':str(path),'entries':len(names),'asset_bytes':sum(sizes.values()),

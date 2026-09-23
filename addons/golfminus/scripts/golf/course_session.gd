@@ -3,7 +3,7 @@ extends RefCounted
 const Handicap=preload("res://addons/golfminus/scripts/golf/handicap.gd")
 var stats:Dictionary={}
 const RETURN_SECONDS:=300.0
-const COURSES:=["spyglass","pebble","dalkey","alpine"]
+const COURSES = preload("res://addons/golfminus/scripts/golf/catalog.gd").ALL
 var games:Dictionary={}
 var serial:=0
 var run_id:=Crypto.new().generate_random_bytes(8).hex_encode()

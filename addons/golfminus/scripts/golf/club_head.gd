@@ -136,7 +136,7 @@ func nearest(point:Vector3)->Dictionary:
 			if distance<best:best=distance;closest=candidate;triangle=id
 	var offset:=triangle*3
 	var outward:Vector3=(triangles[offset+1]-triangles[offset]).cross(triangles[offset+2]-triangles[offset]).normalized()
-	return {"point":closest,"distance":sqrt(best),"triangle":triangle,"inside":(point-closest).dot(outward)<-.000001}
+	return {"point":closest,"distance":sqrt(best),"triangle":triangle,"inside":(point-closest).dot(outward)<-.000001,"outward":outward}
 func sweep(from:Transform3D,to:Transform3D,ball:Vector3,ball_motion:=Vector3.ZERO)->Dictionary:
 	var travel:=(to.origin-from.origin)-ball_motion
 	var angle:=from.basis.get_rotation_quaternion().angle_to(to.basis.get_rotation_quaternion())
@@ -149,14 +149,12 @@ func sweep(from:Transform3D,to:Transform3D,ball:Vector3,ball_motion:=Vector3.ZER
 		var pose:=from.interpolate_with(to,fraction)
 		var centre:=ball+ball_motion*fraction
 		var near:=nearest(pose.affine_inverse()*centre)
-		if near.inside:return {"initial_overlap":true}
 		var separation:float=near.distance-BALL_RADIUS
-		if separation<=.00001:
-			if fraction==0 and separation<-.002:return {"initial_overlap":true}
+		if near.inside or separation<=.00001:
 			var point:Vector3=pose*near.point
-			var normal:Vector3=(centre-point).normalized()
+			var normal:Vector3=pose.basis*near.outward if near.inside or near.distance<.000001 else (centre-point).normalized()
 			if normal.length_squared()<.9:return {"initial_overlap":true}
-			return {"contact":point,"contact_local":near.point,"normal":normal,"head_pose":pose,"head_basis":pose.basis,"head_center":pose.origin,"ball_center":centre,"fraction":fraction,"contact_distance_m":near.distance,"triangle":near.triangle}
+			return {"contact":point,"contact_local":near.point,"normal":normal,"head_pose":pose,"head_basis":pose.basis,"head_center":pose.origin,"ball_center":centre,"fraction":fraction,"contact_distance_m":near.distance,"penetration_m":BALL_RADIUS+near.distance if near.inside else maxf(0,-separation),"triangle":near.triangle}
 		fraction+=maxf(separation/bound*.90,.000001)
 		if fraction>1.0:return {}
 	return {}

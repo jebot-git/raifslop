@@ -5,6 +5,9 @@ const STEP:=2.0
 static var mesh_cache:Dictionary={}
 var course_key:=""
 var hole_markers:Array[Node3D]=[]
+var foliage_mesh:ArrayMesh
+var foliage_material:ShaderMaterial
+var foliage_groups:Dictionary={}
 
 func build(m:RefCounted)->void:
 	model=m;course_key=str(model.course.id)
@@ -17,9 +20,7 @@ func select_hole()->void:
 
 func _terrain()->void:
 	var key:String=JSON.stringify(model.course).sha256_text()
-	var mat:=ShaderMaterial.new();mat.shader=load("res://addons/golfminus/shaders/terrain.gdshader")
-	mat.set_shader_parameter("ambient_fill",1.1)
-	for pair in [["cover","river_bank.png"],["grass","grass.jpg"],["grass_normal","grass_normal.jpg"],["gravel","sand.jpg"],["gravel_normal","sand_normal.jpg"]]:mat.set_shader_parameter(pair[0],load("res://addons/golfminus/assets/shared/"+pair[1]))
+	var mat:=terrain_material()
 	# Old per-hole irradiance UVs cannot be reused on a geographically routed world.
 	var tiles:Array=mesh_cache.get(key,[])
 	if tiles.is_empty():
@@ -31,29 +32,34 @@ func _terrain()->void:
 				tiles.append({"mesh":mesh,"shape":mesh.create_trimesh_shape()})
 		mesh_cache[key]=tiles
 	var ground:=Node3D.new();ground.name="PlayableTerrain";add_child(ground)
-	for tile in tiles:
-		var instance:=MeshInstance3D.new();instance.mesh=tile.mesh;instance.material_override=mat;ground.add_child(instance)
-		var body:=StaticBody3D.new();body.set_meta("role","floor");instance.add_child(body)
-		var collision:=CollisionShape3D.new();collision.shape=tile.shape;body.add_child(collision)
+	for tile in tiles:add_terrain_tile(ground,tile,mat)
+func terrain_material()->ShaderMaterial:
+	var mat:=ShaderMaterial.new();mat.shader=load("res://addons/golfminus/shaders/terrain.gdshader")
+	mat.set_shader_parameter("ambient_fill",1.1)
+	if model.surface!=null:
+		# Use the exact physics cells; interpolated 2 m vertex colours can paint
+		# sand over rough and shrink/erase narrow bunkers.
+		var surface:RefCounted=model.surface
+		var image:=Image.create_from_data(surface.width,surface.depth,false,Image.FORMAT_R8,surface.lies)
+		mat.set_shader_parameter("mapped_lies",ImageTexture.create_from_image(image))
+		mat.set_shader_parameter("lie_origin",surface.origin)
+		mat.set_shader_parameter("has_mapped_lies",true)
+		var palette:=PackedColorArray()
+		# Shader Color arrays are converted to linear by the renderer.
+		for lie in surface.LIES:palette.append(COLORS[lie])
+		palette.append(COLORS.fairway.lightened(.055))
+		mat.set_shader_parameter("lie_colors",palette)
+	for pair in [["cover","river_bank.png"],["grass","grass.jpg"],["grass_normal","grass_normal.jpg"],["gravel","sand.jpg"],["gravel_normal","sand_normal.jpg"]]:mat.set_shader_parameter(pair[0],load("res://addons/golfminus/assets/shared/"+pair[1]))
+	return mat
+func add_terrain_tile(ground:Node3D,tile:Dictionary,mat:Material)->void:
+	var instance:=MeshInstance3D.new();instance.mesh=tile.mesh;instance.material_override=mat;ground.add_child(instance)
+	var body:=StaticBody3D.new();body.set_meta("role","floor");stage_collision(body);instance.add_child(body)
+	var collision:=CollisionShape3D.new();collision.shape=tile.shape;body.add_child(collision)
 
 func _tile_mesh(origin:Vector2)->ArrayMesh:
-	var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var count:=int(TILE/STEP)
-	for iz in count+1:
-		for ix in count+1:
-			var x:=origin.x+ix*STEP;var z:=origin.y+iz*STEP
-			var lie:String=model.lie(x,z)
-			var color:Color=COLORS[lie]
-			if model.course.kind=="alpine" and lie=="rough":color=Color("58633e")
-			if lie=="fairway":color=color.lightened(.055 if int(floor(z/9))%2==0 else 0)
-			color.a=0.0 if lie=="sand" else .2 if lie=="green" else .5 if lie=="fairway" else 1.0
-			st.set_color(color.srgb_to_linear());st.set_normal(model.normal_at(x,z));st.set_uv(Vector2(x,z));st.set_uv2(Vector2.ZERO)
-			st.add_vertex(Vector3(x,model.height(x,z),z))
-	for z in count:
-		for x in count:
-			var a:=z*(count+1)+x
-			for i in [a,a+1,a+count+1,a+1,a+count+2,a+count+1]:st.add_index(i)
-	st.generate_tangents();return st.commit()
+	var mesh:=ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,preload("res://addons/golfminus/scripts/world/terrain_job.gd").tile_arrays(model,origin))
+	return mesh
 
 func surface_height(x:float,z:float)->float:
 	# Same diagonal as the shared mesh, with a common grid across chunk boundaries.
@@ -118,29 +124,38 @@ func _shared_scenery()->void:
 	for entry in data.get("rocks",[]):
 		var rock=load("res://addons/golfminus/assets/models/schist.glb").instantiate();add_child(rock)
 		rock.position=Vector3(entry[0],0,entry[1]);ground_prop(rock);_prop_collision(rock)
-	var at:Array=data.get("clubhouse",[43,17])
+	var pavilion:=add_pavilion();_prop_collision(pavilion)
+func add_pavilion()->Node3D:
+	var at:Array=model.layout.data.get("clubhouse",[43,17])
 	var pavilion=load("res://addons/golfminus/assets/models/pavilion.glb").instantiate();pavilion.name="Clubhouse";add_child(pavilion)
-	pavilion.position=Vector3(at[0],0,at[1]);ground_pavilion(pavilion);_prop_collision(pavilion)
+	pavilion.position=Vector3(at[0],0,at[1]);ground_pavilion(pavilion)
 	var sign:=Label3D.new();sign.text="CLUBHOUSE";sign.font_size=64;sign.pixel_size=.008;sign.modulate=Color("ead4a4");pavilion.add_child(sign);sign.position=Vector3(0,2.65,3.63)
+	return pavilion
 
 func _all_holes()->void:
 	for i in model.course.holes.size():
-		var pin:Vector3=model.pin_for(i)
-		var marker:=Node3D.new();marker.name="Hole%02d"%(i+1);add_child(marker);hole_markers.append(marker)
-		var pole:=CylinderMesh.new();pole.top_radius=.011;pole.bottom_radius=.012;pole.height=2.2
-		mesh_node(pole,pin+Vector3.UP*1.1,material(Color("eadfc1")))
-		var cloth:=PlaneMesh.new();cloth.size=Vector2(.55,.34)
-		var flag_mesh:=mesh_node(cloth,pin+Vector3(.27,2.02,0),material(Color("dcaa61")));flag_mesh.rotation.x=PI/2
-		var cup:=CylinderMesh.new();cup.top_radius=.054;cup.bottom_radius=.054;cup.height=.002
-		mesh_node(cup,pin+Vector3(0,.004,0),material(Color("101d17")))
-		var tee:Vector3=model.tee_for(i,tee_kind)
-		for side in [-1,1]:
-			var pos:Vector3=tee+model.layout.poses[i].basis.x*side*2
-			pos.y=surface_height(pos.x,pos.z)+.07
-			var box:=BoxMesh.new();box.size=Vector3(.18,.14,.18);mesh_node(box,pos,material(Color("d9c48d"),.4))
-		var label:=Label3D.new();label.text="%02d"%(i+1);label.font_size=48;label.pixel_size=.015;label.position=tee+Vector3.UP*1.3;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;marker.add_child(label)
+		add_hole(i)
+func add_hole(i:int)->void:
+	var pin:Vector3=model.pin_for(i)
+	var marker:=Node3D.new();marker.name="Hole%02d"%(i+1);add_child(marker);hole_markers.append(marker)
+	var pole:=CylinderMesh.new();pole.top_radius=.011;pole.bottom_radius=.012;pole.height=2.2
+	mesh_node(pole,pin+Vector3.UP*1.1,material(Color("eadfc1")))
+	var cloth:=PlaneMesh.new();cloth.size=Vector2(.55,.34)
+	var flag_mesh:=mesh_node(cloth,pin+Vector3(.27,2.02,0),material(Color("dcaa61")));flag_mesh.rotation.x=PI/2
+	var cup:=CylinderMesh.new();cup.top_radius=.054;cup.bottom_radius=.054;cup.height=.002
+	mesh_node(cup,pin+Vector3(0,.004,0),material(Color("101d17")))
+	var tee:Vector3=model.tee_for(i,tee_kind)
+	for side in [-1,1]:
+		var pos:Vector3=tee+model.layout.poses[i].basis.x*side*2
+		pos.y=surface_height(pos.x,pos.z)+.07
+		var box:=BoxMesh.new();box.size=Vector3(.18,.14,.18);mesh_node(box,pos,material(Color("d9c48d"),.4))
+	var label:=Label3D.new();label.text="%02d"%(i+1);label.font_size=48;label.pixel_size=.004;label.position=tee+model.layout.poses[i].basis.x*2.4;label.position.y=surface_height(label.position.x,label.position.z)+.65;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;marker.add_child(label)
 
 func _mapped_trees(entries:Array)->void:
+	begin_foliage()
+	for entry in entries:add_foliage_tree(entry)
+	for key in foliage_groups:add_foliage_group(key)
+func begin_foliage()->void:
 	# Batch foliage by terrain tile for culling and VR draw-call cost; collision
 	# volumes remain individual physical obstacles for shots on every hole.
 	var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -149,19 +164,18 @@ func _mapped_trees(entries:Array)->void:
 		var corners:=[Vector3(-3.75,-.205,0),Vector3(3.75,-.205,0),Vector3(-3.75,11.045,0),Vector3(3.75,11.045,0)]
 		var uv:=[Vector2(0,1),Vector2(1,1),Vector2(0,0),Vector2(1,0)]
 		for i in [0,2,1,1,2,3]:st.set_normal(basis*Vector3.BACK);st.set_uv(uv[i]);st.add_vertex(basis*corners[i])
-	var mesh:=st.commit()
-	var mat:=ShaderMaterial.new();mat.shader=load("res://addons/golfminus/shaders/foliage.gdshader");mat.set_shader_parameter("foliage",load("res://addons/golfminus/assets/vegetation/river_alder.png"));mat.set_shader_parameter("exposure",.95)
-	var groups:Dictionary={}
-	for entry in entries:
-		var at:=Vector3(entry[0],surface_height(entry[0],entry[1]),entry[1]);var size:float=entry[2]
-		var key:=Vector2i(floori(at.x/96),floori(at.z/96))
-		if not groups.has(key):groups[key]=[]
-		groups[key].append(Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*size),at))
-		var body:=StaticBody3D.new();body.name="GolfTree";body.collision_layer=5;body.position=at;add_child(body)
-		var trunk:=CollisionShape3D.new();var capsule:=CapsuleShape3D.new();capsule.radius=.3*size;capsule.height=5*size;trunk.shape=capsule;trunk.position.y=2.5*size;body.add_child(trunk)
-		var crown:=CollisionShape3D.new();var sphere:=SphereShape3D.new();sphere.radius=2.8*size;crown.shape=sphere;crown.position.y=7.5*size;body.add_child(crown)
-	for key in groups:
-		var batch:=MultiMeshInstance3D.new();batch.name="CourseFoliage";batch.material_override=mat
-		var multi:=MultiMesh.new();multi.transform_format=MultiMesh.TRANSFORM_3D;multi.mesh=mesh;multi.instance_count=groups[key].size()
-		for i in groups[key].size():multi.set_instance_transform(i,groups[key][i])
-		batch.multimesh=multi;add_child(batch)
+	foliage_mesh=st.commit()
+	foliage_material=ShaderMaterial.new();var mat:=foliage_material;mat.shader=load("res://addons/golfminus/shaders/foliage.gdshader");mat.set_shader_parameter("foliage",load("res://addons/golfminus/assets/vegetation/river_alder.png"));mat.set_shader_parameter("exposure",.95)
+func add_foliage_tree(entry:Array)->void:
+	var at:=Vector3(entry[0],surface_height(entry[0],entry[1]),entry[1]);var size:float=entry[2]
+	var key:=Vector2i(floori(at.x/96),floori(at.z/96))
+	if not foliage_groups.has(key):foliage_groups[key]=[]
+	foliage_groups[key].append(Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*size),at))
+	var body:=StaticBody3D.new();body.name="GolfTree";body.collision_layer=5;body.position=at;stage_collision(body);add_child(body)
+	var trunk:=CollisionShape3D.new();var capsule:=CapsuleShape3D.new();capsule.radius=.3*size;capsule.height=5*size;trunk.shape=capsule;trunk.position.y=2.5*size;body.add_child(trunk)
+	var crown:=CollisionShape3D.new();var sphere:=SphereShape3D.new();sphere.radius=2.8*size;crown.shape=sphere;crown.position.y=7.5*size;body.add_child(crown)
+func add_foliage_group(key:Vector2i)->void:
+	var batch:=MultiMeshInstance3D.new();batch.name="CourseFoliage";batch.material_override=foliage_material
+	var multi:=MultiMesh.new();multi.transform_format=MultiMesh.TRANSFORM_3D;multi.mesh=foliage_mesh;multi.instance_count=foliage_groups[key].size()
+	for i in foliage_groups[key].size():multi.set_instance_transform(i,foliage_groups[key][i])
+	batch.multimesh=multi;add_child(batch)

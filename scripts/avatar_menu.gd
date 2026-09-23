@@ -8,6 +8,7 @@ var resume_button:Button
 var leaderboard_button: Button
 var pictograms_toggle: CheckButton
 var turn_mode: CheckButton
+var head_aimed_casting: CheckButton
 var smooth_turn_speed: HSlider
 var snap_turn_angle: HSlider
 signal turn_mode_changed(smooth: bool)
@@ -139,8 +140,10 @@ func _build_turn_controls() -> void:
 	smooth_turn_speed=_turn_slider(page,"Smooth turn speed",30,360,15,75,"°/s")
 	snap_turn_angle=_turn_slider(page,"Snap turn angle",15,90,15,30,"°")
 	var hint := Label.new();hint.text="Turn with the right stick. Snap turning waits for the stick to return to center.";hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_child(hint)
+	head_aimed_casting = CheckButton.new(); head_aimed_casting.text = "Head-aimed casting"; page.add_child(head_aimed_casting)
+	var casting_hint := Label.new(); casting_hint.text = "VR casting: on uses the center of your headset view. Off uses your controller swing for direction and speed for distance. Hold trigger, swing back then forward, and release."; casting_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; page.add_child(casting_hint)
 	var calibration_title := Label.new(); calibration_title.text = "Controller alignment"; calibration_title.add_theme_font_size_override("font_size", 28); page.add_child(calibration_title)
-	var calibration_hint := Label.new(); calibration_hint.text = "Adjust each grip to match your controller. Offsets follow the controller: X right, Y up, Z toward you. Rotation: pitch, yaw, roll. Casting aims from the center of your headset view."; calibration_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; page.add_child(calibration_hint)
+	var calibration_hint := Label.new(); calibration_hint.text = "Adjust each grip to match your controller. Offsets follow the controller: X right, Y up, Z toward you. Rotation: pitch, yaw, roll."; calibration_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; page.add_child(calibration_hint)
 	for hand in ["Left controller", "Right / casting controller"]:
 		var heading := Label.new(); heading.text = hand; page.add_child(heading)
 		for axis in ["X", "Y", "Z"]:
@@ -281,20 +284,20 @@ var tracking_page: VBoxContainer
 func attach_tracking(manager: Node) -> void:
 	tracking_page=VBoxContainer.new(); tracking_page.add_theme_constant_override("separation",14); _register_page("tracking","Tracking",tracking_page)
 	var heading:=Label.new(); heading.text="AVATAR TRACKING & CALIBRATION"; heading.add_theme_font_size_override("font_size",26); tracking_page.add_child(heading)
-	for row in [["Tracked body",manager.tracking.enabled],["Animate planted tracked legs when walking",manager.tracked_leg_animation],["Eye and face expressions",manager.expressions_enabled],["Seated height calibration",manager.seated]]:
+	for row in [["Tracked body",manager.tracking.enabled],["Animate planted tracked legs when walking",manager.tracked_leg_animation],["Eye and face expressions",manager.expressions_enabled],["Seated play",manager.seated]]:
 		var toggle:=CheckButton.new(); toggle.text=row[0]; toggle.button_pressed=row[1]; tracking_page.add_child(toggle)
 		toggle.toggled.connect(func(value: bool):
 			match row[0]:
 				"Tracked body": manager.tracking.enabled=value
 				"Animate planted tracked legs when walking": manager.tracked_leg_animation=value
 				"Eye and face expressions": manager.expressions_enabled=value
-				"Seated height calibration": manager.seated=value
+				"Seated play": manager.seated=value
 			manager.save())
-	for row in [["Recenter viewpoint",manager.recenter],["Calibrate body — stand straight",manager.calibrate],["Toggle SlimeVR OSC (localhost:9000)",manager.tracking.toggle_osc],["Request tracking permissions",func(): manager.game.permissions.request_tracking(true)]]:
+	for row in [["Measure standing height — stand straight",manager.measure_height],["Recenter viewpoint",manager.recenter],["Calibrate body — stand straight",manager.calibrate],["Toggle SlimeVR OSC (localhost:9000)",manager.tracking.toggle_osc],["Request tracking permissions",func(): manager.game.permissions.request_tracking(true)]]:
 		var action:=Button.new(); action.text=row[0]; action.custom_minimum_size.y=44; tracking_page.add_child(action); action.pressed.connect(row[1])
 	var info:=Label.new(); info.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; info.custom_minimum_size=Vector2(700,110); tracking_page.add_child(info)
 	var timer:=Timer.new(); timer.wait_time=.5; timer.autostart=true; tracking_page.add_child(timer)
-	timer.timeout.connect(func(): info.text=manager.message+"\n"+manager.tracking.status+"\nHold a T-pose for 1.1 s to calibrate body trackers.\nEye tracking animates your avatar; cast aim follows the center of your view.")
+	timer.timeout.connect(func(): info.text="Standing eye height: %.2f m (world uses real metres)\n"%manager.user_height+manager.message+"\n"+manager.tracking.status+"\nHold a T-pose for 1.1 s to calibrate body trackers.\nEye tracking animates your avatar; cast aim follows the center of your view.")
 	tracking_page.hide()
 
 func _build_shell() -> void:

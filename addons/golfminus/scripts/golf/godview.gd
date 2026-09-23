@@ -107,6 +107,11 @@ func update(dt:float)->void:
 	if game.xr:
 		if game.left.get_has_tracking_data():pan=game.left.get_vector2("primary")
 		if game.right.get_has_tracking_data():rotation=game.right.get_vector2("primary")
+		if game.only_one_controller():
+			var controller:XRController3D=game.pointer_controller()
+			var stick:=controller.get_vector2("primary")
+			pan=stick if controller.get_float("trigger")>.5 else Vector2.ZERO
+			rotation=Vector2.ZERO if controller.get_float("trigger")>.5 else stick
 	else:
 		pan=Vector2(float(Input.is_key_pressed(KEY_D))-float(Input.is_key_pressed(KEY_A)),float(Input.is_key_pressed(KEY_W))-float(Input.is_key_pressed(KEY_S)))
 		rotation=Vector2(float(Input.is_key_pressed(KEY_E))-float(Input.is_key_pressed(KEY_Q)),float(Input.is_key_pressed(KEY_UP))-float(Input.is_key_pressed(KEY_DOWN)))
@@ -128,8 +133,11 @@ func update(dt:float)->void:
 	marker.scale=Vector3.ONE*maxf(.25,span*zoom*.004)
 	game.club.hide();game.aim_mesh.hide()
 	caption.global_transform=viewer.global_transform*Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*size),Vector3(0,-.36,-1.1)*size)
-	caption.text="GODVIEW · HOLE %02d · %s\n%s\n%s"%[game.round_state.hole+1,"BALL IN FLIGHT" if game.ball.moving else "LAST SHOT" if game.trail_points.size()>1 else "COURSE OVERVIEW",("Live shot · carry %.0f m · apex %.1f m"%[game.ball.carry,game.ball.peak]) if game.ball.moving else "Actual recorded shot trajectory" if game.trail_points.size()>1 else ("Inspect all %d holes"%game.model.course.holes.size() if game.model.connected else "Inspect the current hole"),"Left stick: pan · right: orbit / zoom\nX: course · A: ball · left click / B: return" if game.xr else "WASD: pan · Q/E: orbit · ↑/↓: zoom\nH: course · F: ball · V/Esc: return"]
-	prompts.show_entries([["pan","L stick" if game.xr else "WASD"],["orbit","R stick" if game.xr else "Q / E"],["zoom","R stick" if game.xr else "↑ / ↓"],["flag","X" if game.xr else "H"],["ball","A" if game.xr else "F"],["return","L click / B" if game.xr else "V / Esc"]])
+	caption.text="GODVIEW · HOLE %02d · %s\n%s\n%s"%[game.round_state.hole+1,"BALL IN FLIGHT" if game.ball.moving else "LAST SHOT" if game.trail_points.size()>1 else "COURSE OVERVIEW",("Live shot · carry %.0f m · apex %.1f m"%[game.ball.carry,game.ball.peak]) if game.ball.moving else "Actual recorded shot trajectory" if game.trail_points.size()>1 else ("Inspect all %d holes"%game.model.course.holes.size() if game.model.connected else "Inspect the current hole"),("Stick: orbit / zoom · hold trigger: pan\nA/X: ball · B/Y: return" if game.only_one_controller() else "Left stick: pan · right: orbit / zoom\nX: course · A: ball · left click / B: return") if game.xr else "WASD: pan · Q/E: orbit · ↑/↓: zoom\nH: course · F: ball · V/Esc: return"]
+	if game.only_one_controller():
+		prompts.show_entries([["pan","Trigger + stick"],["orbit","Stick"],["zoom","Stick"],["ball","A / X"],["return","B / Y"]])
+	else:
+		prompts.show_entries([["pan","L stick" if game.xr else "WASD"],["orbit","R stick" if game.xr else "Q / E"],["zoom","R stick" if game.xr else "↑ / ↓"],["flag","X" if game.xr else "H"],["ball","A" if game.xr else "F"],["return","L click / B" if game.xr else "V / Esc"]])
 	if Icons.enabled:
 		var lines:=caption.text.split("\n")
 		caption.text=lines[0]+"\n"+lines[1]
