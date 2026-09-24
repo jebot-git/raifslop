@@ -30,3 +30,34 @@ def check_signing():
     if 'PrivateKeyEntry' not in result.stdout:
         raise ValueError('The release alias must contain a private signing key')
     return RELEASE_CERT_SHA256
+
+
+def validate_app_id(value):
+    if not isinstance(value, str) or not re.fullmatch(r'[1-9][0-9]{0,18}', value) or int(value) > 9223372036854775807:
+        raise ValueError('Quest store builds require the assigned META_QUEST_APP_ID; see docs/QUEST_ONBOARDING.md. Do not use a placeholder.')
+    return value
+
+
+def check_app_id():
+    import json
+    config = Path(__file__).resolve().parents[1] / 'config/quest_store.json'
+    value = os.environ.get('META_QUEST_APP_ID') or json.loads(config.read_text()).get('app_id', '')
+    return validate_app_id(value)
+
+
+def inspect_platform(apk):
+    import json
+    import zipfile
+    with zipfile.ZipFile(apk) as archive:
+        names = set(archive.namelist())
+        required = {'assets/quest_store.json', 'lib/arm64-v8a/libgodot_meta_toolkit.so',
+                    'lib/arm64-v8a/libovrplatformloader.so'}
+        if not required <= names:
+            raise ValueError('Quest store APK is missing Platform SDK libraries or entitlement configuration')
+        config = json.loads(archive.read('assets/quest_store.json'))
+        app = config.get('app_id', '')
+        if not isinstance(app, str) or not re.fullmatch(r'[1-9][0-9]{0,18}', app) or int(app) > 9223372036854775807 or config.get('entitlement_required') is not True or config.get('format') != 1:
+            raise ValueError('Invalid packaged Quest entitlement configuration')
+        if app != check_app_id():
+            raise ValueError('Packaged Quest AppID differs from META_QUEST_APP_ID')
+        return config

@@ -20,6 +20,7 @@ with tempfile.TemporaryDirectory(prefix='quest-expansion-') as tmp:
     shutil.copy2(ROOT / 'scripts/quest_expansion.gd', folder / 'expansion.gd')
     shutil.copy2(ROOT / 'scripts/quest_bootstrap.gd', folder / 'bootstrap.gd')
     (folder / 'scripts').mkdir()
+    shutil.copy2(ROOT / 'scripts/quest_entitlement.gd', folder / 'scripts/quest_entitlement.gd')
     shutil.copy2(ROOT / 'scripts/quest_expansion.gd', folder / 'scripts/quest_expansion.gd')
     payload = b'[gd_resource type="GradientTexture2D" format=3]\n[resource]\nwidth = 7\nheight = 9\n'
     name = PREFIX + hashlib.sha256(payload).hexdigest() + '.tres'

@@ -29,6 +29,7 @@ jobs:
       STEAM_APP_ID: ${{ vars.STEAM_APP_ID }}
       STEAM_WINDOWS_DEPOT: ${{ vars.STEAM_WINDOWS_DEPOT }}
       STEAM_LINUX_DEPOT: ${{ vars.STEAM_LINUX_DEPOT }}
+      META_QUEST_APP_ID: ${{ vars.META_QUEST_APP_ID }}
       RELEASE_STORE: ${{ inputs.store }}
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +46,8 @@ jobs:
           fi
           python3 -m unittest discover -s tests -p 'test_store_release.py'
           python3 -m unittest discover -s tests -p 'test_quest_expansion.py'
+          python3 -m unittest discover -s tests -p 'test_quest_platform.py'
+          python3 tools/test_quest_entitlement.py
           python3 tools/test_quest_expansion.py --godot "$GODOT_BIN"
       - name: Build and validate candidate
         env:

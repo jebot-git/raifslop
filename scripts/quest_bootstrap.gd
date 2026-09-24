@@ -1,5 +1,6 @@
 extends Node3D
 
+const Entitlement = preload("res://scripts/quest_entitlement.gd")
 const Expansion = preload("res://scripts/quest_expansion.gd")
 var worker := Thread.new()
 var record: Dictionary = {}
@@ -8,10 +9,33 @@ var label: Label3D
 var status: Label
 
 func _ready() -> void:
-	if not FileAccess.file_exists("res://quest_expansion.json"):
+	if not FileAccess.file_exists("res://quest_expansion.json") and not FileAccess.file_exists("res://quest_store.json"):
 		_start_game.call_deferred()
 		return
 	_show_loading()
+	_message("Checking store access…\nPlease wait.")
+	var config = JSON.parse_string(FileAccess.get_file_as_string("res://quest_store.json")) if FileAccess.file_exists("res://quest_store.json") else null
+	if not config is Dictionary or config.get("entitlement_required") != true or not config.get("app_id") is String:
+		_access_failed("This store build is not configured correctly.")
+		return
+	var gate := Entitlement.new()
+	add_child(gate)
+	gate.completed.connect(_entitlement_completed)
+	var sdk: Object = Engine.get_singleton("MetaPlatformSDK") if Engine.has_singleton("MetaPlatformSDK") else null
+	gate.start(config.app_id, sdk)
+
+func _entitlement_completed(allowed: bool, reason: String) -> void:
+	if not allowed:
+		_access_failed(reason)
+		return
+	_message("Checking game download…\nPlease wait.")
+	_check_expansion()
+
+func _access_failed(reason: String) -> void:
+	push_error("Quest entitlement: access denied")
+	_message(reason + "\nClose the game using the system menu.")
+
+func _check_expansion() -> void:
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://quest_expansion.json"))
 	if not parsed is Dictionary:
 		_fail("Invalid game download information.")
