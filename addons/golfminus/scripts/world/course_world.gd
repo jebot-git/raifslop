@@ -100,7 +100,7 @@ func _leaf_tree(variant: int) -> Node3D:
 		var n:=MeshInstance3D.new();var q:=QuadMesh.new();q.size=Vector2(7.5,11.25);n.mesh=q;n.position.y=5.42;n.rotation.y=angle;n.material_override=mat
 		tree.add_child(n)
 	var trunk:=StaticBody3D.new();trunk.collision_layer=5;tree.add_child(trunk)
-	var shape:=CollisionShape3D.new();var capsule:=CapsuleShape3D.new();capsule.radius=.3;capsule.height=5.0;shape.shape=capsule;shape.position.y=2.5;trunk.add_child(shape)
+	var shape:=CollisionShape3D.new();var capsule:=CapsuleShape3D.new();capsule.radius=.3;capsule.height=5.6;shape.shape=capsule;shape.position.y=2.2;trunk.add_child(shape)
 	return tree
 func _prop_collision(prop: Node3D) -> void:
 	for mesh in prop.find_children("*","MeshInstance3D",true,false):
@@ -110,8 +110,67 @@ func prop_mesh_collision(mesh:MeshInstance3D)->void:
 	mesh.create_trimesh_collision()
 	for child in mesh.get_children():
 		if child is StaticBody3D:child.collision_layer=5;stage_collision(child)
-func sweep_ball(from: Vector3,to: Vector3) -> Dictionary:
-	return get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(from,to,4))
+var ball_shape:SphereShape3D
+func sweep_ball(from:Vector3,to:Vector3)->Dictionary:
+	if not from.is_finite() or not to.is_finite():return {}
+	if ball_shape==null:
+		ball_shape=SphereShape3D.new();ball_shape.radius=preload("res://addons/golfminus/scripts/golf/ball_physics.gd").RADIUS
+	var query:=PhysicsShapeQueryParameters3D.new()
+	query.shape=ball_shape;query.collision_mask=4;query.margin=.0001
+	query.transform=Transform3D(Basis.IDENTITY,from)
+	var space:=get_world_3d().direct_space_state
+	# cast_motion ignores initial overlap. Resolve it first using penetration
+	# witnesses, including deeply embedded saves and stationary starts.
+	var centre:=from
+	var normal:=Vector3.ZERO
+	for iteration in 8:
+		query.transform.origin=centre
+		var correction:=Vector3.ZERO
+		for overlap in space.intersect_shape(query,16):
+			var body:CollisionObject3D=overlap.collider
+			var owner:int=body.shape_find_owner(overlap.shape)
+			var node=body.shape_owner_get_owner(owner)
+			if not node is CollisionShape3D or not node.shape is CapsuleShape3D:continue
+			# EPA is ambiguous exactly on a long capsule's centre axis and can
+			# choose an end cap metres away. Use its nearest surface analytically.
+			var capsule:CapsuleShape3D=node.shape
+			var scale:Vector3=node.global_basis.get_scale()
+			var half:float=maxf(0,capsule.height*.5-capsule.radius)*scale.y
+			var up:Vector3=node.global_basis.y.normalized()
+			var closest:=Geometry3D.get_closest_point_to_segment(centre,node.global_position-up*half,node.global_position+up*half)
+			var offset:=centre-closest
+			var radius:float=capsule.radius*maxf(scale.x,scale.z)+ball_shape.radius
+			if offset.length()>=radius:continue
+			var direction:=offset.normalized()
+			if offset.length()<.00001:
+				direction=Vector3(from.x-to.x,0,from.z-to.z).normalized()
+				if direction.length_squared()<.5:direction=Vector3.RIGHT
+			var separation:=direction*(radius-offset.length())
+			if separation.length_squared()>correction.length_squared():correction=separation
+		if correction.length_squared()<.0000000001:
+			var pairs:=space.collide_shape(query,16)
+			for i in range(0,pairs.size(),2):
+				var separation:Vector3=pairs[i+1]-pairs[i]
+				if separation.length_squared()>correction.length_squared():correction=separation
+		if correction.length_squared()<.0000000001:break
+		normal=correction.normalized();centre+=correction+normal*.001
+	if normal.length_squared()>.5:
+		return {"center":centre,"position":centre-normal*ball_shape.radius,"normal":normal,"initial_overlap":true}
+	query.transform.origin=from;query.motion=to-from
+	if query.motion.length_squared()<.0000000001:return {}
+	var fractions:=space.cast_motion(query)
+	if fractions.size()<2 or fractions[0]>=1:return {}
+	centre=from+query.motion*fractions[0]
+	query.transform.origin=from+query.motion*fractions[1]
+	query.motion=Vector3.ZERO
+	var rest:=space.get_rest_info(query)
+	if rest.is_empty():
+		# Narrowphase tolerance can leave the unsafe pose exactly touching.
+		query.margin=.001;rest=space.get_rest_info(query)
+	if rest.is_empty():return {}
+	normal=rest.normal
+	return {"center":centre+normal*.001,"position":rest.point,"normal":normal,"initial_overlap":false}
+
 func _grass(rng: RandomNumberGenerator) -> void:
 	var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for angle in [0.0,PI/2]:

@@ -53,8 +53,7 @@ func run()->void:
 			if fitted.is_empty():continue
 			var fitted_pose:=Solver.head_pose(grip,fitted,float(Clubs.BAG[index].length),shape)
 			check(absf(Solver.clearance(fitted_pose,shape,ground)-Solver.SOLE_CLEARANCE)<.0006,"Club %d actual mesh sole clears terrain"%index)
-			var shaft_basis:Basis=grip.basis.orthonormalized()*Basis.from_euler(fitted.rotation*PI/180.0)
-			check((shaft_basis.inverse()*fitted_pose.basis).is_equal_approx(Basis(Vector3.RIGHT,shape.loft)),"Club %d fit preserves rigid head-to-shaft loft"%index)
+			check(fitted_pose.basis.is_equal_approx(grip.basis*Basis(Vector3.RIGHT,shape.loft)),"Club %d fit preserves intended head address loft"%index)
 			check(fitted_pose.origin.distance_to(fitted.target)<.0001,"Club %d preview marker matches physical head"%index)
 	for index in 8:
 		var shape=preload("res://addons/golfminus/scripts/golf/club_head.gd").for_club(index)

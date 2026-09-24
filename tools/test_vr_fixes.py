@@ -5,13 +5,15 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'test-results/vr-fixes'
+OUT = Path(os.environ.get('VR_TEST_OUTPUT', str(ROOT / 'test-results/vr-fixes')))
+GODOT = os.environ.get('GODOT_BIN', 'godot')
 SUITES = sys.argv[1:] or ['run_tests', 'hand_tracking', 'tracking_orientation', 'avatar_scaling', 'vrm_import_integrity', 'vr_ik', 'avatar_tracking', 'avatar_locomotion', 'fish_guide', 'guide_camera', 'shark_ambience_menu', 'network_guards', 'voice_recovery', 'session_feedback', 'fish_position', 'bait_visuals', 'external_data', 'vr_interactions', 'tester_feedback', 'tackle', 'fishing_feedback', 'quit_game', 'rod_holster', 'locations', 'raised_ankle', 'pier_gameplay', 'tracking_warning', 'menu_ray', 'menu_controls', 'vr_presentation']
 if len(sys.argv) == 1: SUITES.extend(['bbq', 'bbq_controllers', 'bbq_model', 'bbq_food_art', 'bbq_visit', 'bbq_scene'])
 failures = []
+if len(sys.argv) == 1: SUITES.extend(['rec5_cast_replay', 'rec5_terrain'])
 if len(sys.argv) == 1: SUITES.extend(['rod_attachment', 'radio', 'water_wildlife', 'fly_fishing', 'fish_jumps', 'coastal_locations', 'shore_transitions', 'gameplay_recording'])
-if len(sys.argv) == 1: SUITES.extend(['hip_tracking', 'golf_courses', 'golf_course_lanes', 'golf_loading', 'golf_attachment', 'golf_head_contact', 'golf_physics_review', 'golf_surface_alignment', 'golf_vr_input', 'golf_controls_feedback', 'vr_only'])
-if len(sys.argv) == 1: SUITES.extend(['cast_tolerance', 'cast_direction', 'tracked_cast', 'fish_population', 'fishing_update', 'fly_controls', 'fly_reel_penalty', 'empty_retrieve', 'shore_retrieval', 'pier_cleat', 'hdr_bake_compression'])
+if len(sys.argv) == 1: SUITES.extend(['hip_tracking', 'golf_courses', 'golf_course_lanes', 'golf_loading', 'golf_attachment', 'golf_head_contact', 'golf_physics_review', 'golf_surface_alignment', 'golf_vr_input', 'golf_controls_feedback', 'vr_only', 'vr_test_capture', 'golf_contact_effects', 'golf_turf_contact', 'golf_physical_club', 'golf_physics', 'golf_fitting_analytics', 'golf_physics_stress', 'golf_social'])
+if len(sys.argv) == 1: SUITES.extend(['cast_tolerance', 'cast_direction', 'tracked_cast', 'rec4_cast_replay', 'golf_fit_invariants', 'golf_tree_collision', 'rec4_golf_replay', 'fish_population', 'fishing_update', 'fly_controls', 'fly_reel_penalty', 'empty_retrieve', 'shore_retrieval', 'pier_cleat', 'hdr_bake_compression'])
 if len(sys.argv) == 1: SUITES.extend(['fishing_comfort', 'aim_water_grid', 'marine_species', 'fight_mechanics', 'avatar_image_failure', 'avatar_recovery', 'fight_recovery', 'scenery_repairs'])
 if len(sys.argv) == 1: SUITES.extend(['avatar_viewpoint', 'feeder_fishing', 'feeder_interface', 'feeder_nibbles', 'lure_fishing', 'lure_interface', 'fish_species', 'bbq_controls'])
 for suite in SUITES:
@@ -21,7 +23,8 @@ for suite in SUITES:
     log = OUT / (suite + '.log')
     try:
         with log.open('w') as stream:
-            result = subprocess.run(['godot', '--headless', '--verbose', '--path', str(ROOT), '--xr-mode', 'off', '--script', f'res://tests/{suite}.gd', '--', '--xr-test', '--asset-root', str(data / 'assets'), '--photos-root', str(data / 'pictures')], cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=120)
+            capture_args = ['--vr-test-capture', '--client-metrics', '--vr-capture-dir=' + str(data / 'controllers')] if suite == 'vr_test_capture' else []
+            result = subprocess.run([GODOT, '--headless', '--verbose', '--path', str(ROOT), '--xr-mode', 'off', '--script', f'res://tests/{suite}.gd', '--', '--xr-test', '--asset-root', str(data / 'assets'), '--photos-root', str(data / 'pictures')] + capture_args, cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=120)
         errors = [line for line in log.read_text(errors='replace').splitlines() if 'SCRIPT ERROR:' in line or line.startswith('ERROR:') or line.startswith('FAIL ')]
         passed = result.returncode == 0 and not errors
         print(('PASS ' if passed else 'FAIL ') + suite, flush=True)

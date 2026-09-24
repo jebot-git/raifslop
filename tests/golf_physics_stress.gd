@@ -161,7 +161,7 @@ func run()->void:
 					for frame in hz*45:
 						b.step(1.0/hz);var after:=ball_energy(b);gain=maxf(gain,after-before);before=after
 						if not b.moving:break
-					rolls.append({"turf":turf,"grade":grade.y,"hz":hz,"spin_rad_s":backspin,"distance_m":b.roll_distance,"max_energy_step_gain_j":gain,"stop":b.stop_reason})
+					rolls.append({"turf":turf,"grade":grade.y,"hz":hz,"spin_rad_s":backspin,"distance_m":b.roll_distance,"max_energy_step_gain_j":gain,"stop":b.stop_reason,"downhill":b.velocity.z*grade.y<0})
 	check(rows.size()==960,"All 960 tracked swing scenarios completed")
 	check(rows.filter(func(r):return r.scenario!="wide_miss" and r.scenario!="long_dropout").all(func(r):return r.has("flight")),"All 912 intended strikes register, including combined human errors")
 	check(rows.filter(func(r):return r.scenario=="center").all(func(r):return r.has("speed_m_s")),"Centered swings register for every club at 72/90/120 Hz")
@@ -171,7 +171,7 @@ func run()->void:
 	check(impacts.all(func(r):return r.friction_excess_ns<.00001),"Coulomb impulse bounds hold")
 	check(rows.all(func(r):return not r.has("flight") or (not r.flight.moving and r.flight.stop!="simulation_fail_safe")),"All registered shots settle without fail-safe")
 	check(rows.all(func(r):return not r.has("flight") or r.flight.max_energy_step_gain_j<.0001),"Calm flat-ground flight and bounces create no material mechanical energy")
-	check(rolls.all(func(r):return r.max_energy_step_gain_j<.0001 and r.stop=="rest"),"135 rolling/skid/slope cases settle without material energy creation")
+	check(rolls.all(func(r):return r.max_energy_step_gain_j<.0001 and ((r.stop=="moving" and r.downhill) if r.grade!=0 and r.turf in ["green","fringe","fairway"] else r.stop=="rest")),"135 rolling/skid/slope cases dissipate energy and either settle or roll downhill on unbounded slopes")
 	check(surfaces.all(func(r):return not r.moving and r.stop!="simulation_fail_safe"),"Surface and hazard shots terminate")
 	finish()
 func finish()->void:

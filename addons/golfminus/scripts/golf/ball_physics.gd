@@ -2,9 +2,16 @@ extends RefCounted
 ## SI units. Fixed substeps, drag, spin lift, impulse bounce and slope-aware rolling.
 const MASS := .04593
 const RADIUS := .021335
+const TEE_HEIGHT := .035
 const AREA := PI*RADIUS*RADIUS
 const GRAVITY := Vector3(0,-9.80665,0)
 const SURFACES := {"green":[.25,.55],"fringe":[.30,.85],"fairway":[.42,1.8],"rough":[.23,2.5],"sand":[.10,4.5]}
+# Tunable material response, not measured course properties. Static holding is
+# independent of the energy lost pushing through grass/sand while moving.
+const HOLD_ACCEL := {"green":.08,"fringe":.12,"fairway":.16,"rough":.45,"sand":2.0}
+const MATERIAL_DRAG := {"green":0.0,"fringe":.001,"fairway":.002,"rough":.07,"sand":.35}
+const LOW_SPEED_DRAG := 2.0
+const REST_SPEED := .01
 const SLIDING_FRICTION := {"green":.20,"fringe":.25,"fairway":.30,"rough":.45,"sand":.60}
 # Impact friction is separate from sustained sliding and rolling resistance.
 # Initial dry-surface coefficients; course-specific calibration needs measured shots.
@@ -50,6 +57,18 @@ var stop_reason:="placed"
 var rest_time := 0.0
 var model: RefCounted
 var collision_query: Callable
+func support_height(x:float,z:float)->float:
+	# Sphere support on the local plane; vertical radius alone penetrates slopes.
+	return model.height(x,z)+RADIUS/maxf(.2,model.normal_at(x,z).y)
+func holding_acceleration(surface:String)->float:
+	return float(HOLD_ACCEL.get(surface,HOLD_ACCEL.rough))
+func rolling_resistance(surface:String,speed:float)->float:
+	var base:float=SURFACES.get(surface,SURFACES.rough)[1]
+	# Smoothly approach the static threshold as speed crosses zero, allowing an
+	# uphill ball to reverse instead of repeatedly being clamped to a dead stop.
+	return minf(base,holding_acceleration(surface)+speed*LOW_SPEED_DRAG)
+func material_drag(surface:String,speed:float)->float:
+	return float(MATERIAL_DRAG.get(surface,.07))*speed*speed
 func place(p: Vector3) -> void:
 	roll_distance=0;travel_distance=0;stop_reason="placed"
 	position=p; origin=p; velocity=Vector3.ZERO; spin=Vector3.ZERO
@@ -83,12 +102,11 @@ func _substep(dt: float) -> void:
 	var rolling_before:=grounded
 	var surface: String = model.lie(position.x,position.z)
 	var normal: Vector3 = model.normal_at(position.x,position.z)
-	var height: float = model.height(position.x,position.z)+RADIUS
-	var props: Array = SURFACES.get(surface,SURFACES.rough)
+	var height: float = model.height(position.x,position.z)+RADIUS/maxf(.2,normal.y)
 	if grounded and position.y<=height+.04:
 		var slope := GRAVITY-normal*GRAVITY.dot(normal)
 		velocity -= normal*velocity.dot(normal)
-		var resistance: float = props[1]
+		var resistance:float=rolling_resistance(surface,velocity.length())
 		var arm:Vector3=-normal*RADIUS
 		var slip:=velocity+spin.cross(arm)
 		if slip.length()>.002:
@@ -99,17 +117,27 @@ func _substep(dt: float) -> void:
 			var friction:Vector3=-slip.normalized()*minf(slip.length()/3.5,float(SLIDING_FRICTION.get(surface,.3))*absf(GRAVITY.dot(normal))*dt)
 			velocity+=friction
 			spin+=arm.cross(friction)*2.5/(RADIUS*RADIUS)
+			# Bulk material drag acts during a skid too. Reduce both energies
+			# without manufacturing rolling spin or reversing translation.
+			var speed:=velocity.length()
+			var factor:=maxf(0.0,1.0-material_drag(surface,speed)*dt/maxf(speed,.000001))
+			velocity*=factor;spin*=factor
 		else:
 			# I = 2/5 mr²: rolling acceleration down a slope is 5/7 g sin(theta).
 			var acceleration_downhill:=slope*(5.0/7.0)
-			if velocity.length()<.025 and acceleration_downhill.length()<resistance:
+			if velocity.length()<.025 and acceleration_downhill.length()<=holding_acceleration(surface):
 				velocity=Vector3.ZERO
 			else:
 				velocity+=acceleration_downhill*dt
-				velocity=velocity.move_toward(Vector3.ZERO,resistance*dt)
+				velocity=velocity.move_toward(Vector3.ZERO,(resistance+material_drag(surface,velocity.length()))*dt)
 			spin=normal.cross(velocity)/RADIUS+normal*spin.dot(normal)*exp(-3*dt)
 		position+=velocity*dt
-		position.y=model.height(position.x,position.z)+RADIUS
+		var floor_y:=support_height(position.x,position.z)
+		# A convex crest may fall away faster than gravity can keep the ball in
+		# contact. Leave the surface rather than gluing the ball to its height.
+		if position.y+GRAVITY.y*dt*dt*.5>floor_y+.00005:
+			position+=GRAVITY*dt*dt*.5;velocity+=GRAVITY*dt;grounded=false
+		else:position.y=floor_y
 	else:
 		grounded=false
 		# Midpoint integration keeps carry stable across 72/90/120 Hz headset rates.
@@ -119,7 +147,7 @@ func _substep(dt: float) -> void:
 		position+=mid*dt
 		spin*=exp(-.12*dt)
 		air_time+=dt
-		var floor_y: float = model.height(position.x,position.z)+RADIUS
+		var floor_y: float = support_height(position.x,position.z)
 		if position.y<=floor_y:
 			if carry==0: carry=Vector2(position.x-origin.x,position.z-origin.z).length()
 			position.y=floor_y
@@ -127,12 +155,16 @@ func _substep(dt: float) -> void:
 			landing_contact(normal,model.lie(position.x,position.z))
 			if absf(velocity.dot(normal))<.65:
 				grounded=true; velocity-=normal*velocity.dot(normal)
-	if collision_query.is_valid() and before.distance_squared_to(position)>.00000001:
+	if collision_query.is_valid():
 		var obstacle: Dictionary=collision_query.call(before,position)
 		if not obstacle.is_empty():
 			var n: Vector3=obstacle.normal
-			position=obstacle.position+n*(RADIUS+.002)
-			velocity=velocity.bounce(n)*.45;spin*=.5;grounded=false
+			position=obstacle.get("center",obstacle.position+n*(RADIUS+.002))
+			var incoming:=velocity.dot(n)
+			if incoming<0:
+				# Dampen normal motion without reversing an already escaping ball.
+				velocity-=n*(1.45*incoming);spin*=.5
+			grounded=false
 	var horizontal_step:=Vector2(position.x-before.x,position.z-before.z).length()
 	travel_distance+=horizontal_step
 	if rolling_before:roll_distance+=horizontal_step
@@ -143,7 +175,11 @@ func _substep(dt: float) -> void:
 		position=cup-Vector3(0,.09,0);velocity=Vector3.ZERO;moving=false;holed=true;stop_reason="holed";return
 	if surface in ["water","out"] and position.y<=height+.12:
 		hazard=true;moving=false;velocity=Vector3.ZERO;stop_reason=surface;return
-	if grounded and velocity.length()<.025 and (velocity+spin.cross(-normal*RADIUS)).length()<.025: rest_time+=dt
+	var rest_normal:Vector3=model.normal_at(position.x,position.z)
+	var downhill:Vector3=(GRAVITY-rest_normal*GRAVITY.dot(rest_normal))*(5.0/7.0)
+	# Small force hysteresis prevents sub-millimetre creep at large course
+	# coordinates from keeping a visually stationary ball active indefinitely.
+	if grounded and velocity.length()<REST_SPEED and (velocity+spin.cross(-rest_normal*RADIUS)).length()<.025 and downhill.length()<=holding_acceleration(model.lie(position.x,position.z))+LOW_SPEED_DRAG*REST_SPEED: rest_time+=dt
 	else: rest_time=0
 	if rest_time>.35: moving=false;velocity=Vector3.ZERO;stop_reason="rest"
 	# A numerical fail-safe produces a playable lie, never an endless flight.

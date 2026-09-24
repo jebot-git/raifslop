@@ -37,7 +37,7 @@ func _initialize() -> void:
 	motion.sample_controller(Vector3.BACK * .1, .05, pose, Vector3.FORWARD, false)
 	motion.sample_controller(Vector3.FORWARD * .2, .05, pose, Vector3.FORWARD, false)
 	check(is_equal_approx(motion.swing_distance(), 8.75), "Controller cast range comes from measured forward speed")
-	motion.sample_controller(Vector3.BACK * .1, .05, pose, Vector3.FORWARD, true)
+	motion.sample_controller(Vector3.BACK * .02, .05, pose, Vector3.FORWARD, true)
 	motion.sample_controller(Vector3.FORWARD * .05, .05, pose, Vector3.FORWARD, true)
 	check(is_equal_approx(motion.swing_distance(), 8.75), "A softer follow-through preserves the accepted stroke power")
 	check(motion.swing_travel.normalized().dot(Vector3.FORWARD)>.999,"Recovery after a completed cast cannot redirect the saved stroke")

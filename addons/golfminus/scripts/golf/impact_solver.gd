@@ -3,6 +3,11 @@ extends RefCounted
 const MASS:=.04593
 const RADIUS:=.021335
 const BALL_INERTIA:=.4*MASS*RADIUS*RADIUS
+static func surface_region(normal:Vector3)->String:
+	if normal.z<-.65:return "face"
+	if absf(normal.y)>=maxf(absf(normal.x),absf(normal.z)):return "crown" if normal.y>0 else "sole"
+	if absf(normal.x)>absf(normal.z):return "toe" if normal.x>0 else "heel"
+	return "back" if normal.z>0 else "face_edge"
 static func inverse_tensor(basis:Basis,diagonal:Vector3)->Basis:
 	return basis*Basis.from_scale(Vector3(1.0/diagonal.x,1.0/diagonal.y,1.0/diagonal.z))*basis.transposed()
 static func response(impulse:Vector3,arm:Vector3,ball_arm:Vector3,inverse:Basis,head_mass:float)->Vector3:
@@ -64,4 +69,4 @@ static func solve(shape:RefCounted,linear:Vector3,angular:Vector3,contact:Dictio
 	var local:Vector3=basis.transposed()*arm
 	var path:=Vector3(contact_velocity.x,0,contact_velocity.z)
 	var face:=Vector3(normal.x,0,normal.z)
-	return {"velocity":velocity,"spin":spin,"normal_speed_m_s":closing,"tangential_speed_m_s":(relative+normal*closing).length(),"face_path_angle_degrees":rad_to_deg(face.signed_angle_to(path,Vector3.UP)) if face.length()>.0001 and path.length()>.0001 else 0.0,"dynamic_loft_degrees":rad_to_deg(asin(clampf(normal.y,-1,1))),"attack_angle_degrees":rad_to_deg(atan2(contact_velocity.y,path.length())),"impact_offset_m":Vector2(local.x,local.y),"contact_normal":normal,"contact_point":point,"contact_velocity":contact_velocity,"normal_impulse_ns":normal_impulse,"tangent_impulse_ns":tangent_impulse.length(),"friction":mu,"restitution":restitution,"head_velocity_after":head_velocity,"head_angular_velocity_after":head_angular,"efficiency":efficiency,"smash":velocity.length()/maxf(contact_velocity.length(),.001),"head_mass_kg":shape.mass,"head_inertia_kg_m2":shape.inertia,"effective_normal_mass_kg":1.0/kn,"surface":"face" if face_contact else "body","model":"mesh_rigid_impulse_v3"}
+	return {"velocity":velocity,"spin":spin,"normal_speed_m_s":closing,"tangential_speed_m_s":(relative+normal*closing).length(),"face_path_angle_degrees":rad_to_deg(face.signed_angle_to(path,Vector3.UP)) if face.length()>.0001 and path.length()>.0001 else 0.0,"dynamic_loft_degrees":rad_to_deg(asin(clampf(normal.y,-1,1))),"attack_angle_degrees":rad_to_deg(atan2(contact_velocity.y,path.length())),"impact_offset_m":Vector2(local.x,local.y),"contact_normal":normal,"contact_point":point,"contact_velocity":contact_velocity,"normal_impulse_ns":normal_impulse,"tangent_impulse_ns":tangent_impulse.length(),"friction":mu,"restitution":restitution,"head_velocity_after":head_velocity,"head_angular_velocity_after":head_angular,"efficiency":efficiency,"smash":velocity.length()/maxf(contact_velocity.length(),.001),"head_mass_kg":shape.mass,"head_inertia_kg_m2":shape.inertia,"effective_normal_mass_kg":1.0/kn,"surface":"face" if face_contact else "body","surface_region":surface_region(basis.transposed()*normal),"contact_normal_local":basis.transposed()*normal,"model":"mesh_rigid_impulse_v3"}

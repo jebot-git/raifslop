@@ -42,7 +42,10 @@ func _initialize()->void:
 	check(no_spin.distance_to(rifle)<.0001 and tiny.distance_to(rifle)<.001,"Parallel spin produces no lift; near-parallel spin is continuous")
 	check(b.acceleration(v,Vector3(300,0,0),Vector3.ZERO).y>no_spin.y,"Backspin lifts a forward-moving ball")
 	var pure:=roll(1.83,Vector3(-1.83/Ball.RADIUS,0,0))
-	check(absf(pure.roll_distance-1.83*1.83/(2*.55))<.02,"Green roll agrees with configured 0.55 m/s² resistance (about 10 ft Stimp)")
+	var threshold:float=(.55-Ball.HOLD_ACCEL.green)/Ball.LOW_SPEED_DRAG
+	var slow_distance:float=(Ball.LOW_SPEED_DRAG*threshold-Ball.HOLD_ACCEL.green*log(1+Ball.LOW_SPEED_DRAG*threshold/Ball.HOLD_ACCEL.green))/pow(Ball.LOW_SPEED_DRAG,2)
+	var expected:float=(1.83*1.83-threshold*threshold)/(2*.55)+slow_distance
+	check(absf(pure.roll_distance-expected)<.02,"Green roll agrees with piecewise resistance integral (about 10 ft Stimp)")
 	var skid:=roll(3,Vector3.ZERO)
 	var backspin:=roll(3,Vector3(150,0,0))
 	check(backspin.roll_distance<skid.roll_distance and skid.roll_distance<9/(2*.55),"Skidding and backspin dissipate speed before pure roll")
@@ -68,8 +71,7 @@ func _initialize()->void:
 			check(not fit.is_empty(),"Ground fit exists: %d / %s"%[index,grade])
 			if fit.is_empty():continue
 			var pose:Transform3D=Fit.head_pose(grip,fit,Clubs.BAG[index].length,shape)
-			var shaft:Basis=grip.basis*Basis.from_euler(fit.rotation*PI/180)
-			check((shaft.inverse()*pose.basis).is_equal_approx(Basis(Vector3.RIGHT,shape.loft)) and absf(Fit.clearance(pose,shape,ground.height)-.004)<.001,"Auto-fit preserves authored head/shaft axis and sole clearance: %d / %s"%[index,grade])
+			check(pose.basis.is_equal_approx(grip.basis*Basis(Vector3.RIGHT,shape.loft)) and absf(Fit.clearance(pose,shape,ground.height)-.004)<.001,"Auto-fit preserves intended head address orientation and sole clearance: %d / %s"%[index,grade])
 			var correction:=Vector3(7,12,-25)
 			fit=Fit.solve_grounded(grip,Vector3(0,Ball.RADIUS,0),Vector3.FORWARD,Clubs.BAG[index].length,shape,ground.height,correction)
 			check(not fit.is_empty() and fit.head_rotation.is_equal_approx(correction),"Auto-fit preserves explicit head correction: %d / %s"%[index,grade])

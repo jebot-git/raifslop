@@ -9,6 +9,7 @@ var preview:Node3D
 var preview_shaft:MeshInstance3D
 var preview_head:MeshInstance3D
 var show_preview:CheckButton
+var profile_notice:Label
 func _ready()->void:
 	add_theme_constant_override("separation",8)
 	hand=0 if game.left_handed else 1
@@ -17,7 +18,8 @@ func _ready()->void:
 	hand_choice.item_selected.connect(func(index:int):hand=index;refresh())
 	mounted=CheckButton.new();mounted.text="Controller-mounted club / physical attachment";mounted.custom_minimum_size.y=46;add_child(mounted)
 	mounted.toggled.connect(func(value:bool):game.set_club_attachment(hand,"mounted",0,float(value)))
-	var hint:=Label.new();hint.text="Offsets use the calibrated controller's local axes. Mounted mode keeps the club at that position instead of snapping it to the avatar palm. Changes save immediately for the selected hand. Address-pose fitting uses your current swing hand.";hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;add_child(hint)
+	var hint:=Label.new();hint.text="Offsets use the calibrated controller's local axes. Mounted mode keeps the club at that position instead of snapping it to the avatar palm. Changes save immediately for the selected hand. Automatic fitting preserves the head angle. During fitting, press grip to switch between manual head and handle adjustment.";hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;add_child(hint)
+	profile_notice=Label.new();profile_notice.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;add_child(profile_notice)
 	show_preview=CheckButton.new();show_preview.text="Show cyan attachment preview in VR";show_preview.button_pressed=true;show_preview.custom_minimum_size.y=46;add_child(show_preview)
 	var fit:=Button.new();fit.text="Fit current swing hand from address pose";fit.custom_minimum_size.y=46;add_child(fit);fit.pressed.connect(game.begin_club_fit)
 	_make_preview()
@@ -39,6 +41,8 @@ func _axis_row(field:String,axis:int,title:String,minimum:float,maximum:float,st
 	value.value_changed.connect(func(number:float):game.set_club_attachment(hand,field,axis,number*.01 if field=="offset" else number))
 func refresh()->void:
 	if not is_instance_valid(hand_choice):return
+	profile_notice.visible=game.club_head_sources[hand]=="legacy"
+	profile_notice.text="Your older fit has been kept. If its face angle needs correcting, use Clubface correction below or the manual head mode during fitting."
 	hand_choice.select(hand);mounted.set_pressed_no_signal(game.club_controller_mount[hand])
 	for field in ["offset","rotation","head"]:
 		var values:Vector3=game.club_offsets[hand]*100 if field=="offset" else game.club_rotations[hand] if field=="rotation" else game.head_correction(hand)
@@ -61,4 +65,5 @@ func _process(_delta:float)->void:
 	var length:float=game.CLUBS.BAG[game.club_index].length*game.club_reach
 	preview_shaft.global_transform=Transform3D(basis.scaled(Vector3(1,length,1)),grip.origin-basis.y*length*.5)
 	preview_head.mesh=game.head_shape.mesh
-	preview_head.global_transform=Transform3D(basis*Basis.from_euler(game.head_correction(hand)*PI/180)*Basis(Vector3.RIGHT,game.head_shape.loft),grip.origin+basis*Vector3(.055*game.club_reach,-length,0))
+	var head_basis:=grip.basis.orthonormalized()*Basis.from_euler(game.head_correction(hand)*PI/180)*Basis(Vector3.RIGHT,game.head_shape.loft)
+	preview_head.global_transform=Transform3D(head_basis,grip.origin-basis.y*length+head_basis.x*.055)

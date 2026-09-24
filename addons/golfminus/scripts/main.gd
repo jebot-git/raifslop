@@ -36,6 +36,7 @@ var club_offsets:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
 var club_controller_mount:=[false,false]
 var club_rotations:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
 var club_head_rotations:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
+var club_head_sources:Array[String]=["default","default"]
 var club_fitted:=[false,false]
 var address_offset:=Vector3(INF,INF,INF) # Shot-local stance, not a world offset.
 var address_facing:=Vector3.ZERO
@@ -97,6 +98,7 @@ func _ready() -> void:
 	godview=preload("res://addons/golfminus/scripts/golf/godview.gd").new();add_child(godview);godview.setup(self)
 	club_radial=preload("res://addons/golfminus/scripts/golf/club_radial.gd").new();add_child(club_radial);club_radial.setup(self)
 	var cfg:=ConfigFile.new();cfg.load("user://golf_controls.cfg");calibration.load_config(cfg)
+	if preload("res://addons/golfminus/scripts/golf/club_fit_profile.gd").migrate(cfg):cfg.save("user://golf_controls.cfg")
 	ICONS.enabled=bool(cfg.get_value("interface","pictograms",true))
 	if is_instance_valid(host_game):calibration=host_game.controller_calibration
 	if not is_instance_valid(host_game):
@@ -112,6 +114,7 @@ func _ready() -> void:
 		if value is Vector3 and value.is_finite():club_rotations[hand]=value
 		value=cfg.get_value("golf","club_head_rotation_%d"%hand,Vector3.ZERO)
 		if value is Vector3 and value.is_finite():club_head_rotations[hand]=value
+		club_head_sources[hand]=str(cfg.get_value("golf","club_head_source_%d"%hand,"default"))
 		club_fitted[hand]=bool(cfg.get_value("golf","club_fitted_%d"%hand,club_rotations[hand].length_squared()>.001 or club_head_rotations[hand].length_squared()>.001))
 	_ui()
 	fit_preview=preload("res://addons/golfminus/scripts/golf/fit_preview.gd").new();add_child(fit_preview)
@@ -359,6 +362,8 @@ func _save_preferences() -> void:
 		cfg.set_value("golf","club_rotation_%d"%hand,club_rotations[hand])
 		cfg.set_value("golf","club_head_rotation_%d"%hand,club_head_rotations[hand])
 		cfg.set_value("golf","club_fitted_%d"%hand,club_fitted[hand])
+		cfg.set_value("golf","club_head_source_%d"%hand,club_head_sources[hand])
+	cfg.set_value("golf","fit_version",2)
 	cfg.set_value("interface","pictograms",ICONS.enabled)
 	cfg.set_value("golf","reach",club_reach);cfg.set_value("golf","left_handed",preferred_left_handed);cfg.save("user://golf_controls.cfg")
 func _left_button(action:String)->void:_controller_button(action,0)
@@ -587,7 +592,7 @@ func set_club_attachment(hand:int,field:String,axis:int,value:float)->void:
 		"rotation":club_rotations[hand][axis]=clampf(value,-180,180)
 		"head":
 			club_head_rotations[hand]=head_correction(hand)
-			club_head_rotations[hand][axis]=clampf(value,-180,180);club_fitted[hand]=true
+			club_head_rotations[hand][axis]=clampf(value,-180,180);club_fitted[hand]=true;club_head_sources[hand]="explicit"
 		"mounted":club_controller_mount[hand]=value!=0
 		_:return
 	_attachment_changed()
@@ -595,7 +600,7 @@ func reset_club_attachment(hand:int)->void:
 	if hand not in [0,1]:return
 	if fitting_club:cancel_club_fit()
 	club_offsets[hand]=Vector3.ZERO;club_rotations[hand]=Vector3.ZERO;club_head_rotations[hand]=Vector3.ZERO
-	club_fitted[hand]=false;club_controller_mount[hand]=false
+	club_fitted[hand]=false;club_controller_mount[hand]=false;club_head_sources[hand]="default"
 	_attachment_changed()
 func set_club_reach(value:float)->void:
 	if not is_finite(value):return
@@ -631,8 +636,8 @@ func club_world_grip_pose()->Transform3D:
 	return pose
 func head_correction(hand:int)->Vector3:
 	if club_fitted[hand]:return club_head_rotations[hand]
-	# Nominal lie angle gives the shaft its lean while the face sits upright.
-	# Auto-fitting preserves this offset; manual face controls may replace it.
+	# Default grip-relative head orientation before an address fit.
+	# Shaft corrections are independent; explicit face controls may override it.
 	var lean:float=[32.0,31.0,29.0,27.0,26.0,26.0,26.0,20.0][club_index]
 	return Vector3(0,0,lean if hand==0 else -lean)
 func _sync_physical_head()->void:
@@ -641,7 +646,10 @@ func _sync_physical_head()->void:
 	# Reach changes the shaft, not head size, loft, mass or contact geometry.
 	var correction:Vector3=head_correction(0 if left_handed else 1)
 	if fitting_club and not fit_session.candidate.is_empty():correction=fit_session.candidate.get("head_rotation",Vector3.ZERO)
-	physical_head.global_transform=Transform3D(club.global_basis.orthonormalized()*Basis.from_euler(correction*PI/180.0)*Basis(Vector3.RIGHT,head_shape.loft),club.to_global(Vector3(.055,-length,0)))
+	var grip_basis:Basis=club_world_grip_pose().basis.orthonormalized()
+	if equipment!=null and equipment.stowed:grip_basis=club.global_basis.orthonormalized()
+	var head_basis:=grip_basis*Basis.from_euler(correction*PI/180.0)*Basis(Vector3.RIGHT,head_shape.loft)
+	physical_head.global_transform=Transform3D(head_basis,club.to_global(Vector3(0,-length,0))+head_basis.x*.055)
 func begin_club_fit() -> void:
 	godview.exit_view()
 	club_radial.close()
@@ -651,10 +659,12 @@ func begin_club_fit() -> void:
 	toggle_menu(false)
 	course_guide.dock();equipment.set_stowed(false)
 	fit_session.begin(club_reach,club_rotations,0 if left_handed else 1,club_head_rotations,club_fitted)
+	fit_session.baseline.head_sources=club_head_sources.duplicate()
 	fitting_club=true;body.blocked=true;reset_swing();fit_clearance_elapsed=1.0
 	status_text="Hold your natural address pose. Press trigger once, then hold steady."
 func _fit_button(action:String,striking_hand:bool)->void:
 	if action=="primary_click":fit_session.axis=posmod(fit_session.axis+1,3);return
+	if action=="grip_click":fit_session.adjust_head=not fit_session.adjust_head;return
 	if striking_hand:
 		match action:
 			"trigger_click":finish_club_fit()
@@ -665,8 +675,7 @@ func _fit_button(action:String,striking_hand:bool)->void:
 	else:
 		match action:
 			"ax_button":fit_session.axis=posmod(fit_session.axis+1,3)
-			"trigger_click":
-				if not fit_session.candidate.is_empty():fit_session.candidate.head_rotation=(Basis.from_euler(fit_session.candidate.get("head_rotation",Vector3.ZERO)*PI/180)*Basis(Vector3.UP,PI)).get_euler()*180/PI
+
 func _update_fit_preview(dt:float)->void:
 	var controller:=left if left_handed else right
 	var other:=right if left_handed else left
@@ -686,11 +695,11 @@ func _update_fit_preview(dt:float)->void:
 	var text:="Hold natural address pose\nPress trigger once, then hold steady"
 	if fit_session.capture_requested:text="Capturing when steady · %.0f%%\nKeep your address pose; no need to press again"%minf(100,fit_session.stable_seconds/.4*100)
 	if not fit_session.candidate.is_empty():
-		text="PREVIEW · not saved\nHead to marker: %.1f cm · reach %.2f m\nTrigger: recapture · %s: accept · %s: cancel\nEither stick: head %s / reach · stick click: axis\nOther trigger: reverse face"%[tip.distance_to(target)*100,float(CLUBS.BAG[club_index].length)*float(fit_session.candidate.reach),"X" if left_handed else "A","Y" if left_handed else "B",["yaw","pitch","roll"][fit_session.axis]]
+		text="PREVIEW · not saved\nHead to marker: %.1f cm · reach %.2f m\nTrigger: recapture · %s: accept · %s: cancel\nEither stick: %s %s / reach · click: axis · grip: head/handle"%[tip.distance_to(target)*100,float(CLUBS.BAG[club_index].length)*float(fit_session.candidate.reach),"X" if left_handed else "A","Y" if left_handed else "B","head" if fit_session.adjust_head else "handle",["yaw","pitch","roll"][fit_session.axis]]
 	if ICONS.enabled:
 		text="PREVIEW · not saved\nHead offset %.1f cm · reach %.2f m"%[tip.distance_to(target)*100,float(CLUBS.BAG[club_index].length)*float(fit_session.candidate.reach)] if not fit_session.candidate.is_empty() else "HOLD ADDRESS POSE"
-	if ICONS.enabled and not fit_session.candidate.is_empty():text+="\nHead %s / reach · either stick; click: axis"%[["yaw","pitch","roll"][fit_session.axis]]
-	fit_preview.prompts.show_entries([["capture","L trigger" if left_handed else "R trigger"],["accept","X" if left_handed else "A"],["cancel","Y" if left_handed else "B"],["fit","Either stick"],["orbit","Stick click: axis"]])
+	if ICONS.enabled and not fit_session.candidate.is_empty():text+="\n%s %s / reach · stick click: axis · grip: head/handle"%["Head" if fit_session.adjust_head else "Handle",["yaw","pitch","roll"][fit_session.axis]]
+	fit_preview.prompts.show_entries([["capture","L trigger" if left_handed else "R trigger"],["accept","X" if left_handed else "A"],["cancel","Y" if left_handed else "B"],["fit","Stick: adjust"],["orbit","Grip: head/handle"]])
 	if not fit_session.candidate.is_empty():
 		fit_clearance_elapsed+=dt
 		if fit_clearance_elapsed>=.1:
@@ -717,9 +726,14 @@ func _capture_stable_club_fit()->void:
 	if stable.is_empty():return
 	fit_session.capture_requested=false
 	var hand:=0 if left_handed else 1
-	var fit_direction:Vector3=preload("res://addons/golfminus/scripts/golf/club_fit.gd").address_direction(aim_direction(),-head.global_basis.z)
-	var fit:Dictionary=preload("res://addons/golfminus/scripts/golf/club_fit.gd").solve_grounded(stable.pose,ball.position,fit_direction,float(CLUBS.BAG[club_index].length),head_shape,world.surface_height,head_correction(hand))
+	var correction:Vector3=fit_session.candidate.get("head_rotation",head_correction(hand))
+	var source:String=fit_session.candidate.get("head_source",club_head_sources[hand])
+	var face:Vector3=-(stable.pose.basis.orthonormalized()*Basis.from_euler(correction*PI/180.0)*Basis(Vector3.RIGHT,head_shape.loft)).z
+	var fit_direction:=Vector3(face.x,0,face.z).normalized()
+	if fit_direction.length_squared()<.01:fit_direction=aim_direction()
+	var fit:Dictionary=preload("res://addons/golfminus/scripts/golf/club_fit.gd").solve_grounded(stable.pose,ball.position,fit_direction,float(CLUBS.BAG[club_index].length),head_shape,world.surface_height,correction)
 	if not fit_session.stage(fit):status_text="Address is out of reach. Move closer to the ball, then press trigger.";return
+	fit_session.candidate.head_source="explicit" if source=="explicit" else "fit"
 	fit_session.candidate.address_position=head.global_position
 	telemetry.record("fit_preview",{"candidate":fit,"hand":hand})
 	status_text="Sole fitted above turf. Check the preview, then accept to save."
@@ -728,6 +742,7 @@ func _apply_fit(values:Dictionary)->void:
 	club_reach=values.reach;club_rotations.assign(values.rotations)
 	club_head_rotations.assign(values.get("head_rotations",[Vector3.ZERO,Vector3.ZERO]))
 	club_fitted.assign(values.get("fitted",[true,true]))
+	club_head_sources.assign(values.get("head_sources",club_head_sources))
 	hud.length_slider.set_value_no_signal(club_reach)
 	hud.attachment_controls.refresh()
 	reset_swing();swing.cooldown=.8
@@ -740,7 +755,7 @@ func accept_club_fit()->void:
 		var pose:Transform3D=solver.head_pose(fit_session.candidate.capture_grip,fit_session.candidate,float(CLUBS.BAG[club_index].length),head_shape)
 		var gap:float=solver.clearance(pose,head_shape,world.surface_height)
 		# Validate mesh clearance, not a world-space face pitch: fitting must
-		# preserve the rigid head/shaft relation selected by the player.
+		# preserve the independent head address frame selected by the player.
 		if gap<-.001 or gap>.04:
 			status_text="Adjusted sole is %.1f cm from turf. Adjust reach or recapture before saving."%(gap*100);return
 	if fit_session.candidate.has("address_position"):remember_address(fit_session.candidate.address_position)
@@ -766,12 +781,12 @@ func undo_club_fit()->void:
 	_apply_fit(values);_save_preferences();status_text="Previous club fit restored."
 func flip_club_face() -> void:
 	var hand:=0 if left_handed else 1
-	fit_session.undo_state={"reach":club_reach,"rotations":club_rotations.duplicate(),"head_rotations":club_head_rotations.duplicate(),"fitted":club_fitted.duplicate()}
+	fit_session.undo_state={"reach":club_reach,"rotations":club_rotations.duplicate(),"head_rotations":club_head_rotations.duplicate(),"fitted":club_fitted.duplicate(),"head_sources":club_head_sources.duplicate()}
 	club_head_rotations[hand]=(Basis.from_euler(head_correction(hand)*PI/180)*Basis(Vector3.UP,PI)).get_euler()*180/PI
-	club_fitted[hand]=true
+	club_fitted[hand]=true;club_head_sources[hand]="explicit"
 	toggle_menu(false);reset_swing();swing.cooldown=.8;_save_preferences()
 	hud.attachment_controls.refresh()
-	status_text="Club face reversed; grip and head position preserved."
+	status_text="Club face reversed; handle attachment retained."
 func _draw_aim() -> void:
 	aim_mesh.visible=not godview.active and not ball.moving and not ball.holed
 	if not aim_mesh.visible:return

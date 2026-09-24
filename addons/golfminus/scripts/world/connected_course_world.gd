@@ -172,7 +172,7 @@ func add_foliage_tree(entry:Array)->void:
 	if not foliage_groups.has(key):foliage_groups[key]=[]
 	foliage_groups[key].append(Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*size),at))
 	var body:=StaticBody3D.new();body.name="GolfTree";body.collision_layer=5;body.position=at;stage_collision(body);add_child(body)
-	var trunk:=CollisionShape3D.new();var capsule:=CapsuleShape3D.new();capsule.radius=.3*size;capsule.height=5*size;trunk.shape=capsule;trunk.position.y=2.5*size;body.add_child(trunk)
+	var trunk:=CollisionShape3D.new();var capsule:=CapsuleShape3D.new();capsule.radius=.3*size;capsule.height=5.6*size;trunk.shape=capsule;trunk.position.y=2.2*size;body.add_child(trunk)
 	var crown:=CollisionShape3D.new();var sphere:=SphereShape3D.new();sphere.radius=2.8*size;crown.shape=sphere;crown.position.y=7.5*size;body.add_child(crown)
 func add_foliage_group(key:Vector2i)->void:
 	var batch:=MultiMeshInstance3D.new();batch.name="CourseFoliage";batch.material_override=foliage_material

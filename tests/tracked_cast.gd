@@ -26,8 +26,8 @@ func controller_cast(step: float, look: Vector3, direction := Vector3.FORWARD, l
 	var target: Vector3 = g._projected_cast_target()
 	var offset: Vector3 = target - g.cast_aim_anchor
 	check(offset.is_finite() and offset.normalized().dot(direction) > .999, "Controller swing sets heading independently of head and rod facing")
-	g.cast_last_tip += Vector3(0, 0, 100); g._sample_cast_swing(.05)
-	g.cast_last_tip += Vector3(0, 0, 1); g._sample_cast_swing(.2)
+	g.cast_pose_sampler.previous.origin += Vector3(0, 0, 100); g._sample_cast_swing(.05)
+	g.cast_pose_sampler.previous.origin += Vector3(0, 0, 1); g._sample_cast_swing(.2)
 	check(g._projected_cast_target().is_equal_approx(target), "Tracking jumps and frame hitches cannot change controller cast power or direction")
 	g.head.rotation = Vector3(.5, -2, 0)
 	for i in 10: await move_hand(0)
@@ -96,7 +96,7 @@ func run() -> void:
 	check(g._projected_cast_target().is_equal_approx(target), "Marker remains fixed through tracked rod swing")
 	var accepted: int = g.game.fly.strokes
 	g._sample_cast_swing(.2)
-	g.cast_last_tip += Vector3(0, 0, 1.5); g._sample_cast_swing(.014)
+	g.cast_pose_sampler.previous.origin += Vector3(0, 0, 1.5); g._sample_cast_swing(.014)
 	check(g.game.fly.strokes == accepted, "Follow-through discontinuities and frame hitches cannot erase a completed swing")
 	trackers[1].set_input("trigger_click", false)
 	check(g.game.state == 1 and g.cast_target.is_equal_approx(target), "Tracked trigger release lands at the projected water target")
@@ -132,12 +132,16 @@ func run() -> void:
 		check(g.game.state==g.Session.State.CASTING,"Release-frame controller movement completes cast: "+str(aimed))
 		g.game.reset()
 	g.head_aimed_casting=true
-	# A normal fast tip arc exceeds the old half-metre/frame cutoff at 30 FPS.
-	g._begin_cast();g.cast_last_tip=g._tracked_cast_tip()-Vector3.BACK*.65
-	g._sample_cast_swing(1.0/30)
-	g.cast_last_tip=g._tracked_cast_tip()-Vector3.FORWARD*.75
-	g._sample_cast_swing(1.0/30)
-	check(g.game.fly.strokes>0,"Fast rod-tip travel remains castable at 30 FPS")
+	# Controller rotation drives a long, fast tip arc without a hand teleport.
+	var base_pose:=Transform3D(Basis.IDENTITY,Vector3(.25,1.3,-.3))
+	trackers[1].set_pose("grip",base_pose*g.rod_holster.HELD_POSE.affine_inverse(),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	for i in 2:await process_frame
+	g._begin_cast()
+	for pitch in [1.0,0.0]:
+		trackers[1].set_pose("grip",Transform3D(Basis(Vector3.RIGHT,pitch),base_pose.origin)*g.rod_holster.HELD_POSE.affine_inverse(),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+		for i in 2:await process_frame
+		g._sample_cast_swing(1.0/30)
+	check(g.game.fly.strokes>0,"Fast wrist-driven rod-tip travel remains castable at 30 FPS")
 	g.casting=false;g.game.reset()
 	for input in ["grip", "trigger"]:
 		g.fish_guide.grip_was_down=true

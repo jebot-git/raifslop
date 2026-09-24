@@ -5,6 +5,7 @@ var candidate:Dictionary={}
 var undo_state:Dictionary={}
 var hand:=0
 var axis:=0
+var adjust_head:=false
 var capture_requested:=false
 var samples:Array[Transform3D]=[]
 var stable_seconds:=0.0
@@ -25,7 +26,7 @@ func stable_pose()->Dictionary:
 
 func begin(reach:float,rotations:Array[Vector3],selected_hand:int,head_rotations:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO],fitted:Array=[false,false])->void:
 	baseline={"fitted":fitted.duplicate(),"reach":reach,"rotations":rotations.duplicate(),"head_rotations":head_rotations.duplicate()}
-	candidate.clear();hand=selected_hand;axis=0;capture_requested=false;samples.clear();stable_seconds=0
+	candidate.clear();hand=selected_hand;axis=0;adjust_head=false;capture_requested=false;samples.clear();stable_seconds=0
 func stage(fit:Dictionary)->bool:
 	if not fit.has_all(["reach","rotation","target"]):return false
 	if not is_finite(fit.reach) or fit.reach<.35 or fit.reach>1.6 or not fit.rotation.is_finite() or not fit.target.is_finite():return false
@@ -34,7 +35,9 @@ func stage(fit:Dictionary)->bool:
 func adjust(angle_degrees:float,reach_delta:float)->void:
 	if candidate.is_empty():return
 	var axes:=[Vector3.UP,Vector3.RIGHT,Vector3.BACK]
-	candidate.head_rotation=(Basis.from_euler(candidate.get("head_rotation",Vector3.ZERO)*PI/180.0)*Basis(axes[axis],deg_to_rad(angle_degrees))).get_euler()*180.0/PI
+	var key:="head_rotation" if adjust_head else "rotation"
+	candidate[key]=(Basis.from_euler(candidate.get(key,Vector3.ZERO)*PI/180.0)*Basis(axes[axis],deg_to_rad(angle_degrees))).get_euler()*180.0/PI
+	if adjust_head and not is_zero_approx(angle_degrees):candidate.head_source="explicit"
 	candidate.reach=clampf(candidate.reach+reach_delta,.35,1.6)
 func accept()->Dictionary:
 	if candidate.is_empty() or baseline.is_empty():return {}
@@ -42,6 +45,7 @@ func accept()->Dictionary:
 	var result:Dictionary=baseline.duplicate(true)
 	result.reach=candidate.reach;result.rotations[hand]=candidate.rotation
 	result.head_rotations[hand]=candidate.get("head_rotation",Vector3.ZERO)
+	if result.has("head_sources"):result.head_sources[hand]=candidate.get("head_source",result.head_sources[hand])
 	result.fitted[hand]=true
 	cancel();return result
 func cancel()->void:

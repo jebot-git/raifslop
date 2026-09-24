@@ -1,4 +1,5 @@
 extends RefCounted
+const Ball=preload("res://addons/golfminus/scripts/golf/ball_physics.gd")
 ## Single source of truth for terrain, rendered lies and ball contact.
 var course: Dictionary
 var hole: Dictionary
@@ -46,9 +47,9 @@ func tee_for(hole_index:int,kind:="club")->Vector3:
 	if not connected:return tee(kind)
 	if surface!=null:
 		var at:Array=course.holes[hole_index].routing.tees[kind]
-		return Vector3(at[0],height(at[0],at[1])+.021335,at[1])
+		return Vector3(at[0],height(at[0],at[1])+Ball.RADIUS+Ball.TEE_HEIGHT,at[1])
 	var p:Vector3=layout.to_world(patches[hole_index].tee(kind),hole_index)
-	p.y=height(p.x,p.z)+.021335;return p
+	p.y=height(p.x,p.z)+Ball.RADIUS+Ball.TEE_HEIGHT;return p
 func candidates(x:float,z:float)->Array:
 	return buckets.get(Vector2i(floori(x/128),floori(z/128)),[])
 func _world_lie(x:float,z:float)->String:
@@ -90,7 +91,7 @@ func pin() -> Vector3:
 func tee(kind := "club") -> Vector3:
 	if connected:return tee_for(index,kind)
 	var d: float = hole.tee_options.get(kind,0)
-	return Vector3(center_x(d / float(hole.length)),height(center_x(d / float(hole.length)),-d)+.021335,-d)
+	return Vector3(center_x(d / float(hole.length)),height(center_x(d / float(hole.length)),-d)+Ball.RADIUS+Ball.TEE_HEIGHT,-d)
 func green_distance(x: float,z: float) -> float:
 	return Vector2((x-center_x(1))/.92, z+float(hole.length)).length()
 func bunker_center(b: Dictionary) -> Vector2:

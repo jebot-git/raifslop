@@ -84,7 +84,11 @@ func run():
 		var release:Callable=golf._left_released if hand==0 else golf._right_released
 		click.call("primary_click");golf._update_fit_preview(.05)
 		check(golf.fit_session.axis==1 and not golf.godview.active and not golf.club_radial.opened,"Fit stick click selects axis without opening another UI: "+str(hand))
-		check(golf.fit_session.candidate.rotation.is_equal_approx(shaft) and not golf.fit_session.candidate.head_rotation.is_equal_approx(face),"Fine adjustment changes face without tilting shaft: "+str(hand))
+		check(not golf.fit_session.candidate.rotation.is_equal_approx(shaft) and golf.fit_session.candidate.head_rotation.is_equal_approx(face),"Fine adjustment changes handle without rotating head: "+str(hand))
+		shaft=golf.fit_session.candidate.rotation
+		click.call("grip_click");golf._update_fit_preview(.05)
+		check(golf.fit_session.adjust_head and not golf.fit_session.candidate.head_rotation.is_equal_approx(face) and golf.fit_session.candidate.rotation.is_equal_approx(shaft),"Grip selects manual head adjustment with sole controller: "+str(hand))
+		click.call("grip_click")
 		trackers[hand].set_input("primary",Vector2.ZERO);click.call("ax_button")
 		check(not golf.fitting_club and golf.club_fitted[hand],"Sole controller accepts the preview: "+str(hand))
 		var fit_origin:Transform3D=host.origin.global_transform
@@ -96,13 +100,14 @@ func run():
 		# The host process is deliberately disabled in this synthetic fixture.
 		host.avatar.right_grip=host.controller_pose(1);host.avatar.left_grip=host.controller_pose(0)
 		host.avatar.right_grip_frame=Engine.get_process_frames()
-		var correction:Vector3=golf.head_correction(hand)
-		golf.begin_club_fit();click.call("trigger_click")
+		golf.begin_club_fit();golf._update_club_pose()
+		var before_capture:Basis=golf.physical_head.global_basis
+		click.call("trigger_click")
 		for frame in 12:golf._update_fit_preview(.05)
 		check(golf.fit_session.candidate.has("capture_grip"),"One trigger automatically captures the steady address: "+str(hand)+" · "+golf.status_text)
 		var clearance:float=preload("res://addons/golfminus/scripts/golf/club_fit.gd").clearance(golf.physical_head.global_transform,golf.head_shape,golf.world.surface_height)
-		var relative:Basis=golf.club.global_basis.orthonormalized().inverse()*golf.physical_head.global_basis
-		check(relative.is_equal_approx(Basis.from_euler(correction*PI/180)*Basis(Vector3.RIGHT,golf.head_shape.loft)) and absf(clearance-.004)<.001,"Auto-fit keeps head fixed to intended shaft axis and clears turf: "+str(hand))
+		var relative:Basis=golf.physical_head.global_basis
+		check(relative.is_equal_approx(before_capture) and absf(clearance-.004)<.001,"Auto-fit keeps head at intended address loft and clears turf: "+str(hand))
 		click.call("ax_button");check(not golf.fitting_club,"Automatic fit remains acceptable from sole controller: "+str(hand)+" · "+golf.status_text);release.call("ax_button")
 		var guide=golf.course_guide
 		guide.dock();guide.update()
@@ -189,11 +194,11 @@ func run():
 	trackers[0].set_input("primary",Vector2(.8,0));golf._update_fit_preview(.05)
 	check(not golf.fit_session.candidate.is_empty(),"Other hand stick also adjusts club fit")
 	golf.cancel_club_fit();trackers[0].set_input("primary",Vector2.ZERO)
-	golf._update_club_pose();var shaft_pose:Transform3D=golf.club.global_transform;var head_position:Vector3=golf.physical_head.global_position
+	golf._update_club_pose();var shaft_pose:Transform3D=golf.club.global_transform
 	var face_before:Vector3=-golf.physical_head.global_basis.z
 	var face_up:Vector3=(golf.physical_head.global_basis*Basis(Vector3.RIGHT,-golf.head_shape.loft)).y
 	golf.flip_club_face();golf._update_club_pose()
-	check(golf.club.global_transform.is_equal_approx(shaft_pose) and golf.physical_head.global_position.is_equal_approx(head_position),"Reversing face preserves shaft and head position")
+	check(golf.club.global_transform.is_equal_approx(shaft_pose) and (golf.physical_head.global_position-golf.physical_head.global_basis.x*.055).distance_to(golf.club.to_global(Vector3(0,-1.13 if golf.club_index<2 else -.86 if golf.club_index==7 else -.93,0)))<.001,"Explicit face reversal preserves shaft and hosel connection")
 	var face_after:Vector3=-golf.physical_head.global_basis.z
 	var before_tangent:Vector3=face_before-face_up*face_before.dot(face_up)
 	var after_tangent:Vector3=face_after-face_up*face_after.dot(face_up)

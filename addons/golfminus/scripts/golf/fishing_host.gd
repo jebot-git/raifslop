@@ -53,6 +53,7 @@ func setup(root: Node3D) -> void:
 	notice=preload("res://addons/golfminus/scripts/golf/turn_notice.gd").new();add_child(notice);notice.setup(host)
 	host.avatar_menu._register_page("golf","Golf",page)
 func _shared(node: Node) -> bool:
+	if node.is_in_group("activity_services"):return true
 	for key in ["motor","origin","head","left","right","avatar","tracking_manager","network","shoulder_radio","spectator","xr_view","avatar_menu","avatar_menu_view","avatar_panel","menu_pointer","menu_laser","bbq"]:
 		var shared=host.get(key)
 		if is_instance_valid(shared) and (node==shared or shared.is_ancestor_of(node) or node.is_ancestor_of(shared)):return true

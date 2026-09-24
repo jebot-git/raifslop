@@ -1,7 +1,7 @@
 extends RefCounted
 ## Fits the golf implement without changing the host's tracking or controller calibration.
 static func solve(grip:Transform3D,ball:Vector3,aim:Vector3,length:float)->Dictionary:
-	if not grip.origin.is_finite() or not grip.basis.is_finite() or absf(grip.basis.determinant())<.01 or not ball.is_finite() or not aim.is_finite() or aim.length()<.01 or not is_finite(length) or length<=0:return {}
+	if not grip.origin.is_finite() or not grip.basis.is_finite() or absf(grip.basis.determinant())<.01 or not ball.is_finite() or not aim.is_finite() or aim.length()<.01 or not is_finite(length) or not is_finite(length) or length<=0:return {}
 	var target:=ball-aim.normalized()*.075
 	var delta:=target-grip.origin
 	var distance:=delta.length()
@@ -38,25 +38,34 @@ static func clearance(pose:Transform3D,shape:RefCounted,ground:Callable)->float:
 	return lowest
 
 static func head_pose(grip:Transform3D,fit:Dictionary,length:float,shape:RefCounted)->Transform3D:
-	var basis:Basis=grip.basis.orthonormalized()*Basis.from_euler(fit.rotation*PI/180.0)
-	return Transform3D(basis*Basis.from_euler(fit.get("head_rotation",Vector3.ZERO)*PI/180.0)*Basis(Vector3.RIGHT,shape.loft),grip.origin+basis*Vector3(.055,-length,0)*float(fit.reach))
+	var shaft:Basis=grip.basis.orthonormalized()*Basis.from_euler(fit.rotation*PI/180.0)
+	var head:Basis=grip.basis.orthonormalized()*Basis.from_euler(fit.get("head_rotation",Vector3.ZERO)*PI/180.0)*Basis(Vector3.RIGHT,shape.loft)
+	# The shaft ends at the hosel; head dimensions never scale with reach.
+	return Transform3D(head,grip.origin-shaft.y*length*float(fit.reach)+head.x*.055)
 
 static func solve_grounded(grip:Transform3D,ball:Vector3,aim:Vector3,length:float,shape:RefCounted,ground:Callable,head_rotation:=Vector3.ZERO)->Dictionary:
-	# Keep the entire mesh above the terrain, including the back of lofted wedges.
-	var target_ball:=ball
-	var fit:Dictionary={}
+	if not grip.is_finite() or absf(grip.basis.determinant())<.01 or not ball.is_finite() or not aim.is_finite() or not is_finite(length) or length<=0:return {}
+	if not head_rotation.is_finite():return {}
+	var forward:=Vector3(aim.x,0,aim.z).normalized()
+	if forward.length_squared()<.5:return {}
+	# Fitting changes the handle only. Aim positions the head behind the ball;
+	# it must never replace the user's controller-relative head orientation.
+	var local_head:Vector3=head_rotation
+	var head:Basis=grip.basis.orthonormalized()*Basis.from_euler(local_head*PI/180)*Basis(Vector3.RIGHT,shape.loft)
+	var target:=ball-forward*.075
 	for attempt in 12:
-		fit=solve(grip,target_ball,aim,length)
-		if fit.is_empty():return {}
-		# A club is rigid. Fit attachment/reach without rotating its head relative
-		# to the shaft, including any explicit user correction.
-		fit.head_rotation=head_rotation
-		var pose:=head_pose(grip,fit,length,shape)
-		var gap:=clearance(pose,shape,ground)
+		var delta:=target-head.x*.055-grip.origin
+		var reach:=delta.length()/length
+		if reach<.35 or reach>1.6:return {}
+		var up:Vector3=-delta.normalized()
+		var face:Vector3=forward-up*forward.dot(up)
+		if face.length()<.2:return {}
+		face=face.normalized()
+		var shaft:=Basis(face.cross(up).normalized(),up,-face)
+		var fit:Dictionary={"reach":reach,"rotation":(grip.basis.orthonormalized().inverse()*shaft).get_euler()*180/PI,"head_rotation":local_head,"target":target,"capture_grip":grip}
+		var gap:=clearance(head_pose(grip,fit,length,shape),shape,ground)
 		if not is_finite(gap):return {}
 		if absf(gap-SOLE_CLEARANCE)<.0005:
-			fit.capture_grip=grip
-			fit.clearance=gap
-			return fit
-		target_ball.y+=SOLE_CLEARANCE-gap
+			fit.clearance=gap;return fit
+		target.y+=SOLE_CLEARANCE-gap
 	return {}

@@ -5,9 +5,10 @@ from pathlib import Path
 parser=argparse.ArgumentParser()
 parser.add_argument('--host',type=Path,default=Path(__file__).resolve().parents[1])
 parser.add_argument('--godot',default=os.environ.get('GODOT_BIN','/home/blux/.local/bin/Godot_v4.7.2-stable_linux.x86_64'))
+parser.add_argument('--output',type=Path)
 args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]
-out=root/'test-results/host-golf-network';out.mkdir(parents=True,exist_ok=True)
+out=(args.output or root/'test-results/host-golf-network').resolve();out.mkdir(parents=True,exist_ok=True)
 jobs=[];failed=[]
 with tempfile.TemporaryDirectory(prefix='golf-network-') as temp:
  try:
@@ -17,8 +18,9 @@ with tempfile.TemporaryDirectory(prefix='golf-network-') as temp:
    env=dict(os.environ,XDG_DATA_HOME=f'{temp}/{role}')
    jobs.append((role,subprocess.Popen(command + (['--xr-test'] if '--script' in command else []),stdout=stream,stderr=subprocess.STDOUT,env=env),stream,path))
    time.sleep(.8)
+  deadline=time.monotonic()+65
   for role,proc,stream,path in jobs:
-   try:proc.wait(timeout=65)
+   try:proc.wait(timeout=max(.1,deadline-time.monotonic()))
    except subprocess.TimeoutExpired:proc.kill();proc.wait()
    stream.close();log=path.read_text()
    ok=proc.returncode==0 and 'HOST GOLF NETWORK' in log and 'SCRIPT ERROR' not in log and '\nERROR:' not in log

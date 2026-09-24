@@ -80,6 +80,8 @@ var cast_aim_target := Vector3.ZERO
 var cast_aim_anchor := Vector3.ZERO
 var cast_swing_axis := Vector3.FORWARD
 var cast_motion = preload("res://scripts/cast_motion.gd").new()
+var cast_pose_sampler = preload("res://scripts/cast_pose_sampler.gd").new()
+var cast_preparation = preload("res://scripts/cast_preparation.gd").new()
 var cast_last_tip := Vector3.ZERO
 var cast_sample_us := 0
 var cast_trace:Array[Dictionary]=[]
@@ -108,7 +110,10 @@ var quitting := false
 
 func _ready() -> void:
 	var diagnostics=preload("res://scripts/client_diagnostics.gd").new()
-	diagnostics.game_root=self;add_child(diagnostics)
+	diagnostics.game_root=self;diagnostics.add_to_group("activity_services");add_child(diagnostics)
+	if "--vr-test-capture" in OS.get_cmdline_user_args():
+		var capture=preload("res://scripts/vr_test_capture.gd").new()
+		capture.name="VRTestCapture";capture.game_root=self;capture.add_to_group("activity_services");add_child(capture)
 	server_only = "--server" in OS.get_cmdline_user_args()
 	if server_only:
 		_start_network()
@@ -525,26 +530,34 @@ func _strike_tip() -> Vector3:
 func _sample_cast_swing(delta: float) -> void:
 	# Avatar IK can damp/lag the rendered tip. Cast from actual controller
 	# translation and wrist rotation, in tracking-origin space like fly mending.
-	var at := _tracked_cast_tip()
-	var movement := at - cast_last_tip
-	cast_last_tip = at
 	cast_sample_us = Time.get_ticks_usec()
-	if delta <= 0.0 or delta > .1 or not movement.is_finite() or movement.length() > maxf(.5, delta * 35.0):
-		# Ignore discontinuities, retaining an already completed gesture.
+	var tracked_pose:XRPose=right.get_pose()
+	var reliable:bool=right.get_has_tracking_data() and tracking_manager.focused and tracked_pose!=null and tracked_pose.tracking_confidence!=XRPose.XR_TRACKING_CONFIDENCE_NONE
+	var sample:Dictionary=cast_pose_sampler.sample(controller_local_pose(1),delta,reliable)
+	if sample.is_empty():
+		if "--vr-test-capture" in OS.get_cmdline_user_args():
+			cast_trace.append({"us":cast_sample_us,"dt":delta,"rejected":cast_pose_sampler.status})
+			if cast_trace.size()>360:cast_trace.pop_front()
 		return
+	var at:Vector3=sample.tip
+	var movement:Vector3=sample.movement
+	cast_last_tip=at
 	var pose: Transform3D = controller_local_pose(1) * rod_holster.HELD_POSE
 	var travel: float
+	var previous_strokes: int = game.fly.strokes
 	if head_aimed_casting:
 		travel = cast_motion.sample(movement, pose, head.position.y, cast_swing_axis, game.fly.strokes > 0)
 	else:
 		travel = cast_motion.sample_controller(movement, delta, pose, cast_swing_axis, game.fly.strokes > 0)
+		cast_swing_axis=cast_motion.axis
+		game.fly.strokes=1 if cast_motion.committed() else 0
 	if "--vr-test-capture" in OS.get_cmdline_user_args():
-		cast_trace.append({"us":cast_sample_us,"dt":delta,"tip":[at.x,at.y,at.z],"movement":[movement.x,movement.y,movement.z],"travel":travel,"raised":cast_motion.raised,"forward_m":cast_motion.stroke_forward,"back_m":cast_motion.stroke_back,"strokes":game.fly.strokes})
+		cast_trace.append({"us":cast_sample_us,"dt":delta,"tip":[at.x,at.y,at.z],"movement":[movement.x,movement.y,movement.z],"travel":travel,"phase":cast_motion.phase,"raised":cast_motion.raised,"forward_m":cast_motion.stroke_forward,"back_m":cast_motion.stroke_back,"strokes":game.fly.strokes})
 		if cast_trace.size()>360:cast_trace.pop_front()
 	var speed := travel / delta
 	peak_speed = maxf(peak_speed, maxf(0.0, speed))
-	var previous_strokes: int = game.fly.strokes
-	game.fly.stroke(delta, speed)
+	if head_aimed_casting:game.fly.stroke(delta, speed)
+	else:game.fly.charge_age+=delta
 	if previous_strokes == 0 and game.fly.strokes > 0:
 		game.message = "Swing ready — release trigger to cast."
 		rod_status.show_notice("cast")
@@ -643,6 +656,10 @@ func _begin_cast() -> void:
 	cast_aim_anchor = _casting_anchor()
 	cast_swing_axis = origin.global_basis.inverse() * _cast_direction()
 	cast_motion = preload("res://scripts/cast_motion.gd").new()
+	cast_motion.begin(controller_local_pose(1)*rod_holster.HELD_POSE,cast_swing_axis,cast_preparation.backswing() if xr and not head_aimed_casting else {})
+	cast_swing_axis=cast_motion.axis
+	cast_preparation.clear()
+	cast_pose_sampler.reset(controller_local_pose(1))
 	cast_trace.clear()
 	casting = true
 	cast_last_tip = _tracked_cast_tip()
@@ -732,6 +749,10 @@ func _update_tracking_warning(delta: float) -> void:
 		hud.queue_redraw()
 
 func _process(delta: float) -> void:
+	if xr:
+		var preparing:bool=not casting and game.state in [Session.State.READY,Session.State.LOST] and not menu_open and not rod_holster.stowed and not fish_guide.held and not rig_radial.opened and not (is_instance_valid(golf_activity) and golf_activity.active)
+		if preparing:cast_preparation.sample(controller_local_pose(1),delta,right.get_has_tracking_data() and tracking_manager.focused)
+		else:cast_preparation.clear()
 	if is_instance_valid(golf_activity) and golf_activity.active:
 		golf_activity.update_player(delta)
 		return

@@ -56,6 +56,10 @@ func run()->void:
 	game.round_state.progress_path="user://contact_effects_test_round.cfg"
 	game.set_process(false);game.set_physics_process(false);game.body.set_physics_process(false)
 	check(game.contact_effects.tee_armed,"Game arms tee when loading hole")
+	var teed_ball:Vector3=game.ball.position
+	check(absf(teed_ball.y-game.model.height(teed_ball.x,teed_ball.z)-game.BALL.RADIUS-.035)<.00002 and absf(game.contact_effects.tee.position.y-(teed_ball.y-game.BALL.RADIUS))<.00002,"Ball rests visibly on the raised tee cup")
+	game.ball.step(1.0)
+	check(game.ball.position.is_equal_approx(teed_ball),"Tee supports stationary ball until the first strike")
 	check(not game.strike(Vector3.FORWARD*30,Vector3.FORWARD) and game.contact_effects.tee_armed,"Rejected menu shot leaves tee in place")
 	game.toggle_menu(false)
 	check(game.strike(Vector3.FORWARD*30,Vector3.FORWARD) and not game.contact_effects.tee_armed and game.contact_effects.debris.size()==1,"Successful game shot ejects tee exactly once")
