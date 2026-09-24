@@ -1,9 +1,9 @@
 # Releases and build policy
 
-Release **0.1.16** is branded **Ultimate Boomer Simulator** and targets Linux x86_64, Windows x86_64, Quest standalone and a separate Linux dedicated server. The icon and existing save locations are preserved. Historical releases retain their original branding and filenames.
+Release **0.1.17** is branded **Ultimate Boomer Simulator** and targets Linux x86_64, Windows x86_64, Quest standalone and a separate Linux dedicated server. The icon and existing save locations are preserved. Historical releases retain their original branding and filenames.
 
 Download from [GitHub Releases](https://github.com/jebot-git/raifslop/releases).
-See [0.1.16 changes and validation](RELEASE_NOTES_0.1.16.md).
+See [0.1.17 changes and validation](RELEASE_NOTES_0.1.17.md).
 
 - Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime.
 - Windows: extract the ZIP and run `VR.cmd`; retain the executable, PCK and DLLs. See [Windows OpenXR setup](WINDOWS_OPENXR.md).

@@ -2050,5 +2050,317 @@
     "bytes": 1046282627,
     "reason": "Obsolete debug exports; editable sources, prototype build and signing key retained",
     "action": "removed for 0.1.9"
+  },
+  {
+    "path": "builds/BBQ-Prototype/RealAIFishing.x86_64",
+    "bytes": 73519416,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/BBQ-Prototype/RealAIFishing.pck",
+    "bytes": 753666716,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/BBQ-Prototype/libgodotopenxrvendors.so",
+    "bytes": 4772248,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/BBQ-Prototype/libtwovoip.linux.template_release.x86_64.so",
+    "bytes": 6777352,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/OpenXRValidation/RealAIFishing.exe",
+    "bytes": 109161472,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/OpenXRValidation/RealAIFishing.pck",
+    "bytes": 794510072,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/OpenXRValidation/libgodotopenxrvendors.dll",
+    "bytes": 5049344,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/OpenXRValidation/libtwovoip.windows.template_release.x86_64.dll",
+    "bytes": 6495744,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/Rec5Fixes-2026-09-23/RealAIFishing.x86_64",
+    "bytes": 73703800,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/Rec5Fixes-2026-09-23/RealAIFishing.pck",
+    "bytes": 1578755032,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/Rec5Fixes-2026-09-23/libgodotopenxrvendors.so",
+    "bytes": 5021376,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/Rec5Fixes-2026-09-23/libtwovoip.linux.template_debug.x86_64.so",
+    "bytes": 6752792,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/WindowsDebug/RealAIFishing.exe",
+    "bytes": 103069696,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/WindowsDebug/RealAIFishing.pck",
+    "bytes": 1577860652,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/WindowsDebug/libgodotopenxrvendors.dll",
+    "bytes": 5223936,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/WindowsDebug/libtwovoip.windows.template_debug.x86_64.dll",
+    "bytes": 6537216,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GameplayFeedback/RealAIFishing.x86_64",
+    "bytes": 73703800,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GameplayFeedback/RealAIFishing.pck",
+    "bytes": 1577860652,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GameplayFeedback/libgodotopenxrvendors.so",
+    "bytes": 5021376,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GameplayFeedback/libtwovoip.linux.template_debug.x86_64.so",
+    "bytes": 6752792,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GameplayFeedback/Server/RealAIFishingServer.x86_64",
+    "bytes": 96791720,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GolfFeedback/RealAIFishing.x86_64",
+    "bytes": 73703800,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GolfFeedback/RealAIFishing.pck",
+    "bytes": 1577855044,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GolfFeedback/libgodotopenxrvendors.so",
+    "bytes": 5021376,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GolfFeedback/libtwovoip.linux.template_debug.x86_64.so",
+    "bytes": 6752792,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/GolfFeedback/Server/RealAIFishingServer.x86_64",
+    "bytes": 96790968,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HeightInputFix/RealAIFishing.x86_64",
+    "bytes": 73703800,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HeightInputFix/RealAIFishing.pck",
+    "bytes": 1577847172,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HeightInputFix/libgodotopenxrvendors.so",
+    "bytes": 5021376,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HeightInputFix/libtwovoip.linux.template_debug.x86_64.so",
+    "bytes": 6752792,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HeightInputFix/Server/RealAIFishingServer.x86_64",
+    "bytes": 96790968,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HipGolf/RealAIFishing.x86_64",
+    "bytes": 73703800,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HipGolf/RealAIFishing.pck",
+    "bytes": 1577841236,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HipGolf/libgodotopenxrvendors.so",
+    "bytes": 5021376,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HipGolf/libtwovoip.linux.template_debug.x86_64.so",
+    "bytes": 6752792,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/HipGolf/Server/RealAIFishingServer.x86_64",
+    "bytes": 96790712,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/CourseLanes/RealAIFishing-0.1.15-golf.1-Windows-Debug-x86_64.zip",
+    "bytes": 1289540795,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/CourseLanes/WindowsDebug/RealAIFishing.exe",
+    "bytes": 103069696,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/CourseLanes/WindowsDebug/RealAIFishing.pck",
+    "bytes": 1578713628,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/CourseLanes/WindowsDebug/libgodotopenxrvendors.dll",
+    "bytes": 5223936,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/CourseLanes/WindowsDebug/libtwovoip.windows.template_debug.x86_64.dll",
+    "bytes": 6537216,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/ThreadedGolf/RealAIFishing-0.1.15-golf.1-Windows-Debug-x86_64.zip",
+    "bytes": 1289563417,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/ThreadedGolf/PreQuitFix/RealAIFishing.exe",
+    "bytes": 103069696,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/ThreadedGolf/PreQuitFix/RealAIFishing.pck",
+    "bytes": 1578728956,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/ThreadedGolf/PreQuitFix/libgodotopenxrvendors.dll",
+    "bytes": 5223936,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/ThreadedGolf/PreQuitFix/libtwovoip.windows.template_debug.x86_64.dll",
+    "bytes": 6537216,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/ThreadedGolf/WindowsDebug/RealAIFishing.exe",
+    "bytes": 103069696,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/ThreadedGolf/WindowsDebug/RealAIFishing.pck",
+    "bytes": 1578729052,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/ThreadedGolf/WindowsDebug/libgodotopenxrvendors.dll",
+    "bytes": 5223936,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/ThreadedGolf/WindowsDebug/libtwovoip.windows.template_debug.x86_64.dll",
+    "bytes": 6537216,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/quest19-unsigned/main.19.org.jebot.raifslop.quest.obb",
+    "bytes": 2656032500,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
+  },
+  {
+    "path": "builds/quest19-unsigned/UltimateBoomerSimulator.unsigned.apk",
+    "bytes": 214011101,
+    "action": "removed for 0.1.17",
+    "reason": "Obsolete generated binary; source, logs, recordings and signing material retained"
   }
 ]
