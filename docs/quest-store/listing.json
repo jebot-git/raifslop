@@ -48,7 +48,7 @@
     },
     {
       "name": "Golf",
-      "brief": "A playable shot from the golfer’s view, with club, ball and course visible."
+      "brief": "A playable shot from the golfer\u2019s view, with club, ball and course visible."
     },
     {
       "name": "Waterside BBQ",
@@ -56,7 +56,7 @@
     },
     {
       "name": "Together",
-      "brief": "A multiplayer session with avatars; obtain participants’ consent and hide personal identifiers."
+      "brief": "A multiplayer session with avatars; obtain participants\u2019 consent and hide personal identifiers."
     }
   ],
   "requirements_checked": "2026-09-24",
@@ -64,5 +64,55 @@
     "metadata": "https://developers.meta.com/horizon/resources/publish-app-metadata/",
     "assets": "https://developers.meta.com/horizon/resources/asset-guidelines/",
     "localization": "https://developers.meta.com/horizon/design/localization/"
+  },
+  "media": {
+    "trailer": "media/trailer.mp4",
+    "trailer_cover": "media/trailer-cover.png",
+    "logo": "media/logo.png",
+    "icon": "media/icon.png",
+    "screenshots": [
+      {
+        "name": "Harbour at sunrise",
+        "path": "media/screenshot-01-lake_pier.png"
+      },
+      {
+        "name": "Reed-lined lake",
+        "path": "media/screenshot-02-gray_pier.png"
+      },
+      {
+        "name": "Woodland stream",
+        "path": "media/screenshot-03-cedar_creek.png"
+      },
+      {
+        "name": "Alpine river",
+        "path": "media/screenshot-04-glacier_run.png"
+      },
+      {
+        "name": "Dawn coast",
+        "path": "media/screenshot-05-blouberg_sunrise_2.png"
+      },
+      {
+        "name": "A round of golf",
+        "path": "media/screenshot-06-golf.png"
+      }
+    ],
+    "equipment": [
+      {
+        "name": "Spinning, fly and lure tackle",
+        "path": "media/promo-tackle.png"
+      },
+      {
+        "name": "Matching golf clubs",
+        "path": "media/promo-clubs.png"
+      }
+    ],
+    "capture_notes": "Desktop Godot editorial cameras in production scenes. Environment shots use Mobile; staged equipment uses Forward+ depth of field and equipment-only fill lights. Quest headset parity remains to be checked. See media/README.md.",
+    "covers": {
+      "hero": "media/hero.png",
+      "cover-landscape": "media/cover-landscape.png",
+      "cover-square": "media/cover-square.png",
+      "cover-portrait": "media/cover-portrait.png",
+      "mini-landscape": "media/mini-landscape.png"
+    }
   }
 }

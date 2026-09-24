@@ -203,3 +203,14 @@ Godot Meta Toolkit 1.0.3-stable (Meta Platforms and contributors), MIT toolkit
 source with Meta Platform SDK loader under Meta SDK terms. See
 `addons/godot_meta_toolkit/LICENSE.txt`, `THIRD_PARTY_NOTICES.txt`, `NOTICE.md`
 and `PROVENANCE.json`. Used for Quest store entitlement checks; no paid IAP.
+
+## Store-media lettering (24 September 2026)
+
+Almonte and Blue Highway Regular by **Raymond Larabie / Typodermic Fonts**,
+**CC0 1.0**. Original OTF files and the author's licence are retained in
+`docs/quest-store/media/fonts/`; see its README for the exact source archive
+and checksums. Source: https://typodermicfonts.com/public-domain/ . The store
+logos reuse the existing authored `assets/icon.svg`; its artwork is unchanged.
+Environment images and trailer frames are captured from the running game;
+equipment images stage the existing game models with editorial focus/lighting.
+See `docs/quest-store/media/README.md` for capture and audio provenance.

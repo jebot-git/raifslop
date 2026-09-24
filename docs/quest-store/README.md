@@ -32,21 +32,25 @@ Final Quest capture and hardware acceptance remain pending.
 
 ## Media production slots
 
-Create final files only after reviewing current Quest footage. Place approved
-outputs in a future `media/` subdirectory; do not upload the preview or its
-placeholder panels as store art.
+The requested [media package](media/index.html) now contains six in-game vistas,
+two equipment beauty shots, a 36-second environment trailer, the original icon
+and CC0 title lettering. These are desktop engine captures; confirm visual
+parity against the Quest build before submission. See [capture provenance](media/README.md).
+All five cover-art sizes below are exported in `media/`, with the full title and
+original icon. Official safe-area overlay verification remains pending: Meta’s
+template downloads redirected to a Facebook login.
 
 | Output | Target | Brief / state |
 | --- | --- | --- |
-| `cover-landscape.png` | 2560 × 1440 | One consistent fishing/golf/BBQ visual identity |
+| `cover-landscape.png` | 2560 × 1440 | Original icon and full-title identity |
 | `cover-square.png` | 1440 × 1440 | Same title and composition adapted for square |
 | `cover-portrait.png` | 1008 × 1440 | Same identity; preserve safe areas |
 | `hero.png` | 3000 × 900 | Centered branding with room for crops |
 | `mini-landscape.png` | 1080 × 360 | Same identity, legible at small size |
-| `icon.png` | 512 × 512 | Existing artwork only; export and review pending |
-| `screenshot-01` through `05.png` | 2560 × 1440 each | Fresh in-headset gameplay, following the five briefs |
-| `trailer.mp4` | 16:9, 1080p–2K | MP4/H.264/AAC; genuine gameplay |
-| `trailer-cover.png` | 2560 × 1440 | Representative gameplay frame |
+| `icon.png` | 512 × 512 | Exported in media/; existing icon with opaque teal corners |
+| `screenshot-01` through `06` | 2560 × 1440 each | Captured desktop in-game vistas; select five after Quest parity review |
+| `trailer.mp4` | 1920 × 1080 | 36 seconds, 30 fps, H.264/AAC; panoramic environment footage |
+| `trailer-cover.png` | 2560 × 1440 | Harbour vista matching the trailer environment |
 
 Use 24-bit PNG for the static assets above. These dimensions come from
 [Meta’s asset guidelines](https://developers.meta.com/horizon/resources/asset-guidelines/),
@@ -56,15 +60,16 @@ and omit pricing banners and taglines from cover art. The preview’s layout
 labels are instructions, not proposed text for exported covers.
 
 The unchanged SVG icon has rounded artwork with transparent outside corners.
-Meta’s icon guidance specifies a filled, opaque square. Review the existing
-release icon’s raster treatment before export; keep the user’s original design
-and do not silently redesign it. This is an unresolved asset check.
+Meta’s icon guidance specifies a filled, opaque square. The media export fills
+only the transparent outside corners with the existing teal; the artwork is
+unchanged. Transparent PNG/SVG logo versions are also included.
 
-Trailer outline: fishing cast/fight → river fly cast → golf swing/putt → shared
-BBQ → title. Show controller interaction clearly. No synthetic footage posed
-as gameplay. Obtain consent from any visible multiplayer participants and hide
-user identifiers. Older `docs/preview.png` has obsolete branding and a removed
-desktop interface; older BBQ/course overview captures are not final store media.
+The produced trailer follows the requested panoramic brief: title → harbour →
+reed lake → woodland stream → alpine river → dawn coast → title. It uses the
+actual game world and matching ambient sound, without multiplayer participants.
+The earlier action-trailer brief (casts, swings and shared BBQ) remains optional
+future capture work. Older `docs/preview.png` has obsolete branding and a removed
+desktop interface; it is not used in these assets.
 
 ## Dashboard handoff
 

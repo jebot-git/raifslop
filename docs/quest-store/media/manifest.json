@@ -1,0 +1,302 @@
+{
+  "created": "2026-09-24",
+  "game": "Ultimate Boomer Simulator",
+  "version": "0.1.15",
+  "base_commit": "71d768e6bd1259dfa12a083663af1a417fd722a4",
+  "engine": "Godot 4.7.2.stable.official.ed1daf0bf",
+  "environment_renderer": "Mobile / Vulkan / Intel ADL-N",
+  "equipment_renderer": "Forward+ / Vulkan / 4x MSAA / practical DOF / equipment-only fill lights",
+  "capture_source": "Production scenes and models with offline editorial cameras, isolated user data; no physical Quest capture",
+  "trailer": {
+    "duration_seconds": 36.036,
+    "video_frames": 1080,
+    "environment_frames": 900,
+    "fps": 30,
+    "size": [
+      1920,
+      1080
+    ],
+    "codecs": [
+      "H.264",
+      "AAC"
+    ],
+    "audio": "Matching game ambience; final -20 LUFS normalization target, -2 dBTP ceiling"
+  },
+  "fonts": {
+    "Almonte.otf": "Raymond Larabie / CC0 1.0",
+    "Blue-Highway-Regular.otf": "Raymond Larabie / CC0 1.0"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 6202,
+      "sha256": "278309726dd4a9afd885edd037f5481a8590f5224fa59d25c32de4d7aeadeb68"
+    },
+    {
+      "path": "cover-landscape.png",
+      "bytes": 78839,
+      "sha256": "f06ff47070f85d89f647d6827950b64b749f1e94a514097fb63a3737d14e2b13",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "cover-portrait.png",
+      "bytes": 50345,
+      "sha256": "6e058fedf215bc3e309e86eb9155bbf5804f4bf3488c96d3017a85173066f9a2",
+      "size": [
+        1008,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "cover-square.png",
+      "bytes": 58613,
+      "sha256": "eab7362eb3532500c32d4937ec72235a22514452f70e2f047c1451906b08c47b",
+      "size": [
+        1440,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "fonts/Almonte.otf",
+      "bytes": 19452,
+      "sha256": "ba2b65241222895eea54264fd91b370202212145f70652f883da37946743c75b"
+    },
+    {
+      "path": "fonts/Blue-Highway-Regular.otf",
+      "bytes": 35744,
+      "sha256": "669c655efdc35c9153d52a8adb0676f3f6ebbb73072d439eb89de83f6b59d283"
+    },
+    {
+      "path": "fonts/License.pdf",
+      "bytes": 59056,
+      "sha256": "0fbc3cebad02ec1393131a82a5e5bcadc1cb9a4837dedb996950d452e99951e1"
+    },
+    {
+      "path": "fonts/License.txt",
+      "bytes": 536,
+      "sha256": "e5288a010dd172450da7610696671ba5f93d71f0459020380f3462e5e9257923"
+    },
+    {
+      "path": "fonts/README.md",
+      "bytes": 1678,
+      "sha256": "8e06221c95e114d44227b8dc310c2780ca2cdfb1106b2591b58c68cb2aca9aed"
+    },
+    {
+      "path": "hero.png",
+      "bytes": 70547,
+      "sha256": "35336cb1323d96ea98ab39d04d53df6683b23a74034b3e765e85451a289e26eb",
+      "size": [
+        3000,
+        900
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "icon.png",
+      "bytes": 18852,
+      "sha256": "74d0187f0f030477390c2cc39fbff578d8439e559469c5578c7f65bbb5fdd6ef",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "index.html",
+      "bytes": 6393,
+      "sha256": "95a035722c138bc313f46592e8da4cbe7891c4e20fbcd04fc810e7ab8a1744c0"
+    },
+    {
+      "path": "lettering-specimen.png",
+      "bytes": 52795,
+      "sha256": "fe81d5a4046d861db705954f8a0f5078e7029405ba163c9e2ec86cce132d184e",
+      "size": [
+        1600,
+        1000
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "logo-lockup.png",
+      "bytes": 49955,
+      "sha256": "4a1f3a646700606eb42032de370bb7558126ebdac3ad50e4b2755ee75481d2db",
+      "size": [
+        1800,
+        700
+      ],
+      "mode": "RGBA"
+    },
+    {
+      "path": "logo-mark.png",
+      "bytes": 23126,
+      "sha256": "cc933fe0f654eaab8ffc8c43b777f6eaf1238b53ea2ccfce92e553f572e0e5fb",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA"
+    },
+    {
+      "path": "logo-mark.svg",
+      "bytes": 689,
+      "sha256": "e801e3d71d051aad0787adc44128e30b0b7e4d746f0193a761f614c85aed8265"
+    },
+    {
+      "path": "logo-ubs.png",
+      "bytes": 37657,
+      "sha256": "b880178312b83e7eb562b5344a020c232394fd21438141f7b0483f450d6c5a32",
+      "size": [
+        1200,
+        600
+      ],
+      "mode": "RGBA"
+    },
+    {
+      "path": "logo.png",
+      "bytes": 67782,
+      "sha256": "178cf3a8eb31045c90b64761f32550771a2b6b4eeb05497836125e8595ccdbb0",
+      "size": [
+        1800,
+        700
+      ],
+      "mode": "RGBA"
+    },
+    {
+      "path": "mini-landscape.png",
+      "bytes": 18086,
+      "sha256": "89943cc059904ef5ab8290b6cbc87ba2771574bec79bd2b575512c1cdadc032e",
+      "size": [
+        1080,
+        360
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "promo-clubs.png",
+      "bytes": 1517066,
+      "sha256": "c5a0ff46e7cf8ec24080335e8601021097413decb3697a86eb38d57e238f285d",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "promo-tackle.png",
+      "bytes": 1657745,
+      "sha256": "204e6f9b2d30eddf8897a97e91f9a8d9b3f4326399781dd9065bd45e8dfa4b96",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "screenshot-01-lake_pier.png",
+      "bytes": 2912243,
+      "sha256": "61fed0c9508b3fcbcf3014aca199c59fe92d677ab482a0b07028a205e6239021",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "screenshot-02-gray_pier.png",
+      "bytes": 4303837,
+      "sha256": "2f0c02819bd26f462885be1406548418355d876aebc6093f7b300ae0b7db8f9b",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "screenshot-03-cedar_creek.png",
+      "bytes": 5454621,
+      "sha256": "7cbda619628a491bca03fa0abe7b018a1470d4871fcd8c47ad8c3975a04d2278",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "screenshot-04-glacier_run.png",
+      "bytes": 4102108,
+      "sha256": "58e26605f0b1085ed9741c77989ce87362d32119289db55fdb2bbd53d8b0684c",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "screenshot-05-blouberg_sunrise_2.png",
+      "bytes": 2786299,
+      "sha256": "1924f9b46f8d85d3478ca633bbfd03893ecc76b9b31e0eb9eccd5de059a304e8",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "screenshot-06-golf.png",
+      "bytes": 2184525,
+      "sha256": "df6645c416a2a4d0135662fa9220da407408ee2ded3ef0c4556350ef11a2c721",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "trailer-cover.png",
+      "bytes": 2912243,
+      "sha256": "61fed0c9508b3fcbcf3014aca199c59fe92d677ab482a0b07028a205e6239021",
+      "size": [
+        2560,
+        1440
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "trailer-probe.json",
+      "bytes": 3541,
+      "sha256": "33624a090c2c6d637aa4ddfbda14457e1a53124b553c1fbac2e26d17b047f7d2"
+    },
+    {
+      "path": "trailer-title.png",
+      "bytes": 39659,
+      "sha256": "21ff526e3df13805e0592f1827c181b4f62f531fff4982e297296d061a768b2e",
+      "size": [
+        1920,
+        1080
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "trailer.mp4",
+      "bytes": 50587999,
+      "sha256": "f102d7c9a45136cf1f9c6fac8b4944cb743a2a4fee8c862e5497638fcd5d08d3"
+    }
+  ],
+  "asset_guidelines": {
+    "url": "https://developers.meta.com/horizon/resources/asset-guidelines/",
+    "checked": "2026-09-24",
+    "cover_dimensions_and_color_modes": "verified",
+    "safe_area_templates": "Login required; overlay verification pending. Centered design bounds within central 74%.",
+    "submission_logo": "logo.png",
+    "alternate_lettering": [
+      "logo-lockup.png",
+      "logo-ubs.png"
+    ]
+  }
+}
