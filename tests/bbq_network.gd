@@ -24,9 +24,21 @@ func request(action:String,id:=-1,hand:=1,at:=Vector3.ZERO) -> void:
   var state:Dictionary=net.bbq.model.stations.get("fish_hoek_beach",{})
   if action=="cooler":where=Sites.pose("fish_hoek_beach")*Sites.COOLER_HANDLE
   elif action not in ["eat","sip"] and id>=0 and not state.is_empty():where=Sites.pose("fish_hoek_beach")*state.items[id].pos
+  if action=="clamp":where=Sites.pose("fish_hoek_beach")*preload("res://scripts/bbq/model.gd").resting_pose(state.items[id]).origin+Vector3(0,0,.25)
   trackers[hand].set_pose("grip",Transform3D(Basis.IDENTITY,g.origin.to_local(where)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
   await create_timer(.2).timeout
  net.bbq.request(action,id,hand,at)
+func carry(id:int,at:Vector3,turn:=false)->void:
+ await request("clamp",id,1)
+ check(await wait_for(func():return item(id).place=="tongs" and item(id).owner==net.bbq.local_id()),"Food ownership attaches to the tongs")
+ if item(id).place!="tongs":return
+ var basis:=Basis(Vector3.BACK,PI) if turn else Basis.IDENTITY
+ var local:=Transform3D(basis,at-basis*item(id).grip_offset.origin)
+ var world:=Sites.pose("fish_hoek_beach")*local
+ trackers[1].set_pose("grip",g.origin.global_transform.affine_inverse()*world,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+ await create_timer(.3).timeout
+ net.bbq.request("unclamp",id,1)
+ check(await wait_for(func():return item(id).place!="tongs"),"Released food position replicates")
 func run() -> void:
  var args:=OS.get_cmdline_user_args();role=args[0]
  g=load("res://scenes/main.tscn").instantiate();root.add_child(g);net=g.network
@@ -60,15 +72,16 @@ func run() -> void:
    await request("cooler")
    await request("grab",6,1)
    check(await wait_for(func():return item(6).owner==net.bbq.local_id()),"Client receives utensil ownership")
-   await request("cook",0,1,Vector3(0,1,0))
+   await carry(0,Sites.grill(1))
    check(await wait_for(func():return item(0).place=="grill" and item(0).cook[0]>.02),"Host advances cooking independently")
    check(await wait_for(func():return item(1).place=="grill"),"Second cook acquired tongs before menu test")
    g._toggle_avatar_menu();await create_timer(.7).timeout
    check(item(0).cook[0]>.025,"Opening a menu does not pause shared cooking")
    g._toggle_avatar_menu()
    await request("grab",6,1);await create_timer(.3).timeout
-   await request("cook",0,1);await create_timer(.5).timeout
-   await request("cook",0,1)
+   await carry(0,Sites.grill(1),true);await create_timer(.5).timeout
+   check(item(0).side==1,"Physical half turn replicates the cooked side")
+   await carry(0,Sites.plate(0))
    check(await wait_for(func():return item(0).place in ["served","hand","gone"]),"Serving synchronizes")
    await create_timer(8).timeout
   elif role=="observer":
@@ -81,7 +94,7 @@ func run() -> void:
    check(net.bbq.model.stations.size()==1 and g.bbq.item_nodes.size()==10,"Repeated starts keep one shared station and inventory")
    await request("grab",7,1)
    check(await wait_for(func():return item(7).owner==net.bbq.local_id()),"Observer joins with second tongs")
-   await request("cook",1,1)
+   await carry(1,Sites.grill(0))
    check(await wait_for(func():return item(1).place=="grill"),"Second player cooks independently")
    await request("drop",7,1)
    check(await wait_for(func():return item(0).place=="served"),"Observer sees served food")

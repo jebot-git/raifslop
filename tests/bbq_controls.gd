@@ -7,12 +7,14 @@ func _initialize() -> void:run.call_deferred()
 func check(ok:bool,label:String) -> void:
  print("PASS " if ok else "FAIL ",label)
  if not ok:failures.append(label)
-func pose(hand:int,at:Vector3) -> void:
- trackers[hand].set_pose("grip",Transform3D(Basis.IDENTITY,g.origin.to_local(at)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+func pose(hand:int,at:Vector3,basis:=Basis.IDENTITY) -> void:
+ trackers[hand].set_pose("grip",Transform3D(g.origin.global_basis.inverse()*basis,g.origin.to_local(at)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
 func settle() -> void:
  for i in 4:await process_frame
 func trigger(hand:int) -> void:
  trackers[hand].set_input("trigger",1.0);await settle();trackers[hand].set_input("trigger",0.0);await settle()
+func ModelPose(item:Dictionary)->Vector3:
+ return preload("res://scripts/bbq/model.gd").resting_pose(item).origin
 func run() -> void:
  g=load("res://scenes/main.tscn").instantiate();root.add_child(g);await create_timer(.6).timeout
  g.set_process(false);g.motor.set_physics_process(false);g.fishing_feedback.set_process(false)
@@ -34,11 +36,42 @@ func run() -> void:
  check(g.fish_guide.can_grab(),"Guide stays available while cooking")
  check(a.item_nodes[6].global_position.is_equal_approx(g.left.global_position),"Utensil snaps to tracked hand")
  g._left_button("ax_button");check(g.game.bait==bait,"Context action never changes bait")
- pose(1,site*items[0].pos+Vector3(0,0,.22));await settle();await trigger(1)
- check(items[0].place=="grill","Tracked tongs put food on grill with forgiving reach")
- pose(1,site*items[0].pos+Vector3(0,0,.22));await settle();await trigger(1)
- check(items[0].side==1,"Trigger turns food")
- await trigger(1);check(items[0].place=="served","Trigger serves turned food")
+ # Trigger clamps until release; neither pressing nor holding flips by itself.
+ var model=service.model
+ pose(1,site*ModelPose(items[0])+Vector3(0,0,.25));await settle()
+ trackers[1].set_input("trigger",1.0);await settle()
+ check(items[0].place=="tongs" and items[0].owner==1,"Trigger clamps food to held tongs")
+ var offset:Transform3D=items[0].grip_offset
+ var half:=Basis(Vector3.BACK,PI/2)
+ var target:=site*(Sites.grill(1)+Vector3(0,.2,0))
+ pose(1,target-half*offset.origin,half);await settle()
+ check(a.item_nodes[0].global_basis.is_equal_approx(half) and a.item_nodes[0].global_position.distance_to(target)<.001,"Food follows wrist continuously at a quarter turn")
+ check(items[0].side==0 and items[0].cook==[0.0,0.0],"Lifting food pauses cooking without an automatic side change")
+ # Return without turning: same side goes back on the grill.
+ pose(1,site*Sites.grill(1)-offset.origin);await settle()
+ trackers[1].set_input("trigger",0.0);await settle()
+ check(items[0].place=="grill" and items[0].side==0,"Release without wrist flip keeps the same cooking side")
+ pose(1,site*ModelPose(items[0])+Vector3(0,0,.25));await settle()
+ trackers[1].set_input("trigger",1.0);await settle();offset=items[0].grip_offset
+ var turn:=Basis(Vector3.BACK,PI)
+ pose(1,site*Sites.grill(1)-turn*offset.origin,turn);await settle()
+ check(a.item_nodes[0].global_basis.y.dot(Vector3.UP)<-.99,"Held food visibly follows full wrist turn")
+ trackers[1].set_input("trigger",0.0);await settle()
+ check(items[0].side==1 and items[0].place=="grill","Wrist turn and release put the opposite side on the grate")
+ pose(1,site*ModelPose(items[0])+Vector3(0,0,.25));await settle()
+ trackers[1].set_input("trigger",1.0);await settle();offset=items[0].grip_offset
+ pose(1,site*Sites.plate(0)-offset.origin);await settle()
+ trackers[1].set_input("trigger",0.0);await settle()
+ check(items[0].place=="served","Moving to the prep table and releasing serves food")
+ # Left hand uses the same physical path; dropping tongs also releases food.
+ pose(0,site*ModelPose(items[1])+Vector3(0,0,.25));await settle()
+ trackers[0].set_input("trigger",1.0);await settle()
+ check(items[1].place=="tongs" and items[1].hand==0,"Left-hand tongs clamp food")
+ offset=items[1].grip_offset
+ pose(0,site*Sites.grill(0)-turn*offset.origin,turn);await settle()
+ trackers[0].set_input("grip",0.0);await settle()
+ check(items[1].place=="grill" and items[1].side==1 and not a.holds(0),"Dropping left-hand tongs releases food in its actual flipped pose")
+ trackers[0].set_input("trigger",0.0);await settle()
  trackers[1].set_input("grip",0.0);await settle()
  check(not a.holds(1) and items[7].owner==0,"Release docks tongs")
  pose(1,site*items[0].pos);await settle();trackers[1].set_input("grip",1.0);await settle()
@@ -55,11 +88,11 @@ func run() -> void:
  check(items[8].sips==1,"Mouth gesture sips drink")
  # The guide owns camera input while shared food continues cooking.
  service.model.stations[g.current_location].items[1].place="grill"
- var heat:float=items[1].cook[0]
+ var heat:float=items[1].cook[items[1].side]
  g.fish_guide.held=true;g.fish_guide.photo_camera.toggle();await settle()
  check(g.fish_guide.photo_camera.active,"Camera mode opens at the shared BBQ")
  check(not a.holds(0) and not a.holds(1),"Opening guide returns BBQ props")
- check(items[1].cook[0]>heat,"Guide use does not stop shared cooking")
+ check(items[1].cook[items[1].side]>heat,"Guide use does not stop shared cooking")
  g._right_pressed("ax_button")
  check(g.fish_guide.photo_camera.selfie,"Guide keeps controller camera input during BBQ")
  g.fish_guide.photo_camera.toggle();g.fish_guide.held=false

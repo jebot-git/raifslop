@@ -22,7 +22,7 @@ func run() -> void:
 	check(ProjectSettings.get_setting("application/config/version")=="0.1.16","Pack is Ultimate Boomer Simulator 0.1.16")
 	check(not ProjectSettings.get_setting("xr/openxr/extensions/hand_interaction_profile",false),"Hands-only controls remain in planning")
 	check(not ProjectSettings.has_setting("autoload/QuestHandProbe"),"Diagnostic hand overlay is excluded")
-	check(load("res://scripts/network/session.gd").VERSION==16,"Pack uses measured-height and mapped-course protocol 16")
+	check(load("res://scripts/network/session.gd").VERSION==17,"Pack uses measured-height and manual-BBQ protocol 17")
 	check(ResourceLoader.exists("res://scripts/client_diagnostics.gd"),"Pack includes opt-in client diagnostics")
 	for name in ["coastal_dune_grass.png","coastal_wrack.png","fishing_plan_poster.svg"]:
 		var tex:Texture2D=load("res://assets/environment/shore_details/"+name)

@@ -4,9 +4,16 @@ const Sites=preload("res://scripts/bbq/sites.gd")
 var failures:Array=[]
 func check(ok:bool,message:String) -> void:
  if not ok:failures.append(message);push_error(message)
+func carry(m:RefCounted,location:String,peer:int,hand:int,id:int,at:Vector3,turn:=false)->bool:
+ var item:Dictionary=m.stations[location].items[id]
+ var grip:=Transform3D(Basis.IDENTITY,Model.resting_pose(item).origin+Vector3(0,0,.25))
+ if not m.apply(location,peer,hand,"clamp",id,Vector3.ZERO,grip):return false
+ var basis:=Basis(Vector3.BACK,PI) if turn else Basis.IDENTITY
+ var release:=Transform3D(basis,at-basis*item.grip_offset.origin)
+ return m.apply(location,peer,hand,"unclamp",id,Vector3.ZERO,release)
 func _initialize() -> void:
  var m=Model.new()
- check(Sites.SITES.size()==10,"All ten waters, including the maritime additions, have gathering spots")
+ check(Sites.SITES.size()==12,"All twelve waters, including the maritime additions, have gathering spots")
  for location in Sites.SITES:
   check(m.start(location),"Every location can start independently")
   check(m.start(location) and m.stations[location].items.size()==10,"Concurrent starts share one bounded kit")
@@ -16,15 +23,15 @@ func _initialize() -> void:
  check(not m.apply(l,3,0,"grab",6),"Two clients cannot own the same tongs")
  check(m.apply(l,3,1,"grab",7),"Second cook can join")
  check(not m.apply(l,2,0,"grab",8),"One prop per hand")
- check(not m.apply(l,4,1,"cook",0),"Cooking requires held tongs")
- check(m.apply(l,2,0,"cook",0,Sites.grill(1)),"First cook loads central heat")
- check(m.apply(l,3,1,"cook",1,Sites.grill(0)),"Second cook loads cooler edge")
+ check(not m.apply(l,4,1,"clamp",0),"Cooking requires held tongs")
+ check(carry(m,l,2,0,0,Sites.grill(1)),"First cook loads central heat")
+ check(carry(m,l,3,1,1,Sites.grill(0)),"Second cook loads cooler edge")
  m.tick(45,[l])
  check(m.stations[l].items[0].cook[0]>m.stations[l].items[1].cook[0],"Heat zones differ")
- check(m.apply(l,2,0,"cook",0),"Turn first food")
+ check(carry(m,l,2,0,0,Sites.grill(1),true),"Turn first food")
  m.tick(45,[l])
  check(Model.doneness(m.stations[l].items[0]).begins_with("Golden"),"Both sides cook independently")
- check(m.apply(l,2,0,"cook",0),"Serve food")
+ check(carry(m,l,2,0,0,Sites.plate(0)),"Serve food")
  check(m.stations[l].items[0].place=="served","Served food leaves heat")
  check(m.apply(l,4,1,"grab",0),"Observer joins by taking a serving")
  check(not m.apply(l,3,1,"drop",0),"Other player cannot steal or drop held serving")
@@ -36,6 +43,13 @@ func _initialize() -> void:
  check(m.apply(l,4,1,"grab",8) and m.apply(l,4,1,"sip",8),"Open drink")
  for i in 3:check(m.apply(l,4,1,"sip",8),"Sip drink")
  check(m.stations[l].items[8].place=="gone","Empty drink cleans up")
- m.release_peer(2);check(m.held(l,2,0)==-1,"Disconnect returns owned tools")
+ var at:=Transform3D(Basis.IDENTITY,Model.resting_pose(m.stations[l].items[0]).origin+Vector3(0,0,.25))
+ check(m.apply(l,2,0,"clamp",0,Vector3.ZERO,at),"Clamp reserves the food as well as the tool")
+ check(not m.apply(l,3,1,"clamp",0,Vector3.ZERO,at),"Other tongs cannot steal clamped food")
+ check(not m.apply(l,3,1,"unclamp",0,Vector3.ZERO,at),"Another cook cannot release held food")
+ check(not m.apply(l,2,0,"cook",0),"Legacy button-flip command is rejected")
+ var held_cook:Array=m.stations[l].items[0].cook.duplicate()
+ m.tick(10,[l]);check(m.stations[l].items[0].cook==held_cook,"Clamped food is removed from heat")
+ m.release_peer(2);check(m.held(l,2,0)==-1 and m.clamped(l,2,0)==-1 and m.stations[l].items[0].owner==0,"Disconnect returns tools and clamped food")
  m.tick(200,[]);check(m.stations.is_empty(),"Unattended stations pack away")
  print("BBQ_MODEL ",JSON.stringify({"failures":failures}));quit(0 if failures.is_empty() else 1)
