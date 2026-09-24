@@ -35,9 +35,14 @@ func _initialize()->void:
 			check(rough.distance<fair.distance*.5 and sand.distance<rough.distance*.5,"Fast rough/sand travel differs substantially, including skids %s/%s"%[hz,skid])
 			check(fair.gain<.0001 and rough.gain<.0001 and sand.gain<.0001,"Material drag cannot inject energy %s/%s"%[hz,skid])
 	for turf in ["green","fairway","rough"]:
-		var grade:float={"green":.03,"fairway":.06,"rough":.12}[turf]
+		# Reversal requires gravity to exceed the material's rolling resistance.
+		# Shallow turf slopes should hold a stopped ball, not sustain a crawl.
+		var grade:float={"green":.10,"fairway":.35,"rough":.50}[turf]
 		for hz in [72.0,90.0,120.0]:
-			check(roll(turf,1.5,grade,hz).reversed,"Uphill ball reverses on playable slope %s/%s"%[turf,hz])
+			check(roll(turf,1.5,grade,hz).reversed,"Uphill ball reverses when gravity exceeds turf resistance %s/%s"%[turf,hz])
+			var shallow:float={"green":.03,"fairway":.12,"rough":.18}[turf]
+			check(not roll(turf,1.5,shallow,hz).moving,"Uphill ball settles on a slope the turf can hold %s/%s"%[turf,hz])
+			check(not roll(turf,1.5,-shallow,hz).moving,"Downhill ball settles on a slope the turf can hold %s/%s"%[turf,hz])
 	check(not roll("sand",1.5,.1).reversed,"Soft sand can hold an embedded ball on a moderate slope")
 	check(not roll("green",1.5,.005).moving,"Shallow stable slope still settles")
 	var a:=roll("rough",15,0,72);var b:=roll("rough",15,0,120)

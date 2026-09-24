@@ -6,11 +6,9 @@ const TEE_HEIGHT := .035
 const AREA := PI*RADIUS*RADIUS
 const GRAVITY := Vector3(0,-9.80665,0)
 const SURFACES := {"green":[.25,.55],"fringe":[.30,.85],"fairway":[.42,1.8],"rough":[.23,2.5],"sand":[.10,4.5]}
-# Tunable material response, not measured course properties. Static holding is
-# independent of the energy lost pushing through grass/sand while moving.
-const HOLD_ACCEL := {"green":.08,"fringe":.12,"fairway":.16,"rough":.45,"sand":2.0}
+# Tunable material response, not measured course properties. Rolling resistance
+# remains finite at rest: the same turf that slows a roll can hold the ball.
 const MATERIAL_DRAG := {"green":0.0,"fringe":.001,"fairway":.002,"rough":.07,"sand":.35}
-const LOW_SPEED_DRAG := 2.0
 const REST_SPEED := .01
 const SLIDING_FRICTION := {"green":.20,"fringe":.25,"fairway":.30,"rough":.45,"sand":.60}
 # Impact friction is separate from sustained sliding and rolling resistance.
@@ -60,13 +58,8 @@ var collision_query: Callable
 func support_height(x:float,z:float)->float:
 	# Sphere support on the local plane; vertical radius alone penetrates slopes.
 	return model.height(x,z)+RADIUS/maxf(.2,model.normal_at(x,z).y)
-func holding_acceleration(surface:String)->float:
-	return float(HOLD_ACCEL.get(surface,HOLD_ACCEL.rough))
-func rolling_resistance(surface:String,speed:float)->float:
-	var base:float=SURFACES.get(surface,SURFACES.rough)[1]
-	# Smoothly approach the static threshold as speed crosses zero, allowing an
-	# uphill ball to reverse instead of repeatedly being clamped to a dead stop.
-	return minf(base,holding_acceleration(surface)+speed*LOW_SPEED_DRAG)
+func rolling_resistance(surface:String)->float:
+	return float(SURFACES.get(surface,SURFACES.rough)[1])
 func material_drag(surface:String,speed:float)->float:
 	return float(MATERIAL_DRAG.get(surface,.07))*speed*speed
 func place(p: Vector3) -> void:
@@ -106,7 +99,7 @@ func _substep(dt: float) -> void:
 	if grounded and position.y<=height+.04:
 		var slope := GRAVITY-normal*GRAVITY.dot(normal)
 		velocity -= normal*velocity.dot(normal)
-		var resistance:float=rolling_resistance(surface,velocity.length())
+		var resistance:float=rolling_resistance(surface)
 		var arm:Vector3=-normal*RADIUS
 		var slip:=velocity+spin.cross(arm)
 		if slip.length()>.002:
@@ -125,11 +118,12 @@ func _substep(dt: float) -> void:
 		else:
 			# I = 2/5 mr²: rolling acceleration down a slope is 5/7 g sin(theta).
 			var acceleration_downhill:=slope*(5.0/7.0)
-			if velocity.length()<.025 and acceleration_downhill.length()<=holding_acceleration(surface):
-				velocity=Vector3.ZERO
-			else:
-				velocity+=acceleration_downhill*dt
-				velocity=velocity.move_toward(Vector3.ZERO,(resistance+material_drag(surface,velocity.length()))*dt)
+			# Apply gravity before bounded resistance. At a zero-speed crossing,
+			# this holds when turf can balance gravity, or starts a downhill roll
+			# when gravity exceeds resistance. Never taper resistance with speed:
+			# doing so creates a terminal crawl on otherwise stable slopes.
+			velocity+=acceleration_downhill*dt
+			velocity=velocity.move_toward(Vector3.ZERO,(resistance+material_drag(surface,velocity.length()))*dt)
 			spin=normal.cross(velocity)/RADIUS+normal*spin.dot(normal)*exp(-3*dt)
 		position+=velocity*dt
 		var floor_y:=support_height(position.x,position.z)
@@ -177,9 +171,9 @@ func _substep(dt: float) -> void:
 		hazard=true;moving=false;velocity=Vector3.ZERO;stop_reason=surface;return
 	var rest_normal:Vector3=model.normal_at(position.x,position.z)
 	var downhill:Vector3=(GRAVITY-rest_normal*GRAVITY.dot(rest_normal))*(5.0/7.0)
-	# Small force hysteresis prevents sub-millimetre creep at large course
-	# coordinates from keeping a visually stationary ball active indefinitely.
-	if grounded and velocity.length()<REST_SPEED and (velocity+spin.cross(-rest_normal*RADIUS)).length()<.025 and downhill.length()<=holding_acceleration(model.lie(position.x,position.z))+LOW_SPEED_DRAG*REST_SPEED: rest_time+=dt
+	# Sleep only on a slope the rolling resistance can hold. A ball crossing
+	# zero speed on a steeper slope must remain active so gravity can reverse it.
+	if grounded and velocity.length()<REST_SPEED and (velocity+spin.cross(-rest_normal*RADIUS)).length()<.025 and downhill.length()<=rolling_resistance(model.lie(position.x,position.z))+.0001: rest_time+=dt
 	else: rest_time=0
 	if rest_time>.35: moving=false;velocity=Vector3.ZERO;stop_reason="rest"
 	# A numerical fail-safe produces a playable lie, never an endless flight.

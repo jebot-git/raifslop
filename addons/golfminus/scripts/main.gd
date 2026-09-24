@@ -7,6 +7,7 @@ const ROUND=preload("res://addons/golfminus/scripts/golf/round.gd")
 const SWING=preload("res://addons/golfminus/scripts/golf/swing_tracker.gd")
 const LOCOMOTION=preload("res://scripts/locomotion.gd")
 const CALIBRATION=preload("res://scripts/controller_calibration.gd")
+const FIT_PROFILE=preload("res://addons/golfminus/scripts/golf/club_fit_profile.gd")
 var host_game: Node3D
 var host_activity: Node
 var model=MODEL.new()
@@ -37,7 +38,7 @@ var support_hand:Node3D
 var club_reach:=1.0
 var club_offsets:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
 var club_controller_mount:=[false,false]
-var club_rotations:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
+var club_rotations:Array[Vector3]=[FIT_PROFILE.default_shaft_rotation(0),FIT_PROFILE.default_shaft_rotation(1)]
 var club_head_rotations:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
 var club_head_sources:Array[String]=["default","default"]
 var club_fitted:=[false,false]
@@ -101,7 +102,7 @@ func _ready() -> void:
 	godview=preload("res://addons/golfminus/scripts/golf/godview.gd").new();add_child(godview);godview.setup(self)
 	club_radial=preload("res://addons/golfminus/scripts/golf/club_radial.gd").new();add_child(club_radial);club_radial.setup(self)
 	var cfg:=ConfigFile.new();cfg.load("user://golf_controls.cfg");calibration.load_config(cfg)
-	if preload("res://addons/golfminus/scripts/golf/club_fit_profile.gd").migrate(cfg):cfg.save("user://golf_controls.cfg")
+	if FIT_PROFILE.migrate(cfg):cfg.save("user://golf_controls.cfg")
 	ICONS.enabled=bool(cfg.get_value("interface","pictograms",true))
 	practice_exact_contact=bool(cfg.get_value("golf","practice_exact_contact",false))
 	if is_instance_valid(host_game):calibration=host_game.controller_calibration
@@ -114,12 +115,12 @@ func _ready() -> void:
 		var offset=cfg.get_value("golf","club_offset_%d"%hand,Vector3.ZERO)
 		if offset is Vector3 and offset.is_finite():club_offsets[hand]=offset.clamp(-Vector3.ONE,Vector3.ONE)
 		club_controller_mount[hand]=bool(cfg.get_value("golf","club_controller_mount_%d"%hand,false))
-		var value=cfg.get_value("golf","club_rotation_%d"%hand,Vector3.ZERO)
+		var value=cfg.get_value("golf","club_rotation_%d"%hand,FIT_PROFILE.default_shaft_rotation(hand))
 		if value is Vector3 and value.is_finite():club_rotations[hand]=value
 		value=cfg.get_value("golf","club_head_rotation_%d"%hand,Vector3.ZERO)
 		if value is Vector3 and value.is_finite():club_head_rotations[hand]=value
 		club_head_sources[hand]=str(cfg.get_value("golf","club_head_source_%d"%hand,"default"))
-		club_fitted[hand]=bool(cfg.get_value("golf","club_fitted_%d"%hand,club_rotations[hand].length_squared()>.001 or club_head_rotations[hand].length_squared()>.001))
+		club_fitted[hand]=bool(cfg.get_value("golf","club_fitted_%d"%hand,false))
 	_ui()
 	fit_preview=preload("res://addons/golfminus/scripts/golf/fit_preview.gd").new();add_child(fit_preview)
 	if not is_instance_valid(host_game):select_course("spyglass")
@@ -372,7 +373,7 @@ func _save_preferences() -> void:
 		cfg.set_value("golf","club_head_rotation_%d"%hand,club_head_rotations[hand])
 		cfg.set_value("golf","club_fitted_%d"%hand,club_fitted[hand])
 		cfg.set_value("golf","club_head_source_%d"%hand,club_head_sources[hand])
-	cfg.set_value("golf","fit_version",2)
+	cfg.set_value("golf","fit_version",FIT_PROFILE.VERSION)
 	cfg.set_value("golf","practice_exact_contact",practice_exact_contact)
 	cfg.set_value("interface","pictograms",ICONS.enabled)
 	cfg.set_value("golf","reach",club_reach);cfg.set_value("golf","left_handed",preferred_left_handed);cfg.save("user://golf_controls.cfg")
@@ -660,7 +661,7 @@ func set_club_attachment(hand:int,field:String,axis:int,value:float)->void:
 func reset_club_attachment(hand:int)->void:
 	if hand not in [0,1]:return
 	if fitting_club:cancel_club_fit()
-	club_offsets[hand]=Vector3.ZERO;club_rotations[hand]=Vector3.ZERO;club_head_rotations[hand]=Vector3.ZERO
+	club_offsets[hand]=Vector3.ZERO;club_rotations[hand]=FIT_PROFILE.default_shaft_rotation(hand);club_head_rotations[hand]=Vector3.ZERO
 	club_fitted[hand]=false;club_controller_mount[hand]=false;club_head_sources[hand]="default"
 	_attachment_changed()
 func set_club_reach(value:float)->void:
@@ -699,16 +700,19 @@ func head_correction(hand:int)->Vector3:
 	if club_fitted[hand]:return club_head_rotations[hand]
 	# Default grip-relative head orientation before an address fit.
 	# Shaft corrections are independent; explicit face controls may override it.
-	var lean:float=[32.0,31.0,29.0,27.0,26.0,26.0,26.0,20.0][club_index]
-	return Vector3(0,0,lean if hand==0 else -lean)
+	return FIT_PROFILE.default_head_rotation(hand,club_index)
 func _sync_physical_head()->void:
 	if not is_instance_valid(physical_head):return
 	var length:float=1.13 if club_index<2 else .86 if club_index==7 else .93
 	# Reach changes the shaft, not head size, loft, mass or contact geometry.
-	var correction:Vector3=head_correction(0 if left_handed else 1)
+	var hand:=0 if left_handed else 1
+	var correction:Vector3=head_correction(hand)
 	if fitting_club and not fit_session.candidate.is_empty():correction=fit_session.candidate.get("head_rotation",Vector3.ZERO)
 	var grip_basis:Basis=club_world_grip_pose().basis.orthonormalized()
-	if equipment!=null and equipment.stowed:grip_basis=club.global_basis.orthonormalized()
+	if equipment!=null and equipment.stowed:
+		# The belt pose is a shaft frame, not a controller grip. Reconstruct
+		# the grip so changing clubs while stowed preserves head/handle alignment.
+		grip_basis=club.global_basis.orthonormalized()*Basis.from_euler(club_rotations[hand]*PI/180.0).inverse()
 	var head_basis:=grip_basis*Basis.from_euler(correction*PI/180.0)*Basis(Vector3.RIGHT,head_shape.loft)
 	physical_head.global_transform=Transform3D(head_basis,club.to_global(Vector3(0,-length,0))+head_basis.x*.055)
 func begin_club_fit() -> void:

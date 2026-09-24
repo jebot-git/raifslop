@@ -33,6 +33,27 @@ func run():
 	host.golf_activity.start_play("solo");await settle();host.motor.set_physics_process(false)
 	golf.focused=true;golf.set_hand(false);golf.club_reach=1.0
 	golf.reset_club_attachment(0);golf.reset_club_attachment(1)
+	# Exercise the actual hosted visual/contact pose before fitting, not only
+	# the profile helper. A natural OpenXR grip must not require a sideways hand.
+	for hand in 2:
+		golf.set_hand(hand==0);golf.set_club(0);golf.equipment.set_stowed(false)
+		var lean:=deg_to_rad(32.0);var side:float=1 if hand==0 else -1
+		var x:=Vector3.FORWARD if hand==0 else Vector3.BACK
+		var z:=Vector3(-side*sin(lean),-cos(lean),0)
+		var grip:=Transform3D(Basis(x,z.cross(x),z),Vector3(side*.5,1,.1))
+		trackers[hand].set_pose("grip",grip,Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+		await settle();golf._update_club_pose()
+		var expected_head:Basis=host.origin.global_basis.orthonormalized()*Basis(Vector3.RIGHT,deg_to_rad(11.0))
+		check(golf.physical_head.global_basis.is_equal_approx(expected_head),"Hosted unfitted head faces shot with authored loft for hand %d"%hand)
+		var relative:Basis=golf.club.global_basis.orthonormalized().inverse()*expected_head
+		golf.equipment.set_stowed(true);golf.set_club(0)
+		check(golf.physical_head.transform.basis.orthonormalized().is_equal_approx(relative),"Changing stowed club preserves head/handle alignment for hand %d"%hand)
+		golf.equipment.set_stowed(false)
+		golf.club_rotations[hand]+=Vector3(5,12,-8);golf._update_club_pose()
+		check(golf.physical_head.global_basis.is_equal_approx(expected_head),"Hosted handle edits leave default head orientation independent for hand %d"%hand)
+		golf.reset_club_attachment(hand)
+	for hand in 2:await pose(hand,host.head.global_position+Vector3((hand*2-1)*.3,-.4,-.3))
+	golf.set_hand(false)
 
 	var initial_tier:int=host.game.tackle.equipped
 	var initial_club:int=golf.club_index
@@ -65,7 +86,7 @@ func run():
 	ui.mounted.button_pressed=true
 	check(golf.club_offsets[1].is_equal_approx(Vector3(.125,-.08,.3)),"Position controls convert centimetres to metres")
 	check(golf.club_rotations[1]==Vector3(25,-40,90) and golf.club_fitted[1],"Shaft and clubface controls apply independently")
-	check(golf.club_offsets[0]==Vector3.ZERO and golf.club_rotations[0]==Vector3.ZERO and not golf.club_controller_mount[0],"Right attachment edits leave left hand unchanged")
+	check(golf.club_offsets[0]==Vector3.ZERO and golf.club_rotations[0]==golf.FIT_PROFILE.default_shaft_rotation(0) and not golf.club_controller_mount[0],"Right attachment edits leave left hand unchanged")
 	check(host.controller_calibration.pose(1).is_equal_approx(shared),"Golf calibration leaves shared fishing/controller calibration untouched")
 	golf.equipment.set_stowed(false);golf._update_club_pose()
 	var expected:Transform3D=host.right.global_transform*shared*Transform3D(Basis.IDENTITY,golf.club_offsets[1])
