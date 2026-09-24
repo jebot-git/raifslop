@@ -23,10 +23,11 @@ const READY := "READY"
 const BLOCKED := "BLOCKED"
 const RECOVERING := "RECOVERING"
 ## How long a server launched to replace an occupant may wait for the port.
-## 15 s, not 5: on Windows every identity probe is a PowerShell start (about
-## 0.6 s each) and the launch must capture the new process, then re-read and
-## kill the old one, before the replacement gives up waiting for the port.
-const REPLACEMENT_WAIT_FOR_PORT_MS := 15_000
+## A Windows update took 25.262 s from the child's port-wait phase until the
+## incumbent released the port. Keep time for those exact identity checks
+## and termination before the child gives up. Python caps this at the same
+## 60 s; the later capability proof has its own 180 s deadline.
+const REPLACEMENT_WAIT_FOR_PORT_MS := 60_000
 ## How long the replacement gives its launched server to reach that port
 ## wait before it kills the occupant. The launch may be uvx installing the
 ## version the update just brought in; until the server reports it is at its
@@ -43,7 +44,9 @@ const REPLACE := "REPLACE"
 const STOP := "STOP"
 
 const STATUS_PATH := "/godot-ai/status"
-const DEFAULT_PROBE_TIMEOUT_MS := 800
+## Normal starts and recovery need the same settling window as post-update
+## adoption. A healthy authenticated status response can take over a second.
+const DEFAULT_PROBE_TIMEOUT_MS := 3000
 const STALE_PRE_V4_HINT := "stale_pre_v4_server"
 const DEFAULT_PROVE_TIMEOUT_MS := 180_000
 const LAUNCH_FINGERPRINT_TIMEOUT_MS := 15_000
@@ -102,6 +105,11 @@ func _begin_start_episode(existing_id := 0, probe := true) -> void:
 	_cancel_effect()
 	_replacement_authorization = null
 	_transport = null
+	var config_error := McpAllowHosts.configuration_error(str(_plan.get("allow_hosts", "")))
+	if not config_error.is_empty():
+		_block_without_effect("unsupported_remote_access", config_error)
+		startup_finished.emit("blocked:unsupported_remote_access")
+		return
 	if existing_id <= 0:
 		_next_episode_id += 1
 		existing_id = _next_episode_id
@@ -127,6 +135,7 @@ func _begin_start_episode(existing_id := 0, probe := true) -> void:
 		"expected_version": str(_plan.expected_version),
 		"expected_ws_port": int(_plan.ws_port),
 		"timeout_ms": int(_plan.probe_timeout_ms),
+		"grant": _process_grant,
 	})
 
 
@@ -309,6 +318,7 @@ func transport_lost(reason := "Authenticated server endpoint was lost.") -> void
 	_ready_since_msec = 0
 	var limit := ENDPOINT_RECOVERY_DELAYS_SECONDS.size()
 	if _endpoint_recovery_attempts >= limit:
+		_endpoint_recovery_pending_episode = 0
 		_block(
 			"endpoint_lost",
 			"%s Automatic re-probing gave up after %d attempts; click Restart." % [reason, limit],
@@ -316,6 +326,7 @@ func transport_lost(reason := "Authenticated server endpoint was lost.") -> void
 		return
 	_endpoint_recovery_attempts += 1
 	var delay := float(ENDPOINT_RECOVERY_DELAYS_SECONDS[_endpoint_recovery_attempts - 1])
+	_endpoint_recovery_pending_episode = int(_episode.get("id", 0))
 	_block(
 		"endpoint_lost",
 		"%s Re-probing in %ds (attempt %d of %d)." % [
@@ -326,7 +337,6 @@ func transport_lost(reason := "Authenticated server endpoint was lost.") -> void
 		"MCP | server endpoint lost (%s); re-probing in %ds (attempt %d of %d)"
 		% [reason, int(delay), _endpoint_recovery_attempts, limit]
 	)
-	_endpoint_recovery_pending_episode = int(_episode.get("id", 0))
 	if bool(_plan.get("automatic_effects", true)):
 		_recover_lost_endpoint_after(delay, _endpoint_recovery_pending_episode)
 
@@ -344,7 +354,9 @@ func recover_lost_endpoint(episode_id: int) -> bool:
 		_endpoint_recovery_pending_episode = 0
 		return false
 	_endpoint_recovery_pending_episode = 0
-	start_server()
+	## Losing a socket does not prove that the shared backend needs restarting.
+	## The probe retains ownership only after checking the exact listener again.
+	_begin_start_episode()
 	return str(_episode.get("state")) != BLOCKED
 
 
@@ -386,9 +398,20 @@ func _complete_probe(result: Dictionary) -> void:
 			if transport == null or not transport.is_valid():
 				_block("invalid_transport", "The server returned invalid transport authority.")
 				return
-			_process_grant = null
-			_ready("adopted", transport, str(result.get("version", "")))
+			var disposition := str(result.get("owned_disposition", ""))
+			if _process_grant != null and disposition == "owned":
+				_ready("owned", transport, str(result.get("version", "")))
+			elif _process_grant == null or disposition in ["gone", "replaced"]:
+				_process_grant = null
+				_ready("adopted", transport, str(result.get("version", "")))
+			else:
+				_block("process_authority_mismatch", "Managed process identity could not be proven during recovery. Click Restart to retry.")
 		"free":
+			if _process_grant != null:
+				if str(result.get("owned_disposition", "")) not in ["gone", "replaced"]:
+					_block("process_authority_mismatch", "The managed process is still running without a proven endpoint. Click Restart to retry.")
+					return
+				_process_grant = null
 			_episode["phase"] = LAUNCH
 			_episode["message"] = "Launching the managed server."
 			_publish()
@@ -672,19 +695,46 @@ func _effect_probe(payload: Dictionary) -> Dictionary:
 	var port := int(payload.http_port)
 	var expected_version := str(payload.expected_version)
 	var expected_ws_port := int(payload.expected_ws_port)
+	var grant = payload.get("grant")
+	var disposition := "gone"
+	if grant != null:
+		var pid := int(grant.process_id())
+		var alive := PortResolver.pid_alive(pid)
+		disposition = _owned_process_disposition(
+			grant, alive, PortResolver.process_fingerprint(pid) if alive else "",
+		)
+		if disposition == "unproven":
+			return _blocked_probe_result("process_authority_mismatch", port, {}, false,
+				"managed process identity could not be proven; click Restart to retry")
+	var listeners := PortResolver.windows_listener_snapshot() if OS.get_name() == "Windows" else {}
 	var capability := _read_capability(port)
-	var live := _probe_with_capability(port, capability, int(payload.timeout_ms))
+	var live := _probe_with_capability(port, capability, int(payload.timeout_ms), listeners)
 	if _authenticated_status_matches_record(live, capability):
 		var version := str(live.get("version", ""))
 		var ws_port := int(live.get("ws_port", 0))
 		if _server_status_compatibility(version, expected_version, ws_port, expected_ws_port).get("compatible", false):
+			if disposition == "owned" and (
+				not PortResolver.find_all_pids_on_port(port).has(int(grant.process_id()))
+				or not grant.matches(int(grant.process_id()), PortResolver.process_fingerprint(int(grant.process_id())))
+			):
+				return _blocked_probe_result("process_authority_mismatch", port, live, false,
+					"the authenticated endpoint does not match the managed process; click Restart to retry")
 			return {
 				"outcome": "compatible",
+				"owned_disposition": disposition,
 				"version": version,
 				"transport": _transport_from(port, ws_port, live, capability),
 			}
 		return _blocked_probe_result("incompatible", port, live, true)
-	if PortResolver.is_port_in_use(port):
+	var occupied: bool
+	if OS.get_name() == "Windows":
+		var occupancy := PortResolver.windows_port_occupancy(port, listeners)
+		if occupancy == PortResolver.PortOccupancy.UNKNOWN:
+			return _blocked_probe_result("port_occupancy_unknown", port, live)
+		occupied = occupancy == PortResolver.PortOccupancy.OCCUPIED
+	else:
+		occupied = PortResolver.is_port_in_use(port)
+	if occupied:
 		var detail := _record_probe_failure_detail(capability, live)
 		var blocked := _blocked_probe_result("occupied", port, live, false, detail)
 		var pre_v4 := _untrusted_pre_v4_occupant_version(port, int(payload.timeout_ms))
@@ -695,10 +745,16 @@ func _effect_probe(payload: Dictionary) -> Dictionary:
 	## The server binds both ports before it publishes anything. A held
 	## WebSocket port (a server moved off the HTTP port, or another editor)
 	## would kill the launch at preflight; say so now and name the setting.
-	if expected_ws_port > 0 and PortResolver.is_port_in_use(expected_ws_port):
-		return ws_port_blocked_result(expected_ws_port)
+	if expected_ws_port > 0:
+		var ws_occupied := (
+			PortResolver.windows_port_occupancy(expected_ws_port, listeners) == PortResolver.PortOccupancy.OCCUPIED
+			if OS.get_name() == "Windows" else PortResolver.is_port_in_use(expected_ws_port)
+		)
+		if ws_occupied:
+			return ws_port_blocked_result(expected_ws_port)
 	return {
 		"outcome": "free",
+		"owned_disposition": disposition,
 		"baseline_instance_id": str(capability.get("instance_nonce", "")),
 	}
 
@@ -737,6 +793,9 @@ func _effect_launch(payload: Dictionary) -> Dictionary:
 	var server_command: Array = payload.get("server_command", [])
 	if server_command.is_empty():
 		return {"ok": false, "reason": "no_command", "message": "No godot-ai server command was found."}
+	var listener_problem := PortResolver.listener_tools_problem()
+	if not listener_problem.is_empty():
+		return {"ok": false, "reason": "listener_tools_missing", "message": listener_problem}
 	## Do not spawn into a directory the server cannot publish from (#988):
 	## the failure would only surface as a proof timeout three minutes later.
 	var directory_problem := TransportCapability.directory_write_problem(port)
@@ -818,9 +877,10 @@ func _effect_launch(payload: Dictionary) -> Dictionary:
 ## (#988, #1012 both surfaced as this bare sentence). Diagnostic only: the
 ## values are read once more after the capture budget and never grant
 ## authority.
-static func _launch_unproven_message(pid: int, attempts: Array, elapsed_ms: int) -> String:
-	var alive := PortResolver.pid_alive(pid)
-	var commandline := PortResolver.process_commandline(pid) if alive else ""
+func _launch_unproven_message(pid: int, attempts: Array, elapsed_ms: int) -> String:
+	var snapshot: Variant = _capture_process_snapshot(pid)
+	var alive := PortResolver.pid_alive(pid, snapshot)
+	var commandline := PortResolver.process_commandline(pid, snapshot) if alive else ""
 	if commandline.length() > 200:
 		commandline = commandline.substr(0, 199) + "…"
 	## Summarise the per-attempt refusals as "reason×count" in first-seen order.
@@ -842,18 +902,39 @@ static func _launch_unproven_message(pid: int, attempts: Array, elapsed_ms: int)
 		attempts.size(),
 		elapsed_ms / 1000.0,
 		pid,
-		"yes" if alive else "no",
+		"unknown" if PortResolver.capture_failed(snapshot) else ("yes" if alive else "no"),
 		", ".join(summary) if not summary.is_empty() else "none recorded",
 		"" if commandline.is_empty() else "; command: " + commandline,
 	]
 
 
+func _capture_process_snapshot(pid: int) -> Variant:
+	return PortResolver.capture_process_snapshot(pid)
+
+
 func _effect_prove(payload: Dictionary) -> Dictionary:
 	var launch_grant = payload.get("grant")
 	var launch_pid := int(launch_grant.process_id()) if launch_grant != null else -1
-	var launch_alive := PortResolver.pid_alive(launch_pid)
+	## The pid file is an untrusted hint. Reuse its ancestor snapshot only
+	## when it includes the launcher; the original PID read and all final
+	## capability, listener, identity, and lineage checks still follow.
+	var hinted_pid := -1
+	var first_snapshot: Variant = null
+	var launch_snapshot: Variant = null
+	if OS.get_name() == "Windows" and launch_pid > 1:
+		hinted_pid = PortResolver.read_pid_file(str(payload.get("pid_file", "")))
+		if hinted_pid > 1:
+			first_snapshot = _capture_process_snapshot(hinted_pid)
+			if PortResolver.process_descends_from(hinted_pid, launch_pid, first_snapshot):
+				launch_snapshot = first_snapshot
+	if launch_snapshot == null:
+		launch_snapshot = _capture_process_snapshot(launch_pid)
+		first_snapshot = null
+	if PortResolver.capture_failed(launch_snapshot):
+		return {"pending": true, "reason": "identity_unavailable"}
+	var launch_alive := PortResolver.pid_alive(launch_pid, launch_snapshot)
 	var launch_fingerprint := (
-		PortResolver.process_fingerprint(launch_pid)
+		PortResolver.process_fingerprint(launch_pid, launch_snapshot)
 		if launch_alive
 		else ""
 	)
@@ -880,7 +961,8 @@ func _effect_prove(payload: Dictionary) -> Dictionary:
 		or str(capability.get("websocket", "")) != str(payload.get("ws_capability", ""))
 	):
 		return {"pending": true, "reason": "capability_pair"}
-	var live := _probe_with_capability(port, capability, int(payload.timeout_ms))
+	var listeners := PortResolver.windows_listener_snapshot() if OS.get_name() == "Windows" else {}
+	var live := _probe_with_capability(port, capability, int(payload.timeout_ms), listeners)
 	if not _authenticated_status_matches_record(live, capability):
 		return {"pending": true, "reason": "authenticated_status"}
 	var version := str(live.get("version", ""))
@@ -892,13 +974,19 @@ func _effect_prove(payload: Dictionary) -> Dictionary:
 	var pid := PortResolver.read_pid_file(str(payload.get("pid_file", "")))
 	if pid <= 1:
 		return {"pending": true, "reason": "pid_file"}
-	if not PortResolver.find_all_pids_on_port(port).has(pid):
+	if not PortResolver.find_all_pids_on_port(port, Callable(), listeners).has(pid):
 		return {"pending": true, "reason": "listener_pid"}
-	if not PortResolver.pid_cmdline_is_godot_ai(pid):
+	if first_snapshot == null or pid != hinted_pid:
+		first_snapshot = (
+			launch_snapshot if pid == launch_pid else _capture_process_snapshot(pid)
+		)
+	if PortResolver.capture_failed(first_snapshot):
+		return {"pending": true, "reason": "identity_unavailable"}
+	if not PortResolver.pid_cmdline_is_godot_ai(pid, first_snapshot):
 		return {"pending": true, "reason": "process_brand"}
-	if not PortResolver.process_descends_from(pid, launch_pid):
+	if not PortResolver.process_descends_from(pid, launch_pid, first_snapshot):
 		return {"pending": true, "reason": "launch_lineage"}
-	var fingerprint := PortResolver.process_fingerprint(pid)
+	var fingerprint := PortResolver.process_fingerprint(pid, first_snapshot)
 	if fingerprint.is_empty():
 		return {"pending": true, "reason": "process_fingerprint"}
 	## Close every capture window before minting process authority. The same
@@ -906,12 +994,17 @@ func _effect_prove(payload: Dictionary) -> Dictionary:
 	## record must still name the authenticated instance, and the process
 	## fingerprint must remain unchanged after the final probe.
 	var final_capability := _read_capability(port)
-	var final_live := _probe_with_capability(port, final_capability, int(payload.timeout_ms))
+	var final_live := _probe_with_capability(port, final_capability, int(payload.timeout_ms), listeners)
+	var final_snapshot: Variant = _capture_process_snapshot(pid)
+	if PortResolver.capture_failed(final_snapshot):
+		return {"pending": true, "reason": "identity_unavailable"}
+	var final_listeners := PortResolver.windows_listener_snapshot() if OS.get_name() == "Windows" else {}
 	if (
 		PortResolver.read_pid_file(str(payload.get("pid_file", ""))) != pid
-		or not PortResolver.find_all_pids_on_port(port).has(pid)
-		or not PortResolver.process_descends_from(pid, launch_pid)
-		or PortResolver.process_fingerprint(pid) != fingerprint
+		or not PortResolver.find_all_pids_on_port(port, Callable(), final_listeners).has(pid)
+		or not PortResolver.process_descends_from(pid, launch_pid, final_snapshot)
+		or not PortResolver.pid_cmdline_is_godot_ai(pid, final_snapshot)
+		or PortResolver.process_fingerprint(pid, final_snapshot) != fingerprint
 		or final_capability != capability
 		or not _authenticated_status_matches_record(final_live, final_capability)
 		or str(final_live.get("instance_id", "")) != str(live.get("instance_id", ""))
@@ -1014,8 +1107,8 @@ func _effect_replace(payload: Dictionary) -> Dictionary:
 			)
 		return {"ok": false, "reason": "replacement_failed"}
 	if launch.is_empty():
-		PortResolver.wait_for_port_free(port, 5.0)
-		return {"ok": not PortResolver.is_port_in_use(port), "reason": ""}
+		var occupancy := PortResolver.wait_for_port_free(port, 5.0)
+		return {"ok": occupancy == PortResolver.PortOccupancy.FREE, "reason": ""}
 	return {"ok": true, "reason": "", "launch": launch}
 
 
@@ -1094,13 +1187,14 @@ func _effect_stop(payload: Dictionary) -> Dictionary:
 	if disposition == "owned":
 		grants.append({"pid": pid, "fingerprint": fingerprint})
 	PortResolver.kill_exact_processes(grants, true)
-	if port > 0:
-		PortResolver.wait_for_port_free(port, 3.0)
+	var occupancy := PortResolver.PortOccupancy.FREE
+	if port > 0 and not grants.is_empty():
+		occupancy = PortResolver.wait_for_port_free(port, 3.0)
 	var targets_gone := true
 	for exact in grants:
 		if PortResolver.process_fingerprint(int(exact.pid)) == str(exact.fingerprint):
 			targets_gone = false
-	var port_free := port <= 0 or not PortResolver.is_port_in_use(port)
+	var port_free := port <= 0 or (occupancy != PortResolver.PortOccupancy.UNKNOWN and not PortResolver.is_port_in_use(port))
 	## Killing something of ours must also free its listener. When there was
 	## nothing of ours left to kill, whoever holds the port now is not ours to
 	## prove stopped; the next start's probe deals with that occupant.
@@ -1212,11 +1306,20 @@ static func probe_live_server_status(
 	return _probe_with_capability(port, capability, timeout_ms)
 
 
-static func _probe_with_capability(port: int, capability: Dictionary, timeout_ms: int) -> Dictionary:
+static func _probe_with_capability(port: int, capability: Dictionary, timeout_ms: int, listeners: Dictionary = {}) -> Dictionary:
 	var result := {"reachable": false, "name": "", "version": "", "ws_port": 0, "instance_id": "", "status_code": 0, "error": ""}
 	var http_capability := str(capability.get("http", ""))
 	if http_capability.is_empty():
 		result.error = "missing_capability"
+		return result
+	## Windows can otherwise spend the whole connect deadline on an unbound
+	## loopback port. This is only an unreachable probe; callers still check
+	## occupancy and prove any later listener before using it.
+	if (
+		OS.get_name() == "Windows" and PortResolver.can_bind_local_port(port)
+		and PortResolver.windows_port_occupancy(port, listeners) == PortResolver.PortOccupancy.FREE
+	):
+		result.error = "port_unbound"
 		return result
 	var client := HTTPClient.new()
 	var error := client.connect_to_host("127.0.0.1", port)
@@ -1335,7 +1438,9 @@ static func _blocked_probe_result(
 	var message := "Port %d is occupied by another process." % port
 	if not detail.is_empty():
 		message = "Port %d is occupied by another process (%s)." % [port, detail]
-	if replaceable:
+	if reason == "port_occupancy_unknown":
+		message = "Windows could not query listening ports; retry when port discovery is available."
+	elif replaceable:
 		message = "Port %d is occupied by godot-ai v%s; choose Replace to continue." % [port, version]
 	return {
 		"outcome": "blocked",
@@ -1550,6 +1655,13 @@ func get_status_dict() -> Dictionary:
 	return {
 		"episode_id": int(_episode.get("id", 0)),
 		"episode_state": state,
+		"reason": reason,
+		"recovery_pending": (
+			state == BLOCKED and reason == "endpoint_lost"
+			and _endpoint_recovery_pending_episode > 0
+			and _endpoint_recovery_pending_episode == int(_episode.get("id", 0))
+		),
+		"episode_reason": reason,
 		"phase": str(_episode.get("phase", "")),
 		"ready_kind": str(_episode.get("ready_kind", "")),
 		"state": _dock_state(state, reason),
@@ -1636,9 +1748,10 @@ static func _dock_state(state: String, reason: String) -> int:
 			return ServerState.STOPPING
 		BLOCKED:
 			match reason:
+				"unsupported_remote_access": return ServerState.UNSUPPORTED_CONFIG
 				"incompatible": return ServerState.INCOMPATIBLE
 				"no_command": return ServerState.NO_COMMAND
 				"port_reserved": return ServerState.PORT_EXCLUDED
-				"occupied", "replacement_unproven": return ServerState.FOREIGN_PORT
+				"occupied", "replacement_unproven", "port_occupancy_unknown": return ServerState.FOREIGN_PORT
 				_: return ServerState.CRASHED
 	return ServerState.UNINITIALIZED

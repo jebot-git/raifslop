@@ -13,9 +13,11 @@ var menu_scroll: ScrollContainer
 var stats: Label
 var club_text: Label
 var message: Label
+var practice_feedback:Label
+var swing_hint:Label
 var score: Label
 var course_title: Label
-var tee_choice: OptionButton
+var tee_choice: VBoxContainer
 var hand_choice: CheckButton
 var length_slider: HSlider
 var attachment_controls:VBoxContainer
@@ -60,6 +62,8 @@ func _ready() -> void:
 	var bv:=VBoxContainer.new();bottom.add_child(bv)
 	club_text=label(bv,"DRIVER",25)
 	message=label(bv,"",16,Style.BRASS)
+	practice_feedback=label(self,"",15,Style.MUTED);practice_feedback.position=Vector2(32,610)
+	swing_hint=label(self,"",16,Style.BRASS);swing_hint.position=Vector2(32,580)
 	text_hints.append(label(bv,"Grip/trigger: swing, lock movement · release: walk",14,Style.MUTED))
 	text_hints.append(label(bv,"Other hip + grip: hole / course tracker",14,Style.MUTED))
 	guidance(bv,[["swing","Grip / trigger","Hold either to swing and lock stick movement"],["stash","Hip","Grip at striking-hand hip to stash or retrieve"],["bag","Club-hand click","Click to open; point then centre to select. Click again to close"],["godview","Other click","Toggle Godview"],["menu","B","Open field station"]])
@@ -77,7 +81,7 @@ func _ready() -> void:
 		button(box,preload("res://addons/golfminus/scripts/golf/catalog.gd").NAMES[id],game.select_course.bind(id))
 	box=_register_page("controls","Controls")
 	var row:=HBoxContainer.new();row.add_theme_constant_override("separation",14);box.add_child(row)
-	tee_choice=OptionButton.new();for t in ["Club tees","Forward tees","Back tees"]:tee_choice.add_item(t)
+	tee_choice=preload("res://scripts/ui/vr_option.gd").new();for t in ["Club tees","Forward tees","Back tees"]:tee_choice.add_item(t)
 	row.add_child(tee_choice);tee_choice.item_selected.connect(func(i):game.tee_kind=["club","forward","back"][i])
 	hand_choice=CheckButton.new();hand_choice.text="Left-handed swing";row.add_child(hand_choice)
 	hand_choice.toggled.connect(game.set_hand)
@@ -112,6 +116,9 @@ func _ready() -> void:
 		game.toggle_menu(false)
 		game.status_text="Grab the tracker at your non-striking-hand hip.")
 	analytics_button=button(box,"Start local swing capture",func():game.toggle_analytics())
+	var exact_contact:=CheckButton.new();exact_contact.text="Practice: exact contact (disable 2 mm allowance)";box.add_child(exact_contact)
+	exact_contact.button_pressed=game.practice_exact_contact
+	exact_contact.toggled.connect(func(value):game.practice_exact_contact=value;game.reset_swing();game._save_preferences())
 	game.telemetry.capture_changed.connect(func(active):analytics_button.text="Save capture" if active else "Record swings")
 	var footer:=HBoxContainer.new();shell.add_child(footer)
 	for step in [-1,1]:button(footer,"↑" if step<0 else "↓",func():menu_scroll.scroll_vertical+=step*180)
@@ -123,7 +130,7 @@ func _ready() -> void:
 	refresh_icons()
 	refresh()
 func _register_page(id:String,title:String)->VBoxContainer:
-	var scroll:=ScrollContainer.new();scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
+	var scroll=preload("res://scripts/ui/drag_scroll.gd").new()
 	scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;page_host.add_child(scroll)
 	var box:=VBoxContainer.new();box.size_flags_horizontal=Control.SIZE_EXPAND_FILL;box.add_theme_constant_override("separation",9);scroll.add_child(box)
 	var tab:=button(tabs,title,func():show_page(id));tab.toggle_mode=true
@@ -144,6 +151,14 @@ func refresh() -> void:
 	tag.text="%s   ·   WIND %.1f m/s"%[m.hole.name.to_upper(),wind.length()]
 	club_text.text="%s   /   %s"%[game.CLUBS.BAG[game.club_index].name.to_upper(),m.lie(game.ball.position.x,game.ball.position.z).to_upper()]
 	message.text=game.status_text
+	practice_feedback.visible=game.practice and not game.menu_open
+	practice_feedback.text=game.shot_feedback
+	swing_hint.visible=game.xr and not game.ball.moving and not game.menu_open
+	var controller:XRController3D=game.left if game.left_handed else game.right
+	if game.ball.holed:swing_hint.text="Hole complete"
+	elif not controller.get_has_tracking_data():swing_hint.text="Waiting for controller tracking"
+	elif game.club_collision_enabled():swing_hint.text="Ready to swing" if game.swing.cooldown<=0 and game.swing.valid else "Let tracking settle before swinging"
+	else:swing_hint.text="Hold grip or trigger to swing" if game.inactive_swing_reason()=="grip_and_trigger_released" else "Swing paused: "+game.inactive_swing_reason().replace("_"," ")
 	score.text="STROKES  %d    |    COMPLETED  %d / 18    |    TOTAL  %d"%[game.round_state.strokes,game.round_state.scores.size(),game.round_state.total()]
 	play_button.text="BEGIN ROUND AT %s   →"%m.course.name.to_upper()
 

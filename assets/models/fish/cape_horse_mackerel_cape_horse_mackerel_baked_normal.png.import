@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bhtfhpoif72tl"
-path="res://.godot/imported/cape_horse_mackerel_cape_horse_mackerel_baked_normal.png-b171b0e27d2efc73c76cd8463602343d.ctex"
+path.s3tc="res://.godot/imported/cape_horse_mackerel_cape_horse_mackerel_baked_normal.png-b171b0e27d2efc73c76cd8463602343d.s3tc.ctex"
+path.etc2="res://.godot/imported/cape_horse_mackerel_cape_horse_mackerel_baked_normal.png-b171b0e27d2efc73c76cd8463602343d.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "7afdce3e182e4206783147f5ce6fc129"
@@ -14,22 +16,22 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/fish/cape_horse_mackerel_cape_horse_mackerel_baked_normal.png"
-dest_files=["res://.godot/imported/cape_horse_mackerel_cape_horse_mackerel_baked_normal.png-b171b0e27d2efc73c76cd8463602343d.ctex"]
+dest_files=["res://.godot/imported/cape_horse_mackerel_cape_horse_mackerel_baked_normal.png-b171b0e27d2efc73c76cd8463602343d.s3tc.ctex", "res://.godot/imported/cape_horse_mackerel_cape_horse_mackerel_baked_normal.png-b171b0e27d2efc73c76cd8463602343d.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=0
-roughness/src_normal=""
+roughness/mode=1
+roughness/src_normal="res://assets/models/fish/cape_horse_mackerel_cape_horse_mackerel_baked_normal.png"
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

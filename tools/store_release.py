@@ -120,7 +120,7 @@ def main():
     revision = run('git', 'rev-parse', 'HEAD').strip()
     targets = ['Quest'] if args.store == 'quest' else ['Windows', 'Linux']
     records = [verify(t, revision) for t in targets]
-    artifacts = [BUILD / t / ('RealAIFishing.apk' if t == 'Quest' else 'RealAIFishing.pck') for t in targets]
+    artifacts = [BUILD / t / ('UltimateBoomerSimulator.apk' if t == 'Quest' else 'UltimateBoomerSimulator.pck') for t in targets]
     subprocess.run([sys.executable, str(ROOT / 'tools/audit_release.py'), *map(str, artifacts)], cwd=ROOT, check=True)
     checked = quest_checks(artifacts[0]) if args.store == 'quest' else None
     out = BUILD / 'store' / args.store / revision
@@ -131,7 +131,7 @@ def main():
         stage = Path(tmp) / 'candidate'
         stage.mkdir()
         if args.store == 'quest':
-            shutil.copy2(artifacts[0], stage / 'RealAIFishing.apk')
+            shutil.copy2(artifacts[0], stage / 'UltimateBoomerSimulator.apk')
             for name, value in checked.items():
                 (stage / (name + '.txt')).write_text(value)
             copy_notices(stage)

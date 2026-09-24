@@ -28,17 +28,17 @@ def launcher(mode):
 setlocal DisableDelayedExpansion
 pushd "%~dp0"
 if errorlevel 1 exit /b 1
-if not exist "%~dp0RealAIFishing.exe" goto missing
-if not exist "%~dp0RealAIFishing.pck" goto missing
+if not exist "%~dp0UltimateBoomerSimulator.exe" goto missing
+if not exist "%~dp0UltimateBoomerSimulator.pck" goto missing
 :choose_log
 set "RAF_LOG=%~dp0Client-{mode}-%RANDOM%-%RANDOM%"
 if exist "%RAF_LOG%.log" goto choose_log
 if exist "%RAF_LOG%.console.log" goto choose_log
-> "%RAF_LOG%.console.log" echo Real AI Fishing Windows debug / {mode} / %DATE% %TIME%
+> "%RAF_LOG%.console.log" echo Ultimate Boomer Simulator Windows debug / {mode} / %DATE% %TIME%
 if errorlevel 1 goto unwritable
 echo Engine log: "%RAF_LOG%.log"
 echo Console log: "%RAF_LOG%.console.log"
-"%~dp0RealAIFishing.exe" --verbose --debug --log-file "%RAF_LOG%.log" {flags} %* -- --client-metrics --network-metrics >> "%RAF_LOG%.console.log" 2>&1
+"%~dp0UltimateBoomerSimulator.exe" --verbose --debug --log-file "%RAF_LOG%.log" {flags} %* -- --client-metrics --network-metrics >> "%RAF_LOG%.console.log" 2>&1
 set "RAF_EXIT=%ERRORLEVEL%"
 >> "%RAF_LOG%.console.log" echo Client exit code: %RAF_EXIT%
 if "%RAF_EXIT%"=="0" goto done
@@ -90,14 +90,14 @@ def main():
         sources = {os.fsdecode(name): digest(ROOT / os.fsdecode(name)) for name in sorted(set(tracked))
                    if name and (ROOT / os.fsdecode(name)).is_file()}
         command = [godot, '--headless', '--path', str(ROOT), '--xr-mode', 'off',
-                   '--export-debug', 'Windows', str(out / 'RealAIFishing.exe')]
+                   '--export-debug', 'Windows', str(out / 'UltimateBoomerSimulator.exe')]
         with (out / 'export.log').open('w') as stream:
             result = subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT)
         export_text = (out / 'export.log').read_text(errors='replace')
         if result.returncode or any(word in export_text for word in
                                    ['SCRIPT ERROR:', 'Cannot export project', 'Export failed', 'HDR compression failed']):
             raise SystemExit(f'Export failed: {out / "export.log"}')
-        for name in ['RealAIFishing.exe', 'RealAIFishing.pck', 'libgodotopenxrvendors.dll',
+        for name in ['UltimateBoomerSimulator.exe', 'UltimateBoomerSimulator.pck', 'libgodotopenxrvendors.dll',
                      'libtwovoip.windows.template_debug.x86_64.dll']:
             if not (out / name).is_file():
                 raise SystemExit(f'Missing debug runtime: {name}')
@@ -105,7 +105,7 @@ def main():
         for mode in ['VR']:
             (out / f'{mode}.cmd').write_bytes(launcher(mode))
         copy_notices(out)
-        (out / 'TESTING.txt').write_text('''Real AI Fishing - Windows x86_64 DEBUG / PLAYTEST
+        (out / 'TESTING.txt').write_text('''Ultimate Boomer Simulator - Windows x86_64 DEBUG / PLAYTEST
 
 Extract the whole ZIP into a writable folder, such as Desktop or Downloads.
 Keep the EXE, PCK and DLLs together. Start through one of these launchers:
@@ -168,7 +168,7 @@ headset compatibility or performance.
     files = [p for p in sorted(out.rglob('*')) if p.is_file() and p.name not in {'.gdignore', 'export.log', 'SHA256SUMS.txt'}]
     (out / 'SHA256SUMS.txt').write_text(''.join(f'{digest(p)}  {p.relative_to(out).as_posix()}\n' for p in files))
     files.append(out / 'SHA256SUMS.txt')
-    archive = out.parent / f'RealAIFishing-{manifest["version"]}-Windows-Debug-x86_64.zip'
+    archive = out.parent / f'UltimateBoomerSimulator-{manifest["version"]}-Windows-Debug-x86_64.zip'
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
         for p in files:
             z.write(p, Path(archive.stem) / p.relative_to(out))

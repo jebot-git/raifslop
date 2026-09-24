@@ -13,6 +13,8 @@ var touch_source := ""
 var previous_touch := Vector3(INF, INF, INF)
 const Session = preload("res://scripts/fishing_session.gd")
 const DESCRIPTIONS = {
+ "Oncorhynchus clarkii":"A spotted trout with red-orange marks beneath its lower jaw. It feeds on drifting insects in cold streams; try dry flies and nymphs at Cedar Creek.",
+ "Salvelinus alpinus":"A cold-water char with pale spots on darker flanks, a forked tail and white leading edges on its lower fins. Look for it in Glacier Run's current seams and boulder pockets.",
  "Hucho hucho":"A large copper-backed salmonid with scattered dark spots. It hunts smaller fish in cool, oxygen-rich rivers; hooked grayling, trout or dace may attract it.",
  "Carcharias taurus":"A bulky coastal shark with rusty spots, two similar dorsal fins and slender exposed teeth. It eats fish and smaller sharks around reefs and sandy channels.",
  "Blicca bjoerkna": "A small, deep-bodied silver fish with a large eye and pinkish fin bases. It shoals in lakes and slow rivers, feeding on small invertebrates.",

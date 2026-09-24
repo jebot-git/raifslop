@@ -75,6 +75,13 @@ def audit(path):
                      *['assets/models/bbq/'+asset+'.glb' for asset in
                        ['station','cooler','cooler_lid','beer_can','fish_burger','tongs_handle','tongs_jaw','sausage','corn','mushroom']],
                      'ASSET_CREDITS.md','assets/models/locations/manifest.json',
+                     'assets/equipment/tackle_styles.json',
+                     'addons/golfminus/scripts/golf/club_style.gd',
+                     'scripts/ui/scroll_router.gd','scripts/ui/vr_option.gd',
+                     'assets/models/fish/cutthroat_trout.glb','assets/models/fish/arctic_char.glb',
+                     'assets/environment/locations/cedar_creek_4k.hdr',
+                     'assets/environment/locations/glacier_run_4k.hdr',
+                     'assets/audio/ambience/cedar_creek.ogg','assets/audio/ambience/glacier_run.ogg',
                      'assets/textures/lighting/panorama_lighting.json',
                      'scripts/rear_parallax.gd','assets/environment/rear_parallax.gdshader',
                      'assets/environment/shore_details/fishing_plan_poster.svg',

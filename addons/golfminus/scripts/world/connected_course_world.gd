@@ -36,9 +36,12 @@ func _terrain()->void:
 func terrain_material()->ShaderMaterial:
 	var mat:=ShaderMaterial.new();mat.shader=load("res://addons/golfminus/shaders/terrain.gdshader")
 	mat.set_shader_parameter("ambient_fill",1.1)
+	mat.set_shader_parameter("has_course_detail",true)
+	for pair in [["rough_grass","rough_grass_albedo.jpg"],["rough_normal","rough_grass_normal.jpg"],["rough_roughness","rough_grass_roughness.jpg"],["turf_variation","turf_variation.png"]]:
+		mat.set_shader_parameter(pair[0],load("res://addons/golfminus/assets/shared/"+pair[1]))
 	if model.surface!=null:
-		# Use the exact physics cells; interpolated 2 m vertex colours can paint
-		# sand over rough and shrink/erase narrow bunkers.
+		# Keep exact physics categories; the shader blends decoded materials
+		# across a one-metre visual edge without interpolating numeric lie IDs.
 		var surface:RefCounted=model.surface
 		var image:=Image.create_from_data(surface.width,surface.depth,false,Image.FORMAT_R8,surface.lies)
 		mat.set_shader_parameter("mapped_lies",ImageTexture.create_from_image(image))
@@ -70,7 +73,7 @@ func surface_height(x:float,z:float)->float:
 	return a+(b-a)*u+(c-a)*v if u+v<=1 else d+(c-d)*(1-u)+(b-d)*(1-v)
 
 func _shared_water()->void:
-	var mat:=material(Color("347580"));mat.roughness=.22;mat.metallic=.15
+	var mat:=ShaderMaterial.new();mat.shader=load("res://addons/golfminus/shaders/course_water.gdshader")
 	# A capsule footprint is shared by the lie, carved basin and visible water.
 	for hazard in model.layout.data.get("hazards",[]):
 		if hazard.kind!="water":continue
@@ -170,7 +173,9 @@ func add_foliage_tree(entry:Array)->void:
 	var at:=Vector3(entry[0],surface_height(entry[0],entry[1]),entry[1]);var size:float=entry[2]
 	var key:=Vector2i(floori(at.x/96),floori(at.z/96))
 	if not foliage_groups.has(key):foliage_groups[key]=[]
-	foliage_groups[key].append(Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*size),at))
+	# Stable per-tree rotation breaks repeated billboard silhouettes without changing collisions.
+	var yaw:=fposmod(at.x*12.9898+at.z*78.233,TAU)
+	foliage_groups[key].append(Transform3D(Basis(Vector3.UP,yaw).scaled(Vector3.ONE*size),at))
 	var body:=StaticBody3D.new();body.name="GolfTree";body.collision_layer=5;body.position=at;stage_collision(body);add_child(body)
 	var trunk:=CollisionShape3D.new();var capsule:=CapsuleShape3D.new();capsule.radius=.3*size;capsule.height=5.6*size;trunk.shape=capsule;trunk.position.y=2.2*size;body.add_child(trunk)
 	var crown:=CollisionShape3D.new();var sphere:=SphereShape3D.new();sphere.radius=2.8*size;crown.shape=sphere;crown.position.y=7.5*size;body.add_child(crown)

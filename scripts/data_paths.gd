@@ -21,7 +21,7 @@ static func photos() -> String:
 	var index:=args.find("--photos-root")
 	if index>=0 and index+1<args.size():return ProjectSettings.globalize_path(args[index+1]).simplify_path()
 	var pictures:=OS.get_system_dir(OS.SYSTEM_DIR_PICTURES)
-	return pictures.path_join("Real AI Fishing") if not pictures.is_empty() else ProjectSettings.globalize_path("user://photos")
+	return pictures.path_join("Ultimate Boomer Simulator") if not pictures.is_empty() else ProjectSettings.globalize_path("user://photos")
 static func migrate_vrms(destination: String) -> Dictionary:
 	var migrated: Dictionary={}
 	if DirAccess.make_dir_recursive_absolute(destination)!=OK:return migrated

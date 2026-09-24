@@ -4,7 +4,7 @@ Build the independent Linux x86-64 server with:
 
 ```sh
 python3 tools/build_server.py
-builds/Server/RealAIFishingServer.x86_64 -- --port 24567 --bind 0.0.0.0 \
+builds/Server/UltimateBoomerSimulatorServer.x86_64 -- --port 24567 --bind 0.0.0.0 \
   --leaderboard-path /absolute/writable/server/leaderboard.json \
   --asset-root /absolute/writable/server/assets
 ```
@@ -69,7 +69,7 @@ godot --headless --xr-mode off --path . --script res://tests/leaderboard.gd
 # Actual built server + two clients, restart and renamed returning identity.
 python3 tools/test_server_leaderboard.py
 # Existing ad-hoc/dedicated voice, avatar and tackle transport regression.
-FISHING_SERVER_BIN="$PWD/builds/Server/RealAIFishingServer.x86_64" python3 tools/test_multiplayer.py
+FISHING_SERVER_BIN="$PWD/builds/Server/UltimateBoomerSimulatorServer.x86_64" python3 tools/test_multiplayer.py
 ```
 
 The build approach avoids the client dependency graph entirely. Godot also

@@ -1,6 +1,6 @@
 # Windows OpenXR support and capture troubleshooting
 
-Real AI Fishing uses Godot's native **OpenXR** interface on Windows. There is no
+Ultimate Boomer Simulator uses Godot's native **OpenXR** interface on Windows. There is no
 game-side Oculus/LibOVR or OpenVR backend to switch away from. The same Windows
 executable uses the active OpenXR runtime, including Virtual Desktop's VDXR or
 SteamVR OpenXR. Runtime selection happens before graphics initialization; restart
@@ -29,7 +29,7 @@ already defaults to Vulkan for this project: making it explicit is hardening.
 For an existing release, this command requests the same API and renderer:
 
 ```bat
-RealAIFishing.exe --xr-mode on --rendering-driver vulkan --verbose --log-file "%TEMP%\RealAIFishing-OpenXR.log"
+UltimateBoomerSimulator.exe --xr-mode on --rendering-driver vulkan --verbose --log-file "%TEMP%\UltimateBoomerSimulator-OpenXR.log"
 ```
 
 Keep the EXE, PCK and supplied DLLs together. No OpenComposite or replacement
@@ -43,7 +43,7 @@ actual renderer/driver and runtime-provided `XRRuntimeName`, `XRRuntimeVersion`
 and `OpenXRSystemName`. The normal log is at
 `%APPDATA%\Godot\app_userdata\Real AI Fishing\logs\godot.log`. A successful
 instance alone does not prove the headset is rendering: verify the final
-`Real AI Fishing ready | OpenXR` line and the in-headset view. If initialization
+`Ultimate Boomer Simulator ready | OpenXR` line and the in-headset view. If initialization
 fails, the VR-only client exits with `VR_REQUIRED`; inspect the earlier loader,
 graphics or session error and restart after correcting the runtime/headset setup.
 

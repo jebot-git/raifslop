@@ -12,6 +12,8 @@ func run()->void:
 		var model:=Model.new();model.load_course(id)
 		var world:=World.new();world.model=model;root.add_child(world)
 		var mat:=world.terrain_material()
+		# Exact mode verifies classification separately from the visual feather.
+		mat.set_shader_parameter("terrain_blend_width",0.0)
 		check(mat.get_shader_parameter("has_mapped_lies")==true and mat.get_shader_parameter("lie_origin")==model.surface.origin,"Rendered surface uses physics map coordinates: "+id)
 		var texture:Texture2D=mat.get_shader_parameter("mapped_lies")
 		check(texture!=null and texture.get_width()==model.surface.width and texture.get_height()==model.surface.depth,"Full resolution lie map is supplied to terrain: "+id)

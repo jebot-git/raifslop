@@ -1,0 +1,23 @@
+{
+  "failures": [],
+  "model_texture_references": 268,
+  "models": 115,
+  "texture_imports": 485,
+  "ui_only_exceptions": [
+    "res://addons/vrm/node_constraint/icons/bone_node_constraint.svg",
+    "res://addons/vrm/node_constraint/icons/bone_node_constraint_applier.svg",
+    "res://assets/icon.svg",
+    "res://assets/environment/locations/bell_park_pier_preview.jpg",
+    "res://assets/environment/locations/blouberg_sunrise_2_preview.jpg",
+    "res://assets/environment/locations/boulder_run_preview.jpg",
+    "res://assets/environment/locations/cedar_creek_preview.jpg",
+    "res://assets/environment/locations/fish_hoek_beach_preview.jpg",
+    "res://assets/environment/locations/glacier_run_preview.jpg",
+    "res://assets/environment/locations/gray_pier_preview.jpg",
+    "res://assets/environment/locations/lake_pier_preview.jpg",
+    "res://assets/environment/locations/lakeside_preview.jpg",
+    "res://assets/environment/locations/meadow_bend_preview.jpg",
+    "res://assets/environment/locations/secluded_beach_preview.jpg",
+    "res://assets/environment/locations/simons_town_rocks_preview.jpg"
+  ]
+}

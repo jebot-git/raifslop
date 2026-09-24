@@ -1,5 +1,9 @@
 shader_type spatial;
 // Appearance only. Vertex positions, loft and contact normals stay in club_head.gd.
+uniform bool style_enabled=false;
+// Linear RGB, matching the Blender-authored tackle palette.
+uniform vec3 style_blank=vec3(.028,.055,.018);
+uniform vec3 style_trim=vec3(.18,.25,.10);
 uniform int club_kind=0; // driver / iron / putter
 uniform float head_depth=.096;
 uniform sampler2D carbon : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
@@ -15,7 +19,9 @@ void fragment(){
  float face=COLOR.r;
  float crown=smoothstep(.1,.65,local_normal.y)*(1.0-face);
  vec3 steel=vec3(.58,.65,.69);
- vec3 body=club_kind==0 ? texture(carbon,UV*2.0).rgb*.6 : club_kind==2 ? vec3(.025,.075,.063) : steel;
+ vec3 carbon_color=texture(carbon,UV*2.0).rgb;
+ vec3 body=club_kind==0 ? carbon_color*.6 : club_kind==2 ? vec3(.025,.075,.063) : steel;
+ if(style_enabled && club_kind!=1){body=club_kind==0 ? style_blank*(.72+carbon_color.r*1.8) : style_blank;}
  float rough=texture(brushed_rough,UV*vec2(2.0,1.0)).r;
  ALBEDO=mix(body,steel,face);
  METALLIC=club_kind==0 ? mix(.55,.94,face) : club_kind==2 ? mix(.4,.9,face) : .94;
@@ -33,8 +39,8 @@ void fragment(){
  // A recessed-looking rear badge is painted onto the unchanged metal shell.
  float back=smoothstep(.3,.8,local_normal.z)*(1.0-face);
  float badge=stripe(local_point.x,.027)*stripe(local_point.y,.010)*back;
- if(club_kind==1){ALBEDO=mix(ALBEDO,vec3(.028,.075,.058),badge);ROUGHNESS=mix(ROUGHNESS,.42,badge);}
+ if(club_kind==1){ALBEDO=mix(ALBEDO,(style_enabled ? style_blank : vec3(.028,.075,.058)),badge);ROUGHNESS=mix(ROUGHNESS,.42,badge);}
  float signature=stripe(local_point.y,.001)*stripe(local_point.x,.010)*back;
- ALBEDO=mix(ALBEDO,vec3(.62,.43,.18),signature);
+ ALBEDO=mix(ALBEDO,(style_enabled ? style_trim : vec3(.62,.43,.18)),signature);
  SPECULAR=.5;
 }

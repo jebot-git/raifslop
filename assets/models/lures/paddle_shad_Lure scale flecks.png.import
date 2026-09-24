@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://kcyrqqjosri1"
-path="res://.godot/imported/paddle_shad_Lure scale flecks.png-7d71548e26deb0f5d8354987d43d883c.ctex"
+path.s3tc="res://.godot/imported/paddle_shad_Lure scale flecks.png-7d71548e26deb0f5d8354987d43d883c.s3tc.ctex"
+path.etc2="res://.godot/imported/paddle_shad_Lure scale flecks.png-7d71548e26deb0f5d8354987d43d883c.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c0d97fee31ba9de4eb706f1e93d6048b"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/lures/paddle_shad_Lure scale flecks.png"
-dest_files=["res://.godot/imported/paddle_shad_Lure scale flecks.png-7d71548e26deb0f5d8354987d43d883c.ctex"]
+dest_files=["res://.godot/imported/paddle_shad_Lure scale flecks.png-7d71548e26deb0f5d8354987d43d883c.s3tc.ctex", "res://.godot/imported/paddle_shad_Lure scale flecks.png-7d71548e26deb0f5d8354987d43d883c.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

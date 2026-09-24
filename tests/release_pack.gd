@@ -19,7 +19,7 @@ func run() -> void:
 			var path := folder.path_join(child)
 			check(path not in ["res://docs", "res://source", "res://tests", "res://tools", "res://builds", "res://data", "res://.release-signing", "res://addons/godot_ai", "res://addons/fishing_export"], "Private/development folder leaked: " + path)
 			stack.append(path)
-	check(ProjectSettings.get_setting("application/config/version")=="0.1.15-golf.1","Pack is integrated prototype 0.1.15-golf.1")
+	check(ProjectSettings.get_setting("application/config/version")=="0.1.15","Pack is Ultimate Boomer Simulator 0.1.15")
 	check(not ProjectSettings.get_setting("xr/openxr/extensions/hand_interaction_profile",false),"Hands-only controls remain in planning")
 	check(not ProjectSettings.has_setting("autoload/QuestHandProbe"),"Diagnostic hand overlay is excluded")
 	check(load("res://scripts/network/session.gd").VERSION==16,"Pack uses measured-height and mapped-course protocol 16")
@@ -33,12 +33,12 @@ func run() -> void:
 		var texture := load(entry.panorama) as Texture2D
 		check(texture != null, "Missing panorama " + entry.id)
 		if texture == null: continue
-		check(texture.get_size() == Vector2(8192,4096), "Panorama is not native 8K " + entry.id)
+		check(texture.get_size() == (Vector2(4096,2048) if entry.id in ["cedar_creek","glacier_run"] else Vector2(8192,4096)), "Panorama has wrong native size " + entry.id)
 		var pixels := texture.get_image()
 		check(pixels.has_mipmaps(), "Missing panorama mipmaps " + entry.id)
 		check(pixels.get_format() == (Image.FORMAT_BPTC_RGBFU if desktop else Image.FORMAT_RGBE9995), "Wrong HDR format " + entry.id + ": " + str(pixels.get_format()))
 		metrics[entry.id] = {"size": str(texture.get_size()), "format": pixels.get_format()}
-		if entry.id in ["meadow_bend","boulder_run"]: continue # Procedural banks use shared river textures.
+		if entry.id in ["meadow_bend","boulder_run","cedar_creek","glacier_run"]: continue # Procedural banks use shared river textures.
 		for name in ["irradiance", "sky", "ao"]:
 			check(load("res://assets/textures/lighting/" + entry.id + "_" + name + (".png" if name == "ao" else ".exr")) != null, "Missing lighting " + entry.id + " " + name)
 			if name != "ao":
@@ -66,6 +66,12 @@ func run() -> void:
 	for node in game.bbq.station.find_children("*","Node3D",true,false):
 		if node.get_script() == load("res://scripts/bbq/tongs.gd"): tools_in_game += 1
 	check(tools_in_game == 2,"Pack contains two shared tongs")
+	var tracker := XRControllerTracker.new()
+	tracker.name="release_pack_right";XRServer.add_tracker(tracker)
+	game.right.tracker=tracker.name;game.right.pose="grip"
+	var tongs_at:Vector3=load("res://scripts/bbq/sites.gd").pose(game.current_location)*game.bbq.service.model.stations[game.current_location].items[6].pos
+	tracker.set_pose("grip",Transform3D(Basis.IDENTITY,game.origin.to_local(tongs_at)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+	await process_frame
 	game.bbq.service.request("grab",6,1)
 	check(game.bbq.holds(1),"Pack can pick up shared tongs")
 	check(game.fish_guide.can_grab(),"Pack keeps guide available at BBQ")
@@ -98,6 +104,7 @@ func run() -> void:
 		for player in game.find_children("*",type,true,false):player.stop()
 	await create_timer(.3).timeout
 	game.queue_free();await process_frame;await create_timer(.3).timeout
+	XRServer.remove_tracker(tracker)
 	var total := 0
 	for size in entries.values(): total += size
 	var report := {"files": entries, "total_bytes": total, "panoramas": metrics, "failures": failures}

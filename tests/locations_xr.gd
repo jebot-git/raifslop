@@ -111,6 +111,7 @@ func run() -> void:
 	await settle()
 	check(g.menu_open and g.avatar_panel.visible and g.motor.blocked, "Controller B opens and pauses VR menu")
 	g.avatar_menu.show_locations()
+	g.avatar_menu.open_water_category("lakes")
 	await settle()
 	check(g.avatar_menu.size.x <= 900 and g.avatar_menu.position.y + g.avatar_menu.size.y <= 720, "VR menu fits its texture")
 	check(g.avatar_menu_view.get_texture().get_image().save_png("res://docs/locations/xr_menu_texture.png") == OK, "Saved in-world menu texture")

@@ -1,31 +1,16 @@
 # Releases and build policy
 
-Release **0.1.14** targets Linux x86_64, Windows x86_64, Quest standalone and a
-separate asset-free Linux dedicated server. Quest 3 performance in an earlier release passed physical
-device testing and was accepted by the user; this build has not been retested on hardware. The signed Quest APK is included in
-build, packaging and publishing validation. Hand-tracking controls remain in planning.
-Pico standalone builds remain retired after the reported Pico 4 startup failure;
-**Pico OS 6 support is a future goal only**, requiring hardware testing.
-Historical releases remain available without a claim of current device support.
+Release **0.1.15** is branded **Ultimate Boomer Simulator** and targets Linux x86_64, Windows x86_64, Quest standalone and a separate Linux dedicated server. The icon and existing save locations are preserved. Historical releases retain their original branding and filenames.
 
 Download from [GitHub Releases](https://github.com/jebot-git/raifslop/releases).
-See [0.1.14 changes and validation](RELEASE_NOTES_0.1.14.md).
+See [0.1.15 changes and validation](RELEASE_NOTES_0.1.15.md).
 
-- Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime or
-  `VR.sh`. Keep the executable, PCK and shared libraries together.
-- Windows: extract the ZIP and run `VR.cmd` or `VR.cmd`; retain the PCK/DLLs.
-  See [Windows OpenXR setup and capture troubleshooting](WINDOWS_OPENXR.md) for
-  VDXR and SteamVR runtime selection and verification.
-- Quest 3: sideload the signed APK with `adb install -r RealAIFishing-0.1.14-Quest.apk`; launch Real AI Fishing from the headset app library. Controllers remain the supported gameplay input.
-- Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional
-  arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`.
-  This binary embeds shared server scripts but no visual/audio assets or extensions.
-  PC VR packages also retain their existing server launchers.
+- Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime.
+- Windows: extract the ZIP and run `VR.cmd`; retain the executable, PCK and DLLs. See [Windows OpenXR setup](WINDOWS_OPENXR.md).
+- Quest: sideload the signed APK. Use the same signing certificate for upgrades. This release has not been retested on physical hardware.
+- Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`. The binary embeds shared server scripts and course data but no visual/audio assets or extensions.
 
-Multiplayer uses **protocol 11**; update clients and server together. Publishing
-packages does not upgrade an existing live server. Eight slots, direct UDP
-connections and local guide/progression remain unchanged. Accomplishment records
-are saved only by the server. Keep bundled asset credits and notices when sharing.
+Multiplayer uses **protocol 16**; update clients and server together. Publishing packages does not upgrade a live server. Eight slots, direct UDP connections and local progression remain unchanged. Accomplishment records are saved by the server. Keep bundled asset credits and notices when sharing.
 
 ## Rebuilding and publishing
 

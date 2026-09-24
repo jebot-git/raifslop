@@ -34,6 +34,27 @@ func run():
 	golf.focused=true;golf.set_hand(false);golf.club_reach=1.0
 	golf.reset_club_attachment(0);golf.reset_club_attachment(1)
 
+	var initial_tier:int=host.game.tackle.equipped
+	var initial_club:int=golf.club_index
+	var peer=preload("res://scripts/network/remote_angler.gd").new();peer.session=host.network;root.add_child(peer);peer.set_process(false)
+	for tier in 4:
+		host.game.tackle.equipped=tier
+		for index in 8:
+			golf.set_club(index)
+			check(golf.club.get_meta("tackle_style",-1)==tier,"New club inherits equipped tackle style")
+		var snapshot=preload("res://scripts/network/state.gd").capture(host,tier)
+		peer.receive_state(snapshot);peer._process(1.0)
+		check(is_instance_valid(peer.golf_club) and peer.golf_club.get_meta("tackle_style",-1)==tier,"Existing multiplayer snapshot updates remote style")
+	var same_club:Node3D=golf.club;var same_head:Transform3D=golf.physical_head.transform
+	golf.last_swing_us=12345;golf.fitting_club=true
+	host.game.tackle.equipped=0;golf.update_club_style()
+	check(golf.club==same_club and golf.physical_head.transform==same_head and golf.last_swing_us==12345 and golf.fitting_club,"Tier-only update preserves club, fit and swing tracking")
+	golf.fitting_club=false;golf.equipment.set_stowed(true);host.game.tackle.equipped=2;golf.update_club_style()
+	check(golf.equipment.stowed and golf.club.get_meta("tackle_style")==2,"Stowed club updates cosmetically")
+	golf.equipment.set_stowed(false);golf.set_hand(true)
+	check(golf.club.get_meta("tackle_style")==2,"Left-handed replacement keeps style")
+	host.game.tackle.equipped=initial_tier;golf.set_hand(false);golf.set_club(initial_club);peer.queue_free();await settle()
+
 	var ui=golf.hud.attachment_controls
 	check(host.avatar_menu.pages.controls.page.is_ancestor_of(ui),"Attachment calibration belongs to Golf Controls")
 	var shared:Transform3D=host.controller_calibration.pose(1)

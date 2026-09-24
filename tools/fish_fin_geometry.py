@@ -7,7 +7,7 @@ from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 
-def repair_fins(obj, photographic=False, anchor_roots=True):
+def repair_fins(obj, photographic=False, anchor_roots=True, discard_speckles=True):
     mesh = obj.data
     bm = bmesh.new()
     bm.from_mesh(mesh)
@@ -54,7 +54,7 @@ def repair_fins(obj, photographic=False, anchor_roots=True):
             continue  # Barbels are volumetric; keep their authored placement.
         nearest = {v: tree.find_nearest(v.co) for v in group}
         gap = min(value[3] for value in nearest.values())
-        if photographic and len(group) < 20 and extent.y < 1e-5:
+        if photographic and discard_speckles and len(group) < 20 and extent.y < 1e-5:
             bmesh.ops.delete(bm, geom=group, context='VERTS')
             discarded += 1
             continue

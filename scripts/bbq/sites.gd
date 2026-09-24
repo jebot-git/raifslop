@@ -11,6 +11,8 @@ const SITES := {
  "fish_hoek_beach": [Vector3(3.0,0,4.0),0.0],
  "meadow_bend": [Vector3(3.0,.05,2.0),0.0],
  "boulder_run": [Vector3(3.0,.05,2.0),0.0],
+ "cedar_creek": [Vector3(3.0,.05,2.0),0.0],
+ "glacier_run": [Vector3(3.0,.05,2.0),0.0],
 }
 static func supported(location:String)->bool:
  return SITES.has(location) or preload("res://addons/golfminus/scripts/golf/host_locations.gd").is_clubhouse(location)

@@ -13,7 +13,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-SUITES = ['golf_contact_effects', 'golf_turf_contact', 'golf_physical_club', 'golf_physics', 'golf_fitting_analytics',
+SUITES = ['golf_tracking_tolerance', 'golf_pending_contact', 'golf_contact_effects', 'golf_turf_contact', 'golf_physical_club', 'golf_physics', 'golf_fitting_analytics',
           'golf_physics_review', 'golf_head_contact', 'golf_surface_alignment',
           'golf_controls_feedback', 'golf_attachment', 'golf_vr_input',
           'golf_courses', 'golf_course_lanes', 'golf_physics_stress']

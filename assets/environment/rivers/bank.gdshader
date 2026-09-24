@@ -10,6 +10,7 @@ uniform sampler2D irradiance : filter_linear_mipmap,repeat_disable;
 uniform sampler2D bank_ao : hint_default_white,filter_linear_mipmap,repeat_disable;
 uniform bool has_bake=false;
 uniform float ambient_fill=.18;
+uniform float snow_cover=0.0;
 varying vec3 world;
 varying float bake_weight;
 void vertex(){
@@ -28,8 +29,10 @@ void fragment(){
  float blend=smoothstep(-.1,.7,world.y+irregular);
  float wet=1.0-smoothstep(-.32,-.04,world.y+irregular*.12);
  ALBEDO=mix(stones*.68,growth*.8,blend)*mix(1.0,.53,wet);
+ float snow=snow_cover*smoothstep(.3,1.3,world.y+irregular*2.5);
+ ALBEDO=mix(ALBEDO,vec3(.71,.78,.82)*mix(.92,1.0,texture(gravel,uv*1.7).r),snow);
  NORMAL_MAP=normalize(mix(texture(gravel_normal,uv*.8).rgb*2.0-1.0,texture(grass_normal,uv*.63).rgb*2.0-1.0,blend))*.5+.5;
- NORMAL_MAP_DEPTH=.55;
+ NORMAL_MAP_DEPTH=mix(.55,.12,snow);
  ROUGHNESS=mix(mix(.9,max(.72,texture(grass_roughness,uv*.63).g),blend),.36,wet);
  SPECULAR=mix(.22,.42,wet);
  AO=mix(.82,1.0,smoothstep(.02,.18,dot(stones,vec3(.333))));

@@ -26,6 +26,10 @@ func run():
 	host.golf_activity.start_play("solo");await settle();host.motor.set_physics_process(false)
 	golf.focused=true;golf.set_hand(false);golf.club_reach=1.0
 	golf.address_offset=Vector3(INF,INF,INF);golf.aim=.8;golf.address_ball()
+	check(is_equal_approx(golf.aim,.8),"Address preserves player-selected aim")
+	golf._reset_lane_aim();var lane_aim:float=golf.aim
+	golf.address_ball()
+	check(is_equal_approx(golf.aim,lane_aim) and golf.model.guide_clear(golf.ball.position,golf.model.guide_target(golf.ball.position)),"Address preserves routed lane aim through integrated rig")
 	var offset:Vector3=host.head.global_position-golf.ball.position;offset.y=0
 	check(offset.length()>=.85 and offset.dot(golf.aim_direction().cross(Vector3.UP))<-.8,"Initial address gives room beside the shot direction")
 	var stance:=Vector3(-1.12,0,.48)
@@ -38,7 +42,7 @@ func run():
 	offset=host.head.global_position-golf.ball.position;offset.y=0
 	var expected:Vector3=golf.address_basis()*local_stance
 	var facing:Vector3=-host.head.global_basis.z;facing.y=0
-	check(offset.is_equal_approx(expected) and facing.normalized().dot(golf.address_basis()*local_facing)>.999,"Address rotates saved stance and facing with current ball-to-pin direction")
+	check(offset.is_equal_approx(expected) and facing.normalized().dot(golf.address_basis()*local_facing)>.999 and is_equal_approx(golf.aim,-.7),"Address rotates saved stance and facing with selected shot direction")
 	var aligned:Transform3D=host.origin.global_transform
 	golf.address_ball()
 	check(host.origin.global_transform.is_equal_approx(aligned),"Repeated address does not accumulate yaw or room-space offset")
@@ -162,6 +166,23 @@ func run():
 		check(host.motor.stick_release_pending,"Release cannot apply an accidentally held stick")
 		for t in trackers:t.set_input("primary",Vector2.ZERO)
 		host.motor._physics_process(.016);check(not host.motor.stick_release_pending,"Neutral sticks restore locomotion after releasing club")
+	trackers[1].set_input("grip",.6);check(golf.club_collision_enabled(),"Integrated grip engages above threshold")
+	trackers[1].set_input("grip",.5);check(golf.club_collision_enabled(),"Integrated grip stays armed through pressure noise")
+	host.golf_activity.pending_shot={"contact":{"tracking_correction_m":.002}}
+	check(not golf.club_collision_enabled(),"Pending multiplayer approval inhibits duplicate contact")
+	host.golf_activity.pending_shot.clear()
+	golf.swing.cooldown=.8;golf.reject_contact({},"test_rejection")
+	check(golf.swing.cooldown==0 and golf.last_contact_state=="rejected","Rejected contact releases cooldown in live game")
+	trackers[1].set_input("grip",0.0);check(not golf.club_collision_enabled(),"Integrated release immediately disarms")
+	check(golf.telemetry.start_capture(),"Tracking-loss diagnostic capture starts")
+	trackers[1].invalidate_pose("grip");await settle()
+	golf.last_origin_basis=host.origin.global_basis;golf.last_swing_us=Time.get_ticks_usec()-14000
+	golf._swing()
+	check(golf.last_swing_state=="tracking_lost" and golf.telemetry.queue.any(func(event):return event.type=="swing_state" and event.data.get("status")=="tracking_lost"),"Tracking loss is recorded before sampler returns")
+	await pose(1,host.head.global_position+Vector3(.3,-.4,-.3))
+	golf.last_swing_us=Time.get_ticks_usec()-14000;golf._swing()
+	check(golf.telemetry.queue.any(func(event):return event.type=="swing_state" and event.data.get("status")=="tracking_reacquired"),"Reacquisition emits a diagnostic without reconstructing lost motion")
+	golf.telemetry.stop_capture()
 	# Resting/absent offhand and nearby manual grip all share a visual target.
 	for handed in [false,true]:
 		golf.set_hand(handed)

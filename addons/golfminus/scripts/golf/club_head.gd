@@ -1,6 +1,8 @@
 extends RefCounted
 ## The visible head and contact surface share the same rounded triangle mesh.
 const BALL_RADIUS:=.021335
+const TRACKING_TOLERANCE:=.002
+const FACE_TRIANGLES:=224
 var triangles:=PackedVector3Array()
 var surface_points:=PackedVector3Array()
 var mesh:ArrayMesh
@@ -138,10 +140,28 @@ func nearest(point:Vector3)->Dictionary:
 	var outward:Vector3=(triangles[offset+1]-triangles[offset]).cross(triangles[offset+2]-triangles[offset]).normalized()
 	return {"point":closest,"distance":sqrt(best),"triangle":triangle,"inside":(point-closest).dot(outward)<-.000001,"outward":outward}
 func sweep(from:Transform3D,to:Transform3D,ball:Vector3,ball_motion:=Vector3.ZERO)->Dictionary:
+	return _sweep(from,to,ball,ball_motion,0.0)
+func sweep_tracked(from:Transform3D,to:Transform3D,ball:Vector3,ball_motion:=Vector3.ZERO,tolerance:=TRACKING_TOLERANCE)->Dictionary:
+	# Exact whole-head contact always wins. The fallback never changes the mesh,
+	# ball radius, surface point or lever arm used by the impulse solver.
+	var hit:=sweep(from,to,ball,ball_motion)
+	if not hit.is_empty():
+		hit.merge({"contact_policy":"exact","tracking_correction_m":0.0,"tracking_tolerance_m":clampf(tolerance,0,TRACKING_TOLERANCE)})
+		return hit
+	if not is_finite(tolerance) or tolerance<=0:return {}
+	hit=_sweep(from,to,ball,ball_motion,minf(tolerance,TRACKING_TOLERANCE))
+	if hit.is_empty() or int(hit.get("triangle",FACE_TRIANGLES))>=FACE_TRIANGLES:return {}
+	# Only a closing approach to the front face is eligible; the tracker also
+	# checks actual point velocity, tracking continuity and control state.
+	var face:Vector3=hit.head_basis*Vector3.FORWARD
+	if face.dot(hit.normal)<=.65:return {}
+	hit.merge({"contact_policy":"tracking_tolerance","tracking_correction_m":maxf(0,float(hit.contact_distance_m)-BALL_RADIUS),"tracking_tolerance_m":minf(tolerance,TRACKING_TOLERANCE)})
+	return hit
+func _sweep(from:Transform3D,to:Transform3D,ball:Vector3,ball_motion:Vector3,tolerance:float)->Dictionary:
 	var travel:=(to.origin-from.origin)-ball_motion
 	var angle:=from.basis.get_rotation_quaternion().angle_to(to.basis.get_rotation_quaternion())
 	var bound:=travel.length()+angle*radius
-	if Geometry3D.get_closest_point_to_segment(ball,from.origin,to.origin-ball_motion).distance_to(ball)>radius+BALL_RADIUS:return {}
+	if Geometry3D.get_closest_point_to_segment(ball,from.origin,to.origin-ball_motion).distance_to(ball)>radius+BALL_RADIUS+tolerance:return {}
 	if bound<.000001:return {}
 	var fraction:=0.0
 	# Conservative advancement: distance is Lipschitz bounded by linear + angular travel.
@@ -150,12 +170,12 @@ func sweep(from:Transform3D,to:Transform3D,ball:Vector3,ball_motion:=Vector3.ZER
 		var centre:=ball+ball_motion*fraction
 		var near:=nearest(pose.affine_inverse()*centre)
 		var separation:float=near.distance-BALL_RADIUS
-		if near.inside or separation<=.00001:
+		if near.inside or separation<=(.00001 if tolerance==0 else tolerance):
 			var point:Vector3=pose*near.point
 			var normal:Vector3=pose.basis*near.outward if near.inside or near.distance<.000001 else (centre-point).normalized()
 			if normal.length_squared()<.9:return {"initial_overlap":true}
 			return {"contact":point,"contact_local":near.point,"normal":normal,"head_pose":pose,"head_basis":pose.basis,"head_center":pose.origin,"ball_center":centre,"fraction":fraction,"contact_distance_m":near.distance,"penetration_m":BALL_RADIUS+near.distance if near.inside else maxf(0,-separation),"triangle":near.triangle}
-		fraction+=maxf(separation/bound*.90,.000001)
+		fraction+=maxf((separation-tolerance)/bound*.90,.000001)
 		if fraction>1.0:return {}
 	return {}
 

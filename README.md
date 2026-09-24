@@ -1,5 +1,6 @@
-# Real AI Fishing
+# Ultimate Boomer Simulator
 
+Formerly Real AI Fishing. Existing saves and Android package identity are retained; the game icon is unchanged.
 A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. Freshwater and marine fish, six bait choices per habitat, eight photographed waterside settings plus two rivers, distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
 
 Open `project.godot` in Godot 4.7.2 and press F6/F5, or launch:

@@ -3,7 +3,7 @@
 import argparse,json,os,subprocess,tempfile,time
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-p=argparse.ArgumentParser();p.add_argument('--server',type=Path,default=ROOT/'builds/Server/RealAIFishingServer.x86_64');p.add_argument('--godot',default='/home/blux/.local/bin/Godot_v4.7.2-stable_linux.x86_64');args=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--server',type=Path,default=ROOT/'builds/Server/UltimateBoomerSimulatorServer.x86_64');p.add_argument('--godot',default='/home/blux/.local/bin/Godot_v4.7.2-stable_linux.x86_64');args=p.parse_args()
 logs=ROOT/'test-results/golf-dedicated';logs.mkdir(parents=True,exist_ok=True)
 with tempfile.TemporaryDirectory(prefix='golf-dedicated-') as temp:
  jobs=[]

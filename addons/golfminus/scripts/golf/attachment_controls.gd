@@ -2,7 +2,7 @@ extends VBoxContainer
 ## Golf-only mount corrections; shared controller calibration stays independent.
 var game:Node3D
 var hand:=1
-var hand_choice:OptionButton
+var hand_choice:VBoxContainer
 var mounted:CheckButton
 var fields:Dictionary={}
 var preview:Node3D
@@ -14,7 +14,7 @@ func _ready()->void:
 	add_theme_constant_override("separation",8)
 	hand=0 if game.left_handed else 1
 	var title:=Label.new();title.text="Club attachment calibration";add_child(title)
-	hand_choice=OptionButton.new();hand_choice.add_item("Left hand",0);hand_choice.add_item("Right hand",1);hand_choice.custom_minimum_size.y=46;add_child(hand_choice)
+	hand_choice=preload("res://scripts/ui/vr_option.gd").new();hand_choice.add_item("Left hand",0);hand_choice.add_item("Right hand",1);hand_choice.custom_minimum_size.y=46;add_child(hand_choice)
 	hand_choice.item_selected.connect(func(index:int):hand=index;refresh())
 	mounted=CheckButton.new();mounted.text="Controller-mounted club / physical attachment";mounted.custom_minimum_size.y=46;add_child(mounted)
 	mounted.toggled.connect(func(value:bool):game.set_club_attachment(hand,"mounted",0,float(value)))

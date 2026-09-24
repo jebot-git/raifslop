@@ -158,7 +158,7 @@ func _ready() -> void:
 	bbq=preload("res://scripts/bbq/activity.gd").new();add_child(bbq);bbq.setup(self)
 	golf_activity = preload("res://addons/golfminus/scripts/golf/fishing_host.gd").new()
 	add_child(golf_activity); golf_activity.setup(self)
-	print("Real AI Fishing ready | ", "OpenXR" if xr else "XR test fixture", " | panorama + location foreground loaded")
+	print("Ultimate Boomer Simulator ready | ", "OpenXR" if xr else "XR test fixture", " | panorama + location foreground loaded")
 
 func material(color: Color, metal := 0.0) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -790,9 +790,12 @@ func _process(delta: float) -> void:
 		fight_input.reset()
 		_layout_avatar_menu()
 		_update_menu_pointer()
-		if xr and right.get_has_tracking_data():
-			var scroll_axis := right.get_vector2("primary").y
-			if absf(scroll_axis) > 0.2: avatar_menu.scroll_page(-scroll_axis * 650.0 * delta)
+		var scroll_axis:=preload("res://scripts/ui/scroll_router.gd").joystick_axis()
+		if xr:
+			scroll_axis=0.0
+			for controller in [left,right]:
+				if controller.get_has_tracking_data() and absf(controller.get_vector2("primary").y)>absf(scroll_axis):scroll_axis=-controller.get_vector2("primary").y
+		if absf(scroll_axis)>.2:avatar_menu.scroll_page(scroll_axis*650.0*delta)
 		last_tip = _strike_tip()
 		_update_line()
 		return
@@ -1309,8 +1312,8 @@ func _select_location(id: String, persist := true) -> bool:
 	# exposes those distant triangles as a second floating strip at the horizon.
 	water_surface.mesh.size=Vector2(512,512)
 	water_surface.position.y=water_level
-	water_material.set_shader_parameter("river_flow",.6 if id=="meadow_bend" else 1.1 if id=="boulder_run" else 0.0)
-	water_material.set_shader_parameter("boulder_pockets",id=="boulder_run")
+	water_material.set_shader_parameter("river_flow",float(Session.Fly.RIVERS.get(id,{}).get("visual_flow",0.0)))
+	water_material.set_shader_parameter("boulder_pockets",not Session.Fly.pockets(id).is_empty())
 	water_material.set_shader_parameter("blend_start",1000.0 if Session.Fly.river(id) else 14.0)
 	water_material.set_shader_parameter("blend_end",1100.0 if Session.Fly.river(id) else 45.0)
 	water_material.set_shader_parameter("protect_panorama_foreground",entry.get("protect_panorama_foreground",false))

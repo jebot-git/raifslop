@@ -12,7 +12,9 @@ static func box(root:Node3D,at:Vector3,size:Vector3,mat:Material,collision:=true
  if collision:n.create_trimesh_collision()
 static func create(id:String)->Node3D:
  var root:=Node3D.new();root.name="RiverForeground";root.set_meta("location_id",id);root.set_meta("spawn",Vector3(0,0,1))
- var gravel=material("gray_pier_gravelly_sand_Diffuse.jpg",Color("c0b7a1"))
+ var alpine:bool=id=="glacier_run"
+ var cedar:bool=id=="cedar_creek"
+ var gravel=material("gray_pier_gravelly_sand_Diffuse.jpg",Color("849caa") if alpine else Color("c0b7a1"))
  var bank:=ShaderMaterial.new();bank.shader=load("res://assets/environment/rivers/bank.gdshader")
  bank.set_shader_parameter("cover",load("res://assets/environment/rivers/river_bank.png"))
  bank.set_shader_parameter("gravel",gravel.albedo_texture)
@@ -20,6 +22,8 @@ static func create(id:String)->Node3D:
  bank.set_shader_parameter("gravel_normal",gravel.normal_texture)
  bank.set_shader_parameter("grass_roughness",load("res://assets/models/locations/lit/lakeside_aerial_grass_rock_Rough.png"))
  bank.set_shader_parameter("grass",load("res://assets/models/locations/lit/lakeside_aerial_grass_rock_Diffuse.jpg"))
+ bank.set_shader_parameter("snow_cover",1.0 if alpine else 0.0)
+ if alpine or cedar:bank.set_shader_parameter("ambient_fill",.32)
  var bake_path:String="res://assets/textures/lighting/"+id+"_irradiance.exr"
  if ResourceLoader.exists(bake_path):
   bank.set_shader_parameter("irradiance",load(bake_path))
@@ -39,7 +43,7 @@ static func create(id:String)->Node3D:
  # Invisible bank-edge collision keeps the player on dry ground.
  var body:=StaticBody3D.new();root.add_child(body);body.position=Vector3(0,0,-3.1)
  var shape:=CollisionShape3D.new();var bounds:=BoxShape3D.new();bounds.size=Vector3(180,.6,.15);shape.shape=bounds;body.add_child(shape)
- var rng:=RandomNumberGenerator.new();rng.seed=711 if id=="meadow_bend" else 919
+ var rng:=RandomNumberGenerator.new();rng.seed=1223 if cedar else (1447 if alpine else (711 if id=="meadow_bend" else 919))
  var stones:=MultiMesh.new();stones.transform_format=MultiMesh.TRANSFORM_3D;stones.mesh=rock_mesh
  stones.instance_count=30 if id=="meadow_bend" else 65
  for i in stones.instance_count:
@@ -48,14 +52,15 @@ static func create(id:String)->Node3D:
   n.position=Vector3(x,-.25,z);n.rotation.y=rng.randf_range(-PI,PI);n.scale=Vector3(rng.randf_range(.4,1.2),.7,rng.randf_range(.4,1.0))
   stones.set_instance_transform(i,n.transform);n.free()
  var stone_visual:=MultiMeshInstance3D.new();stone_visual.name="InstancedRiverStones";stone_visual.multimesh=stones;stone_visual.material_override=rockmat;root.add_child(stone_visual)
- if id=="boulder_run":
-  for at in [Vector3(-7,-.6,-10),Vector3(5,-.6,-13),Vector3(15,-.6,-8)]:
+ if not preload("res://scripts/fly_fishing.gd").pockets(id).is_empty():
+  for pocket in preload("res://scripts/fly_fishing.gd").pockets(id):
+   var at:=Vector3(pocket.x,-.6,pocket.z)
    var n:=MeshInstance3D.new();n.mesh=rock_mesh;n.material_override=rockmat;n.position=at;n.scale=Vector3(3.2,3.0,2.7);root.add_child(n);n.create_trimesh_collision();n.set_meta("fish_ground",true)
  # Crossed cutouts in separated depth groups retain silhouettes from oblique views.
  var shrub_texture=load("res://assets/environment/rivers/river_shrubs.png")
  var tree_texture=load("res://assets/environment/rivers/river_alder.png")
  var shrubs:=Node3D.new();shrubs.name="LayeredRiverShrubs";root.add_child(shrubs)
- for i in 52:
+ for i in (10 if alpine else 52):
   var x:=rng.randf_range(-75,75)
   var far:bool=i%3!=0
   var t:float=rng.randf_range(.065,.13) if far else rng.randf_range(.045,.08)
@@ -72,7 +77,7 @@ static func create(id:String)->Node3D:
    at.y=footprint_height(at,size.x*.5,far)-size.y*.08
    card(shrubs,at,size,shrub_texture,rng.randf_range(-.3,.3),rng.randf_range(.88,1.05),rng.randf()<.5)
  var trees:=Node3D.new();trees.name="RiverAlders";root.add_child(trees)
- for i in (9 if id=="meadow_bend" else 24):
+ for i in (0 if alpine or cedar else (9 if id=="meadow_bend" else 24)):
   var x:=rng.randf_range(-85,85);var t:=rng.randf_range(.18,.42)
   var z:float=-19-t*45+sin(x*.07)*.65+sin(x*.19)*.2
   var height:=rng.randf_range(6.0,9.0)
@@ -81,13 +86,14 @@ static func create(id:String)->Node3D:
  # A second, smaller tree band breaks up the bare modeled ridge and masks
  # the source panorama's stretched lower horizon when viewed from the side.
  var backdrop_rng:=RandomNumberGenerator.new();backdrop_rng.seed=1701 if id=="meadow_bend" else 1702
- for i in (18 if id=="meadow_bend" else 26):
+ for i in (0 if alpine or cedar else (18 if id=="meadow_bend" else 26)):
   var x:float=-82.0+i*(164.0/(17.0 if id=="meadow_bend" else 25.0))+backdrop_rng.randf_range(-2,2)
   var t:float=backdrop_rng.randf_range(.48,.72)
   var z:float=-19-t*45+sin(x*.07)*.65+sin(x*.19)*.2
   var height:float=backdrop_rng.randf_range(3.8,6.2)
   card(trees,Vector3(x,footprint_height(Vector3(x,0,z),height*.3,true)-.15,z),Vector2(height*backdrop_rng.randf_range(.58,.82),height),tree_texture,backdrop_rng.randf_range(-.5,.5),backdrop_rng.randf_range(.83,1.0),backdrop_rng.randf()<.5)
- add_margin_reeds(root,rng)
+ if not alpine:add_margin_reeds(root,rng)
+ if alpine or cedar:add_expansion_props(root,rng,alpine,rock_mesh,rockmat)
  batch_cards(shrubs,shrub_texture,3)
  batch_cards(trees,tree_texture,2)
  preload("res://scripts/shore_dressing.gd").add_to(root,id)
@@ -181,3 +187,27 @@ static func add_margin_reeds(root:Node3D,rng:RandomNumberGenerator):
   var size:=Vector2(rng.randf_range(.55,.95),rng.randf_range(.65,1.25))
   card(group,Vector3(x,footprint_height(Vector3(x,0,z),size.x*.5,far)-.05,z),size,texture,rng.randf_range(-PI,PI),rng.randf_range(.85,1.0),false)
  batch_cards(group,texture,3)
+
+static func add_expansion_props(root:Node3D,rng:RandomNumberGenerator,alpine:bool,rock_mesh:Mesh,rock_material:Material):
+ var group:=Node3D.new();group.name="GlacialRidge" if alpine else "CedarGrove";root.add_child(group)
+ if alpine:
+  # Share the established UV-mapped river granite, normal detail, AO and wetness.
+  var multi:=MultiMesh.new();multi.transform_format=MultiMesh.TRANSFORM_3D;multi.mesh=rock_mesh;multi.instance_count=28
+  for i in multi.instance_count:
+   var x:float=rng.randf_range(-88,88);var z:float=rng.randf_range(-49,-22)
+   var scale:=Vector3(rng.randf_range(1.0,2.4),rng.randf_range(.7,1.65),rng.randf_range(.9,2.0))
+   var at:=Vector3(x,ground_height(x,z,true)-rock_mesh.get_aabb().position.y*scale.y-.12,z)
+   multi.set_instance_transform(i,Transform3D(Basis(Vector3.UP,rng.randf_range(-PI,PI)).scaled(scale),at))
+  var visual:=MultiMeshInstance3D.new();visual.multimesh=multi;visual.material_override=rock_material;group.add_child(visual)
+ else:
+  var texture:Texture2D=load("res://assets/environment/rivers/expansion/cedar_card.png")
+  for i in 44:
+   var x:float=rng.randf_range(-88,88);var z:float=rng.randf_range(-50,-26)
+   var height:float=rng.randf_range(5.5,9.0)
+   var at:=Vector3(x,0,z);at.y=footprint_height(at,height*.22,true)-.1
+   card(group,at,Vector2(height*2.0/3.0,height),texture,rng.randf_range(-.6,.6),rng.randf_range(.85,1.05),rng.randf()<.5)
+  batch_cards(group,texture,2)
+  var log_scene:PackedScene=load("res://assets/environment/rivers/expansion/fallen_cedar.glb")
+  for at in [Vector3(-8,0,-1),Vector3(13,0,-.5),Vector3(-17,0,-22)]:
+   var log_mesh:Node3D=log_scene.instantiate();root.add_child(log_mesh);log_mesh.position=at
+   log_mesh.position.y=ground_height(at.x,at.z,at.z< -18)+.03;log_mesh.rotation.y=rng.randf_range(-.5,.5)

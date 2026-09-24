@@ -18,6 +18,9 @@ var bridge: Node
 var telemetry:Node
 var last_swing_us:=0
 var last_swing_state:=""
+var last_contact_state:=""
+var practice_exact_contact:=false
+var shot_feedback:=""
 var last_capture_state:Dictionary={}
 var world: Node3D
 var body: CharacterBody3D
@@ -100,6 +103,7 @@ func _ready() -> void:
 	var cfg:=ConfigFile.new();cfg.load("user://golf_controls.cfg");calibration.load_config(cfg)
 	if preload("res://addons/golfminus/scripts/golf/club_fit_profile.gd").migrate(cfg):cfg.save("user://golf_controls.cfg")
 	ICONS.enabled=bool(cfg.get_value("interface","pictograms",true))
+	practice_exact_contact=bool(cfg.get_value("golf","practice_exact_contact",false))
 	if is_instance_valid(host_game):calibration=host_game.controller_calibration
 	if not is_instance_valid(host_game):
 		body.smooth_turn=bool(cfg.get_value("controls","smooth_turn",false))
@@ -207,10 +211,11 @@ func load_hole(index: int) -> void:
 		world=(preload("res://addons/golfminus/scripts/world/connected_course_world.gd").new() if model.connected else preload("res://addons/golfminus/scripts/world/course_world.gd").new())
 		world.name="Course";world.tee_kind=tee_kind;add_child(world);world.build(model)
 	ball.model=model;ball.collision_query=world.sweep_ball;ball.place(model.tee(tee_kind));ball_mesh.position=ball.position
+	shot_feedback="";last_contact_state=""
 	contact_effects.arm_tee(ball.position)
 	set_club(0)
 	trail_points.clear();trail.mesh=null
-	aim=(model.pin()-ball.position).signed_angle_to(Vector3.FORWARD,Vector3.UP)
+	_reset_lane_aim()
 	address_offset=Vector3(INF,INF,INF);address_facing=Vector3.ZERO
 	address_ball()
 	hud.refresh()
@@ -228,14 +233,14 @@ func resume_round() -> bool:
 	practice=false;round_active=true;course_id=cfg.get_value("round","course");tee_kind=cfg.get_value("round","tee","club")
 	load_hole(cfg.get_value("round","hole"));round_state.restore(cfg,ball)
 	if round_state.strokes>0 or ball.moving or ball.position.distance_to(model.tee(tee_kind))>.06:contact_effects.clear()
-	was_moving=ball.moving;toggle_menu(false);address_ball();status_text="Round resumed."
+	was_moving=ball.moving;_reset_lane_aim();toggle_menu(false);address_ball();status_text="Round resumed."
 	return true
 func start_practice() -> void:
 	if is_instance_valid(host_activity) and host_activity.enrolled():status_text="Retire from the course before starting practice.";return
 	practice=true;round_active=false;round_state.start();load_hole(0)
 	var p: Vector3=model.pin()+Vector3(0,0,6);p.y=model.height(p.x,p.z)+BALL.RADIUS
 	contact_effects.clear()
-	ball.place(p);set_club(7);toggle_menu(false);address_ball();status_text="Putting practice  ·  six metres to the cup."
+	ball.place(p);_reset_lane_aim();set_club(7);toggle_menu(false);address_ball();status_text="Putting practice  ·  six metres to the cup."
 func pointer_controller()->XRController3D:
 	var preferred:XRController3D=left if left_handed else right
 	return preferred if preferred.get_has_tracking_data() else (right if left_handed else left)
@@ -294,10 +299,14 @@ func set_club(index: int) -> void:
 	(left if left_handed else right).add_child(club)
 	head_shape=preload("res://addons/golfminus/scripts/golf/club_head.gd").for_club(club_index)
 	physical_head=head_shape.install(club,club_index)
+	update_club_style()
 	_sync_physical_head()
 	club.visible=not menu_open and not godview.active
 	if equipment.stowed:equipment.set_stowed(true)
 	reset_swing()
+func update_club_style()->void:
+	var tier:int=host_game.game.tackle.equipped if is_instance_valid(host_game) else -1
+	preload("res://addons/golfminus/scripts/golf/club_style.gd").apply(club,tier)
 func reset_swing() -> void:
 	last_swing_us=0
 	if is_instance_valid(contact_effects):contact_effects.valid=false
@@ -310,8 +319,8 @@ func address_basis()->Basis:
 	return Basis(direction.cross(Vector3.UP),Vector3.UP,-direction)
 func address_ball() -> void:
 	if ball.moving:return
-	var direction:Vector3=model.pin()-ball.position;direction.y=0
-	if direction.length_squared()>.0001:aim=direction.signed_angle_to(Vector3.FORWARD,Vector3.UP)
+	# Aim was chosen by the player or the lane planner. Addressing only moves
+	# the stance; it must not redirect a dogleg shot through out-of-lane ground.
 	var frame:=address_basis()
 	var offset:=frame*address_offset if address_offset.is_finite() else Vector3.ZERO
 	if not address_offset.is_finite():
@@ -364,6 +373,7 @@ func _save_preferences() -> void:
 		cfg.set_value("golf","club_fitted_%d"%hand,club_fitted[hand])
 		cfg.set_value("golf","club_head_source_%d"%hand,club_head_sources[hand])
 	cfg.set_value("golf","fit_version",2)
+	cfg.set_value("golf","practice_exact_contact",practice_exact_contact)
 	cfg.set_value("interface","pictograms",ICONS.enabled)
 	cfg.set_value("golf","reach",club_reach);cfg.set_value("golf","left_handed",preferred_left_handed);cfg.save("user://golf_controls.cfg")
 func _left_button(action:String)->void:_controller_button(action,0)
@@ -435,20 +445,35 @@ func strike(v: Vector3,face: Vector3,contact:Dictionary={}) -> bool:
 	var diagnostic:Dictionary=contact.duplicate(true)
 	diagnostic.merge({"club":club_index,"club_name":CLUBS.BAG[club_index].name,"lie":lie,"filtered_velocity":v,"face":face,"impact":impact,"source":"vr_render_sweep"},true)
 	if not rejection.is_empty():
-		diagnostic.rejection=rejection;diagnostic.accepted=false;telemetry.contact(diagnostic);return false
+		reject_contact(diagnostic,rejection);return false
 	if is_instance_valid(host_activity) and host_activity.intercept_shot(v,face,contact):return false
 	if ball.launch(impact.velocity,impact.spin):
+		swing.resolve_contact(true);last_contact_state="accepted"
+		shot_feedback="%s · face/path %+.1f° · %.1f m/s\nContact %+.0f / %+.0f mm · turf speed loss %.0f%% · allowance %.1f mm"%[str(impact.surface_region).capitalize(),float(impact.face_path_angle_degrees),ball.velocity.length(),impact.impact_offset_m.x*1000,impact.impact_offset_m.y*1000,(1.0-float(contact.get("turf",{}).get("speed_scale",1.0)))*100,float(contact.get("tracking_correction_m",0.0))*1000]
 		contact_effects.launch_tee(ball.position,impact.velocity)
 		if xr:remember_address(head.global_position)
 		round_active=not practice;round_state.shot(ball.position);trail_points.clear();trail_points.append(ball.position);was_moving=true;rest_delay=0
 		status_text="Ball in flight";_impact_audio(float(impact.normal_speed_m_s))
 		if xr:(left if left_handed else right).trigger_haptic_pulse("haptic",0,clampf(float(impact.normal_speed_m_s)/45,.12,.8),.045,0)
 		var payload:Dictionary={"course":course_id,"hole":round_state.hole,"hole_number":round_state.hole+1,"club":club_index,"club_name":CLUBS.BAG[club_index].name,"practice":practice,"lie":lie,"velocity":ball.velocity,"spin":ball.spin,"ball_launch_speed_m_s":ball.velocity.length(),"spin_rpm":ball.spin.length()*60.0/TAU,"launch_angle_degrees":rad_to_deg(atan2(ball.velocity.y,Vector2(ball.velocity.x,ball.velocity.z).length())),"origin":ball.position,"target":model.pin(),"target_distance_m":Vector2(model.pin().x-ball.position.x,model.pin().z-ball.position.z).length(),"club_velocity":v,"raw_velocity":contact.get("raw_velocity",v),"face":face,"impact":impact,"source":diagnostic.source}
+		for key in ["contact_policy","tracking_correction_m","tracking_tolerance_m","turf"]:
+			if contact.has(key):payload[key]=contact[key]
 		var shot_id:String=telemetry.begin_shot(payload)
 		payload.shot_id=shot_id;diagnostic.shot_id=shot_id;diagnostic.accepted=true
 		telemetry.contact(diagnostic);bridge.record_shot(payload);save_progress();return true
-	diagnostic.rejection="ball_launch_rejected";diagnostic.accepted=false;telemetry.contact(diagnostic)
+	reject_contact(diagnostic,"ball_launch_rejected")
 	return false
+func reject_contact(contact:Dictionary,reason:String)->void:
+	swing.resolve_contact(false);last_contact_state="rejected"
+	var diagnostic:=contact.duplicate(true)
+	diagnostic.merge({"rejection":reason,"accepted":false,"acceptance":"rejected"},true)
+	telemetry.contact(diagnostic)
+	status_text="Shot paused: "+reason.replace("_"," ")+"."
+func pending_contact(contact:Dictionary)->void:
+	last_contact_state="pending"
+	var diagnostic:=contact.duplicate(true)
+	diagnostic.merge({"accepted":false,"acceptance":"pending"},true)
+	telemetry.contact(diagnostic);status_text="Waiting for shot approval."
 func _complete_shot(reason:="")->void:
 	if not is_instance_valid(telemetry) or telemetry.pending.is_empty():return
 	if trail_points.size()>0 and trail_points[-1].distance_to(ball.position)>.001:trail_points.append(ball.position);_draw_trail()
@@ -480,6 +505,7 @@ func _physics_process(dt: float) -> void:
 	if model.hole.is_empty():return
 	if not is_instance_valid(host_game):body.tracking_focused=focused
 	if menu_open:
+		if not xr:preload("res://scripts/ui/scroll_router.gd").scroll(ui_viewport,preload("res://scripts/ui/scroll_router.gd").joystick_axis()*650*dt,hud.menu_scroll)
 		if xr and not (is_instance_valid(host_activity) and host_activity.settings_open):_pointer()
 		if not ball.moving:return
 	if club_radial.opened:return
@@ -500,6 +526,7 @@ func _physics_process(dt: float) -> void:
 		was_moving=false
 		if ball.hazard:
 			ball.place(round_state.penalty());status_text="Water / out of bounds  ·  +1 stroke  ·  Club A/X to address"
+			_reset_lane_aim()
 		elif ball.holed:
 			if not practice:
 				round_state.complete_hole();round_state.save_result(course_id)
@@ -508,16 +535,35 @@ func _physics_process(dt: float) -> void:
 			status_text="Holed in %d!   N / A: %s"%[round_state.strokes,"putt again" if practice else "next hole"]
 		else:
 			status_text="CARRY %.0f m   ·   TOTAL %.0f m   ·   T / A to address"%[ball.carry,Vector2(ball.position.x-ball.origin.x,ball.position.z-ball.origin.z).length()]
-			aim=(model.pin()-ball.position).signed_angle_to(Vector3.FORWARD,Vector3.UP)
+			_reset_lane_aim()
 			if model.lie(ball.position.x,ball.position.z)=="green":set_club(7)
 		save_progress()
 	_draw_aim();hud.refresh()
 func club_input_active()->bool:
-	if not xr or not focused or menu_open or fitting_club or godview.active or club_radial.opened or equipment.stowed or course_guide.held:return false
+	if not xr or not focused or menu_open or fitting_club or godview.active or club_radial.opened or equipment.stowed or course_guide.held:
+		return swing.activation(0,0,false,false)
 	var controller:XRController3D=left if left_handed else right
-	return controller.get_has_tracking_data() and (maxf(controller.get_float("grip"),controller.get_float("trigger"))>.55 or controller.is_button_pressed("trigger_click") or controller.is_button_pressed("grip_click"))
+	return swing.activation(controller.get_float("grip"),controller.get_float("trigger"),controller.is_button_pressed("trigger_click") or controller.is_button_pressed("grip_click"),controller.get_has_tracking_data())
 func club_collision_enabled()->bool:
-	return club_input_active() and not ball.moving
+	return club_input_active() and not ball.moving and not ball.holed and not shot_awaiting_approval() and not waiting_for_turn()
+func shot_awaiting_approval()->bool:
+	return is_instance_valid(host_activity) and not host_activity.pending_shot.is_empty()
+func waiting_for_turn()->bool:
+	return is_instance_valid(host_activity) and (host_activity.clubhouse_round!=null or host_activity.enrolled() and not host_activity.service.can_shoot())
+func inactive_swing_reason()->String:
+	if not focused:return "focus_lost"
+	if menu_open:return "menu_open"
+	if fitting_club:return "fitting"
+	if godview.active:return "godview"
+	if club_radial.opened:return "club_selection"
+	if equipment.stowed:return "club_stowed"
+	if course_guide.held:return "guide_held"
+	if shot_awaiting_approval():return "shot_pending"
+	if waiting_for_turn():return "waiting_for_turn"
+	if ball.holed:return "ball_holed"
+	if ball.moving:return "ball_moving"
+	if body.last_motion.length()>=.2:return "locomotion"
+	return "grip_and_trigger_released"
 
 func _swing() -> void:
 	var now:=Time.get_ticks_usec()
@@ -529,18 +575,31 @@ func _swing() -> void:
 	var tip:=_update_club_pose()
 	if dt<=0:return
 	var active: bool=club_collision_enabled() and body.last_motion.length()<.2
-	if not controller.get_has_tracking_data():swing.reset();contact_effects.valid=false;return
+	if not controller.get_has_tracking_data():
+		var lost:Dictionary={"monotonic_us":now,"head":tip,"ball":ball.position,"club":club_index,"active":false,"tracked":false,"status":"tracking_lost","inactive_reason":"tracking_lost"}
+		telemetry.sample_swing(lost)
+		if last_swing_state!="tracking_lost":telemetry.record("swing_state",lost)
+		last_swing_state="tracking_lost";status_text="Swing paused: controller tracking lost."
+		swing.reset();contact_effects.valid=false;return
+	if last_swing_state=="tracking_lost":
+		telemetry.record("swing_state",{"status":"tracking_reacquired","monotonic_us":now})
+		status_text="Tracking restored. Hold grip or trigger when ready."
 	var ground_event:Dictionary=contact_effects.sample_ground(physical_head.global_transform,head_shape,model,dt,club_input_active() and body.last_motion.length()<.2)
 	if not ground_event.is_empty():controller.trigger_haptic_pulse("haptic",0,ground_event.strength,.055 if ground_event.hard else .025,0)
-	var sample: Dictionary=swing.sample_pose(physical_head.global_transform,head_shape,ball.position,dt,active,ball.velocity,model)
+	swing.tracking_tolerance=0.0 if practice and practice_exact_contact else SWING.TRACKING_TOLERANCE
+	var tracked_pose:=controller.get_pose()
+	var tracking_reliable:=tracked_pose!=null and tracked_pose.tracking_confidence==XRPose.XR_TRACKING_CONFIDENCE_HIGH
+	var sample: Dictionary=swing.sample_pose(physical_head.global_transform,head_shape,ball.position,dt,active,ball.velocity,model,tracking_reliable)
 	var observation:Dictionary=swing.last_sample.duplicate(true)
 	observation.merge({"monotonic_us":now,"club":club_index,"face":-physical_head.global_basis.z.normalized(),"grip":controller.get_float("grip"),"trigger":controller.get_float("trigger"),"tracked":controller.get_has_tracking_data(),"focused":focused,"body_speed_m_s":body.last_motion.length(),"menu_open":menu_open,"fitting":fitting_club},true)
-	if not active:observation.inactive_reason="tracking_lost" if not controller.get_has_tracking_data() else "grip_and_trigger_released" if not club_input_active() else "ball_moving" if ball.moving else "locomotion"
+	if tracked_pose!=null:observation.tracking_confidence=tracked_pose.tracking_confidence
+	if not active:observation.inactive_reason=inactive_swing_reason()
 	telemetry.sample_swing(observation)
 	# Walking or an in-flight ball is not an unarmed address pose to retain.
 	if not active and (body.last_motion.length()>=.2 or ball.moving):swing.reset()
 	var state:String=observation.get("status","")
 	if active and state=="invalid_interval":status_text="Swing paused: tracking update gap. Wait for smooth tracking; no need to refit."
+	if state=="discontinuity":status_text="Swing paused: controller pose jumped. Address the ball again."
 	if state!=last_swing_state and state in ["discontinuity","invalid_interval","inactive","priming"]:
 		telemetry.record("swing_state",observation)
 	last_swing_state=state
@@ -554,8 +613,10 @@ func _release_pointer(hide_laser:=true) -> void:
 		ui_viewport.push_input(click,true)
 	pointer_down=false
 func _pointer() -> void:
-	var scroll_axis:=right.get_vector2("primary").y
-	if absf(scroll_axis)>.2:hud.menu_scroll.scroll_vertical-=int(scroll_axis*650*get_physics_process_delta_time())
+	var scroll_axis:=0.0
+	for controller in [left,right]:
+		if controller.get_has_tracking_data() and absf(controller.get_vector2("primary").y)>absf(scroll_axis):scroll_axis=controller.get_vector2("primary").y
+	if absf(scroll_axis)>.2:preload("res://scripts/ui/scroll_router.gd").scroll(ui_viewport,-scroll_axis*650*get_physics_process_delta_time(),hud.menu_scroll)
 	pointer_dot.visible=false
 	var ray:Dictionary=preload("res://addons/golfminus/scripts/core/menu_ray.gd").sample(self)
 	if ray.is_empty():_release_pointer();return
@@ -787,13 +848,21 @@ func flip_club_face() -> void:
 	toggle_menu(false);reset_swing();swing.cooldown=.8;_save_preferences()
 	hud.attachment_controls.refresh()
 	status_text="Club face reversed; handle attachment retained."
+func _reset_lane_aim()->void:
+	var direction:Vector3=model.guide_target(ball.position)-ball.position
+	direction.y=0
+	if direction.length_squared()>.0001:aim=direction.signed_angle_to(Vector3.FORWARD,Vector3.UP)
+
 func _draw_aim() -> void:
 	aim_mesh.visible=not godview.active and not ball.moving and not ball.holed
 	if not aim_mesh.visible:return
-	var mesh:=ImmediateMesh.new();mesh.surface_begin(Mesh.PRIMITIVE_LINES)
 	var p: Vector3=ball.position
+	var length:float=model.guide_length(p,aim_direction())
+	if length<=.4:aim_mesh.visible=false;return
+	var mesh:=ImmediateMesh.new();mesh.surface_begin(Mesh.PRIMITIVE_LINES)
 	for i in range(1,14):
-		for t in [float(i)*.4,float(i)*.4+.20]:
+		if float(i)*.4>=length:break
+		for t in [float(i)*.4,minf(float(i)*.4+.20,length)]:
 			var pt: Vector3=p+aim_direction()*t;pt.y=model.height(pt.x,pt.z)+.035;mesh.surface_add_vertex(pt)
 	mesh.surface_end();aim_mesh.mesh=mesh
 	if not aim_mesh.material_override:

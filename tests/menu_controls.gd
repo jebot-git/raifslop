@@ -25,7 +25,7 @@ func check_list_drag(list:ItemList,label:String):
 	var at:Vector2=list.global_position+Vector2(list.size.x*.5,140)
 	motion(at);await settle();button(at,true);motion(at-Vector2(0,100),true);await settle();button(at-Vector2(0,100),false);await settle()
 	check(list.get_v_scroll_bar().value>80 and list.get_selected_items()[0]==0,label+" drags without selecting an avatar/file")
-	check(list.get_v_scroll_bar().modulate.a==0,label+" hides the VR scrollbar")
+	check(list.get_v_scroll_bar().modulate.a==1,label+" shows an indicator scrollbar")
 func run():
 	var g=load("res://scenes/main.tscn").instantiate(); root.add_child(g); await settle()
 	g.set_process(false);g.motor.set_physics_process(false)
@@ -68,14 +68,18 @@ func run():
 	at=heading.get_global_rect().get_center();motion(at);await settle();button(at,true);motion(at-Vector2(0,45),true);await settle();button(at-Vector2(0,45),false);await settle()
 	check(menu.pages.together.view.scroll_vertical>scroll,"Empty page background still supports deliberate drag scrolling")
 	menu.show_page("waters");await settle()
+	check(menu.water_categories.visible and not menu.water_submenu.visible,"Waters starts with categories")
+	menu.open_water_category("lakes");await settle()
 	var waters:ItemList=menu.location_list
+	for i in 32:waters.add_item("Scroll fixture %d"%i)
 	waters.select(0);waters.get_v_scroll_bar().value=0;await settle()
 	var outer_scroll:int=menu.pages.waters.view.scroll_vertical
 	at=waters.global_position+waters.get_item_rect(2).get_center()
 	motion(at);await settle();button(at,true);motion(at-Vector2(0,95),true);await settle();button(at-Vector2(0,95),false);await settle()
 	check(waters.get_v_scroll_bar().value>80,"VR trigger drag scrolls water rows")
 	check(waters.get_selected_items()[0]==0 and menu.pages.waters.view.scroll_vertical==outer_scroll,"Water dragging neither selects a row nor drags its parent page")
-	check(waters.get_v_scroll_bar().modulate.a==0,"VR water browsing does not require scrollbar targeting")
+	check(waters.get_v_scroll_bar().modulate.a==1,"VR water browsing does not require scrollbar targeting")
+	menu.refresh_locations(g.current_location,true);await settle()
 	waters.get_v_scroll_bar().value=0;await settle()
 	at=waters.global_position+waters.get_item_rect(1).get_center()
 	motion(at);await settle();button(at,true);motion(at+Vector2(0,3),true);button(at+Vector2(0,3),false);await settle()

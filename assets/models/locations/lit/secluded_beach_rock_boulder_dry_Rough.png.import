@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cxyx1hs6hndpr"
-path="res://.godot/imported/secluded_beach_rock_boulder_dry_Rough.png-ef1e8313e44173317d158c9c752cbe8f.ctex"
+path.s3tc="res://.godot/imported/secluded_beach_rock_boulder_dry_Rough.png-ef1e8313e44173317d158c9c752cbe8f.s3tc.ctex"
+path.etc2="res://.godot/imported/secluded_beach_rock_boulder_dry_Rough.png-ef1e8313e44173317d158c9c752cbe8f.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "b8b7c5ab2d9583c3cd9710b725b6bb72"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/locations/lit/secluded_beach_rock_boulder_dry_Rough.png"
-dest_files=["res://.godot/imported/secluded_beach_rock_boulder_dry_Rough.png-ef1e8313e44173317d158c9c752cbe8f.ctex"]
+dest_files=["res://.godot/imported/secluded_beach_rock_boulder_dry_Rough.png-ef1e8313e44173317d158c9c752cbe8f.s3tc.ctex", "res://.godot/imported/secluded_beach_rock_boulder_dry_Rough.png-ef1e8313e44173317d158c9c752cbe8f.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

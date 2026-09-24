@@ -7,8 +7,7 @@ var initial_scroll := 0.0
 var pressed_row := -1
 func _process(_delta:float) -> void:
  var bar:=get_v_scroll_bar()
- bar.modulate.a=0.0
- bar.mouse_filter=Control.MOUSE_FILTER_IGNORE
+ preload("res://scripts/ui/scroll_router.gd").indicator(bar)
  if not is_visible_in_tree():pressed=false;dragging=false
 func _input(event:InputEvent) -> void:
  if not is_visible_in_tree():return

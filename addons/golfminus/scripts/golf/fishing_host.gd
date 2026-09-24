@@ -167,6 +167,7 @@ func preserve_mirror()->void:
 	host.spectator.camera.far=host.head.far
 func update_player(delta: float) -> void:
 	if not active:return
+	golf.update_club_style()
 	preserve_mirror()
 	if is_instance_valid(host.avatar) and avatar_bound!=host.avatar:
 		avatar_bound=host.avatar;avatar_bound.hand_attachments_updated.connect(attach_club_to_hand)
@@ -183,12 +184,14 @@ func update_player(delta: float) -> void:
 		if golf.hud.icons_were_enabled!=preload("res://addons/golfminus/scripts/golf/pictograms.gd").enabled:golf.hud.refresh_icons()
 	if settings_open:
 		if not host.menu_open:close_settings()
-		elif host.xr and host.has_method("_update_menu_pointer"):
-			host._update_menu_pointer()
-			var controller:XRController3D=golf.pointer_controller()
-			if controller.get_has_tracking_data():
-				var scroll:=controller.get_vector2("primary").y
-				if absf(scroll)>.2:host.avatar_menu.scroll_page(-scroll*650*delta)
+		else:
+			if host.xr and host.has_method("_update_menu_pointer"):host._update_menu_pointer()
+			var scroll:float=preload("res://scripts/ui/scroll_router.gd").joystick_axis()
+			if host.xr:
+				for controller in [host.left,host.right]:
+					var axis:float=-controller.get_vector2("primary").y
+					if controller.get_has_tracking_data() and absf(axis)>absf(scroll):scroll=axis
+			if absf(scroll)>.2:host.avatar_menu.scroll_page(scroll*650*delta)
 	# Giant-scale head/controller poses are view-only, not avatar body samples.
 	if golf.godview.active:
 		if is_instance_valid(host.tracking_manager):golf.focused=host.tracking_manager.focused and host.motor.tracking_focused
@@ -380,6 +383,7 @@ func sync_session()->void:
 	if not is_inside_tree() or is_queued_for_deletion() or not is_instance_valid(service):return
 	var v:Dictionary=service.view
 	if v.is_empty():
+		if not pending_shot.is_empty() and is_instance_valid(golf):golf.reject_contact(pending_shot.contact,"session_disconnected")
 		pending_shot.clear()
 		if loading_course.is_empty():status.text="Join a course to play with this server."
 		return
@@ -420,11 +424,12 @@ func sync_session()->void:
 		host.current_location=preload("res://addons/golfminus/scripts/golf/host_locations.gd").location(v.course,v.hole)
 		if is_instance_valid(host.get("bbq")):host.bbq.select_location()
 func intercept_shot(v:Vector3,face:Vector3,contact:Dictionary)->bool:
-	if clubhouse_round!=null:return true
+	if clubhouse_round!=null:golf.reject_contact(contact,"clubhouse");return true
 	if not enrolled() or shot_granted:return false
-	if clubhouse_round!=null or not service.can_shoot():golf.status_text="Waiting for your turn";return true
 	if not pending_shot.is_empty():return true
+	if not service.can_shoot():golf.reject_contact(contact,"waiting_for_turn");return true
 	pending_shot={"velocity":v,"face":face,"contact":contact.duplicate(true)}
+	golf.pending_contact(contact)
 	service.request("shot",{"epoch":service.view.epoch});return true
 func request_relief()->void:
 	if pending_relief or not enrolled() or not service.can_shoot():return
@@ -439,7 +444,7 @@ func command_result(action:String,accepted:bool)->void:
 		if accepted and active and service.view.hole==golf.model.index:
 			golf.round_state.strokes=int(service.view.strokes)
 			if service.view.done:golf.ball.holed=true
-			else:golf.ball.place(golf.round_state.last_safe);golf.address_ball()
+			else:golf.ball.place(golf.round_state.last_safe);golf._reset_lane_aim();golf.address_ball()
 		if active:sync_session()
 		return
 	if action=="retire" and accepted:leave(true);return
@@ -460,6 +465,7 @@ func command_result(action:String,accepted:bool)->void:
 			var launched:bool=golf.strike(shot.velocity,shot.face,shot.contact)
 			shot_granted=false
 			if not launched:service.request("settled",{"epoch":service.view.epoch,"holed":false,"hazard":false})
+		else:golf.reject_contact(shot.contact,"shot_not_authorized")
 func shot_settled(outcome:Dictionary)->void:
 	if enrolled():service.request("settled",{"epoch":service.view.epoch,"holed":outcome.get("holed",false),"hazard":outcome.get("hazard",false)})
 

@@ -13,9 +13,9 @@ func until(test:Callable,seconds:=20.0)->bool:
   await create_timer(.05).timeout
  return false
 func _initialize()->void:run.call_deferred()
-func pose(location:String,serial:int,offset:=Vector3.ZERO)->void:
+func pose(location:String,serial:int,offset:=Vector3.ZERO,tier:=0,club_index:=0)->void:
  var at:Vector3=preload("res://scripts/bbq/sites.gd").arrival(location)+offset
- var data:Dictionary={"user_height":1.78,"serial":serial,"location":location,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"state":0,"bait":0,"species":0,"rod_tier":0,"rig":0,"length":10.0,"curl":0.0,"reel_angle":0.0,"golf_club":0,"golf_stowed":true}
+ var data:Dictionary={"user_height":1.78,"serial":serial,"location":location,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"state":0,"bait":0,"species":0,"rod_tier":tier,"rig":0,"length":10.0,"curl":0.0,"reel_angle":0.0,"golf_club":club_index,"golf_stowed":true}
  for key in Net.State.TRANSFORMS:data[key]=Transform3D(Basis.IDENTITY,at+Vector3.UP*1.7)
  for key in Net.State.VECTORS:data[key]=at
  for key in ["caught","in_hand","xr","bobber_visible","bait_visible"]:data[key]=false
@@ -55,9 +55,45 @@ func run()->void:
   pose("golf_spyglass_clubhouse" if role=="B" else "golf_spyglass_05",3)
   check(await until(func():return net.states.size()==2),"Course poses replicated across holes and clubhouse")
   check(net.same_location(net.states.keys()[0],net.states.keys()[1]),"Dedicated server and client share course visibility domain")
+  # Real reliable snapshots cross the exported server before driving materials.
+  # A coordinates; B acknowledges each phase only after checking A's snapshot.
+  var other:int=net.states.keys().filter(func(id):return id!=net.multiplayer.get_unique_id())[0]
+  var style=preload("res://addons/golfminus/scripts/golf/club_style.gd")
+  var displayed:Node3D
+  var displayed_index:=-1
+  for phase in 12:
+   var tier:int=phase%4;var club_index:int=[0,3,7][phase/4]
+   var serial:int=10+phase
+   if role=="A":pose("golf_spyglass_05",serial,Vector3.ZERO,tier,club_index)
+   check(await until(func():return net.states.has(other) and int(net.states[other].serial)>=serial),"Cosmetic snapshot relayed by dedicated server")
+   var snapshot:Dictionary=net.states[other]
+   var expected:int=3-tier if role=="A" else tier
+   check(snapshot.rod_tier==expected and snapshot.golf_club==club_index,"Club and tackle tier arrive unchanged")
+   var previous:Node3D=displayed
+   if displayed_index!=club_index:
+    if is_instance_valid(displayed):displayed.free()
+    displayed=load("res://addons/golfminus/assets/models/%s.glb"%["driver" if club_index==0 else "putter" if club_index==7 else "iron"]).instantiate()
+    displayed_index=club_index
+   style.apply(displayed,snapshot.rod_tier)
+   check(displayed.get_meta("tackle_style")==expected and (tier==0 or displayed==previous),"Network-driven finish changes without rebuilding same club")
+   var shaft:MeshInstance3D
+   for mesh in displayed.find_children("*","MeshInstance3D",true,false):
+    if "shaft" in mesh.name:shaft=mesh
+   check(shaft.get_active_material(0).albedo_color.is_equal_approx(style.linear_rgb(style.palettes[expected].blank).linear_to_srgb()),"Received tier produces expected visible shaft colour")
+   if role=="B":pose("golf_spyglass_clubhouse",serial,Vector3.ZERO,3-tier,club_index)
+  if is_instance_valid(displayed):displayed.free()
   if role=="B":
    net.bbq.request("start")
    check(await until(func():return net.bbq.model.stations.has("golf_spyglass_clubhouse")),"Exported server resolves terrain-backed clubhouse BBQ")
+   # Supply a tracked hand at the prop, as the live XR client does. The
+   # generic pose puts both hands at head height, outside the grab radius.
+   var hand_pose:Dictionary=net.states[net.multiplayer.get_unique_id()].duplicate(true)
+   hand_pose.serial=30
+   hand_pose.xr=true
+   hand_pose.right=Transform3D(Basis.IDENTITY,preload("res://scripts/bbq/sites.gd").pose("golf_spyglass_clubhouse")*net.bbq.model.stations.golf_spyglass_clubhouse.items[6].pos)
+   check(Net.State.valid(hand_pose),"Tracked tongs grab pose validates")
+   net.states[net.multiplayer.get_unique_id()]=hand_pose
+   net._submit_event.rpc_id(1,hand_pose)
    net.bbq.request("grab",6,1)
    check(await until(func():return net.bbq.model.stations.golf_spyglass_clubhouse.items[6].owner==net.multiplayer.get_unique_id()),"Dedicated server grants tongs ownership")
    net.bbq.request("release")

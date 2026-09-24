@@ -35,7 +35,10 @@ def main():
         if old.relative_to(stage).as_posix() not in seen:old.unlink()
     (stage/'project.godot').write_text('''config_version=5
 [application]
-config/name="Real AI Fishing Server"
+config/name="Ultimate Boomer Simulator Server"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="Godot/app_userdata/Real AI Fishing Server"
+config/custom_user_dir_name.linux="godot/app_userdata/Real AI Fishing Server"
 run/main_scene="res://server.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 [rendering]
@@ -55,7 +58,7 @@ custom_features="dedicated_server"
 export_filter="all_resources"
 include_filter="addons/golfminus/courses/*.json,addons/golfminus/assets/course_data/**/*.bin,addons/golfminus/assets/course_data/CREDITS.md"
 exclude_filter=""
-export_path="../RealAIFishingServer.x86_64"
+export_path="../UltimateBoomerSimulatorServer.x86_64"
 script_export_mode=0
 [preset.0.options]
 binary_format/architecture="x86_64"
@@ -72,11 +75,11 @@ texture_format/etc2_astc=false
     template=pathlib.Path.home()/'.local/share/godot/export_templates'/version/'linux_release.x86_64'
     if template.exists():
         with (stage/'export_presets.cfg').open('a') as f:f.write('custom_template/debug='+json.dumps(str(template))+'\ncustom_template/release='+json.dumps(str(template))+'\n')
-    for suffix,command in [('import',['--editor','--import','--quit']),('export',['--export-release','Server',str(out/'RealAIFishingServer.x86_64')])]:
+    for suffix,command in [('import',['--editor','--import','--quit']),('export',['--export-release','Server',str(out/'UltimateBoomerSimulatorServer.x86_64')])]:
         log=out/(suffix+'.log')
         with log.open('w') as stream:result=subprocess.run([args.godot,'--headless','--xr-mode','off','--path',str(stage),*command],stdout=stream,stderr=subprocess.STDOUT,env=env)
         if result.returncode or any(x in log.read_text() for x in ['SCRIPT ERROR','Parse Error','Export failed']):raise SystemExit('Build failed: '+str(log))
-    binary=out/'RealAIFishingServer.x86_64'
+    binary=out/'UltimateBoomerSimulatorServer.x86_64'
     manifest={'files':sorted(seen|set(data_files)|{'project.godot','server.tscn'}),'binary_bytes':binary.stat().st_size,'sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'bundled_assets':0,'course_data_files':len(data_files),'course_data_bytes':sum((stage/f).stat().st_size for f in data_files),'bundled_native_extensions':0}
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps(manifest,indent=2))

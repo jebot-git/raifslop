@@ -2,7 +2,7 @@
 extends VBoxContainer
 
 ## Dock subpanel — port-change escape hatch surfaced inside the spawn-failure
-## crash panel when a port is contested (PORT_EXCLUDED, FOREIGN_PORT).
+## crash panel when a port is contested or an incompatible server cannot be reclaimed.
 ##
 ## It moves BOTH ports. A godot-ai server binds its HTTP and WebSocket ports
 ## together, so moving only the HTTP port onto a free number lands the next
@@ -44,15 +44,15 @@ func _build_ui() -> void:
 	var picker_row := HBoxContainer.new()
 	picker_row.add_theme_constant_override("separation", 6)
 
-	_spinbox = _port_spinbox(ClientConfigurator.http_port(), "HTTP port (godot_ai/http_port)")
+	_spinbox = _port_spinbox(ClientConfigurator.http_port(), "Effective HTTP port")
 	picker_row.add_child(_spinbox)
-	_ws_spinbox = _port_spinbox(ClientConfigurator.ws_port(), "WebSocket port (godot_ai/ws_port)")
+	_ws_spinbox = _port_spinbox(ClientConfigurator.ws_port(), "Effective WebSocket port")
 	picker_row.add_child(_ws_spinbox)
 
 	var apply_btn := Button.new()
 	apply_btn.text = "Apply + Reload"
 	apply_btn.tooltip_text = (
-		"Saves godot_ai/http_port and godot_ai/ws_port to Editor Settings and reloads"
+		"Saves the effective HTTP and WebSocket ports to Editor Settings and reloads"
 		+ " the plugin so the server spawns on the new ports. Reconfigure your AI"
 		+ " clients afterwards so their bridges use the new ports."
 	)
@@ -80,17 +80,39 @@ static func _port_spinbox(value: int, tooltip: String) -> SpinBox:
 ## carry it keep working. Note that this OVERWRITES unsaved user input — fine
 ## in practice because the dock only calls this on `server_status`
 ## transitions (`if server_status == _last_server_status: return`).
-func seed_suggested_ports(conflict_port := 0) -> void:
+func seed_suggested_ports(conflict_port := 0, occupancy: Dictionary = {}) -> void:
 	if _spinbox == null:
 		return
+	if OS.get_name() == "Windows" and occupancy.is_empty():
+		occupancy = PortResolver.windows_listener_snapshot()
 	var http := ClientConfigurator.http_port()
 	var ws := ClientConfigurator.ws_port()
-	if conflict_port == http or bool(port_in_use_probe.call(http)):
-		http = ClientConfigurator.suggest_free_port(http + 1)
-	if conflict_port == ws or ws == http or bool(port_in_use_probe.call(ws)):
-		ws = ClientConfigurator.suggest_free_port(ws + 1)
-		if ws == http:
-			ws = ClientConfigurator.suggest_free_port(ws + 1)
+	var http_occupied: bool
+	var ws_occupied: bool
+	if OS.get_name() == "Windows":
+		http_occupied = PortResolver.windows_port_occupancy(http, occupancy) != PortResolver.PortOccupancy.FREE
+		ws_occupied = PortResolver.windows_port_occupancy(ws, occupancy) != PortResolver.PortOccupancy.FREE
+	else:
+		http_occupied = bool(port_in_use_probe.call(http))
+		ws_occupied = bool(port_in_use_probe.call(ws))
+	var unavailable := false
+	if conflict_port == http or http_occupied:
+		var suggested := ClientConfigurator.suggest_free_port(http + 1, 2048, occupancy)
+		if suggested > 0:
+			http = suggested
+		else:
+			unavailable = true
+	if conflict_port == ws or ws == http or ws_occupied:
+		var suggested := ClientConfigurator.suggest_free_port(ws + 1, 2048, occupancy)
+		if suggested == http:
+			suggested = ClientConfigurator.suggest_free_port(suggested + 1, 2048, occupancy)
+		if suggested > 0:
+			ws = suggested
+		else:
+			unavailable = true
+	var detail := "Automatic port selection is unavailable. Choose ports manually or retry." if unavailable else ""
+	_spinbox.tooltip_text = detail if unavailable else "Effective HTTP port"
+	_ws_spinbox.tooltip_text = detail if unavailable else "Effective WebSocket port"
 	_spinbox.value = http
 	_ws_spinbox.value = ws
 

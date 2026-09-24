@@ -38,7 +38,8 @@ func run() -> void:
 				seen[s.fish_index] = true
 				all_seen[s.fish_index] = true
 			check(valid, "Normal casting respects location including incidental catches")
-		check(seen.size() == roster.size(), "Every local species reachable")
+		var eligible: Array = Session.Fly.POOLS[location.id] if Session.Fly.river(location.id) else roster
+		check(seen.size() == eligible.size(), "Every local species reachable: %s, seen %s / %s" % [location.id, seen.keys(), roster])
 	check(all_seen.size() == Session.SPECIES.filter(func(row): return not row.get("predator",false)).size(), "Every direct-bait species reachable")
 	check(layouts.size() == Session.LOCATION_SPECIES.size(), "Locations have distinct rosters")
 	var g = load("res://scenes/main.tscn").instantiate()

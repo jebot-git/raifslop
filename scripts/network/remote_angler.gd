@@ -117,6 +117,7 @@ func _process(delta: float) -> void:
 			var kind:String="putter" if golf_index==7 else "driver" if golf_index<2 else "iron"
 			golf_club=load("res://addons/golfminus/assets/models/%s.glb"%kind).instantiate();add_child(golf_club)
 	if is_instance_valid(golf_club):
+		preload("res://addons/golfminus/scripts/golf/club_style.gd").apply(golf_club,target.rod_tier)
 		golf_club.global_transform=rendered.rod
 		if target.golf_stowed:golf_club.scale*=.65
 	caught.visible=target.caught

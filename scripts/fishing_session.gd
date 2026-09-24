@@ -53,7 +53,9 @@ const SPECIES = [
 	{"name": "Leervis", "latin": "Lichia amia", "length": 85.0, "weight": 5.0, "rarity": 3, "endurance": 165.0, "power": 1.3, "bait": 4, "habitat": "marine", "model": "res://assets/models/fish/leervis.glb"},
 	{"name": "Atlantic chub mackerel", "latin": "Scomber colias", "length": 35.0, "weight": 0.42, "rarity": 1, "endurance": 80.0, "power": 0.85, "bait": 2, "habitat": "marine", "model": "res://assets/models/fish/atlantic_chub_mackerel.glb"},
 	{"name":"Huchen", "latin":"Hucho hucho", "length":120.0, "weight":18.0, "rarity":5, "endurance":340.0, "power":1.6, "bait":-1, "habitat":"freshwater", "predator":true, "model":"res://assets/models/fish/huchen.glb"},
-	{"name":"Ragged-tooth shark", "latin":"Carcharias taurus", "length":220.0, "weight":90.0, "rarity":5, "endurance":480.0, "power":1.95, "bait":-1, "habitat":"marine", "predator":true, "model":"res://assets/models/fish/raggedtooth_shark.glb"}
+	{"name":"Ragged-tooth shark", "latin":"Carcharias taurus", "length":220.0, "weight":90.0, "rarity":5, "endurance":480.0, "power":1.95, "bait":-1, "habitat":"marine", "predator":true, "model":"res://assets/models/fish/raggedtooth_shark.glb"},
+	{"name":"Cutthroat trout","latin":"Oncorhynchus clarkii","length":40.0,"weight":.85,"rarity":2,"endurance":118.0,"power":1.1,"bait":5,"model":"res://assets/models/fish/cutthroat_trout.glb"},
+	{"name":"Arctic char","latin":"Salvelinus alpinus","length":45.0,"weight":1.2,"rarity":3,"endurance":138.0,"power":1.18,"bait":5,"model":"res://assets/models/fish/arctic_char.glb"}
 ]
 # Stable indices preserve existing catch records and model mapping.
 const MARINE_BAITS = ["Ragworm", "Squid", "Spinner", "Prawn", "Sardine", "Saltwater fly"]
@@ -69,7 +71,9 @@ const LOCATION_SPECIES = {
  "secluded_beach": [18,19,20,21,23,25,29,30,31,36],
  "fish_hoek_beach": [18,20,22,23,24,25,28,29,31,36,37],
  "meadow_bend":[11,12,9,14,3,13,16,33,34,35],
- "boulder_run":[10,11,12,17]
+ "boulder_run":[10,11,12,17],
+ "cedar_creek":[10,17,40],
+ "glacier_run":[11,12,41]
 }
 # A single chance per eligible retrieval, never a per-frame probability.
 const PREDATOR_CHANCE := .03
@@ -396,7 +400,7 @@ func _submerge_tick(delta: float) -> void:
 
 func _try_jump() -> bool:
 	if at_ground_boundary: return false
-	if not jumps_enabled or fish_index not in [10,11] or stamina<.55 or jump_attempts>=2 or next_jump>0.0:return false
+	if not jumps_enabled or fish_index not in [10,11,40] or stamina<.55 or jump_attempts>=2 or next_jump>0.0:return false
 	if cue>=0 or submerge!=Submerge.NONE or is_running() or counter_rest>0.0 or distance<landing_distance+2 or tension<.25 or tension>.75:return false
 	next_jump=18.0; jump_attempts+=1
 	if rng.randf()>(.60 if fish_index==10 else .35):return false

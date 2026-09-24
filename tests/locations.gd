@@ -40,7 +40,7 @@ func run() -> void:
 		check(g._select_location(entry.id), "Can visit " + entry.name)
 		check(g.current_location == entry.id and g.game.location_name == entry.name, "Active location and HUD identity agree")
 		var texture: Texture2D = g.panorama_material.panorama
-		check(texture.get_width() == 8192 and texture.get_height() == 4096, "Sky uses bounded 2:1 native 8K panorama")
+		check(Vector2i(texture.get_width(),texture.get_height()) == entry.get("panorama_size",Vector2i(8192,4096)), "Sky uses its declared bounded 2:1 panorama")
 		check(Locations.saved_location() == entry.id, "Location selection survives preference reload")
 		check(is_equal_approx(g.location_sun.light_energy, entry.sun_energy), "Location sunlight is applied")
 		check(g.water_material.get_shader_parameter("deep_color") == entry.water, "Location water colour is applied")
@@ -76,6 +76,7 @@ func run() -> void:
 	g._toggle_avatar_menu()
 	g.avatar_menu.show_locations()
 	check(g.menu_open and g.motor.blocked and g.avatar_menu.locations_page.visible, "Locations share paused VR menu")
+	g.avatar_menu.open_water_category("lakes")
 	g.avatar_menu.location_list.select(1)
 	g.avatar_menu._preview_location(1)
 	g.avatar_menu.visit_button.pressed.emit()

@@ -12,6 +12,7 @@ var laser:=MeshInstance3D.new()
 var last_hit:=Vector2(-100,-100)
 var trigger_was_down:=false
 var touching:=false
+var roster:ScrollContainer
 func setup(a:Node)->void:
 	activity=a;name="ClubhouseCompetitionBoard"
 	var pose:Transform3D=preload("res://addons/golfminus/scripts/golf/host_locations.gd").pose("golf_%s_clubhouse"%a.golf.course_id)
@@ -19,7 +20,7 @@ func setup(a:Node)->void:
 	viewport.size=Vector2i(960,640);viewport.transparent_bg=false;viewport.render_target_update_mode=SubViewport.UPDATE_ALWAYS;add_child(viewport)
 	var background:=ColorRect.new();background.color=Color("112b28");background.size=Vector2(960,640);viewport.add_child(background)
 	var box:=VBoxContainer.new();box.position=Vector2(36,24);box.size=Vector2(888,592);box.add_theme_constant_override("separation",18);viewport.add_child(box)
-	var roster:=ScrollContainer.new();roster.custom_minimum_size.y=225;box.add_child(roster)
+	roster=preload("res://scripts/ui/drag_scroll.gd").new();roster.custom_minimum_size.y=225;box.add_child(roster)
 	label.size_flags_horizontal=Control.SIZE_EXPAND_FILL;label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;label.add_theme_font_size_override("font_size",26);roster.add_child(label)
 	for entry in [["Start new solo round",a.start_play.bind("solo")],["Join competition",a.start_play.bind("competition")],["Start competition",a.start_competition],["Return to round",a.resume_course]]:
 		var b:=Button.new();b.text=entry[0];b.custom_minimum_size.y=65;b.add_theme_font_size_override("font_size",26);box.add_child(b);b.pressed.connect(entry[1])
@@ -78,6 +79,12 @@ func _process(_dt:float)->void:
 	if touch and not touching or pressed and not trigger_was_down:next_down=true
 	if not touch and not pressed:next_down=false
 	var motion:=InputEventMouseMotion.new();motion.position=hit;motion.global_position=hit;motion.button_mask=MOUSE_BUTTON_MASK_LEFT if down else 0;viewport.push_input(motion,true)
+	var scroll_axis:float=preload("res://scripts/ui/scroll_router.gd").joystick_axis()
+	if g.xr:
+		for hand in [g.left,g.right]:
+			var axis:float=-hand.get_vector2("primary").y
+			if hand.get_has_tracking_data() and absf(axis)>absf(scroll_axis):scroll_axis=axis
+	if absf(scroll_axis)>.2:preload("res://scripts/ui/scroll_router.gd").scroll(viewport,scroll_axis*650*_dt,roster)
 	if next_down!=down:send_click(next_down,hit)
 	last_hit=hit;trigger_was_down=pressed;touching=touch
 

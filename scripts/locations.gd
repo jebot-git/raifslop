@@ -2,6 +2,13 @@ extends RefCounted
 ## Photographed backdrops paired with authored foreground and lighting presets.
 const DEFAULT_ID := "lakeside"
 const SAVE_PATH := "user://location.cfg"
+const WATER_TYPES=[{"id":"lakes","name":"Lakes & reservoirs","description":"Sheltered lakes, piers and open stillwater."},{"id":"rivers","name":"Rivers & streams","description":"Moving water, current seams and fly fishing."},{"id":"coasts","name":"Coasts & estuaries","description":"Saltwater beaches, rocky shores and coves."}]
+static func water_type(id:String)->String:
+	if preload("res://scripts/fly_fishing.gd").river(id):return "rivers"
+	if id in ["simons_town_rocks","blouberg_sunrise_2","secluded_beach","fish_hoek_beach"]:return "coasts"
+	return "lakes"
+static func waters_in_category(category:String)->Array:
+	return CATALOG.filter(func(entry):return water_type(entry.id)==category)
 # Legacy sun values are fallbacks; the measured bake data is applied on lookup.
 static var CATALOG:Array = [
 	{"id": "lakeside", "name": "Lakeside", "mood": "Open water · Gentle morning", "description": "Gravel cove · Rope-lined paths along the stony shore beneath grassy hills.", "panorama": "res://assets/environment/locations/lakeside_8k.hdr", "preview": "res://assets/environment/locations/lakeside_preview.jpg", "yaw": 0.0, "sun_rotation": Vector3(-35, -40, 0), "sun_color": Color("ffe2b5"), "sun_energy": 0.55, "sky_energy": 0.8, "ambient": 0.42, "water": Color(0.025, 0.15, 0.17), "roughness": 0.3, "ripples": 1.0},
@@ -14,6 +21,8 @@ static var CATALOG:Array = [
 	{"id": "fish_hoek_beach", "coastal_shallows": true, "name": "Fish Hoek", "mood": "Saltwater beach · Misty morning", "description": "A broad pale-sand strand beneath misty hills, with scattered wrack, driftwood and soft rolling surf.", "panorama": "res://assets/environment/locations/fish_hoek_beach_8k.hdr", "preview": "res://assets/environment/locations/fish_hoek_beach_preview.jpg", "yaw": 180.0, "sun_rotation": Vector3(-10,30,0), "sun_color": Color("e5ebf2"), "sun_energy": .1, "sky_energy": .8, "ambient": .45, "water": Color("3e5058"), "roughness": .48, "ripples": .65, "ground_bounds": Vector4(0,3.5,10,6.5), "ground_transition": Vector2(12,8), "sand_shore": true, "beach_sides": true},
  {"id":"meadow_bend","name":"Meadow Bend","mood":"Fly fishing · Gentle river","description":"Gravel bank, slow margins and a clear current seam. Dry flies and nymphs.","panorama":"res://assets/environment/locations/lakeside_8k.hdr","preview":"res://assets/environment/locations/meadow_bend_preview.jpg","yaw":0.0,"sun_rotation":Vector3(-35,-40,0),"sun_color":Color("fff0d5"),"sun_energy":.55,"sky_energy":.8,"ambient":.42,"water":Color("294b40"),"roughness":.35,"ripples":.6},
  {"id":"boulder_run","name":"Boulder Run","mood":"Fly fishing · Fast river","description":"Rocky bank and boulder pockets beside a powerful current. Mend upstream for a natural drift.","panorama":"res://assets/environment/locations/bell_park_pier_8k.hdr","preview":"res://assets/environment/locations/boulder_run_preview.jpg","yaw":-72.0,"sun_rotation":Vector3(-28,40,0),"sun_color":Color("fff1d4"),"sun_energy":.4,"sky_energy":.42,"ambient":.38,"water":Color("1b3836"),"roughness":.3,"ripples":1.2},
+ {"id":"cedar_creek","name":"Cedar Creek","mood":"Fly fishing · Shaded woodland stream","description":"Mossy gravel margins, cedar trunks and a gentle current seam. Cutthroat and rainbow trout rise to dry flies.","panorama":"res://assets/environment/locations/cedar_creek_4k.hdr","panorama_size":Vector2i(4096,2048),"preview":"res://assets/environment/locations/cedar_creek_preview.jpg","yaw":0.0,"sun_rotation":Vector3(-42,-35,0),"sun_color":Color("e7efe5"),"sun_energy":.24,"sky_energy":.6,"ambient":.4,"water":Color("224b40"),"roughness":.32,"ripples":.5},
+ {"id":"glacier_run","name":"Glacier Run","mood":"Fly fishing · Cold alpine river","description":"Pale granite, remnant snow and cold blue water beneath alpine peaks. Work nymphs through boulder pockets for Arctic char.","panorama":"res://assets/environment/locations/glacier_run_4k.hdr","panorama_size":Vector2i(4096,2048),"preview":"res://assets/environment/locations/glacier_run_preview.jpg","yaw":0.0,"sun_rotation":Vector3(-28,-70,0),"sun_color":Color("eef5ff"),"sun_energy":.55,"sky_energy":.7,"ambient":.42,"water":Color("315b67"),"roughness":.28,"ripples":1.35},
 ]
 
 static var measured_lighting:Dictionary = {}

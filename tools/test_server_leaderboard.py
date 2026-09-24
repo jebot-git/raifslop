@@ -3,7 +3,7 @@
 import os,pathlib,subprocess,tempfile,time,argparse,json
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 def main():
- p=argparse.ArgumentParser();p.add_argument('--server',type=pathlib.Path,default=ROOT/'builds/Server/RealAIFishingServer.x86_64');p.add_argument('--port',type=int,default=28621);a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--server',type=pathlib.Path,default=ROOT/'builds/Server/UltimateBoomerSimulatorServer.x86_64');p.add_argument('--port',type=int,default=28621);a=p.parse_args()
  godot=os.environ.get('GODOT_BIN','/home/blux/.local/bin/Godot_v4.7.2-stable_linux.x86_64')
  logs=ROOT/'test-results/server-leaderboard';logs.mkdir(parents=True,exist_ok=True)
  with tempfile.TemporaryDirectory(prefix='fishing-board-') as tmp:

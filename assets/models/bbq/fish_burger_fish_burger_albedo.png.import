@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://04skghgw221o"
-path="res://.godot/imported/fish_burger_fish_burger_albedo.png-2d2690b7e619a3e88a41f2afc19fb977.ctex"
+path.s3tc="res://.godot/imported/fish_burger_fish_burger_albedo.png-2d2690b7e619a3e88a41f2afc19fb977.s3tc.ctex"
+path.etc2="res://.godot/imported/fish_burger_fish_burger_albedo.png-2d2690b7e619a3e88a41f2afc19fb977.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "7e9a7a2f2036551904b50cbc4419d3e1"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/bbq/fish_burger_fish_burger_albedo.png"
-dest_files=["res://.godot/imported/fish_burger_fish_burger_albedo.png-2d2690b7e619a3e88a41f2afc19fb977.ctex"]
+dest_files=["res://.godot/imported/fish_burger_fish_burger_albedo.png-2d2690b7e619a3e88a41f2afc19fb977.s3tc.ctex", "res://.godot/imported/fish_burger_fish_burger_albedo.png-2d2690b7e619a3e88a41f2afc19fb977.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

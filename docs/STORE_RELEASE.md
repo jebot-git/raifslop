@@ -100,8 +100,8 @@ quit
    explain the entire game is free with no IAP. Do not enable paid DLC,
    subscriptions, microtransactions or external purchase links. The Steam Direct
    app fee/onboarding still applies to a free game.
-2. Configure OS-specific VR launch options: `RealAIFishing.exe` on Windows and
-   `RealAIFishing.x86_64` on Linux, arguments
+2. Configure OS-specific VR launch options: `UltimateBoomerSimulator.exe` on Windows and
+   `UltimateBoomerSimulator.x86_64` on Linux, arguments
    `--xr-mode on --rendering-driver vulkan`. Declare **VR required**, OpenXR,
    tracked-controller input and tested headsets/play-area requirements.
 3. Select actual required redistributables after clean-machine testing. Assign

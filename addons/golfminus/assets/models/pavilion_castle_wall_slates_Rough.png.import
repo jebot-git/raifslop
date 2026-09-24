@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c5s13kyr861lr"
-path="res://.godot/imported/pavilion_castle_wall_slates_Rough.png-19fe89925077ab8dbbc3fc46732a49ab.ctex"
+path.s3tc="res://.godot/imported/pavilion_castle_wall_slates_Rough.png-19fe89925077ab8dbbc3fc46732a49ab.s3tc.ctex"
+path.etc2="res://.godot/imported/pavilion_castle_wall_slates_Rough.png-19fe89925077ab8dbbc3fc46732a49ab.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "d060e667c6d7ff2bc13cfa7f5e91a5dd"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://addons/golfminus/assets/models/pavilion_castle_wall_slates_Rough.png"
-dest_files=["res://.godot/imported/pavilion_castle_wall_slates_Rough.png-19fe89925077ab8dbbc3fc46732a49ab.ctex"]
+dest_files=["res://.godot/imported/pavilion_castle_wall_slates_Rough.png-19fe89925077ab8dbbc3fc46732a49ab.s3tc.ctex", "res://.godot/imported/pavilion_castle_wall_slates_Rough.png-19fe89925077ab8dbbc3fc46732a49ab.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

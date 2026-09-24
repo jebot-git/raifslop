@@ -1,0 +1,22 @@
+[
+  {
+    "id": "cedar_creek",
+    "asset": "mossy_forest",
+    "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/mossy_forest_4k.hdr",
+    "license": "CC0",
+    "resolution": "4k",
+    "author": "Andreas Mischok",
+    "page": "https://polyhaven.com/a/mossy_forest",
+    "sha256": "21764e200571d612d48273c7b38326686d7f9f81bad6c0f348eb20b6876423f1"
+  },
+  {
+    "id": "glacier_run",
+    "asset": "lago_disola",
+    "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/lago_disola_4k.hdr",
+    "license": "CC0",
+    "resolution": "4k",
+    "author": "Andreas Mischok",
+    "page": "https://polyhaven.com/a/lago_disola",
+    "sha256": "49b02525462f1e518bc39907277300d38bc611bbbc4703979d7881a9193c882c"
+  }
+]

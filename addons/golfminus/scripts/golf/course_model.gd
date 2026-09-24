@@ -145,3 +145,67 @@ func normal_at(x: float,z: float) -> Vector3:
 	return Vector3(height(x-e,z)-height(x+e,z),2*e,height(x,z-e)-height(x,z+e)).normalized()
 func wind() -> Vector3:
 	return Vector3(course.wind[0],course.wind[1],course.wind[2])
+
+func guide_clear(from:Vector3,to:Vector3)->bool:
+	# Sub-cell samples with a ball-width margin also catch narrow raster corners.
+	var distance:=Vector2(to.x-from.x,to.z-from.z).length()
+	var steps:=maxi(1,ceili(distance/.25))
+	for i in steps+1:
+		var p:=from.lerp(to,float(i)/steps)
+		for offset in [Vector2.ZERO,Vector2(.06,0),Vector2(-.06,0),Vector2(0,.06),Vector2(0,-.06)]:
+			if lie(p.x+offset.x,p.z+offset.y) not in ["fairway","fringe","green"]:return false
+	return true
+
+func guide_target(from:Vector3)->Vector3:
+	var target:=pin()
+	if guide_clear(from,target):return target
+	var route:Array=hole.get("routing",{}).get("play_path",[]).duplicate()
+	if route.is_empty():
+		# Procedural courses use the same centreline as their terrain.
+		for i in 65:
+			var t:=float(i)/64
+			var p:=to_course(Vector3(center_x(t),0,-float(hole.length)*t))
+			route.append([p.x,p.z])
+	var paths:Array=[route]
+	for branch in hole.get("routing",{}).get("tee_paths",{}).values():
+		if branch.is_empty():continue
+		var joined:Array=branch.duplicate()
+		var end:=Vector2(branch[-1][0],branch[-1][1])
+		var join_index:=1;var join_distance:=INF
+		for i in range(1,route.size()):
+			var a:=Vector2(route[i-1][0],route[i-1][1]);var b:=Vector2(route[i][0],route[i][1])
+			var distance:=end.distance_squared_to(Geometry2D.get_closest_point_to_segment(end,a,b))
+			if distance<join_distance:join_distance=distance;join_index=i
+		joined.append_array(route.slice(join_index));paths.append(joined)
+	var nearest:=INF
+	var selected:Array=route
+	var start:=0
+	var entry:=from
+	var at:=Vector2(from.x,from.z)
+	for path in paths:
+		for i in range(1,path.size()):
+			var a:=Vector2(path[i-1][0],path[i-1][1]);var b:=Vector2(path[i][0],path[i][1])
+			var p:=Geometry2D.get_closest_point_to_segment(at,a,b)
+			if at.distance_squared_to(p)<nearest:
+				nearest=at.distance_squared_to(p);selected=path;start=i;entry=Vector3(p.x,0,p.y)
+	# Advance only to visible points on this hole's route, never cut a dogleg.
+	target=entry
+	for i in range(start,selected.size()):
+		var a:Vector3=entry if i==start else Vector3(selected[i-1][0],0,selected[i-1][1])
+		var b:=Vector3(selected[i][0],0,selected[i][1])
+		var steps:=maxi(1,ceili(a.distance_to(b)/4.0))
+		for j in range(1,steps+1):
+			var p:=a.lerp(b,float(j)/steps)
+			if not guide_clear(from,p):
+				target.y=height(target.x,target.z);return target
+			target=p
+	target.y=height(target.x,target.z);return target
+
+func guide_length(from:Vector3,direction:Vector3,maximum:=5.4)->float:
+	if not guide_clear(from,from):return 0.0
+	var distance:=0.0
+	while distance<maximum:
+		var next:=minf(maximum,distance+.1)
+		if not guide_clear(from+direction*distance,from+direction*next):break
+		distance=next
+	return distance

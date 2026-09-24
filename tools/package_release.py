@@ -63,7 +63,7 @@ for target in TARGETS:
     if record['commit'] != revision or record['target'] != target:
         raise SystemExit('Stale build for ' + target)
     folder = BUILD / target
-    exported = [folder/'RealAIFishingServer.x86_64'] if target == 'Server' else sorted(folder.rglob('*'))
+    exported = [folder/'UltimateBoomerSimulatorServer.x86_64'] if target == 'Server' else sorted(folder.rglob('*'))
     actual = {str(p.relative_to(folder)): digest(p) for p in exported if p.is_file()}
     if actual != record['files']:
         raise SystemExit('Export files changed for ' + target)
@@ -84,31 +84,31 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
             if target == 'Linux':
                 script = folder / (name + '.sh')
                 script.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\n'
-                                  'exec ./RealAIFishing.x86_64 ' + LOG_ARGS + launch_args + ' "$@"\n')
+                                  'exec ./UltimateBoomerSimulator.x86_64 ' + LOG_ARGS + launch_args + ' "$@"\n')
                 script.chmod(0o755)
             else:
                 (folder / (name + '.cmd')).write_bytes(
-                    ('@echo off\r\ncd /d "%~dp0"\r\n"%~dp0RealAIFishing.exe" '
+                    ('@echo off\r\ncd /d "%~dp0"\r\n"%~dp0UltimateBoomerSimulator.exe" '
                      + LOG_ARGS + launch_args + ' %*\r\n').encode())
-        name = f'RealAIFishing-{VERSION}-{target}'
+        name = f'UltimateBoomerSimulator-{VERSION}-{target}'
         archive(folder, result / (name + '-x86_64.zip'), name)
         print('PACKAGED ' + target, flush=True)
     server = stage / 'Server'
     server.mkdir()
-    shutil.copy2(BUILD/'Server/RealAIFishingServer.x86_64', server/'RealAIFishingServer.x86_64')
+    shutil.copy2(BUILD/'Server/UltimateBoomerSimulatorServer.x86_64', server/'UltimateBoomerSimulatorServer.x86_64')
     copy_notices(server)
     launcher = server/'Server.sh'
-    launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./RealAIFishingServer.x86_64 ' + LOG_ARGS + '-- "$@"\n')
+    launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./UltimateBoomerSimulatorServer.x86_64 ' + LOG_ARGS + '-- "$@"\n')
     launcher.chmod(0o755)
-    name = f'RealAIFishing-{VERSION}-Server-Linux-x86_64'
+    name = f'UltimateBoomerSimulator-{VERSION}-Server-Linux-x86_64'
     archive(server, result/(name+'.zip'), name)
     print('PACKAGED Server', flush=True)
     for target in ANDROID_TARGETS:
-        shutil.copy2(BUILD / target / 'RealAIFishing.apk', result / f'RealAIFishing-{VERSION}-{target}.apk')
+        shutil.copy2(BUILD / target / 'UltimateBoomerSimulator.apk', result / f'UltimateBoomerSimulator-{VERSION}-{target}.apk')
     notices = stage / 'Notices'
     notices.mkdir()
     copy_notices(notices)
-    archive(notices, result / f'RealAIFishing-{VERSION}-Notices.zip')
+    archive(notices, result / f'UltimateBoomerSimulator-{VERSION}-Notices.zip')
     (result / 'build-manifest.json').write_text(json.dumps(
         {'version': VERSION, 'commit': revision, 'prerelease': args.prototype, 'targets': records}, indent=2) + '\n')
     (result / 'SHA256SUMS').write_text(''.join(

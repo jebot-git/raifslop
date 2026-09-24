@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bdqf1vrpoaoh4"
-path="res://.godot/imported/pavilion_ash_oiled_albedo.png-b1d61bb55c585a8dc1db072e5206de59.ctex"
+path.s3tc="res://.godot/imported/pavilion_ash_oiled_albedo.png-b1d61bb55c585a8dc1db072e5206de59.s3tc.ctex"
+path.etc2="res://.godot/imported/pavilion_ash_oiled_albedo.png-b1d61bb55c585a8dc1db072e5206de59.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "8bce58dba6f9de247913d569373fbf4d"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://addons/golfminus/assets/models/pavilion_ash_oiled_albedo.png"
-dest_files=["res://.godot/imported/pavilion_ash_oiled_albedo.png-b1d61bb55c585a8dc1db072e5206de59.ctex"]
+dest_files=["res://.godot/imported/pavilion_ash_oiled_albedo.png-b1d61bb55c585a8dc1db072e5206de59.s3tc.ctex", "res://.godot/imported/pavilion_ash_oiled_albedo.png-b1d61bb55c585a8dc1db072e5206de59.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

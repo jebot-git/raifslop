@@ -19,9 +19,9 @@ assert subprocess.check_output(['git','describe','--exact-match','--tags','HEAD'
 assert not subprocess.check_output(['git','status','--porcelain'],cwd=root), 'Working tree is not clean'
 assert json.loads((assets_dir/'build-manifest.json').read_text())['commit']==commit
 number=manifest['version']
-allowed_assets={f'RealAIFishing-{number}-{target}-x86_64.zip' for target in ['Linux','Windows']}
-allowed_assets.update({f'RealAIFishing-{number}-Server-Linux-x86_64.zip',f'RealAIFishing-{number}-Notices.zip','build-manifest.json','SHA256SUMS'})
-allowed_assets.update(f'RealAIFishing-{number}-{target}.apk' for target in ANDROID_TARGETS)
+allowed_assets={f'UltimateBoomerSimulator-{number}-{target}-x86_64.zip' for target in ['Linux','Windows']}
+allowed_assets.update({f'UltimateBoomerSimulator-{number}-Server-Linux-x86_64.zip',f'UltimateBoomerSimulator-{number}-Notices.zip','build-manifest.json','SHA256SUMS'})
+allowed_assets.update(f'UltimateBoomerSimulator-{number}-{target}.apk' for target in ANDROID_TARGETS)
 assert {p.name for p in assets_dir.iterdir()}==allowed_assets, 'Missing or excluded release artifact; repackage before publishing'
 expected_files={line.split('  ',1)[1] for line in (assets_dir/'SHA256SUMS').read_text().splitlines()}
 assert {p.name for p in assets_dir.iterdir()}==expected_files|{'SHA256SUMS'}
@@ -31,7 +31,7 @@ for line in (assets_dir/'SHA256SUMS').read_text().splitlines():
         assert hashlib.file_digest(stream,'sha256').hexdigest()==digest, name
 gh=os.environ.get('GH_BIN',shutil.which('gh') or 'gh')
 token=subprocess.run([gh,'auth','token','--hostname','github.com'],capture_output=True,text=True,check=True,timeout=30).stdout.strip()
-headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'RealAIFishing-release-builder'}
+headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'UltimateBoomerSimulator-release-builder'}
 
 def api(method,path,data=None,allow_missing=False):
     body=json.dumps(data).encode() if data is not None else None
@@ -53,7 +53,7 @@ if release is None:
         if release is not None or len(candidates)<100:break
         page+=1
 if release is None:
-    release=api('POST',base,{'tag_name':version,'target_commitish':commit,'name':'Real AI Fishing '+version.removeprefix('v'),'body':(root/'docs'/('RELEASE_NOTES_'+version.removeprefix('v')+'.md')).read_text(),'draft':True,'prerelease':args.prototype})
+    release=api('POST',base,{'tag_name':version,'target_commitish':commit,'name':'Ultimate Boomer Simulator '+version.removeprefix('v'),'body':(root/'docs'/('RELEASE_NOTES_'+version.removeprefix('v')+'.md')).read_text(),'draft':True,'prerelease':args.prototype})
 assert release['draft'], 'Release already published; refusing to modify it'
 expected=[]
 for name in sorted(p.name for p in assets_dir.iterdir() if p.is_file()):

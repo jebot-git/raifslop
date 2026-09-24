@@ -1,6 +1,7 @@
 extends RefCounted
 ## Render-clock rigid-pose sweep of the complete clubhead against the ball sphere.
 const Turf=preload("res://addons/golfminus/scripts/golf/club_turf.gd")
+const TRACKING_TOLERANCE=preload("res://addons/golfminus/scripts/golf/club_head.gd").TRACKING_TOLERANCE
 var turf:=Turf.new()
 var previous:=Vector3.ZERO
 var previous_pose:=Transform3D.IDENTITY
@@ -9,14 +10,26 @@ var filtered_velocity:=Vector3.ZERO
 var filtered_angular:=Vector3.ZERO
 var cooldown:=0.0
 var last_sample:Dictionary={}
+var tracking_tolerance:float=TRACKING_TOLERANCE
+var armed:=false
+var previous_tracking_reliable:=false
+func activation(grip:float,trigger:float,clicked:bool,allowed:bool)->bool:
+	if not allowed or not is_finite(grip) or not is_finite(trigger):
+		armed=false;return false
+	var pressure:=maxf(grip,trigger)
+	armed=clicked or pressure>(.45 if armed else .55)
+	return armed
+func resolve_contact(accepted:bool)->void:
+	cooldown=.8 if accepted else 0.0
+	last_sample["acceptance"]="accepted" if accepted else "rejected"
 func reset()->void:
 	turf.reset()
-	valid=false;filtered_velocity=Vector3.ZERO;filtered_angular=Vector3.ZERO;cooldown=.15
+	valid=false;armed=false;previous_tracking_reliable=false;filtered_velocity=Vector3.ZERO;filtered_angular=Vector3.ZERO;cooldown=.15
 func sample(head:Vector3,ball:Vector3,dt:float,active:bool)->Dictionary:
 	return sample_pose(Transform3D(Basis.IDENTITY,head),preload("res://addons/golfminus/scripts/golf/club_head.gd").for_club(7),ball,dt,active)
-func sample_pose(pose:Transform3D,shape:RefCounted,ball:Vector3,dt:float,active:bool,ball_velocity:=Vector3.ZERO,terrain:RefCounted=null)->Dictionary:
+func sample_pose(pose:Transform3D,shape:RefCounted,ball:Vector3,dt:float,active:bool,ball_velocity:=Vector3.ZERO,terrain:RefCounted=null,tracking_reliable:=true)->Dictionary:
 	cooldown=maxf(0,cooldown-dt)
-	last_sample={"dt_s":dt,"head":pose.origin,"ball":ball,"active":active,"status":"inactive"}
+	last_sample={"dt_s":dt,"head":pose.origin,"head_pose":pose,"ball":ball,"ball_velocity":ball_velocity,"tracking_reliable":tracking_reliable,"active":active,"status":"inactive"}
 	if not is_finite(dt) or dt<=0 or dt>.05 or not ball.is_finite() or not ball_velocity.is_finite() or not pose.origin.is_finite() or not pose.basis.is_finite() or absf(pose.basis.determinant())<.01:
 		last_sample.status="invalid_interval" if dt<=0 or dt>.05 else "inactive"
 		reset();return {}
@@ -25,10 +38,10 @@ func sample_pose(pose:Transform3D,shape:RefCounted,ball:Vector3,dt:float,active:
 		# Keep tracking a known pose while the grip is released. Arming should
 		# not impose a fresh 150 ms blind interval on a short chip or putt.
 		turf.reset()
-		previous_pose=pose;previous=pose.origin;valid=true
+		previous_pose=pose;previous=pose.origin;valid=true;previous_tracking_reliable=tracking_reliable
 		filtered_velocity=Vector3.ZERO;filtered_angular=Vector3.ZERO
 		return {}
-	if not valid:previous_pose=pose;previous=pose.origin;valid=true;last_sample.status="priming";return {}
+	if not valid:previous_pose=pose;previous=pose.origin;valid=true;previous_tracking_reliable=tracking_reliable;last_sample.status="priming";return {}
 	var raw:Vector3=(pose.origin-previous_pose.origin)/dt
 	var rotation:Quaternion=pose.basis.get_rotation_quaternion()*previous_pose.basis.get_rotation_quaternion().inverse()
 	if rotation.w<0:rotation=-rotation
@@ -39,10 +52,13 @@ func sample_pose(pose:Transform3D,shape:RefCounted,ball:Vector3,dt:float,active:
 	filtered_velocity=filtered_velocity.lerp(raw,weight);filtered_angular=filtered_angular.lerp(angular,weight)
 	last_sample.merge({"raw_velocity":raw,"filtered_velocity":filtered_velocity,"raw_angular_velocity":angular,"filtered_angular_velocity":filtered_angular,"cooldown_s":cooldown},true)
 	var start:=previous_pose
+	var rescue_allowed:=tracking_reliable and previous_tracking_reliable
+	last_sample.merge({"rescue_allowed":rescue_allowed,"tracking_tolerance_m":tracking_tolerance if rescue_allowed else 0.0})
+	previous_tracking_reliable=tracking_reliable
 	previous_pose=pose;previous=pose.origin
 	last_sample.status="cooldown" if cooldown>0 else "miss"
 	if cooldown>0:turf.reset();return {}
-	var hit:Dictionary=shape.sweep(start,pose,ball,ball_velocity*dt)
+	var hit:Dictionary=shape.sweep_tracked(start,pose,ball,ball_velocity*dt,tracking_tolerance if rescue_allowed else 0.0)
 	# Only integrate terrain up to the first ball contact, never the follow-through.
 	turf.sweep(start,pose,shape,terrain,dt,float(hit.get("fraction",1.0)),raw)
 	if hit.is_empty():return {}

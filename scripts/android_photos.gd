@@ -15,7 +15,7 @@ static func save(photo: Image,filename: String) -> Error:
 	if java.get_exception()!=null or values==null:return ERR_CANT_CREATE
 	# String values avoid ambiguity between Java's boxed numeric put overloads.
 	values.put("_display_name",filename);values.put("mime_type","image/png")
-	values.put("relative_path","Pictures/Real AI Fishing/");values.put("is_pending","1")
+	values.put("relative_path","Pictures/Ultimate Boomer Simulator/");values.put("is_pending","1")
 	if java.get_exception()!=null:return ERR_INVALID_DATA
 	var uri=resolver.insert(media.EXTERNAL_CONTENT_URI,values)
 	if java.get_exception()!=null or uri==null:return ERR_CANT_CREATE

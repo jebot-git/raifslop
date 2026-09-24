@@ -8,7 +8,7 @@ for name,bounds in [('cypress',(-121.982,36.570,-121.953,36.587)),('poppy',(-121
  url='https://api.openstreetmap.org/api/0.6/map?bbox='+','.join(map(str,bounds))
  if not path.exists():
   print('Fetching',name,url,flush=True)
-  req=urllib.request.Request(url,headers={'User-Agent':'RealAIFishing-course-authoring/1.0'})
+  req=urllib.request.Request(url,headers={'User-Agent':'UltimateBoomerSimulator-course-authoring/1.0'})
   with urllib.request.urlopen(req,timeout=90) as response: data=response.read()
   E.fromstring(data);path.write_bytes(data)
   print(name,len(data),'OSM bytes',flush=True)

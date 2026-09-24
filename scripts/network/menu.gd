@@ -1,7 +1,7 @@
 extends VBoxContainer
 var session: Node
 var status := Label.new()
-var roster := ItemList.new()
+var roster := preload("res://scripts/ui/vr_item_list.gd").new()
 var voice_status := Label.new()
 var refresh_time := 0.0
 func setup(owner_session: Node, back: Callable) -> void:

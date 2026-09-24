@@ -30,7 +30,7 @@ FPSloppa's decoded-avatar cache pattern avoids decoding the same remote VRM repe
 
 Local imports and downloaded VRMs share `data/vrm/` beside the desktop executable (project `data/vrm/` in editor; app external files on Android). `--asset-root PATH` overrides the data root. Legacy `user://avatars/` and `user://network_avatars/` files are copied without deleting originals, and selected-avatar paths migrate. The VRM browser includes a folder shortcut.
 
-Photos save to the OS Pictures folder under `Real AI Fishing`. Android uses MediaStore to create its own Pictures entries, following [Android shared-media guidance](https://developer.android.com/training/data-storage/shared/media) through the [Godot AndroidRuntime/JNI bridge](https://docs.godotengine.org/en/stable/tutorials/platform/android/javaclasswrapper_and_androidruntimeplugin.html). Android device validation remains outstanding. Desktop tests use `--photos-root PATH` for isolation. User data and docs remain excluded from exported packs.
+Photos save to the OS Pictures folder under `Ultimate Boomer Simulator`. Android uses MediaStore to create its own Pictures entries, following [Android shared-media guidance](https://developer.android.com/training/data-storage/shared/media) through the [Godot AndroidRuntime/JNI bridge](https://docs.godotengine.org/en/stable/tutorials/platform/android/javaclasswrapper_and_androidruntimeplugin.html). Android device validation remains outstanding. Desktop tests use `--photos-root PATH` for isolation. User data and docs remain excluded from exported packs.
 
 ## Validation
 

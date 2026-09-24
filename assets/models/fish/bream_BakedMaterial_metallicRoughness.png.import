@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clpciubnlbcm3"
-path="res://.godot/imported/bream_BakedMaterial_metallicRoughness.png-2564a9d86eb9d44c7789305149d3d639.ctex"
+path.s3tc="res://.godot/imported/bream_BakedMaterial_metallicRoughness.png-2564a9d86eb9d44c7789305149d3d639.s3tc.ctex"
+path.etc2="res://.godot/imported/bream_BakedMaterial_metallicRoughness.png-2564a9d86eb9d44c7789305149d3d639.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "84ef69ace8b010ce62e76c4714293c68"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/fish/bream_BakedMaterial_metallicRoughness.png"
-dest_files=["res://.godot/imported/bream_BakedMaterial_metallicRoughness.png-2564a9d86eb9d44c7789305149d3d639.ctex"]
+dest_files=["res://.godot/imported/bream_BakedMaterial_metallicRoughness.png-2564a9d86eb9d44c7789305149d3d639.s3tc.ctex", "res://.godot/imported/bream_BakedMaterial_metallicRoughness.png-2564a9d86eb9d44c7789305149d3d639.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

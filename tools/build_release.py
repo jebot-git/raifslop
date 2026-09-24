@@ -40,7 +40,7 @@ for target in (TARGETS if a.target=='all' else [a.target]):
     child_env = env.copy()
     if target == 'Server':
         run([sys.executable, str(ROOT/'tools/build_server.py'), '--godot', godot, '--output', str(out)], 'export-Server', child_env)
-        artifact = out/'RealAIFishingServer.x86_64'
+        artifact = out/'UltimateBoomerSimulatorServer.x86_64'
         manifest.write_text(json.dumps({'target':target, 'commit':revision,
                             'godot':subprocess.check_output([godot,'--version'],text=True).strip(),
                             'files':{artifact.name:digest(artifact)}},indent=2)+'\n')
@@ -63,7 +63,7 @@ for target in (TARGETS if a.target=='all' else [a.target]):
             password=json.loads(credentials.read_text())['password']; key=signing/'fishing.keystore';alias='fishing'
         child_env['FISHING_SIGNING_PASSWORD']=password
         if not key.exists():
-            run([str(jdk/'bin/keytool'),'-genkeypair','-keystore',str(key),'-alias','fishing','-keyalg','RSA','-keysize','2048','-validity','10000','-dname','CN=Real AI Fishing','-storepass:env','FISHING_SIGNING_PASSWORD','-keypass:env','FISHING_SIGNING_PASSWORD'], 'signing-key',child_env)
+            run([str(jdk/'bin/keytool'),'-genkeypair','-keystore',str(key),'-alias','fishing','-keyalg','RSA','-keysize','2048','-validity','10000','-dname','CN=Ultimate Boomer Simulator','-storepass:env','FISHING_SIGNING_PASSWORD','-keypass:env','FISHING_SIGNING_PASSWORD'], 'signing-key',child_env)
             key.chmod(0o600)
         child_env.update(GODOT_ANDROID_KEYSTORE_RELEASE_PATH=str(key.resolve()),GODOT_ANDROID_KEYSTORE_RELEASE_USER=alias,GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=password)
         android=ROOT/'android/build'
@@ -76,7 +76,7 @@ for target in (TARGETS if a.target=='all' else [a.target]):
             from quest_store_manifest import configure
             configure(android/'src/main/AndroidManifest.xml')
     ext={'Linux':'x86_64','Windows':'exe','Quest':'apk'}[target]
-    artifact=out/('RealAIFishing.'+ext)
+    artifact=out/('UltimateBoomerSimulator.'+ext)
     run([godot,'--headless','--path',str(ROOT),'--xr-mode','off','--export-release',target,str(artifact)],'export-'+target,child_env)
     if not artifact.exists(): raise SystemExit('Missing '+str(artifact))
     if ext=='apk':

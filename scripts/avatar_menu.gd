@@ -26,6 +26,11 @@ var active_page := "avatar"
 var avatar_page: VBoxContainer
 var locations_page: VBoxContainer
 var location_list: ItemList
+var water_categories:VBoxContainer
+var water_submenu:VBoxContainer
+var water_heading:Label
+var water_category:=""
+var visible_waters:Array=[]
 var location_preview: TextureRect
 var location_description: Label
 var location_status: Label
@@ -172,16 +177,26 @@ func _build_locations() -> void:
 	locations_page = VBoxContainer.new()
 	locations_page.add_theme_constant_override("separation", 18)
 	_register_page("waters","Waters",locations_page)
+	water_categories=VBoxContainer.new();water_categories.add_theme_constant_override("separation",16);locations_page.add_child(water_categories)
+	var category_title:=Label.new();category_title.text="Choose a water type";category_title.add_theme_font_size_override("font_size",28);water_categories.add_child(category_title)
+	for category in Locations.WATER_TYPES:
+		var category_button:=Button.new();category_button.text=category.name+"   ·   %d waters  →"%Locations.waters_in_category(category.id).size();category_button.custom_minimum_size.y=66;water_categories.add_child(category_button)
+		category_button.pressed.connect(open_water_category.bind(category.id))
+		var description:=Label.new();description.text=category.description;description.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;water_categories.add_child(description)
+	water_submenu=VBoxContainer.new();water_submenu.add_theme_constant_override("separation",16);locations_page.add_child(water_submenu)
+	var back:=Button.new();back.text="← Water types";back.custom_minimum_size.y=46;back.custom_minimum_size.x=180;back.pressed.connect(show_water_categories)
 	var header := HBoxContainer.new()
-	locations_page.add_child(header)
+	water_submenu.add_child(header)
 	var title := Label.new()
 	title.text = "Find your water"
+	water_heading=title
 	title.add_theme_font_size_override("font_size", 28)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
+	header.add_child(back)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 20)
-	locations_page.add_child(row)
+	water_submenu.add_child(row)
 	location_list = preload("res://scripts/ui/vr_item_list.gd").new()
 	location_list.custom_minimum_size = Vector2(310, 305)
 	location_list.add_theme_font_size_override("font_size", 23)
@@ -194,7 +209,7 @@ func _build_locations() -> void:
 	details.add_theme_constant_override("separation", 12)
 	row.add_child(details)
 	location_preview = TextureRect.new()
-	location_preview.custom_minimum_size = Vector2(440, 220)
+	location_preview.custom_minimum_size = Vector2(440, 160)
 	location_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	location_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	details.add_child(location_preview)
@@ -220,10 +235,22 @@ func _build_locations() -> void:
 	buttons.add_child(visit_button)
 	visit_button.pressed.connect(func():
 		var indices := location_list.get_selected_items()
-		if not indices.is_empty(): location_selected.emit(Locations.CATALOG[indices[0]].id))
+		if not indices.is_empty() and indices[0]<visible_waters.size(): location_selected.emit(visible_waters[indices[0]].id))
 	locations_page.hide()
 	location_actions.hide()
 	refresh_locations(active_location, true)
+	show_water_categories()
+
+func show_water_categories()->void:
+	water_category="";water_categories.show();water_submenu.hide();location_actions.hide()
+	pages.waters.view.scroll_vertical=0
+func open_water_category(category:String)->void:
+	if not Locations.WATER_TYPES.any(func(entry):return entry.id==category):return
+	water_category=category;water_categories.hide();water_submenu.show();location_actions.visible=active_page=="waters"
+	for entry in Locations.WATER_TYPES:
+		if entry.id==category:water_heading.text=entry.name
+	refresh_locations(active_location,can_travel)
+	pages.waters.view.scroll_vertical=0
 
 func show_locations() -> void:
 	show_page("waters")
@@ -233,17 +260,20 @@ func refresh_locations(current: String, allowed: bool) -> void:
 	can_travel = allowed
 	if not is_instance_valid(location_list): return
 	location_list.clear()
+	visible_waters=Locations.waters_in_category(water_category)
 	var selected_index := 0
-	for index in range(Locations.CATALOG.size()):
-		var entry: Dictionary = Locations.CATALOG[index]
+	for index in range(visible_waters.size()):
+		var entry: Dictionary = visible_waters[index]
 		location_list.add_item(entry.name + ("  •" if entry.id == current else ""))
 		if entry.id == current: selected_index = index
-	location_list.select(selected_index)
-	_preview_location(selected_index)
+	if not visible_waters.is_empty():
+		location_list.select(selected_index)
+		_preview_location(selected_index)
 	location_status.text = "Choose a spot, then select Fish here." if allowed else "Finish this cast and release your catch before travelling."
 
 func _preview_location(index: int) -> void:
-	var entry: Dictionary = Locations.CATALOG[index]
+	if index<0 or index>=visible_waters.size():return
+	var entry: Dictionary = visible_waters[index]
 	# Only small JPG previews are loaded while browsing; never the HDR skies.
 	location_preview.texture = load(entry.preview) if not entry.preview.is_empty() else null
 	location_description.text = entry.mood + "\n" + entry.description
@@ -304,7 +334,7 @@ func _build_shell() -> void:
 	for step in [-1, 1]:
 		var scroll_button := Button.new()
 		scroll_button.text = "↑" if step < 0 else "↓"
-		scroll_button.tooltip_text = "Scroll page (or use the right stick)"
+		scroll_button.tooltip_text = "Scroll page (or use either stick)"
 		scroll_button.custom_minimum_size = Vector2(52, 44)
 		bottom.add_child(scroll_button)
 		scroll_button.pressed.connect(func(): scroll_page(step * 180.0))
@@ -316,7 +346,7 @@ func scroll_page(pixels: float) -> void:
 		vrm_browser.files.get_v_scroll_bar().value += pixels
 		return
 	if is_instance_valid(keyboard) and keyboard.visible: return
-	if pages.has(active_page): pages[active_page].view.scroll_vertical += roundi(pixels)
+	if pages.has(active_page): preload("res://scripts/ui/scroll_router.gd").scroll(get_viewport(),pixels,pages[active_page].view)
 
 func attach_leaderboard(session:Node) -> void:
 	var page=preload("res://scripts/network/leaderboard_menu.gd").new()
@@ -344,7 +374,7 @@ func show_page(id: String) -> void:
 	if is_instance_valid(vrm_browser): vrm_browser.hide()
 	active_page=id
 	if is_instance_valid(avatar_actions): avatar_actions.visible = id == "avatar"
-	if is_instance_valid(location_actions): location_actions.visible = id == "waters"
+	if is_instance_valid(location_actions): location_actions.visible = id == "waters" and not water_category.is_empty()
 	for key in pages:
 		pages[key].view.visible=key==id
 		pages[key].page.visible=key==id
@@ -394,7 +424,7 @@ func attach_tackle(session) -> void:
 	tackle_balance.add_theme_font_size_override("font_size", 26)
 	page.add_child(tackle_balance)
 	var hint := Label.new()
-	hint.text = "Earn shekels for each catch. Rarer and larger fish pay more.\nBetter rods withstand strain and tire fish faster."
+	hint.text = "Earn shekels for each catch. Rarer and larger fish pay more.\nBetter rods withstand strain and tire fish faster.\nGolf clubs match your equipped finish; golf performance stays the same."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(hint)
 	for index in range(session.Tackle.RODS.size()):

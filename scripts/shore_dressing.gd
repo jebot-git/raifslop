@@ -14,7 +14,7 @@ static func ground(id:String,x:float,z:float,terrain:PackedVector3Array=PackedVe
   var hit=Geometry3D.ray_intersects_triangle(Vector3(x,10,z),Vector3.DOWN,terrain[i],terrain[i+1],terrain[i+2])
   if hit is Vector3:height=maxf(height,hit.y)
  if is_finite(height):return height
- return load("res://scripts/river_foreground.gd").ground_height(x,z,false) if id in ["meadow_bend","boulder_run"] else 0.0
+ return load("res://scripts/river_foreground.gd").ground_height(x,z,false) if preload("res://scripts/fly_fishing.gd").river(id) else 0.0
 static func ground_triangles(parent:Node3D)->PackedVector3Array:
  var terrain:=PackedVector3Array()
  for node in parent.find_children("*","MeshInstance3D",true,false):

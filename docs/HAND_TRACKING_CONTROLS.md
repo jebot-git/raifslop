@@ -2,6 +2,8 @@
 
 Assessment: 17 September 2026. This is an implementation proposal; hands-only gameplay has not been enabled or validated.
 
+Follow-up: [24 September integrated-branch review and mixed reality club fitting](INTEGRATED_HAND_TRACKING_AND_MR_FITTING.md) reassesses these findings against the shared fishing/golf rig and current attachment calibration.
+
 ## Findings
 
 Hand controls are feasible with the existing avatar and OpenXR stack. Menus, guide interactions and photos are the best first milestone. Full fishing needs input-source handling and controls for actions currently assigned to buttons and sticks.

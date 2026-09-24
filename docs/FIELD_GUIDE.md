@@ -61,7 +61,7 @@ Forward mode follows the guide’s rear lens. VR selfie mode starts at the guide
 
 Camera controls do not cast, release catches or change bait. Collection navigation remains available after leaving camera mode.
 
-Files are saved locally in your operating system’s Pictures folder, inside `Real AI Fishing` (for example `~/Pictures/Real AI Fishing` on Linux). Android saves new photos to the Pictures collection through MediaStore. `--photos-root PATH` overrides the destination for capture tests. Each filename includes a timestamp and unique suffix. The guide confirms successful saves and reports failures. Photos are never uploaded or sent to other players. Forward/selfie choice lasts for the current session.
+Files are saved locally in your operating system’s Pictures folder, inside `Ultimate Boomer Simulator` (for example `~/Pictures/Ultimate Boomer Simulator` on Linux). Android saves new photos to the Pictures collection through MediaStore. `--photos-root PATH` overrides the destination for capture tests. Each filename includes a timestamp and unique suffix. The guide confirms successful saves and reports failures. Photos are never uploaded or sent to other players. Forward/selfie choice lasts for the current session.
 
 Preview rendering is limited to 640 × 360 at approximately 10 Hz while the camera is held. It stops when docked or in collection mode. Full resolution renders only for the shutter; repeated shutter input is ignored while saving. UI exclusion uses a dedicated render layer, so photography does not toggle shared world visibility or put the guide's preview inside itself.
 

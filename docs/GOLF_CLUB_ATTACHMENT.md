@@ -1,5 +1,7 @@
 # Golf club attachment calibration
 
+For the proposed passthrough alignment workflow, see [the mixed reality fitting feasibility study](INTEGRATED_HAND_TRACKING_AND_MR_FITTING.md). Mixed reality fitting is not implemented yet.
+
 Golf Controls now includes **Club attachment calibration**. In the integrated fishing client, open the shared **Controls** tab while on a golf course and scroll to **Club attachment calibration**. Standalone golf exposes it under its own **Controls** tab.
 
 1. Select the left or right hand to edit. This does not change your swing handedness.

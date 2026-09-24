@@ -26,20 +26,24 @@ var mend_tracking:=false
 var mend_travel:=0.0
 var mend_latched:=false
 # Stable species IDs: dry-fly surface feeders differ from the nymph pool.
-const POOLS={"meadow_bend":[11,12,9,14,34],"boulder_run":[10,11,12,17]}
-const PREFERENCES={0:[9,10,11,12,14,17,34],1:[9,10,11,12,17,34]}
+const POOLS={"meadow_bend":[11,12,9,14,34],"boulder_run":[10,11,12,17],"cedar_creek":[10,17,40],"glacier_run":[11,12,41]}
+const PREFERENCES={0:[9,10,11,12,14,17,34,40,41],1:[9,10,11,12,17,34,40,41]}
+const RIVERS={"meadow_bend":{"speed":.85,"margin":.25,"width":7.0,"visual_flow":.6},"boulder_run":{"speed":1.35,"margin":.35,"width":5.0,"visual_flow":1.1},"cedar_creek":{"speed":.65,"margin":.18,"width":6.0,"visual_flow":.48},"glacier_run":{"speed":1.6,"margin":.4,"width":5.0,"visual_flow":1.3}}
+static func pockets(id:String)->Array:
+ return [Vector3(-7,0,-10),Vector3(5,0,-13),Vector3(15,0,-8)] if id in ["boulder_run","glacier_run"] else []
 static func preferred(bait:int,id:String)->Array:
  var result:Array=[]
  for index in POOLS.get(id,[]):
   if index in PREFERENCES.get(bait,[]):result.append(index)
  return result
-static func river(id:String)->bool:return id in ["meadow_bend","boulder_run"]
+static func river(id:String)->bool:return RIVERS.has(id)
 static func current(at:Vector3,id:String)->Vector3:
  var across:float=absf(at.z+11.0)
- var speed:float=lerpf(.85,.25,clampf(across/7,0,1)) if id=="meadow_bend" else lerpf(1.35,.35,clampf(across/5,0,1))
- if id=="boulder_run":
-  for rock in [Vector3(-7,0,-10),Vector3(5,0,-13),Vector3(15,0,-8)]:
-   if at.x>rock.x and at.x<rock.x+3 and absf(at.z-rock.z)<1.7:speed*=.25
+ if not river(id):return Vector3.ZERO
+ var profile:Dictionary=RIVERS[id]
+ var speed:float=lerpf(profile.speed,profile.margin,clampf(across/profile.width,0,1))
+ for rock in pockets(id):
+  if at.x>rock.x and at.x<rock.x+3 and absf(at.z-rock.z)<1.7:speed*=.25
  return Vector3(speed,0,0)
 func reset():
  offset=Vector3.ZERO;drag=0;age=0;mend_cooldown=0;quality=1;charging=false;charge_age=0;strokes=0;backstroke=false;strip_engaged=false;strip_grip_down=false;strip_blocked=false

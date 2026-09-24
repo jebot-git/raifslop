@@ -9,7 +9,7 @@ static func vector(values: Array) -> Vector3:
 	return Vector3(values[0], values[1], values[2])
 
 static func create(id: String) -> Node3D:
-	if id in ["meadow_bend","boulder_run"]:return preload("res://scripts/river_foreground.gd").create(id)
+	if preload("res://scripts/fly_fishing.gd").river(id):return preload("res://scripts/river_foreground.gd").create(id)
 	var records := catalog()
 	if not records.has(id): return null
 	var record: Dictionary = records[id]

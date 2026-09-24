@@ -1,6 +1,6 @@
 # Resume development
 
-Current milestone: Real AI Fishing 0.1.7, Godot 4.7.2, Mobile/Vulkan.
+Current milestone: Ultimate Boomer Simulator 0.1.7, Godot 4.7.2, Mobile/Vulkan.
 
 The main game has eight photographic environments and two procedural river maps,
 native 8K panoramas, measured HDR lighting, authored foregrounds, fly/spinning

@@ -183,7 +183,7 @@ def build(name,d):
  for v in body.data.vertices:v.co.x=(v.co.x-(lo+hi)/2)/(hi-lo);v.co.y/=(hi-lo);v.co.z/=(hi-lo)
  # Continuous contours already overlap the skin. Projecting their small rays
  # onto the nearest body surface would fold the fin tips into square stubs.
- repair_fins(body,photographic=True,anchor_roots=not d.get('fin_outline_file'));body['fin_roots_repaired']=True
+ repair_fins(body,photographic=True,anchor_roots=not d.get('fin_outline_file'),discard_speckles=not d.get('fin_outline_file'));body['fin_roots_repaired']=True
  bpy.ops.export_scene.gltf(filepath=str(OUT/(name+'.glb')),export_format='GLB',use_active_scene=True,export_animations=False)
  print('PHOTOGRAPHIC_FISH_COMPLETE',name,flush=True)
 
