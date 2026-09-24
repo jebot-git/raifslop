@@ -23,6 +23,8 @@ func run()->void:
  g.set_process(false);g.motor.set_physics_process(false);g.fishing_feedback.set_process(false)
  g.game.reset();g.bbq.service.request("start");await process_frame
  for id in 6:
+  var item:Dictionary=g.bbq.service.model.stations[g.current_location].items[id]
+  check(absf(g.bbq.food_bounds[id].size.y*.5-preload("res://scripts/bbq/model.gd").HALF_HEIGHT[item.kind])<.00001,"Network food height matches actual mesh")
   for material in g.bbq.food_materials[id]:
    check(material.get_shader_parameter("use_texture"),"Cooking retains baked colour")
    check(material.get_shader_parameter("use_normal_texture"),"Cooking retains normal map")

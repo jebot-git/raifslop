@@ -1,5 +1,10 @@
 # Ultimate Boomer Simulator
 
+`main` is the production codebase, promoted from `integration/golf-fishing` on
+2026-09-24. Use `integration/golf-fishing` for integration work and merge shared
+fixes into `stores` for store packaging. The previous fishing-only `main` is
+preserved at `archive/main-pre-integration-2026-09-24`.
+
 Formerly Real AI Fishing. Existing saves and Android package identity are retained; the game icon is unchanged.
 A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. Freshwater and marine fish, six bait choices per habitat, eight photographed waterside settings plus two rivers, distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
 
@@ -118,7 +123,7 @@ Meta avatar option research: [Quest and PC feasibility](docs/META_AVATARS_FEASIB
 
 ## Multiplayer and voice
 
-Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**left stick click**) remain available. Voice is positional within each location. Grab the left-shoulder radio and hold its trigger to talk to all waters. Multiplayer requires matching protocol-14 server and clients.
+Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**left stick click**) remain available. Voice is positional within each location. Grab the left-shoulder radio and hold its trigger to talk to all waters. Multiplayer requires matching protocol-17 server and clients.
 
 Run `./run.sh --server --port 24567` for a headless dedicated server. LAN/Internet connections use direct UDP; Internet hosts need port forwarding or a reachable server. See [setup, controls and limitations](docs/MULTIPLAYER.md) and [FPSloppa code reuse](docs/FPSLOPPA_REUSE.md).
 
@@ -205,11 +210,11 @@ The catalogue now has **40 species**, including huchen and ragged-tooth shark pr
 
 ### Waterside BBQ
 
-Open **Menu → BBQ** for a cookout with fish caught at the current water and fish burgers. Grip food, turn your wrist, and release onto the grill to flip it. Eat with the holding-hand trigger or by bringing food to your mouth. Beer starts inside the closed cooler: trigger its lid, grip a can, and trigger once to open it; drink at your mouth or press again. [Controls, assets, and validation](docs/BBQ.md).
+Open **Menu → BBQ** for shared cooking. Grip the tongs, hold trigger near food to clamp it, turn your wrist, and release trigger over the grate or prep table. Take a serving and trigger near your mouth to eat. Trigger the cooler lid to open it, grip a can, then trigger to open and sip near your mouth. [Controls, assets, and validation](docs/BBQ.md).
 
 ## Golf integration branch
 
-This branch integrates GolfMinus into the existing Fishing menu, avatar, radio, shared records and clubhouse BBQ. See [integration notes](docs/GOLF_INTEGRATION.md) for dedicated-server packaging and verification. Clients and servers must both use protocol 16.
+This branch integrates GolfMinus into the existing Fishing menu, avatar, radio, shared records and clubhouse BBQ. See [integration notes](docs/GOLF_INTEGRATION.md) for dedicated-server packaging and verification. Current development clients and servers must both use protocol 17 (manual BBQ food handling). Published v0.1.17 packages use protocol 16.
 
 The integrated Golf page offers Spyglass Hill, Pebble Beach, Cypress Point and Poppy Hills, each with 18 holes in one connected world. See [course sources, hip tracking and validation](docs/HIP_TRACKING_AND_COURSES.md).
 

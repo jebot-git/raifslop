@@ -17,7 +17,7 @@ SUITES = ['golf_tracking_tolerance', 'golf_pending_contact', 'golf_contact_effec
           'golf_physics_review', 'golf_head_contact', 'golf_surface_alignment',
           'golf_controls_feedback', 'golf_attachment', 'golf_vr_input',
           'golf_courses', 'golf_course_lanes', 'golf_physics_stress',
-          'golf_fit_invariants', 'rec5_terrain', 'quest19_golf_regressions']
+          'golf_fit_invariants', 'golf_address_line', 'golf_fit_orientation', 'rec5_terrain', 'quest19_golf_regressions']
 
 
 def unexpected_errors(result):

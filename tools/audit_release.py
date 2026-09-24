@@ -89,7 +89,7 @@ def audit(path):
                      'assets/audio/bbq/grill_sizzle.wav',
                      *['assets/models/bbq/'+asset+'.glb' for asset in
                        ['station','cooler','cooler_lid','beer_can','fish_burger','tongs_handle','tongs_jaw','sausage','corn','mushroom']],
-                     'ASSET_CREDITS.md','assets/models/locations/manifest.json',
+                     'ASSET_CREDITS.md','assets/ui/store_logo.png','assets/models/locations/manifest.json',
                      'assets/equipment/tackle_styles.json',
                      'addons/golfminus/scripts/golf/club_style.gd',
                      'scripts/ui/scroll_router.gd','scripts/ui/vr_option.gd',

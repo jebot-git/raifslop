@@ -81,9 +81,21 @@ func run()->void:
   else:
    net.bbq.request("start")
    check(await until(func():return net.bbq.model.stations.has("golf_spyglass_clubhouse")),"Remote player starts existing BBQ on golf course")
+   var state:Dictionary=net.states[net.multiplayer.get_unique_id()]
+   var site:Transform3D=load("res://scripts/bbq/sites.gd").pose("golf_spyglass_clubhouse")
+   state.serial+=1;state.right=site*Transform3D(Basis.IDENTITY,net.bbq.model.stations.golf_spyglass_clubhouse.items[6].pos)
+   net._submit_event.rpc_id(1,state);await create_timer(.25).timeout
    net.bbq.request("grab",6,1)
    check(await until(func():return net.bbq.model.stations.golf_spyglass_clubhouse.items[6].owner==net.multiplayer.get_unique_id()),"Shared BBQ grants remote tongs ownership")
-   net.bbq.request("cook",0,1,Vector3(0,1,0))
+   var food:Dictionary=net.bbq.model.stations.golf_spyglass_clubhouse.items[0]
+   state.serial+=1;state.right=site*Transform3D(Basis.IDENTITY,load("res://scripts/bbq/model.gd").resting_pose(food).origin+Vector3(0,0,.25))
+   net._submit_event.rpc_id(1,state);await create_timer(.25).timeout
+   net.bbq.request("clamp",0,1)
+   check(await until(func():return net.bbq.model.stations.golf_spyglass_clubhouse.items[0].place=="tongs"),"Clubhouse food clamps to the held tongs")
+   food=net.bbq.model.stations.golf_spyglass_clubhouse.items[0]
+   state.serial+=1;state.right=site*Transform3D(Basis.IDENTITY,load("res://scripts/bbq/sites.gd").grill(1)-food.grip_offset.origin)
+   net._submit_event.rpc_id(1,state);await create_timer(.25).timeout
+   net.bbq.request("unclamp",0,1)
    check(await until(func():return net.bbq.model.stations.golf_spyglass_clubhouse.items[0].cook[0]>0),"Server cooks golf BBQ food while course turn is pending")
    net.bbq.request("release")
    check(await until(func():return net.golf.view.your_turn),"Turn notification state reaches player outside course")

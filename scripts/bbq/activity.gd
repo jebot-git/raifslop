@@ -17,6 +17,7 @@ var food_materials:Dictionary={}
 var food_bounds:Dictionary={}
 var grip_down:=[false,false]
 var trigger_down:=[false,false]
+var unclamp_pending:=[-1,-1]
 var hint:Node3D
 var hint_icons:Array[Sprite3D]=[]
 var cooler_icon:Sprite3D
@@ -165,9 +166,9 @@ func prompt(target:int) -> Array:
   var item:Dictionary=items[held_id]
   if item.kind=="drink":return ["trigger","drink" if item.open else "open_can"]
   if item.kind in Model.FOODS:return ["trigger","eat"]
+  if service.model.clamped(location,service.local_id(),item.hand)>=0:return ["flip","serve"]
   if target>=0 and items[target].kind in Model.FOODS:
-   var food:Dictionary=items[target]
-   return ["tongs",("flip" if food.side==0 else "serve") if food.place=="grill" else "bbq"]
+   return ["trigger","tongs"]
   return ["tongs","bbq"]
  if target>=0:
   var item:Dictionary=items[target]
@@ -228,7 +229,7 @@ func _move(destination:Vector3,returning:=false) -> void:
 
 func release_all() -> void:
  if is_instance_valid(service):service.request("release")
- grip_down=[true,true];trigger_down=[true,true]
+ grip_down=[true,true];trigger_down=[true,true];unclamp_pending=[-1,-1]
 
 func hand_pose(hand:int,peer:=-1) -> Transform3D:
  if peer<0 or peer==service.local_id():
@@ -250,8 +251,8 @@ func use(hand:int,target:int,cool:=false) -> void:
  var id:int=service.model.held(location,service.local_id(),hand)
  if id<0:return
  var item:Dictionary=service.model.stations[location].items[id]
- if item.kind=="tongs" and target>=0:
-  service.request("cool" if cool else "cook",target,hand,station.to_local(hand_pose(hand).origin))
+ if item.kind=="tongs":
+  if not cool and target>=0:service.request("clamp",target,hand)
  elif item.kind=="drink":service.request("sip",id,hand)
  elif item.kind in Model.FOODS:service.request("eat",id,hand)
 
@@ -268,21 +269,24 @@ func _process(_delta:float) -> void:
   var node:Node3D=item_nodes[item.id];node.visible=item.place!="gone" and (item.kind!="drink" or item.owner!=0 or state.cooler_open)
   if item.owner!=0:
    node.global_transform=hand_pose(item.hand,item.owner)
+   if item.place=="tongs":node.global_transform*=item.grip_offset
    if item.kind=="drink":node.rotate_object_local(Vector3.RIGHT,PI/2)
-  else:node.transform=Transform3D(Basis.IDENTITY,item.pos)
+  else:node.transform=Model.resting_pose(item)
   if item.kind=="tongs":
    var tool:Node3D=node.get_child(0);tool.held_hand=item.hand if item.owner!=0 else -1
-   tool.squeezed=item.owner==service.local_id() and g.xr and (g.left if item.hand==0 else g.right).get_float("trigger")>.55
+   var carried:int=service.model.clamped(location,item.owner,item.hand) if item.owner!=0 else -1
+   tool.food=item_nodes[carried] if carried>=0 else null
+   tool.clamped_angle=atan((Model.HALF_HEIGHT[state.items[carried].kind]+.009)/Tongs.JAW_REACH) if carried>=0 else Tongs.EMPTY_CLOSED_ANGLE
+   tool.squeezed=carried>=0 or (item.owner==service.local_id() and g.xr and ((g.left if item.hand==0 else g.right).get_float("trigger")>.55 or (g.left if item.hand==0 else g.right).is_button_pressed("trigger_click")))
    tool.animate_jaws(_delta)
   if item.kind=="drink":
    if item.open and not opened_cans.get(item.id,false):open_sound.global_position=node.global_position;open_sound.play()
    opened_cans[item.id]=item.open
   if item.kind in Model.FOODS:
    var food:Node3D=node.get_child(0)
-   var target_angle:float=PI if item.side==1 else 0.0
-   food.rotation.z=move_toward(food.rotation.z,target_angle,_delta*10)
-   var bounds:AABB=food_bounds[item.id]
-   food.position.y=lerpf(-bounds.position.y-.041,bounds.end.y-.041,(1-cos(food.rotation.z))*.5)+sin(food.rotation.z)*.065
+   # Food orientation comes from the actual tongs pose, never a flip tween.
+   food.rotation=Vector3.ZERO
+   food.position=-food_bounds[item.id].get_center()
    for material in food_materials[item.id]:
     material.set_shader_parameter("cook_bottom",item.cook[0]);material.set_shader_parameter("cook_top",item.cook[1]);material.set_shader_parameter("world_to_food",food.global_transform.affine_inverse())
    if item.place=="grill":cooking=true
@@ -300,10 +304,10 @@ func _process(_delta:float) -> void:
   if not controller.get_has_tracking_data():
    if id>=0:service.request("drop",id,hand)
    grip_down[hand]=true;trigger_down[hand]=true;continue
-  var grip:bool=controller.get_float("grip")>(.35 if grip_down[hand] else .55)
-  var trigger:bool=controller.get_float("trigger")>.55 or controller.is_button_pressed("trigger_click")
+  var grip:bool=controller.get_float("grip")>(.35 if grip_down[hand] else .55) or controller.is_button_pressed("grip_click")
+  var trigger:bool=controller.get_float("trigger")>(.35 if trigger_down[hand] else .55) or controller.is_button_pressed("trigger_click")
   var hand_transform:=hand_pose(hand)
-  var at:Vector3=hand_transform.origin-hand_transform.basis.z*(.22 if id in [6,7] else 0)
+  var at:Vector3=hand_transform.origin-hand_transform.basis.z*(.25 if id in [6,7] else 0)
   var target:=nearest(at,.25 if id in [6,7] else .19,id in [6,7])
   if target>=0:hovered=target
   if grip and not grip_down[hand] and id<0 and target>=0:service.request("grab",target,hand)
@@ -311,6 +315,10 @@ func _process(_delta:float) -> void:
   if trigger and not trigger_down[hand]:
    if id>=0:use(hand,target)
    elif controller.global_position.distance_to(station.to_global(Sites.COOLER_HANDLE))<.3:service.request("cooler",-1,hand)
+  var carried:int=service.model.clamped(location,service.local_id(),hand)
+  if carried<0 or trigger:unclamp_pending[hand]=-1
+  if not trigger and id in [6,7] and carried>=0 and unclamp_pending[hand]!=carried:
+   unclamp_pending[hand]=carried;service.request("unclamp",carried,hand)
   grip_down[hand]=grip;trigger_down[hand]=trigger
  var nearby:bool=g.head.global_position.distance_to(station.global_position)<3.5
  hint.visible=Icons.enabled and nearby;cooler_icon.visible=Icons.enabled and nearby

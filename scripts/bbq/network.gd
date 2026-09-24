@@ -19,7 +19,7 @@ func actor(peer:int) -> Dictionary:
  if not session.active or (peer==local_id() and not session.dedicated):
   var g=session.root_game
   if not is_instance_valid(g) or not is_instance_valid(g.get("head")):return {}
-  return {"location":g.current_location,"feet":g.motor.global_position,"head":g.head.global_transform,"left":g.left.global_transform,"right":g.right.global_transform,"left_valid":g.left.get_has_tracking_data(),"right_valid":g.right.get_has_tracking_data(),"xr":g.xr,"state":g.game.state}
+  return {"location":g.current_location,"feet":g.motor.global_position,"head":g.head.global_transform,"left":g.controller_pose(0),"right":g.controller_pose(1),"left_valid":g.left.get_has_tracking_data(),"right_valid":g.right.get_has_tracking_data(),"xr":g.xr,"state":g.game.state}
  var data:Dictionary=session.states.get(peer,{})
  for key in ["location","feet","head","left","right","left_valid","right_valid","xr","state"]:
   if not data.has(key):return {}
@@ -72,13 +72,16 @@ func accept(peer:int,command:Dictionary) -> bool:
   return changed
  if command.id<0 or command.id>=10:return false
  var item:Dictionary=model.stations[location].items[command.id]
- if command.action in ["grab","cook","cool"]:
+ if command.action in ["grab","clamp"]:
   var reach:float=.8
   var reach_from:Vector3=who[hand_name].origin
-  if reach_from.distance_to(pose*item.pos)>reach:return false
+  if reach_from.distance_to(pose*Model.resting_pose(item).origin)>reach:return false
+  if command.action=="clamp":
+   var tip:Vector3=who[hand_name]*Vector3(0,0,-.25)
+   if tip.distance_to(pose*Model.resting_pose(item).origin)>.25:return false
  if command.action in ["eat","sip"] and (command.action=="eat" or item.open):
   if who[hand_name].origin.distance_to(who.head.origin)>.45:return false
- var ok:bool=model.apply(location,peer,command.hand,command.action,command.id,command.at)
+ var ok:bool=model.apply(location,peer,command.hand,command.action,command.id,command.at,pose.affine_inverse()*who[hand_name])
  if ok:broadcast()
  return ok
 
