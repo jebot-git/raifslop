@@ -1,13 +1,13 @@
 # Releases and build policy
 
-Release **0.1.15** is branded **Ultimate Boomer Simulator** and targets Linux x86_64, Windows x86_64, Quest standalone and a separate Linux dedicated server. The icon and existing save locations are preserved. Historical releases retain their original branding and filenames.
+Release **0.1.16** is branded **Ultimate Boomer Simulator** and targets Linux x86_64, Windows x86_64, Quest standalone and a separate Linux dedicated server. The icon and existing save locations are preserved. Historical releases retain their original branding and filenames.
 
 Download from [GitHub Releases](https://github.com/jebot-git/raifslop/releases).
-See [0.1.15 changes and validation](RELEASE_NOTES_0.1.15.md).
+See [0.1.16 changes and validation](RELEASE_NOTES_0.1.16.md).
 
 - Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime.
 - Windows: extract the ZIP and run `VR.cmd`; retain the executable, PCK and DLLs. See [Windows OpenXR setup](WINDOWS_OPENXR.md).
-- Quest: sideload the signed APK. Use the same signing certificate for upgrades. This release has not been retested on physical hardware.
+- Quest: sideload the signed APK. Use the same signing certificate for upgrades. The final fixes have automated regression coverage; this package has not been retested on physical hardware. The GitHub sideload key differs from the Meta ALPHA key, so this APK cannot update that installation.
 - Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`. The binary embeds shared server scripts and course data but no visual/audio assets or extensions.
 
 Multiplayer uses **protocol 16**; update clients and server together. Publishing packages does not upgrade a live server. Eight slots, direct UDP connections and local progression remain unchanged. Accomplishment records are saved by the server. Keep bundled asset credits and notices when sharing.

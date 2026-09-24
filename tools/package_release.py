@@ -21,7 +21,7 @@ if args.prototype:
     TARGETS = ['Linux', 'Windows', 'Server']
     ANDROID_TARGETS = []
     OUT = BUILD / 'prototype-release'
-LOG_ARGS = '--verbose --log-file user://logs/prototype.log ' if args.prototype else ''
+LOG_ARGS = '--verbose ' if args.prototype else ''
 
 def digest(path):
     with path.open('rb') as stream:
@@ -84,12 +84,12 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
             if target == 'Linux':
                 script = folder / (name + '.sh')
                 script.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\n'
-                                  'exec ./UltimateBoomerSimulator.x86_64 ' + LOG_ARGS + launch_args + ' "$@"\n')
+                                  'exec ./UltimateBoomerSimulator.x86_64 ' + LOG_ARGS + '--log-file "$PWD/Client-' + name + '.log" ' + launch_args + ' "$@"\n')
                 script.chmod(0o755)
             else:
                 (folder / (name + '.cmd')).write_bytes(
                     ('@echo off\r\ncd /d "%~dp0"\r\n"%~dp0UltimateBoomerSimulator.exe" '
-                     + LOG_ARGS + launch_args + ' %*\r\n').encode())
+                     + LOG_ARGS + '--log-file "%~dp0Client-' + name + '.log" ' + launch_args + ' %*\r\n').encode())
         name = f'UltimateBoomerSimulator-{VERSION}-{target}'
         archive(folder, result / (name + '-x86_64.zip'), name)
         print('PACKAGED ' + target, flush=True)
@@ -98,7 +98,7 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
     shutil.copy2(BUILD/'Server/UltimateBoomerSimulatorServer.x86_64', server/'UltimateBoomerSimulatorServer.x86_64')
     copy_notices(server)
     launcher = server/'Server.sh'
-    launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./UltimateBoomerSimulatorServer.x86_64 ' + LOG_ARGS + '-- "$@"\n')
+    launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./UltimateBoomerSimulatorServer.x86_64 ' + LOG_ARGS + '--log-file "$PWD/Server.log" -- "$@"\n')
     launcher.chmod(0o755)
     name = f'UltimateBoomerSimulator-{VERSION}-Server-Linux-x86_64'
     archive(server, result/(name+'.zip'), name)
