@@ -196,3 +196,10 @@ Huchen and ragged-tooth shark: original built-in imagegen reference illustration
 - Cedar tree cards: original AI-generated transparent texture, `assets/environment/rivers/expansion/cedar_card.png`; editable Krita source and generation prompt/mode in `source/vegetation/fly_expansion/`. Uses the existing crossed-card foliage renderer.
 - Fallen timber: original procedural Blender geometry, `source/fly_expansion_scenery.blend`, reproducible with `tools/build_fly_expansion_props.py`. Glacial rocks reuse the existing credited UV-mapped river boulder, granite texture, normal detail and occlusion map.
 - New river ambience: original seeded synthesized noise, `tools/build_fly_expansion_audio.py`; no third-party recording.
+
+## Meta Platform integration
+
+Godot Meta Toolkit 1.0.3-stable (Meta Platforms and contributors), MIT toolkit
+source with Meta Platform SDK loader under Meta SDK terms. See
+`addons/godot_meta_toolkit/LICENSE.txt`, `THIRD_PARTY_NOTICES.txt`, `NOTICE.md`
+and `PROVENANCE.json`. Used for Quest store entitlement checks; no paid IAP.

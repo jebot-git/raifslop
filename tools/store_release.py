@@ -169,7 +169,8 @@ def main():
         steam_vdf(args.app_id, args.windows_depot, args.linux_depot, 'configuration-check')
     if args.check_config:
         if args.store == 'quest':
-            from quest_store_config import check_signing
+            from quest_store_config import check_signing, check_app_id
+            check_app_id()
             check_signing()
             print('Quest signing identity verified. Account, AppID, entitlement and hardware acceptance remain separate gates.')
         else:
@@ -190,6 +191,10 @@ def main():
     if args.store == 'quest':
         from quest_expansion import inspect
         expansion = inspect(artifacts[0])
+        from quest_store_config import inspect_platform
+        inspect_platform(artifacts[0])
+        if 'org.godotengine.plugin.v2.GodotMetaToolkit' not in checked['manifest']:
+            raise ValueError('Quest APK is missing the Platform SDK Android plugin registration')
         if expansion:
             package = re.search(r"package: name='([^']+)' versionCode='([0-9]+)'", checked['badging'])
             if not package or package[1] != expansion['package'] or int(package[2]) != expansion['version_code']:

@@ -45,8 +45,8 @@ The public digest is deliberately pinned in preflight to protect upgrades.
    leaderboards against actual server data handling. Complete applicable data-use,
    age/content and user-reporting requirements in the dashboard.
 
-No account enrollment, AppID assignment or dashboard configuration has been
-performed by these repository changes.
+The owner supplied AppID `3428825797290213`; it is configured in source.
+Account enrollment and dashboard configuration were not performed here.
 
 ## Engineering work before a candidate
 
@@ -55,11 +55,11 @@ performed by these repository changes.
    and audit/stage the pair. See [QUEST_EXPANSION.md](QUEST_EXPANSION.md). Test
    channel install, offline startup, upgrade, missing/corrupt files and interrupted
    download on physical Quest before accepting delivery.
-2. **Platform entitlement:** integrate Meta Platform SDK with the assigned AppID
-   and implement the entitlement result/error path. The source audit found no
-   application entitlement implementation. OpenXR vendor extensions alone do not
-   supply this integration. Validate entitled/non-entitled users and network
-   failures using the official platform behavior.
+2. **Platform entitlement implemented; live validation pending:** AppID
+   `3428825797290213` is configured. The pinned SDK gates store startup on
+   successful initialization and viewer entitlement. See
+   [QUEST_ENTITLEMENT.md](QUEST_ENTITLEMENT.md) for account/channel setup and
+   entitled/denied/offline/timeout tests on Quest.
 3. **Lifecycle and permissions:** test overlay focus, hidden hands, input
    suppression, recenter, headset removal and suspend/resume in all activities.
    Review microphone and optional tracking permissions, including denied access.

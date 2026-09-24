@@ -22,6 +22,8 @@ setup are separate from packaging success.
 ### Quest
 
 Start with [Quest onboarding and measured blockers](QUEST_ONBOARDING.md).
+AppID `3428825797290213` is configured for [entitlement checks](QUEST_ENTITLEMENT.md).
+An optional `META_QUEST_APP_ID` environment override must match the intended app.
 
 Provision the **existing** signing keystore outside the checkout. Preserve its
 password and certificate identity; changing keys can break upgrades. Set

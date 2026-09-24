@@ -10,8 +10,9 @@ a = p.parse_args()
 if subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip():
     raise SystemExit('Commit the source changes before building a release.')
 if a.store_release and (a.target == 'all' or a.target in ANDROID_TARGETS):
-    from quest_store_config import check_signing
+    from quest_store_config import check_signing, check_app_id
     try:
+        check_app_id()
         check_signing()
     except (ValueError, OSError) as exc:
         raise SystemExit(str(exc))
@@ -79,6 +80,8 @@ for target in (TARGETS if a.target=='all' else [a.target]):
             (ROOT/'android/.build_version').write_text('4.7.2.stable')
             (ROOT/'android/.gdignore').touch();(android/'gradlew').chmod(0o755)
         if a.store_release:
+            child_env['FISHING_STORE_RELEASE'] = '1'
+            child_env['META_QUEST_APP_ID'] = check_app_id()
             from quest_store_manifest import configure
             configure(android/'src/main/AndroidManifest.xml')
     ext={'Linux':'x86_64','Windows':'exe','Quest':'apk'}[target]

@@ -1,0 +1,21 @@
+{
+  "release": "1.0.3-stable",
+  "commit": "7fc223fa4b9a1b43552a53bf287a720c4719ea76",
+  "source": "https://github.com/godot-sdk-integrations/godot-meta-toolkit",
+  "archive_sha256": "cbd23eb9c0ce6868570aa43a674688d749bafeab6b38027f5a588bb21b27d879",
+  "files": {
+    ".bin/android/debug/godot_meta_toolkit-debug.aar": "af83c0de1a78626d0694286b7bb339c8f815e41ffa19eb52d2ffd87deff9a1f3",
+    ".bin/android/release/godot_meta_toolkit-release.aar": "7e9df20b10a99f3c4e58dab82378bc472c141373a104bc7d687b0712ed5b3695",
+    ".bin/android/template_debug/arm64/libgodot_meta_toolkit.so": "2bd348e954de2b5a9dc2fcf3934059328b77f5b1969a6a4254d9f681dd948577",
+    ".bin/android/template_release/arm64/libgodot_meta_toolkit.so": "100b10bb9d847daa3a4f3626c07216e013402a13134b9d7eb0d12b6b667477dd",
+    ".bin/linux/template_debug/x86_64/libgodot_meta_toolkit.so": "dce32192d720cf7f17d0a8023d86bca1a9142cc8db6c1bed696c7375c74d5eff",
+    ".bin/linux/template_release/x86_64/libgodot_meta_toolkit.so": "6c62e4b00a7ef9faee2a6acd0a73082eed79110f079d3d19e53d7fed4a261cce",
+    ".bin/macos/template_debug/libgodot_meta_toolkit.macos.framework/libgodot_meta_toolkit.macos": "bce7b84dfc9d6cb3459a8469c90de32fd6bb5a935c5a12f67bff198282ab64de",
+    ".bin/macos/template_release/libgodot_meta_toolkit.macos.framework/libgodot_meta_toolkit.macos": "9687f1286d8b382230ab451576ce93b52542c189daa792d8932cd9fcadcdef2d",
+    ".bin/windows/template_debug/x86_64/libgodot_meta_toolkit.dll": "ce04fb3b8ec1ba28b1c281004be02acb88de32a708183fa5f735eac4c21d45eb",
+    ".bin/windows/template_release/x86_64/libgodot_meta_toolkit.dll": "75eff96deb11e3260d850b79d11cc9b701a9cf575f642f8745305e9eb638b01e",
+    "LICENSE.txt": "aa93a6ef4789abeee26b901f70f5f1c87d01ea0833e9fe6efa63a3cf2ba3e35c",
+    "THIRD_PARTY_NOTICES.txt": "736b18b78c8128d2f3a6b8795ee220e4097ee68d5a87cd392119ad9057a34d65",
+    "toolkit.gdextension": "bc62acb0e5c1c2dd7f5acb2a74f6965f3b68159b6f568295e8d043364ada4e9a"
+  }
+}

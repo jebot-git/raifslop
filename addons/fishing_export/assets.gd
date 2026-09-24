@@ -8,6 +8,9 @@ var desktop := false
 func _get_name() -> String: return "FishingRuntimeAssets"
 
 func _export_begin(features: PackedStringArray, _debug: bool, _path: String, _flags: int) -> void:
+	if features.has("android") and OS.get_environment("FISHING_STORE_RELEASE") == "1":
+		var config := {"app_id": OS.get_environment("META_QUEST_APP_ID"), "entitlement_required": true, "format": 1}
+		add_file("res://quest_store.json", JSON.stringify(config).to_utf8_buffer(), false)
 	textures.clear()
 	emitted.clear()
 	desktop = features.has("pc")

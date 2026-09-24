@@ -8,12 +8,12 @@ remaps, native libraries and other resources stay in the APK.
 
 The name is `main.<Android version code>.org.jebot.raifslop.quest.obb`.
 `quest_expansion.json` inside the signed APK binds the filename, package,
-version, length, SHA256 and entry count. Version code is now 17; increase it
+version, length, SHA256 and entry count. Version code is now 18; increase it
 for any subsequent uploaded revision. APK and OBB must always be updated as a
 pair. Non-store exports remain monolithic for the existing release workflow.
 
-The Quest feature selects `scenes/quest_bootstrap.tscn`. Before the main game
-scene or its resource dependencies are loaded, it obtains the current app's
+The Quest feature selects `scenes/quest_bootstrap.tscn`. After the [store entitlement check](QUEST_ENTITLEMENT.md) succeeds, before the
+main game scene or its resource dependencies are loaded, it obtains the current app's
 OBB directory through AndroidRuntime, checks installed package/version,
 verifies length and SHA256 on a worker and mounts the pack. A headset-visible
 loading message remains while verification runs. Missing, incomplete, corrupt
@@ -52,7 +52,7 @@ A sideload test requires both files. For the current version:
 ```bash
 adb install -r builds/Quest/UltimateBoomerSimulator.apk
 adb shell mkdir -p /sdcard/Android/obb/org.jebot.raifslop.quest
-adb push builds/Quest/main.17.org.jebot.raifslop.quest.obb /sdcard/Android/obb/org.jebot.raifslop.quest/
+adb push builds/Quest/main.18.org.jebot.raifslop.quest.obb /sdcard/Android/obb/org.jebot.raifslop.quest/
 ```
 
 This shell path is for developer installation on the primary device user; the
