@@ -79,3 +79,12 @@ and whether this was a clean install or upgrade. The `ls` path above is for the
 primary Android user; runtime code obtains the actual user's path from Android.
 Logs may include device/account identifiers: share privately and redact those
 before posting publicly. No tester logs have been obtained during this session.
+
+## Follow-up: physical Quest reproduction
+
+The ALPHA build 18 crash was reproduced on Quest 3 on 2026-09-24. Both installed
+artifact hashes match the uploaded candidate. Captured logs and an isolated
+probe identify stale APK sparse-pack entries taking precedence over OBB
+textures. See [the live debugging report](QUEST3_ALPHA18_LIVE_DEBUG.md) for the
+crash timeline, metrics, evidence, and proposed correction. The earlier
+no-device/no-reproduction statements above describe the initial investigation.
