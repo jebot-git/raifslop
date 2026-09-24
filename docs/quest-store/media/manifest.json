@@ -63,6 +63,11 @@
       "mode": "RGB"
     },
     {
+      "path": "fonts/.gitattributes",
+      "bytes": 18,
+      "sha256": "925e0b848b7805ecee968a38c0e89659807feea23c952fff4d0794aaea9eca04"
+    },
+    {
       "path": "fonts/Almonte.otf",
       "bytes": 19452,
       "sha256": "ba2b65241222895eea54264fd91b370202212145f70652f883da37946743c75b"

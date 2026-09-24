@@ -36,7 +36,7 @@ for name in files:
     target = out/name
     target.parent.mkdir(parents=True,exist_ok=True)
     shutil.copy2(repo/'docs/quest-store'/name,target)
-for name in ['License.txt','License.pdf','README.md']:
+for name in ['License.txt','License.pdf','README.md','.gitattributes']:
     shutil.copy2(repo/'docs/quest-store/media/fonts'/name,out/'media/fonts'/name)
 (out/'README.md').write_text('''# Ultimate Boomer Simulator landing page
 
