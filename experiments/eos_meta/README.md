@@ -59,8 +59,9 @@ Host on one, Copy current reference, and Join reference on the other.
 
 ## Developer portal setup
 
-Account availability alone does not create the following resources. No portal
-resources have been created by this branch yet.
+Portal configuration was supplied manually by the user and the configured
+EOS deployment has passed the desktop checks below. This branch does not
+automatically create or modify portal resources.
 
 1. In the [Epic Developer Portal](https://dev.epicgames.com/portal/), select the
    correct organization and the existing **Ultimate Boomer Simulator** product,
@@ -138,6 +139,43 @@ does not contact EOS or claim a successful real account login.
 
 Godot reports one ObjectDB instance at exit with the native dependencies loaded;
 this also occurs in configuration-only preflight. Investigate before release.
+
+### Live desktop results, 2026-09-24
+
+Configuration preflight passed. Two separate persistent desktop device identities
+authenticated, created/joined an eight-member test lobby, exchanged ten P2P
+ping/echo probes, and both left successfully in each run:
+
+| Mode | EOS-reported network type | Replies | Median RTT | Cleanup |
+| --- | --- | --- | --- | --- |
+| Auto | Direct (`1`) | 10/10 | 7 ms | Host and client successful |
+| Forced relay | Relayed (`2`) | 10/10 | 41.5 ms | Host and client successful |
+
+Both processes ran on this workstation. The forced-relay check traverses EOS's
+relay, but these results do **not** establish cross-network NAT behavior,
+eight-player performance, Quest identity or Meta invitations. Both runs reported
+zero rejected requests/packets and empty incoming/outgoing queues at completion.
+Reports are in `test-results/eos-meta/live-20260924-235218-auto/` and
+`test-results/eos-meta/live-20260924-235259-force/`. Logs/configuration are private
+local files and are not committed.
+
+A further forced-relay run verified the runner's network-type assertion and
+median calculation: 10 replies, 35 ms median, both clients cleaned up
+(`test-results/eos-meta/live-20260924-235441-force/`).
+
+To repeat explicitly (this contacts EOS and creates temporary public lab lobbies):
+
+```sh
+python3 tools/eos/test_live.py --relay auto
+python3 tools/eos/test_live.py --relay force
+```
+
+The live runner overrides identity to **device only in process memory**; the
+user's `provider="meta"` configuration remains intact. Test identities persist
+under `builds/eos-live-identities/host` and `client`. It checks actual reported
+transport type, bounds execution time, records RTT/queue diagnostics, and attempts
+lobby cleanup. No headset is installed or launched. An externally killed process
+may leave lobby membership until the service expires it.
 
 Still required after provisioning:
 
