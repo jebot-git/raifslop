@@ -1,5 +1,8 @@
 # Free Quest and Steam release workflow
 
+Start with the [stores branch launch plan](STORE_LAUNCH_PLAN.md) for synchronization,
+current 0.1.15 blockers, ordered submission steps and acceptance records.
+
 Release policy: the integrated fishing, golf and BBQ game is **free to acquire,
 with no real-money in-app purchases, subscriptions or paid currency** on both
 stores. Earned gameplay progression/tackle purchases remain ordinary gameplay;
@@ -37,7 +40,10 @@ hashes, packaged assets, target SDK, ARM64, release flags, launch categories,
 v2 signature, 16 KiB ZIP alignment and a conservative **1,000,000,000-byte APK
 budget**. If size fails, reduce packaged assets or implement/test expansion
 asset delivery; this workflow does not silently strip content or implement OBBs.
-The existing older APK is over this budget and is not a current candidate.
+The 0.1.15 GitHub APK is 1,952,432,894 bytes and is not a store candidate.
+Its v3-only signature also fails this workflow's explicit v2 check. The shared
+builder must explicitly enable v2 signing for this workflow, and the store
+manifest overrides must be used; see the launch plan for the measured failures.
 
 Output: `builds/store/quest/<commit>/`, including APK, manifest inspection,
 signature report, notices, candidate metadata and SHA256SUMS. A failure produces
@@ -132,6 +138,9 @@ from native simulated Monado tests or successful export.
 
 `.github/workflows/store-candidate.yml` provides a manual Quest/Steam selector.
 It builds and stages candidates, never uploads to either Store or publishes.
+The workflow must also exist on the default branch to enable manual dispatch;
+it was absent from remote `main` on 2026-09-24. After registering it, dispatch
+with `--ref stores`. The launch plan includes the local-build alternative.
 Provision a dedicated Linux x64 self-hosted runner labelled `store-release`, with
 matching Godot templates, SDK, Java and enough disk for imports/exports. Run only
 trusted release branches on this runner; never attach it to untrusted PR jobs.
