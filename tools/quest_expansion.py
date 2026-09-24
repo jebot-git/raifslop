@@ -54,12 +54,14 @@ def split(apk, unsigned, package, version):
             raise ValueError('APK already contains expansion metadata')
         if 'assets/scripts/quest_bootstrap.gd' not in source.namelist() and 'assets/scripts/quest_bootstrap.gd.remap' not in source.namelist():
             raise ValueError('APK has no expansion bootstrap')
-        # Godot may resolve the window icon before the bootstrap runs.
+        # Startup graphics must be available before the OBB is verified/mounted.
         keep = set()
-        if 'assets/assets/icon.svg.import' in source.namelist():
-            icon = source.read('assets/assets/icon.svg.import').decode()
-            match = re.search(r'^path="res://([^"]+)"', icon, re.M)
-            if match: keep.add('assets/' + match[1])
+        for resource in ('assets/icon.svg', 'assets/ui/store_logo.png'):
+            import_path = 'assets/' + resource + '.import'
+            if import_path in source.namelist():
+                settings = source.read(import_path).decode()
+                match = re.search(r'^path="res://([^"]+)"', settings, re.M)
+                if match: keep.add('assets/' + match[1])
         entries = sorted((i for i in source.infolist() if i.filename.startswith(PREFIX) and i.filename not in keep and not i.is_dir()), key=lambda i: i.filename)
         moved = {i.filename for i in entries}
         if not entries or sum(i.file_size for i in entries) + 1024 * 1024 >= OBB_LIMIT:

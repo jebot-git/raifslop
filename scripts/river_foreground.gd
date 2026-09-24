@@ -207,7 +207,35 @@ static func add_expansion_props(root:Node3D,rng:RandomNumberGenerator,alpine:boo
    var at:=Vector3(x,0,z);at.y=footprint_height(at,height*.22,true)-.1
    card(group,at,Vector2(height*2.0/3.0,height),texture,rng.randf_range(-.6,.6),rng.randf_range(.85,1.05),rng.randf()<.5)
   batch_cards(group,texture,2)
-  var log_scene:PackedScene=load("res://assets/environment/rivers/expansion/fallen_cedar.glb")
+  # Use the same grain, weathering and baked vertex AO as the shore deadwood.
+  var dressing=preload("res://scripts/shore_dressing.gd")
+  var log_mesh:Mesh=dressing.mesh_for(dressing.DIR+"ForkedDriftwood.glb")
+  var finish:=ShaderMaterial.new();finish.shader=load(dressing.DIR+"fibres.gdshader")
+  finish.set_shader_parameter("timber",load("res://assets/models/locations/lit/secluded_beach_weathered_timber_Diffuse.jpg"))
+  var logs:=Node3D.new();logs.name="CedarDeadwood";root.add_child(logs)
   for at in [Vector3(-8,0,-1),Vector3(13,0,-.5),Vector3(-17,0,-22)]:
-   var log_mesh:Node3D=log_scene.instantiate();root.add_child(log_mesh);log_mesh.position=at
-   log_mesh.position.y=ground_height(at.x,at.z,at.z< -18)+.03;log_mesh.rotation.y=rng.randf_range(-.5,.5)
+   var visual:=MeshInstance3D.new();visual.mesh=log_mesh;visual.material_override=finish
+   visual.transform=deadwood_transform(log_mesh,at,rng.randf_range(-.5,.5),1.65,at.z< -18)
+   logs.add_child(visual)
+
+static func deadwood_transform(mesh:Mesh,at:Vector3,yaw:float,size:float,far:bool)->Transform3D:
+ # Fit a rigid trunk to the bank plane, then seat its lower envelope. Using
+ # the asset origin or a single centre height leaves the ends floating.
+ var half_length:float=mesh.get_aabb().size.x*size*.5
+ var forward:=Basis(Vector3.UP,yaw).x
+ var across:=Basis(Vector3.UP,yaw).z
+ var a:Vector3=at-forward*half_length;var b:Vector3=at+forward*half_length
+ forward.y=(ground_height(b.x,b.z,far)-ground_height(a.x,a.z,far))/(half_length*2)
+ a=at-across*.4;b=at+across*.4
+ across.y=(ground_height(b.x,b.z,far)-ground_height(a.x,a.z,far))/.8
+ var up:=across.cross(forward).normalized()
+ forward=forward.normalized();across=forward.cross(up).normalized()
+ var result:=Transform3D(Basis(forward,up,across).scaled_local(Vector3.ONE*size),at)
+ var lift:=-INF
+ for vertex in mesh.get_faces():
+  # The main trunk supports the prop; branch tips can project into the air.
+  if absf(vertex.z)>.14:continue
+  var point:Vector3=result*vertex
+  lift=maxf(lift,ground_height(point.x,point.z,far)-point.y)
+ result.origin.y+=lift-.035
+ return result

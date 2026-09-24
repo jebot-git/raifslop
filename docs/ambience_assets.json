@@ -15,9 +15,29 @@
     "bytes": 174143
   },
   {
+    "file": "assets/audio/ambience/cedar_creek.ogg",
+    "sha256": "3ab6c662e423fb32368528530264f53ec8f64b585ec7435334a11a406631f3a8",
+    "bytes": 170899
+  },
+  {
     "file": "assets/audio/ambience/fish_hoek_beach.ogg",
     "sha256": "1e63e51591bae465b36a2bdaf097f126de5624f11aaaf5fb811770aa5b9b6ea4",
     "bytes": 1422842
+  },
+  {
+    "file": "assets/audio/ambience/glacier_run.ogg",
+    "sha256": "cbe3772afea01385c4b0ca92097692368e7e6401e53521395fc72b70aaf000a1",
+    "bytes": 175347
+  },
+  {
+    "file": "assets/audio/ambience/golf_links.ogg",
+    "sha256": "54ed63db0903251baf5d68cf072310cda3cfeea8f2c40c7385c6d48ede921b30",
+    "bytes": 1577474
+  },
+  {
+    "file": "assets/audio/ambience/golf_woodland.ogg",
+    "sha256": "15be6947655f2787975a582ac5879d2fc8ce47ceb9a533b58104d97c7c6ff86d",
+    "bytes": 1689359
   },
   {
     "file": "assets/audio/ambience/gray_pier.ogg",

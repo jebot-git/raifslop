@@ -97,6 +97,7 @@ def audit(path):
                      'assets/environment/locations/cedar_creek_4k.hdr',
                      'assets/environment/locations/glacier_run_4k.hdr',
                      'assets/audio/ambience/cedar_creek.ogg','assets/audio/ambience/glacier_run.ogg',
+                     'assets/audio/ambience/golf_woodland.ogg','assets/audio/ambience/golf_links.ogg',
                      'assets/textures/lighting/panorama_lighting.json',
                      'scripts/rear_parallax.gd','assets/environment/rear_parallax.gdshader',
                      'assets/environment/shore_details/fishing_plan_poster.svg',

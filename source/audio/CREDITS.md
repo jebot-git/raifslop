@@ -10,3 +10,7 @@ These are curated background recordings, not recordings of the photographed game
 ## Coastal surf
 
 `coastal_wave_01.flac` and `coastal_wave_04.flac`: recorded Alki Beach surf by **jasinski**, excerpts published by **qubodup**, [Beach Ocean Waves](https://opengameart.org/content/beach-ocean-waves), **CC0**. Original recording: https://freesound.org/people/jasinski/sounds/18363/. The retained excerpts are unmodified downloads; runtime beds filter, crossfade and vary the spacing and volume of these real recordings. Build with `tools/build_coastal_ambience.py` in Blender's Python (includes NumPy).
+
+## Golf course beds
+
+`tools/build_golf_ambience.py` reuses `park_birds.flac` (Thimras, CC0, credited above) for independent 128-second woodland and links mixes. Woodland retains brighter bird/leaf detail; links filters the higher bird calls for a quieter open-air bed. Neither mix includes water or surf recordings. Spyglass/Poppy use woodland; Pebble/Cypress use links.

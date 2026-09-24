@@ -34,6 +34,10 @@ func run()->void:
 	check(a.golf.world.find_children("GolfTree*","StaticBody3D",true,false).size()>0,"Tree collision retained")
 	check(a.course_life.birds.bird_count>0 and a.course_life.insects.insect_count>0 and a.course_life.animals.size()==3,"Course has birds, insects and ground wildlife")
 	check(a.course_life.sound.playing,"Course ambience is playing")
+	check(a.course_life.sound.stream.loop and a.course_life.sound.stream.get_length()>127,"Course uses its independent looped bed")
+	g.ambience.set_muted(true);a.course_life._process(.01)
+	check(a.course_life.sound.volume_db<=-79,"Shared ambience mute reaches golf")
+	g.ambience.set_muted(false)
 	var Icons=load("res://addons/golfminus/scripts/golf/pictograms.gd")
 	Icons.enabled=false;a.course_life._process(.01);check(not a.course_life.marker.visible,"Guiding off hides current-hole beacon")
 	Icons.enabled=true;a.course_life._process(.01);check(a.course_life.marker.visible,"Guiding on restores current-hole beacon")
@@ -62,8 +66,11 @@ func run()->void:
 	check(a.clubhouse_round==null and not g.bbq.visiting,"Existing BBQ return restores round")
 	a.leave();await process_frame
 	check(not a.active and g.current_location==original,"Waters transition restores fishing")
+	await create_timer(2.2).timeout
+	check(g.ambience.is_processing() and g.ambience.voices[original].player.playing and g.ambience.voices[original].player.volume_db>-10,"Hosted golf return restores audible water ambience")
 	await a.resume_course();await process_frame
 	check(a.active and a.clubhouse_round==null and g.current_location.begins_with("golf_spyglass_"),"Return to course works while in fishing")
+	check(is_instance_valid(a.course_life) and a.course_life.sound.playing,"Resumed enrolled course completes activation and plays ambience")
 	a.retire();await process_frame
 	check(not a.active and a.service.view.retired,"Retire withdraws from round")
 	check(not a.cached_rounds.has("spyglass") and preload("res://addons/golfminus/scripts/golf/round.gd").new().read_progress()==null,"Accepted server retirement clears cached and disk progress")

@@ -9,8 +9,8 @@ func check(ok:bool,label:String):
 	if not ok:failures.append(label)
 func settle():
 	for i in 3:await process_frame
-func pose(hand:int,at:Vector3):
-	trackers[hand].set_pose("grip",Transform3D(Basis.IDENTITY,host.origin.to_local(at)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+func pose(hand:int,at:Vector3,basis:=Basis.IDENTITY):
+	trackers[hand].set_pose("grip",Transform3D(basis,host.origin.to_local(at)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
 	await settle()
 func run():
 	host=load("res://scenes/main.tscn").instantiate();root.add_child(host);await create_timer(.5).timeout
@@ -118,7 +118,7 @@ func run():
 	# Capture at a palm displaced from the controller, then accept without
 	# moving: changing attachment origin here used to lift the accepted head.
 	golf.reset_club_attachment(1);golf.set_club(0)
-	await pose(1,golf.ball.position+Vector3(-.5,.85,.1))
+	await pose(1,golf.ball.position+Vector3(-.5,.85,.1),golf.FIT_PROFILE.grip_basis(1).inverse())
 	host.avatar.right_grip=host.controller_pose(1);host.avatar.right_grip.origin+=Vector3(.025,-.035,.02)
 	host.avatar.right_grip_frame=Engine.get_process_frames()
 	golf.begin_club_fit();golf.finish_club_fit()
