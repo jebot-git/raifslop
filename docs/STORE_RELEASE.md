@@ -2,6 +2,8 @@
 
 Start with the [stores branch launch plan](STORE_LAUNCH_PLAN.md) for synchronization,
 current 0.1.15 blockers, ordered submission steps and acceptance records.
+For Steam account creation and the implemented launch fixes, use
+[Steam onboarding](STEAM_ONBOARDING.md).
 
 Release policy: the integrated fishing, golf and BBQ game is **free to acquire,
 with no real-money in-app purchases, subscriptions or paid currency** on both
@@ -79,6 +81,7 @@ Configure each depot for its OS and include both depots in the appropriate
 package. The repository has no publisher account credentials or assigned IDs.
 
 ```bash
+python3 tools/store_release.py steam --check-config
 python3 tools/build_release.py --target Windows
 python3 tools/build_release.py --target Linux
 python3 tools/store_release.py steam \
@@ -128,8 +131,9 @@ and shared persistence can remain. If dedicated server delivery through Steam is
 wanted, configure a separate Tool app/depot; this workflow stages client depots
 only. Existing server build tooling remains available separately.
 
-Recommended product follow-ups: migrate writable avatar storage from the install
-folder into user data; improve missing-OpenXR feedback; validate Touch and Index
+Desktop avatar storage now uses user data with non-destructive legacy migration,
+and missing OpenXR displays a setup message. These fixes are covered by release-mode
+storage/startup tests. Remaining product follow-ups: validate Touch and Index
 and implement additional controller profiles before advertising them. Windows
 runtime testing is still outstanding. Do not infer Steam/Linux headset acceptance
 from native simulated Monado tests or successful export.
@@ -139,8 +143,9 @@ from native simulated Monado tests or successful export.
 `.github/workflows/store-candidate.yml` provides a manual Quest/Steam selector.
 It builds and stages candidates, never uploads to either Store or publishes.
 The workflow must also exist on the default branch to enable manual dispatch;
-it was absent from remote `main` on 2026-09-24. After registering it, dispatch
-with `--ref stores`. The launch plan includes the local-build alternative.
+it was absent from remote `main` on 2026-09-24. Registration is prepared in [draft PR #1](https://github.com/jebot-git/raifslop/pull/1).
+After it is merged, dispatch with `--ref stores`. No self-hosted runner was
+registered when checked; the launch plan includes the local-build alternative.
 Provision a dedicated Linux x64 self-hosted runner labelled `store-release`, with
 matching Godot templates, SDK, Java and enough disk for imports/exports. Run only
 trusted release branches on this runner; never attach it to untrusted PR jobs.

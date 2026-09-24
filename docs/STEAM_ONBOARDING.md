@@ -130,7 +130,7 @@ not a published privacy policy or a claim of legal compliance.
 | Performance/system requirements | Record physical headset frame timing and hardware/runtime versions |
 | Multiplayer | Test Wi-Fi/WAN and oversized-pose-packet loss; loopback alone is insufficient |
 | CI availability | No repository self-hosted runner registered at last check; use local workflow or provision trusted `store-release` runner/environment |
-| CI registration | Default branch must contain the manual workflow; bootstrap PR can register it without moving gameplay branches |
+| CI registration | Default branch must contain the manual workflow; [draft PR #1](https://github.com/jebot-git/raifslop/pull/1) registers it without moving gameplay branches |
 | Public release | Only after approved page/build, eligibility dates and acceptance evidence |
 
 The application, payment, agreements and dashboard submission require the account

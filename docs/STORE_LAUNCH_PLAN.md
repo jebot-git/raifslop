@@ -9,7 +9,8 @@ The game remains free, with no real-money purchases. Retain the existing icon.
 ## Branch and synchronization
 
 `stores` starts at integrated commit `937232ecdae4a923c124a5deca461d4e7c1d1f03`
-(0.1.15). Its only differences are store preparation documents. Game code,
+(0.1.15), and now includes integrated Steam fixes through `c2b2270`.
+Its only differences from that integrated revision are store preparation documents. Game code,
 assets, export settings, tests and build tools match `integration/golf-fishing`.
 The integrated checkout remains on its original branch; a separate worktree
 holds `stores`.
@@ -122,6 +123,11 @@ Do not waive the checker simply because sideloading succeeds.
 
 ## Steam: ordered preparation and submission
 
+Start with [Steam onboarding and current blocker status](STEAM_ONBOARDING.md).
+The account owner has confirmed AppID/depot IDs are not yet assigned. Desktop
+storage migration, missing-XR feedback and staging/preflight checks are now
+implemented and tested; a fresh full store candidate remains pending IDs.
+
 1. **Provision Steamworks.** Complete publisher onboarding and obtain the real
    AppID plus distinct Windows and Linux depot IDs. Configure each depot for its
    OS and include both in the app's package. Configure free acquisition and no
@@ -136,6 +142,7 @@ Do not waive the checker simply because sideloading succeeds.
    and actual IDs through the environment, then run the established commands:
 
    ```bash
+   python3 tools/store_release.py steam --check-config
    python3 tools/build_release.py --target Windows
    python3 tools/build_release.py --target Linux
    python3 tools/store_release.py steam \
@@ -178,7 +185,8 @@ Manual dispatch also requires the workflow on the repository's default branch,
 according to [GitHub's dispatch documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
 The default-branch workflow was absent when checked. Bootstrap its reviewed
 workflow file on `main` before trying these commands; that separate repository
-change has not been performed by this preparation. Local builds above are usable
+change is prepared in [draft PR #1](https://github.com/jebot-git/raifslop/pull/1),
+which is not merged. No self-hosted runner is registered yet. Local builds above are usable
 without CI registration. Once registered and provisioned:
 
 ```bash
