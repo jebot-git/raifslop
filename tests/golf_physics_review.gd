@@ -42,10 +42,8 @@ func _initialize()->void:
 	check(no_spin.distance_to(rifle)<.0001 and tiny.distance_to(rifle)<.001,"Parallel spin produces no lift; near-parallel spin is continuous")
 	check(b.acceleration(v,Vector3(300,0,0),Vector3.ZERO).y>no_spin.y,"Backspin lifts a forward-moving ball")
 	var pure:=roll(1.83,Vector3(-1.83/Ball.RADIUS,0,0))
-	var threshold:float=(.55-Ball.HOLD_ACCEL.green)/Ball.LOW_SPEED_DRAG
-	var slow_distance:float=(Ball.LOW_SPEED_DRAG*threshold-Ball.HOLD_ACCEL.green*log(1+Ball.LOW_SPEED_DRAG*threshold/Ball.HOLD_ACCEL.green))/pow(Ball.LOW_SPEED_DRAG,2)
-	var expected:float=(1.83*1.83-threshold*threshold)/(2*.55)+slow_distance
-	check(absf(pure.roll_distance-expected)<.02,"Green roll agrees with piecewise resistance integral (about 10 ft Stimp)")
+	var expected:float=1.83*1.83/(2*.55)
+	check(absf(pure.roll_distance-expected)<.02,"Green roll agrees with constant resistance stopping distance (about 10 ft Stimp)")
 	var skid:=roll(3,Vector3.ZERO)
 	var backspin:=roll(3,Vector3(150,0,0))
 	check(backspin.roll_distance<skid.roll_distance and skid.roll_distance<9/(2*.55),"Skidding and backspin dissipate speed before pure roll")

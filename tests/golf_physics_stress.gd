@@ -171,7 +171,7 @@ func run()->void:
 	check(impacts.all(func(r):return r.friction_excess_ns<.00001),"Coulomb impulse bounds hold")
 	check(rows.all(func(r):return not r.has("flight") or (not r.flight.moving and r.flight.stop!="simulation_fail_safe")),"All registered shots settle without fail-safe")
 	check(rows.all(func(r):return not r.has("flight") or r.flight.max_energy_step_gain_j<.0001),"Calm flat-ground flight and bounces create no material mechanical energy")
-	check(rolls.all(func(r):return r.max_energy_step_gain_j<.0001 and ((r.stop=="moving" and r.downhill) if r.grade!=0 and r.turf in ["green","fringe","fairway"] else r.stop=="rest")),"135 rolling/skid/slope cases dissipate energy and either settle or roll downhill on unbounded slopes")
+	check(rolls.all(func(r):return r.max_energy_step_gain_j<.0001 and r.stop=="rest"),"135 rolling/skid/shallow-slope cases dissipate energy and settle")
 	check(surfaces.all(func(r):return not r.moving and r.stop!="simulation_fail_safe"),"Surface and hazard shots terminate")
 	finish()
 func finish()->void:
