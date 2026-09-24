@@ -87,24 +87,29 @@ still lists 1000 for the full description; this draft conservatively stays below
 1000. The renderer also checks at most five single-token keywords of at most
 50 characters each. Dashboard limits remain authoritative.
 
-## Privacy policy draft
+## Privacy policy
 
-The [privacy policy](PRIVACY_POLICY.md) covers current local storage, multiplayer,
-voice, tracking, avatars, platform checks and deletion. Complete the
-[publication review](PRIVACY_REVIEW.md) before publishing it; a public URL
-remains pending.
+The [public privacy policy](https://jebot-git.github.io/raifslop/privacy.html)
+covers local storage, multiplayer, voice, tracking, avatars, platform checks,
+Gmail support, Cloudzy testing-server operations and deletion. It is effective
+24 September 2026. The [source](PRIVACY_POLICY.md),
+[publication review](PRIVACY_REVIEW.md) and
+[operating procedure](PRIVACY_OPERATIONS.md) are maintained here.
+Run `python3 docs/quest-store/render_privacy.py` after updating the policy.
+Privacy/deletion requests go to jewzuv@gmail.com without charge.
+The local listing includes these links; the Meta Dashboard still needs them.
 
 ## Pending owner information and acceptance
 
-The owner confirmed on 2026-09-24 that publisher name, support contact and
-privacy-policy URL are not ready. They remain `null`, displayed as Pending.
-No contact, URL, content rating, comfort rating or launch date is invented.
+The owner supplied the publisher and support details on 2026-09-24. The
+privacy-policy and deletion URLs are now populated. Content rating, comfort
+rating, hardware acceptance and launch date remain unconfirmed.
 
 | Field | Next action |
 | --- | --- |
-| Public publisher identity | Supply the approved public name |
-| Support and privacy URLs | Publish real pages and verify they load without login |
-| Data deletion route | Match the actual data retention/deletion process |
+| Public publisher identity | PLdot development team; legal controller is Juzuv Jebot, Serbia |
+| Support and privacy URLs | jewzuv@gmail.com and the public policy linked above; enter in Dashboard |
+| Data deletion route | Free email requests; follow PRIVACY_OPERATIONS.md and the agreed retention schedule |
 | Privacy / data-use answers | Review voice, avatars, network identity and server records against implementation |
 | Content rating | Complete applicable questionnaires in the Dashboard |
 | Supported headsets / play modes / comfort | Validate the uploaded build on advertised hardware and modes |
@@ -112,5 +117,4 @@ No contact, URL, content rating, comfort rating or launch date is invented.
 | Multiplayer disclosures / reporting | Review current youth, communication and user-reporting requirements |
 | Media permissions and credits | Check asset rights, participant consent, attribution and requested AI disclosures |
 
-No legal policy has been fabricated to fill these gaps. Keep engineering notes
-and pending-field labels out of the final consumer listing.
+Keep engineering notes and pending-field labels out of the final consumer listing.
