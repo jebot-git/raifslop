@@ -67,13 +67,20 @@ The original certificate and 16 KiB alignment were preserved.
 See [Quest onboarding](QUEST_ONBOARDING.md) for current Meta requirements,
 account steps, expansion delivery and entitlement integration blockers.
 
+The new expansion build passes local packaging checks: **210,834,085-byte APK**
+and **2,656,032,500-byte OBB**, version code 17. See
+[the validation record](QUEST_VALIDATION.md) for source provenance, hashes,
+completed checks and pending headset tests. The failures listed above describe
+the historical monolithic v0.1.15 artifact.
+
 ## Quest: ordered preparation and submission
 
-1. **Resolve package delivery on the integrated branch.** Decide whether to bring
-   the APK under the existing budget without removing promised content, or
-   implement supported expansion-asset delivery. For expansion delivery, include
-   download/install, offline access, updates, checksums and failure recovery;
-   extend staging and tests before treating an oversized APK as eligible.
+1. **Expansion delivery implemented on integrated and merged here.** Store
+   exports split unchanged texture payloads into a matching OBB, bind its digest
+   in the signed APK and mount it before the game scene loads. Combined asset
+   audits and candidate provenance cover both files. See
+   [QUEST_EXPANSION.md](QUEST_EXPANSION.md) for installation and pending headset
+   acceptance. Physical channel install, upgrade and recovery tests remain open.
 2. **Signing checks implemented.** The shared builder explicitly enables v1/v2/v3,
    and preflight checks the existing certificate before export. The corrected
    verifier exercises all required schemes. Nine release regression tests pass;
@@ -114,7 +121,7 @@ account steps, expansion delivery and entitlement integration blockers.
    no IAP. Supply gameplay captures, description, privacy/support URLs, ratings,
    AI-asset disclosures where requested and the reporting/data-use information
    described in the workflow. Upload to an internal channel through the app's
-   dashboard/MQDH. Test clean install and signed upgrade on every advertised
+   Meta Platform CLI with the matching OBB. Test clean install and signed upgrade on every advertised
    device, including saved progress, permissions, overlays and suspend/resume.
    Work through [Meta's current VRCs](https://developers.meta.com/horizon/resources/publish-quest-req/)
    and attach evidence to the acceptance record.
