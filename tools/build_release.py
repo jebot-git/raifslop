@@ -9,6 +9,12 @@ p.add_argument('--store-release', action='store_true', help='Require an existing
 a = p.parse_args()
 if subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip():
     raise SystemExit('Commit the source changes before building a release.')
+if a.store_release and (a.target == 'all' or a.target in ANDROID_TARGETS):
+    from quest_store_config import check_signing
+    try:
+        check_signing()
+    except (ValueError, OSError) as exc:
+        raise SystemExit(str(exc))
 revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
 build = ROOT/'builds'; build.mkdir(exist_ok=True)
 (build/'.gdignore').touch()
@@ -90,10 +96,10 @@ for target in (TARGETS if a.target=='all' else [a.target]):
                     continue
                 dest.writestr(info, source.read(info), compress_type=info.compress_type, compresslevel=9)
         run([str(sdk/'build-tools/36.1.0/zipalign'),'-f','-P','16','4',str(unsigned),str(aligned)],'recompress-align-'+target,child_env)
-        run([str(sdk/'build-tools/36.1.0/apksigner'),'sign','--ks',str(key),'--ks-key-alias',alias,'--ks-pass','env:FISHING_SIGNING_PASSWORD','--key-pass','env:FISHING_SIGNING_PASSWORD','--out',str(artifact),str(aligned)],'recompress-sign-'+target,child_env)
+        run([str(sdk/'build-tools/36.1.0/apksigner'),'sign','--v1-signing-enabled','true','--v2-signing-enabled','true','--v3-signing-enabled','true','--ks',str(key),'--ks-key-alias',alias,'--ks-pass','env:FISHING_SIGNING_PASSWORD','--key-pass','env:FISHING_SIGNING_PASSWORD','--out',str(artifact),str(aligned)],'recompress-sign-'+target,child_env)
         unsigned.unlink(); aligned.unlink()
         artifact.with_suffix('.apk.idsig').unlink(missing_ok=True)
-        run([str(sdk/'build-tools/36.1.0/apksigner'),'verify','--verbose','--print-certs',str(artifact)],'verify-'+target,child_env)
+        run([str(sdk/'build-tools/36.1.0/apksigner'),'verify','--verbose','--min-sdk-version','21','--print-certs',str(artifact)],'verify-'+target,child_env)
         run([str(sdk/'build-tools/36.1.0/zipalign'),'-c','-P','16','4',str(artifact)],'align-'+target,child_env)
     print(f'BUILT {target}: {artifact.stat().st_size} bytes',flush=True)
     files = {str(path.relative_to(out)): digest(path)

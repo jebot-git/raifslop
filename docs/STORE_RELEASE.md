@@ -16,6 +16,8 @@ setup are separate from packaging success.
 
 ### Quest
 
+Start with [Quest onboarding and measured blockers](QUEST_ONBOARDING.md).
+
 Provision the **existing** signing keystore outside the checkout. Preserve its
 password and certificate identity; changing keys can break upgrades. Set
 `GODOT_BIN`, `JAVA_HOME`, `ANDROID_SDK_ROOT`, `STORE_KEYSTORE` (absolute path),
@@ -25,6 +27,7 @@ artifacts or documentation. Use the existing JDK installation, not an assumed pa
 
 ```bash
 export PATH="$JAVA_HOME/bin:$PATH"
+python3 tools/store_release.py quest --check-config
 python3 tools/build_release.py --target Quest --store-release
 python3 tools/store_release.py quest
 ```
@@ -34,7 +37,7 @@ head-tracking/recents/release overrides to Godot's generated Android manifest.
 The Quest export explicitly targets Android API 34. This is distinct from the
 Android compile SDK and Horizon OS version. The stager checks current-commit
 hashes, packaged assets, target SDK, ARM64, release flags, launch categories,
-v2 signature, 16 KiB ZIP alignment and a conservative **1,000,000,000-byte APK
+v1/v2 signatures, 16 KiB ZIP alignment and a conservative **1,000,000,000-byte APK
 budget**. If size fails, reduce packaged assets or implement/test expansion
 asset delivery; this workflow does not silently strip content or implement OBBs.
 The existing older APK is over this budget and is not a current candidate.

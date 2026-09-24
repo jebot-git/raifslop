@@ -109,6 +109,57 @@ class StoreReleaseTests(unittest.TestCase):
         self.assertNotEqual(bad.returncode, 0)
         self.assertIn('distinct', bad.stderr)
 
+    def test_quest_required_attributes_are_scoped_and_order_independent(self):
+        badging = "targetSdkVersion:'34'\nnative-code: 'arm64-v8a'\ninstall-location:'auto'"
+        xml = ('E: manifest (line=1)\n'
+               '  E: uses-feature (line=2)\n'
+               '    A: android:version(0x0101021b)=(type 0x10)0x1\n'
+               '    A: android:required(0x0101028e)=(type 0x12)0xffffffff\n'
+               '    A: android:name(0x01010003)="android.hardware.vr.headtracking"\n'
+               '  E: application (line=3)\n'
+               '    E: activity (line=4)\n'
+               '      A: android:name(0x01010003)="com.godot.game.GodotApp"\n'
+               '      A: android:excludeFromRecents(0x01010017)=(type 0x12)0xffffffff\n'
+               '      E: category (line=5)\n'
+               '        A: android:name="android.intent.category.LAUNCHER"\n'
+               '      E: category (line=6)\n'
+               '        A: android:name="com.oculus.intent.category.VR"\n'
+               '    E: meta-data (line=7)\n'
+               '      A: android:name="com.oculus.supportedDevices"\n')
+        signing = ('Verified using v1 scheme (JAR signing): true\n'
+                   'Verified using v2 scheme (APK Signature Scheme v2): true')
+        with tempfile.TemporaryDirectory() as tmp:
+            apk = Path(tmp) / 'game.apk'
+            apk.write_bytes(b'fixture')
+            with patch.object(store, 'run', side_effect=[badging, xml, signing, '']):
+                store.quest_checks(apk)
+            wrong = xml.replace('com.godot.game.GodotApp', 'com.other.Activity')
+            with patch.object(store, 'run', side_effect=[badging, wrong, signing, '']):
+                with self.assertRaisesRegex(ValueError, 'excluded from recents'):
+                    store.quest_checks(apk)
+            with patch.object(store, 'run', side_effect=[badging, xml, signing.replace('v1 scheme (JAR signing): true', 'v1 scheme (JAR signing): false'), '']):
+                report = store.quest_checks(apk, report_only=True)
+                self.assertEqual(report['errors'], ['APK must have a valid v1 signature'])
+            with apk.open('r+b') as stream:
+                stream.truncate(1_000_000_001)
+            with patch.object(store, 'run', side_effect=[badging, xml, signing, '']):
+                with self.assertRaisesRegex(ValueError, '1 GB'):
+                    store.quest_checks(apk)
+
+    def test_quest_signing_identity_preflight(self):
+        config = module('quest_store_config')
+        import subprocess
+        with tempfile.TemporaryDirectory() as tmp:
+            key = Path(tmp) / 'key'
+            key.touch()
+            with patch.dict('os.environ', {'STORE_KEYSTORE': str(key), 'STORE_KEYSTORE_PASSWORD': 'test-only', 'JAVA_HOME': tmp}):
+                for output in ['SHA256: ' + config.RELEASE_CERT_SHA256, 'PrivateKeyEntry\nSHA256: 00:11']:
+                    with patch.object(config.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, output, '')):
+                        with self.assertRaises(ValueError):
+                            config.check_signing()
+                with patch.object(config.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, 'PrivateKeyEntry\nSHA256: ' + config.RELEASE_CERT_SHA256, '')):
+                    self.assertEqual(config.check_signing(), config.RELEASE_CERT_SHA256)
+
     def test_quest_rejects_old_manifest_and_billing(self):
         with tempfile.TemporaryDirectory() as tmp:
             apk = Path(tmp) / 'game.apk'
