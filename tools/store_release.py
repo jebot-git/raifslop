@@ -77,6 +77,8 @@ def positive_id(value):
 
 
 def steam_vdf(app, windows, linux, revision):
+    for value in [app, windows, linux]:
+        positive_id(value)
     if len({app, windows, linux}) != 3:
         raise ValueError('App and depot IDs must be distinct')
     # Relative paths make the staged candidate relocatable after CI download.
@@ -95,6 +97,34 @@ def steam_vdf(app, windows, linux, revision):
 '''
 
 
+STEAM_LAUNCH = {
+    'vr_required': True,
+    'runtime': 'OpenXR',
+    'platforms': {
+        'Windows': {'executable': 'UltimateBoomerSimulator.exe', 'arguments': '--xr-mode on --rendering-driver vulkan'},
+        'Linux': {'executable': 'UltimateBoomerSimulator.x86_64', 'arguments': '--xr-mode on --rendering-driver vulkan'},
+    },
+    'note': 'Configure these OS-filtered launch options in Steamworks; this file does not change the dashboard.',
+}
+
+
+def steam_checks(folder, target):
+    executable = folder / STEAM_LAUNCH['platforms'][target]['executable']
+    required = [executable, folder / 'UltimateBoomerSimulator.pck']
+    libraries = (['libgodotopenxrvendors.dll', 'libtwovoip.windows.template_release.x86_64.dll']
+                 if target == 'Windows' else
+                 ['libgodotopenxrvendors.so', 'libtwovoip.linux.template_release.x86_64.so'])
+    required.extend(folder / name for name in libraries)
+    for path in required:
+        if not path.is_file() or path.stat().st_size == 0:
+            raise ValueError(f'{target}: missing or empty launch dependency: {path.name}')
+    if target == 'Linux' and not executable.stat().st_mode & 0o111:
+        raise ValueError('Linux: executable permission is missing')
+    for path in folder.rglob('*'):
+        if path.is_file() and path not in required:
+            raise ValueError(f'{target}: unexpected depot file: {path.relative_to(folder)}')
+
+
 def copy_notices(destination):
     shutil.copy2(ROOT / 'ASSET_CREDITS.md', destination / 'ASSET_CREDITS.md')
     for folder in ['addons', 'assets/avatars', 'assets/audio', 'source/audio']:
@@ -109,17 +139,28 @@ def copy_notices(destination):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('store', choices=['quest', 'steam'])
-    parser.add_argument('--app-id', type=positive_id)
-    parser.add_argument('--windows-depot', type=positive_id)
-    parser.add_argument('--linux-depot', type=positive_id)
+    parser.add_argument('--app-id', type=positive_id, default=os.environ.get('STEAM_APP_ID') or None)
+    parser.add_argument('--windows-depot', type=positive_id, default=os.environ.get('STEAM_WINDOWS_DEPOT') or None)
+    parser.add_argument('--linux-depot', type=positive_id, default=os.environ.get('STEAM_LINUX_DEPOT') or None)
+    parser.add_argument('--check-config', action='store_true', help='Validate Steam IDs before expensive exports; does not build or contact Steam')
     args = parser.parse_args()
     if args.store == 'steam' and not all([args.app_id, args.windows_depot, args.linux_depot]):
-        parser.error('Steam requires --app-id, --windows-depot and --linux-depot')
+        parser.error('Steam requires an assigned AppID and Windows/Linux depot IDs. Set STEAM_APP_ID, STEAM_WINDOWS_DEPOT and STEAM_LINUX_DEPOT or use the flags. Start onboarding at https://partner.steamgames.com/steamdirect')
+    if args.store == 'steam':
+        steam_vdf(args.app_id, args.windows_depot, args.linux_depot, 'configuration-check')
+    if args.check_config:
+        if args.store != 'steam':
+            parser.error('--check-config is for Steam')
+        print('Steam ID syntax and distinctness passed. Ownership/account permissions still require Steamworks verification.')
+        return
     if run('git', 'status', '--porcelain').strip():
         raise ValueError('Commit source before staging a Store candidate')
     revision = run('git', 'rev-parse', 'HEAD').strip()
     targets = ['Quest'] if args.store == 'quest' else ['Windows', 'Linux']
     records = [verify(t, revision) for t in targets]
+    if args.store == 'steam':
+        for target in targets:
+            steam_checks(BUILD / target, target)
     artifacts = [BUILD / t / ('UltimateBoomerSimulator.apk' if t == 'Quest' else 'UltimateBoomerSimulator.pck') for t in targets]
     subprocess.run([sys.executable, str(ROOT / 'tools/audit_release.py'), *map(str, artifacts)], cwd=ROOT, check=True)
     checked = quest_checks(artifacts[0]) if args.store == 'quest' else None
@@ -141,6 +182,7 @@ def main():
                 shutil.copytree(BUILD / target, dest)
                 copy_notices(dest)
             (stage / 'app_build.vdf').write_text(steam_vdf(args.app_id, args.windows_depot, args.linux_depot, revision))
+            (stage / 'steam-launch.json').write_text(json.dumps(STEAM_LAUNCH, indent=2) + '\n')
         shutil.copy2(ROOT / 'docs/STORE_RELEASE.md', stage / 'SUBMISSION.md')
         (stage / 'candidate.json').write_text(json.dumps({
             'commit': revision, 'store': args.store, 'price': 'free', 'iap': False,
