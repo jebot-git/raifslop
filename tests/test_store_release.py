@@ -25,7 +25,7 @@ class StoreReleaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'AndroidManifest.xml'
             path.write_text('<manifest xmlns:android="http://schemas.android.com/apk/res/android">'
-                            '<application><profileable android:enabled="true"/>'
+                            '<application android:debuggable="true"><profileable android:enabled="true"/>'
                             '<activity android:name=".GodotApp" android:excludeFromRecents="false"/>'
                             '</application></manifest>')
             manifest.configure(path)
@@ -36,6 +36,7 @@ class StoreReleaseTests(unittest.TestCase):
             self.assertEqual(root.find('uses-feature').get(manifest.A + 'required'), 'true')
             self.assertEqual(root.find('application/activity').get(manifest.A + 'excludeFromRecents'), 'true')
             self.assertIsNone(root.find('application/profileable'))
+            self.assertIsNone(root.find('application').get(manifest.A + 'debuggable'))
 
     def test_manifest_rejects_unknown_template(self):
         with tempfile.TemporaryDirectory() as tmp:

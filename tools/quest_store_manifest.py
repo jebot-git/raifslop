@@ -23,7 +23,8 @@ def configure(path):
     app = root.find('application')
     if app is None:
         raise ValueError('Android template has no application')
-    app.set(A + 'debuggable', 'false')
+    # AGP's release build sets this; a hardcoded value triggers fatal lint.
+    app.attrib.pop(A + 'debuggable', None)
     activities = [e for e in app.findall('activity') if e.get(A + 'name', '').endswith('.GodotApp')]
     if len(activities) != 1:
         raise ValueError('Expected exactly one GodotApp activity')
