@@ -75,6 +75,9 @@ the historical monolithic v0.1.15 artifact.
 
 ## Quest: ordered preparation and submission
 
+The [Quest listing skeleton](quest-store/README.md) includes copy-ready metadata,
+a local page preview, media briefs and outstanding owner fields.
+
 1. **Expansion delivery implemented on integrated and merged here.** Store
    exports split unchanged texture payloads into a matching OBB, bind its digest
    in the signed APK and mount it before the game scene loads. Combined asset

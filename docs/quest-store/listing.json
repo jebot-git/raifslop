@@ -1,0 +1,68 @@
+{
+  "status": "Local draft; not saved to Meta Dashboard or submitted for review",
+  "app_id": "3428825797290213",
+  "locale": "en_US",
+  "name": "Ultimate Boomer Simulator",
+  "short_description": "Cast a line, play a round, and fire up the grill. Ultimate Boomer Simulator brings fishing, golf, and waterside BBQs together in VR. Explore freshwater and coastal settings, build your tackle collection, and make time for one more catch.",
+  "long_description": "Your weekend plans just got simpler: fish, golf, grill, repeat.\n\nFind your spot by a lake, river, or coast. Choose your tackle, cast with tracked controllers, and work the reel as fish run and your line comes under tension. Try fly fishing, record your catches, and spend earned in-game rewards on new tackle.\n\nSwap the rod for a club and head onto the golf course. Read the lie, line up your shot, and swing your way toward the cup. Your selected tackle gives your clubs a matching cosmetic style.\n\nTake a break at the waterside BBQ: turn the food, share a serving, and enjoy the view. Play solo or join friends on a player-hosted session or dedicated server.\n\nFree to play, with no real-money purchases. Multiplayer requires a reachable host or server; automatic matchmaking is not included.",
+  "keywords": [
+    "fishing",
+    "golf",
+    "barbecue",
+    "outdoors",
+    "simulation"
+  ],
+  "price": "Free",
+  "real_money_iap": false,
+  "audience": "TEENS_AND_ADULTS",
+  "category_proposal": "Games",
+  "genre_proposals": [
+    "Simulation",
+    "Sports"
+  ],
+  "publisher_name": null,
+  "support_url_or_email": null,
+  "privacy_policy_url": null,
+  "deletion_request_url": null,
+  "content_rating": null,
+  "comfort_rating": null,
+  "supported_devices": null,
+  "play_modes": null,
+  "controller_support": "Tracked controllers; confirm final Dashboard selection after device testing",
+  "language_proposal": "English; confirm complete interface coverage before listing",
+  "icon_source": "../../assets/icon.svg",
+  "internal_build": {
+    "version": "0.1.15",
+    "version_code": 18,
+    "build_id": "3428857920620334",
+    "channel": "ALPHA"
+  },
+  "capture_slots": [
+    {
+      "name": "Fishing",
+      "brief": "A first-person catch or fish fight, with tracked rod and reel visible."
+    },
+    {
+      "name": "Fly waters",
+      "brief": "Fly casting at Cedar Creek or Glacier Run; show the line and river setting."
+    },
+    {
+      "name": "Golf",
+      "brief": "A playable shot from the golfer’s view, with club, ball and course visible."
+    },
+    {
+      "name": "Waterside BBQ",
+      "brief": "Use tongs to turn or serve food at the shared grill."
+    },
+    {
+      "name": "Together",
+      "brief": "A multiplayer session with avatars; obtain participants’ consent and hide personal identifiers."
+    }
+  ],
+  "requirements_checked": "2026-09-24",
+  "sources": {
+    "metadata": "https://developers.meta.com/horizon/resources/publish-app-metadata/",
+    "assets": "https://developers.meta.com/horizon/resources/asset-guidelines/",
+    "localization": "https://developers.meta.com/horizon/design/localization/"
+  }
+}
