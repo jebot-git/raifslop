@@ -18,8 +18,12 @@ class ExpansionTests(unittest.TestCase):
             source, output = folder / 'original.apk', folder / 'split.apk'
             data = bytes(range(256)) * 37
             name = PREFIX + hashlib.sha256(data).hexdigest() + '.ctex'
+            logo_name = PREFIX + hashlib.sha256(b'logo pixels').hexdigest() + '.ctex'
             with zipfile.ZipFile(source, 'w') as apk:
                 apk.writestr(name, data)
+                apk.writestr(logo_name, b'logo pixels')
+                apk.writestr('assets/assets/ui/store_logo.png.import',
+                             '[remap]\npath="res://' + logo_name.removeprefix('assets/') + '"\n')
                 apk.writestr('assets/scripts/quest_bootstrap.gd', b'bootstrap')
                 apk.writestr('lib/arm64-v8a/libgodot.so', b'native')
                 apk.writestr('META-INF/CERT.RSA', b'old signature')
@@ -30,6 +34,8 @@ class ExpansionTests(unittest.TestCase):
             pack.file.close()
             with zipfile.ZipFile(output) as apk:
                 self.assertNotIn(name, apk.namelist())
+                self.assertEqual(apk.read(logo_name), b'logo pixels')
+                self.assertNotIn(logo_name.removeprefix('assets/'), pack.entries)
                 self.assertNotIn('META-INF/CERT.RSA', apk.namelist())
                 self.assertEqual(apk.read('lib/arm64-v8a/libgodot.so'), b'native')
                 self.assertEqual(json.loads(apk.read(METADATA)), metadata)

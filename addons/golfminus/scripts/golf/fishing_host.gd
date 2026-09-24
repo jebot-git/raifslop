@@ -121,7 +121,7 @@ func _activate_course(id:String,prepared:Node3D)->void:
 	if is_instance_valid(host.get("fish_guide")):host.fish_guide.dock()
 	if is_instance_valid(host.get("shoulder_radio")):host.shoulder_radio.reset()
 	if host.menu_open:host._toggle_avatar_menu()
-	player_snapshot={"stick_lock":host.motor.stick_lock,"stick_release_pending":host.motor.stick_release_pending,"single_controller_controls":host.motor.single_controller_controls,"rod_stowed":host.rod_holster.stowed if is_instance_valid(host.get("rod_holster")) else false,"location":host.current_location,"motor":host.motor.global_transform,"origin":host.origin.transform,"head":host.head.transform,"head_current":host.head.current,"head_far":host.head.far,"safe":host.motor.safe_spawn,"velocity":host.motor.velocity,"blocked":host.motor.blocked,"catch_controls":host.motor.catch_controls,"turn_reserved":host.motor.turn_reserved,"radial_open":host.motor.radial_open,"world_scale":XRServer.world_scale,"window_camera":host.get_viewport().get_camera_3d(),"mirror_far":host.spectator.camera.far if is_instance_valid(host.spectator) else 0.0}
+	player_snapshot={"stick_lock":host.motor.stick_lock,"stick_release_pending":host.motor.stick_release_pending,"single_controller_controls":host.motor.single_controller_controls,"single_controller_hand":host.motor.single_controller_hand,"rod_stowed":host.rod_holster.stowed if is_instance_valid(host.get("rod_holster")) else false,"location":host.current_location,"motor":host.motor.global_transform,"origin":host.origin.transform,"head":host.head.transform,"head_current":host.head.current,"head_far":host.head.far,"safe":host.motor.safe_spawn,"velocity":host.motor.velocity,"blocked":host.motor.blocked,"catch_controls":host.motor.catch_controls,"turn_reserved":host.motor.turn_reserved,"radial_open":host.motor.radial_open,"world_scale":XRServer.world_scale,"window_camera":host.get_viewport().get_camera_3d(),"mirror_far":host.spectator.camera.far if is_instance_valid(host.spectator) else 0.0}
 	if is_instance_valid(host.get("bbq")):
 		var bbq_state:Dictionary={}
 		for key in ["visiting","return_at","return_safe","return_location","return_yaw"]:bbq_state[key]=host.bbq.get(key)
@@ -131,7 +131,7 @@ func _activate_course(id:String,prepared:Node3D)->void:
 		var tool=host.get(key)
 		if is_instance_valid(tool) and tool is Node3D:
 			snapshots.append({"node":tool,"visible":tool.visible});tool.visible=false
-	host.ambience.stop();host.ambience.location=""
+	host.ambience.stop()
 	active=true;last_course=id
 	host.current_location=preload("res://addons/golfminus/scripts/golf/host_locations.gd").location(id,0)
 	host.motor.single_controller_controls=true
@@ -148,7 +148,7 @@ func _activate_course(id:String,prepared:Node3D)->void:
 	if cached_rounds.has(id) and can_restore(cached_rounds[id],id):
 		golf.load_hole(cached_rounds[id].get_value("round","hole"));golf.round_state.restore(cached_rounds[id],golf.ball)
 	if enrolled():
-		golf.tee_kind="club";golf.hud.tee_choice.select(0);golf.hud.tee_choice.disabled=true
+		golf.tee_kind="club";golf.hud.tee_choice.select(0);golf.hud.tee_choice.trigger.disabled=true
 	club_settings=golf.hud.pages.controls.page
 	club_settings.reparent(host.avatar_menu.pages.golf.page)
 	golf.hud.attachment_controls.reparent(host.avatar_menu.pages.controls.page)
@@ -258,8 +258,8 @@ func leave(discard_round:=false) -> void:
 	golf.release_borrowed_rig()
 	host.remove_child(golf);golf.queue_free();golf=null
 	for state in snapshots:
+		if not is_instance_valid(state.node):continue
 		var n: Node=state.node
-		if not is_instance_valid(n):continue
 		if state.has("process_mode"):n.process_mode=state.process_mode
 		if state.has("visible"):n.visible=state.visible
 		if state.has("layer"):n.collision_layer=state.layer;n.collision_mask=state.mask
@@ -270,6 +270,7 @@ func leave(discard_round:=false) -> void:
 	host.head.transform=player_snapshot.head;host.head.current=player_snapshot.head_current;host.head.far=player_snapshot.head_far
 	host.motor.stick_lock=player_snapshot.stick_lock;host.motor.stick_release_pending=player_snapshot.stick_release_pending
 	host.motor.single_controller_controls=player_snapshot.single_controller_controls
+	host.motor.single_controller_hand=player_snapshot.single_controller_hand
 	host.motor.safe_spawn=player_snapshot.safe;host.motor.velocity=player_snapshot.velocity
 	host.motor.blocked=player_snapshot.blocked;host.motor.catch_controls=player_snapshot.catch_controls
 	host.motor.turn_reserved=player_snapshot.turn_reserved;host.motor.radial_open=player_snapshot.radial_open

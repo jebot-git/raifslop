@@ -12,9 +12,7 @@ func reset()->void:
 func update(dt:float)->bool:
 	var offhand:int=1 if game.left_handed else 0
 	if hand!=offhand:reset();hand=offhand
-	if not game.xr or not game.focused or game.menu_open or game.fitting_club or game.equipment.stowed or game.course_guide.held or game.godview.active or game.club_radial.opened:
-		reset();return false
-	if is_instance_valid(game.host_game) and (game.host_game.shoulder_radio.held or game.host_game.bbq.holds(offhand)):
+	if not game.xr or not game.focused:
 		reset();return false
 	var striking:XRController3D=game.left if game.left_handed else game.right
 	var other:XRController3D=game.right if game.left_handed else game.left
@@ -38,6 +36,12 @@ func update(dt:float)->bool:
 	# A controller laid down remains tracked. A quiet hand away from the grip
 	# becomes the support hand; picking it up or touching a control releases it.
 	automatic=not tracked or idle_seconds>=.8
+	# Keep detecting a controller set down even while the club is stowed or a
+	# menu is open, so one-hand locomotion does not depend on holding the club.
+	if game.menu_open or game.fitting_club or game.equipment.stowed or game.course_guide.held or game.godview.active or game.club_radial.opened:
+		engaged=false;return false
+	if is_instance_valid(game.host_game) and (game.host_game.shoulder_radio.held or game.host_game.bbq.holds(offhand)):
+		automatic=false;engaged=false;return false
 	var distance:float=(game.origin.global_transform*pose).origin.distance_to(global_position)
 	engaged=automatic or (pressed and distance<(.35 if engaged else .18))
 	return engaged

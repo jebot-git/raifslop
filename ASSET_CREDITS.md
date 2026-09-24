@@ -194,7 +194,7 @@ Huchen and ragged-tooth shark: original built-in imagegen reference illustration
 - Download URLs, hashes and license records: `source/locations/fly_expansion_sources.json`.
 - Cutthroat trout and Arctic char: original AI-generated skin references, reconstructed as textured volumetric meshes with authored fin outlines, normal maps and eyes using Blender MCP. Source `.blend`: `source/fly_expansion_fish.blend`. Generation prompts and mode: `source/fish_references/fly_expansion/prompts.json`.
 - Cedar tree cards: original AI-generated transparent texture, `assets/environment/rivers/expansion/cedar_card.png`; editable Krita source and generation prompt/mode in `source/vegetation/fly_expansion/`. Uses the existing crossed-card foliage renderer.
-- Fallen timber: original procedural Blender geometry, `source/fly_expansion_scenery.blend`, reproducible with `tools/build_fly_expansion_props.py`. Glacial rocks reuse the existing credited UV-mapped river boulder, granite texture, normal detail and occlusion map.
+- Fallen timber: Cedar Creek reuses the original `ForkedDriftwood.glb` shore mesh from `tools/build_shore_dressing.py`, its baked vertex AO, shared wood-fibre shader and existing credited weathered-timber texture. The superseded prototype remains in `source/fly_expansion_scenery.blend`. Glacial rocks reuse the existing credited UV-mapped river boulder, granite texture, normal detail and occlusion map.
 - New river ambience: original seeded synthesized noise, `tools/build_fly_expansion_audio.py`; no third-party recording.
 
 ## Meta Platform integration
@@ -203,3 +203,15 @@ Godot Meta Toolkit 1.0.3-stable (Meta Platforms and contributors), MIT toolkit
 source with Meta Platform SDK loader under Meta SDK terms. See
 `addons/godot_meta_toolkit/LICENSE.txt`, `THIRD_PARTY_NOTICES.txt`, `NOTICE.md`
 and `PROVENANCE.json`. Used for Quest store entitlement checks; no paid IAP.
+
+## Golf ambience (24 September 2026)
+
+- `golf_woodland.ogg` and `golf_links.ogg`: separate filtered, offset loops of the retained Thimras CC0 park recording credited above. No water, river or surf samples. Built by `tools/build_golf_ambience.py`; exact source attribution in `source/audio/CREDITS.md` and output hashes in `docs/ambience_assets.json`.
+
+## Startup logo
+
+`assets/ui/store_logo.png` is an unchanged copy of the full-title store submission
+logo, `docs/quest-store/media/logo.png` on the `stores` branch. It combines the
+existing game icon with Almonte lettering by Raymond Larabie (CC0 1.0). The store
+media package retains the font source and author-issued license; no font binary
+is required for this raster logo.

@@ -8,6 +8,7 @@ var left: XRController3D
 var right: XRController3D
 var xr := false
 var single_controller_controls := false
+var single_controller_hand:Callable
 var blocked := false
 var stick_lock:Callable
 var stick_release_pending:=false
@@ -98,8 +99,12 @@ func _physics_process(delta: float) -> void:
 	var turn_axis := 0.0
 	if left.get_has_tracking_data(): stick = deadzone(left.get_vector2("primary"))
 	if right.get_has_tracking_data(): turn_axis = right.get_vector2("primary").x
-	if single_controller_controls and left.get_has_tracking_data()!=right.get_has_tracking_data():
-		var only:=left if left.get_has_tracking_data() else right
+	var only:XRController3D=null
+	if single_controller_controls:
+		if single_controller_hand.is_valid():only=single_controller_hand.call()
+		if not is_instance_valid(only) and left.get_has_tracking_data()!=right.get_has_tracking_data():
+			only=left if left.get_has_tracking_data() else right
+	if is_instance_valid(only) and only.get_has_tracking_data():
 		var input:=deadzone(only.get_vector2("primary"))
 		stick=Vector2(0,input.y);turn_axis=only.get_vector2("primary").x
 	if stick_lock.is_valid() and stick_lock.call():stick_release_pending=true

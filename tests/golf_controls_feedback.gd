@@ -9,9 +9,22 @@ func check(ok:bool,label:String):
 	if not ok:failures.append(label)
 func settle():
 	for i in 3:await process_frame
-func pose(hand:int,at:Vector3):
-	trackers[hand].set_pose("grip",Transform3D(Basis.IDENTITY,host.origin.to_local(at)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
+func pose(hand:int,at:Vector3,basis:=Basis.IDENTITY):
+	trackers[hand].set_pose("grip",Transform3D(basis,host.origin.to_local(at)),Vector3.ZERO,Vector3.ZERO,XRPose.XR_TRACKING_CONFIDENCE_HIGH)
 	await settle()
+func remote_club_pickup(hand:int,label:String):
+	golf.course_guide.dock();golf.equipment.set_stowed(true)
+	await pose(hand,host.head.global_position+Vector3((hand*2-1)*.45,-.35,-.65))
+	trackers[hand].set_input("grip",0.0);trackers[hand].set_input("grip_click",false)
+	golf.equipment.update();golf.course_guide.update()
+	trackers[hand].set_input("grip_click",true);golf.equipment.update();golf.course_guide.update()
+	check(not golf.equipment.stowed and not golf.course_guide.held,"Empty-hand grip equips club away from hip: "+label)
+	golf.equipment.update()
+	check(not golf.equipment.stowed,"Holding equip grip cannot stow club: "+label)
+	trackers[hand].set_input("grip_click",false);golf.equipment.update();golf.course_guide.update()
+	trackers[hand].set_input("grip",1.0);golf.equipment.update();golf.course_guide.update()
+	check(not golf.equipment.stowed,"Grip away from hip keeps held club equipped: "+label)
+	trackers[hand].set_input("grip",0.0);golf.equipment.update();golf.course_guide.update()
 func run():
 	host=load("res://scenes/main.tscn").instantiate();root.add_child(host);await create_timer(.5).timeout
 	host.set_process(false);host.motor.set_physics_process(false)
@@ -79,6 +92,7 @@ func run():
 		trackers[hand].set_input("primary",Vector2(1,0));host.motor._physics_process(.016)
 		check(not host.origin.global_basis.is_equal_approx(before_turn),"Sole controller stick turns: "+str(hand))
 		trackers[hand].set_input("primary",Vector2.ZERO)
+		await remote_club_pickup(hand,"sole controller "+str(hand))
 		golf.begin_club_fit()
 		trackers[hand].set_input("primary",Vector2(.8,.6));golf._update_fit_preview(.05)
 		check(not golf.fit_session.candidate.is_empty() and golf.fit_session.candidate.reach>golf.club_reach,"Fitting stick adjusts before auto capture: "+str(hand))
@@ -87,40 +101,48 @@ func run():
 		var click:Callable=golf._left_button if hand==0 else golf._right_button
 		var release:Callable=golf._left_released if hand==0 else golf._right_released
 		click.call("primary_click");golf._update_fit_preview(.05)
-		check(golf.fit_session.axis==1 and not golf.godview.active and not golf.club_radial.opened,"Fit stick click selects axis without opening another UI: "+str(hand))
-		check(not golf.fit_session.candidate.rotation.is_equal_approx(shaft) and golf.fit_session.candidate.head_rotation.is_equal_approx(face),"Fine adjustment changes handle without rotating head: "+str(hand))
+		check(not golf.godview.active and not golf.club_radial.opened,"Fit stick click is consumed without opening another UI: "+str(hand))
+		check(golf.fit_session.candidate.rotation.is_equal_approx(shaft) and golf.fit_session.candidate.head_rotation.is_equal_approx(face),"Fine adjustment preserves handle and head angles: "+str(hand))
 		shaft=golf.fit_session.candidate.rotation
 		click.call("grip_click");golf._update_fit_preview(.05)
-		check(golf.fit_session.adjust_head and not golf.fit_session.candidate.head_rotation.is_equal_approx(face) and golf.fit_session.candidate.rotation.is_equal_approx(shaft),"Grip selects manual head adjustment with sole controller: "+str(hand))
+		check(golf.fit_session.candidate.head_rotation.is_equal_approx(face) and golf.fit_session.candidate.rotation.is_equal_approx(shaft),"Grip cannot enable angle changes during length fitting: "+str(hand))
 		click.call("grip_click")
 		trackers[hand].set_input("primary",Vector2.ZERO);click.call("ax_button")
-		check(not golf.fitting_club and golf.club_fitted[hand],"Sole controller accepts the preview: "+str(hand))
+		check(not golf.fitting_club and golf.club_rotations[hand].is_equal_approx(shaft),"Sole controller accepts the preview: "+str(hand))
 		var fit_origin:Transform3D=host.origin.global_transform
 		click.call("ax_button")
 		check(host.origin.global_transform.is_equal_approx(fit_origin),"Held/repeated fit confirmation cannot teleport to the ball: "+str(hand))
 		release.call("ax_button")
 		# Auto-fit keeps the head rigidly attached even with a leaning shaft.
-		await pose(hand,golf.ball.position+Vector3(-.5 if hand==1 else .5,.85,0))
+		await pose(hand,golf.ball.position+Vector3(-.5 if hand==1 else .5,.85,0),golf.FIT_PROFILE.grip_basis(hand).inverse())
 		# The host process is deliberately disabled in this synthetic fixture.
 		host.avatar.right_grip=host.controller_pose(1);host.avatar.left_grip=host.controller_pose(0)
 		host.avatar.right_grip_frame=Engine.get_process_frames()
 		golf.begin_club_fit();golf._update_club_pose()
-		var before_capture:Basis=golf.physical_head.global_basis
+		var initial_head_profiles:Array=golf.club_head_rotations.duplicate()
+		var initial_flags:Array=golf.club_fitted.duplicate()
 		click.call("trigger_click")
 		for frame in 12:golf._update_fit_preview(.05)
 		check(golf.fit_session.candidate.has("capture_grip"),"One trigger automatically captures the steady address: "+str(hand)+" · "+golf.status_text)
 		var clearance:float=preload("res://addons/golfminus/scripts/golf/club_fit.gd").clearance(golf.physical_head.global_transform,golf.head_shape,golf.world.surface_height)
-		var relative:Basis=golf.physical_head.global_basis
-		check(relative.is_equal_approx(before_capture) and absf(clearance-.004)<.001,"Auto-fit keeps head at intended address loft and clears turf: "+str(hand))
+		check(is_equal_approx(golf.club.scale.x,1.0) and is_equal_approx(golf.club.scale.z,1.0),"Auto-fit retains shaft thickness")
+		check(golf.physical_head.global_position.distance_to(golf.fit_session.candidate.target)<.001 and absf(clearance-.004)<.001,"Auto-fit connects hand to grounded address target: "+str(hand))
 		click.call("ax_button");check(not golf.fitting_club,"Automatic fit remains acceptable from sole controller: "+str(hand)+" · "+golf.status_text);release.call("ax_button")
+		check(golf.club_head_rotations==initial_head_profiles and golf.club_fitted==initial_flags,"Accepting length preserves default/manual head settings for every club")
 		var guide=golf.course_guide
 		guide.dock();guide.update()
 		var hip:Transform3D=golf.equipment.hip_pose(1.0 if golf.left_handed else -1.0)
 		var grip:Transform3D=Transform3D(Basis.IDENTITY,hip.origin)*golf.calibration.pose(hand).affine_inverse()
 		await pose(hand,grip.origin)
-		trackers[hand].set_input("grip",0.0);guide.update()
-		trackers[hand].set_input("grip",1.0);guide.update()
+		golf.equipment.set_stowed(true)
+		trackers[hand].set_input("grip",0.0);golf.equipment.update();guide.update()
+		trackers[hand].set_input("grip_click",true);golf.equipment.update();guide.update()
+		check(golf.equipment.stowed,"Guide pickup takes priority over remote club equip: "+str(hand))
+		trackers[hand].set_input("grip_click",false);trackers[hand].set_input("grip",1.0)
 		check(guide.held and guide.held_hand==hand,"Tablet can be grabbed by sole hand: "+str(hand))
+		await pose(hand,host.head.global_position+Vector3(0,-.3,-.6))
+		golf.equipment.grip_was_down[hand]=false;golf.equipment.update()
+		check(golf.equipment.stowed and guide.held,"Occupied guide hand cannot equip club: "+str(hand))
 		click.call("trigger_click");check(guide.photo_camera.active,"Sole tablet hand opens camera: "+str(hand))
 		click.call("by_button");check(not guide.photo_camera.active and guide.held,"Sole tablet hand closes camera without losing tablet: "+str(hand))
 		trackers[hand].set_input("grip",0.0);guide.update();check(not guide.held,"Releasing the holding grip docks tablet: "+str(hand))
@@ -194,6 +216,25 @@ func run():
 		trackers[off].set_input("trigger_touch",false)
 		for frame in 12:golf.support_hand.update(.1)
 		check(golf.support_hand.engaged and golf.support_hand.automatic,"Laid-down tracked controller snaps support hand: "+str(off))
+		var held:int=1-off
+		for t in trackers:t.set_input("grip",0.0);t.set_input("trigger",0.0);t.set_input("primary",Vector2.ZERO)
+		host.motor.blocked=false;host.motor.catch_controls=false;host.motor.turn_reserved=false;host.motor.stick_release_pending=false
+		check(golf.one_hand_controller()==(host.left if held==0 else host.right),"Tracked idle offhand enables held-stick locomotion")
+		for direction in [1.0,-1.0]:
+			trackers[held].set_input("primary",Vector2(0,direction));host.motor.velocity=Vector3.ZERO
+			host.motor._physics_process(.016)
+			var held_facing:Vector3=-host.head.global_basis.z;held_facing.y=0
+			check(host.motor.velocity.dot(held_facing)*direction>.01,"Held stick moves forward/back with offhand still tracked: %s / %s"%[held,direction])
+		for smooth in [false,true]:
+			host.motor.smooth_turn=smooth;host.motor.turn_latched=false
+			var start:Basis=host.origin.global_basis
+			trackers[held].set_input("primary",Vector2(.9,0));host.motor._physics_process(.016)
+			check(not host.origin.global_basis.is_equal_approx(start),"Held stick turns in snap/smooth mode with tracked offhand: %s / %s"%[held,smooth])
+		host.motor.smooth_turn=false;trackers[held].set_input("primary",Vector2.ZERO)
+		golf.equipment.set_stowed(true);golf.support_hand.update(.016)
+		check(golf.one_hand_controller()==(host.left if held==0 else host.right),"One-hand controls remain active while club is stowed")
+		await remote_club_pickup(held,"tracked idle offhand "+str(held))
+		golf.support_hand.update(.016)
 		host.golf_activity.update_player(.016)
 		check((host.avatar.right_target if handed else host.avatar.left_target)==golf.support_hand,"Live avatar follows support target instead of laid-down controller")
 		var packet:Dictionary=preload("res://scripts/network/state.gd").capture(host,1)
@@ -211,8 +252,14 @@ func run():
 		check(golf.support_hand.engaged and not golf.support_hand.automatic,"Trigger grabs nearby club grip like fishing reel")
 		trackers[off].set_input("trigger",0.0);golf.support_hand.update(.016)
 		check(not golf.support_hand.engaged,"Releasing manual grip frees offhand")
+		golf.equipment.set_stowed(true)
+		await pose(held,host.head.global_position+Vector3(0,-.35,-.65))
+		golf.equipment.update()
+		trackers[held].set_input("grip",1.0);golf.equipment.update()
+		check(golf.equipment.stowed,"Two active controllers still require hip pickup: "+str(held))
+		trackers[held].set_input("grip",0.0);golf.equipment.update();golf.equipment.set_stowed(false)
 	golf.set_hand(false);golf.begin_club_fit()
-	trackers[0].set_input("primary",Vector2(.8,0));golf._update_fit_preview(.05)
+	trackers[0].set_input("primary",Vector2(0,.8));golf._update_fit_preview(.05)
 	check(not golf.fit_session.candidate.is_empty(),"Other hand stick also adjusts club fit")
 	golf.cancel_club_fit();trackers[0].set_input("primary",Vector2.ZERO)
 	golf._update_club_pose();var shaft_pose:Transform3D=golf.club.global_transform

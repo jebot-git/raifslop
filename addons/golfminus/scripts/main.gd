@@ -38,6 +38,7 @@ var support_hand:Node3D
 var club_reach:=1.0
 var club_offsets:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
 var club_controller_mount:=[false,false]
+var club_pose_rotations:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
 var club_rotations:Array[Vector3]=[FIT_PROFILE.default_shaft_rotation(0),FIT_PROFILE.default_shaft_rotation(1)]
 var club_head_rotations:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
 var club_head_sources:Array[String]=["default","default"]
@@ -115,6 +116,8 @@ func _ready() -> void:
 		var offset=cfg.get_value("golf","club_offset_%d"%hand,Vector3.ZERO)
 		if offset is Vector3 and offset.is_finite():club_offsets[hand]=offset.clamp(-Vector3.ONE,Vector3.ONE)
 		club_controller_mount[hand]=bool(cfg.get_value("golf","club_controller_mount_%d"%hand,false))
+		var pose_rotation=cfg.get_value("golf","club_pose_rotation_%d"%hand,Vector3.ZERO)
+		if pose_rotation is Vector3 and pose_rotation.is_finite():club_pose_rotations[hand]=pose_rotation
 		var value=cfg.get_value("golf","club_rotation_%d"%hand,FIT_PROFILE.default_shaft_rotation(hand))
 		if value is Vector3 and value.is_finite():club_rotations[hand]=value
 		value=cfg.get_value("golf","club_head_rotation_%d"%hand,Vector3.ZERO)
@@ -145,7 +148,7 @@ func _rig() -> void:
 	if is_instance_valid(host_game):
 		body=host_game.motor;origin=host_game.origin;head=host_game.head;left=host_game.left;right=host_game.right;xr=host_game.xr
 		head.far=4000
-		body.stick_lock=club_input_active
+		body.stick_lock=club_input_active;body.single_controller_controls=true;body.single_controller_hand=one_hand_controller
 		left.button_pressed.connect(_left_button);left.button_released.connect(_left_released);right.button_pressed.connect(_right_button);right.button_released.connect(_right_released)
 		return
 	xr_interface=XRServer.find_interface("OpenXR")
@@ -162,7 +165,7 @@ func _rig() -> void:
 	head=XRCamera3D.new();origin.add_child(head);head.far=4000
 	left=XRController3D.new();left.tracker=&"left_hand";left.pose=&"grip";origin.add_child(left)
 	right=XRController3D.new();right.tracker=&"right_hand";right.pose=&"grip";origin.add_child(right)
-	body.origin=origin;body.head=head;body.left=left;body.right=right;body.xr=xr;body.stick_lock=club_input_active
+	body.origin=origin;body.head=head;body.left=left;body.right=right;body.xr=xr;body.stick_lock=club_input_active;body.single_controller_controls=true;body.single_controller_hand=one_hand_controller
 	left.button_pressed.connect(_left_button);left.button_released.connect(_left_released);right.button_pressed.connect(_right_button);right.button_released.connect(_right_released)
 func _ball_visual() -> void:
 	ball_mesh=MeshInstance3D.new();var sphere:=SphereMesh.new();sphere.radius=BALL.RADIUS;sphere.height=BALL.RADIUS*2;sphere.radial_segments=24;sphere.rings=12
@@ -245,6 +248,13 @@ func start_practice() -> void:
 func pointer_controller()->XRController3D:
 	var preferred:XRController3D=left if left_handed else right
 	return preferred if preferred.get_has_tracking_data() else (right if left_handed else left)
+func one_hand_controller()->XRController3D:
+	if not xr:return null
+	if left.get_has_tracking_data()!=right.get_has_tracking_data():return left if left.get_has_tracking_data() else right
+	# A laid-down controller can remain tracked. Share the same inactivity
+	# decision as the automatic support hand rather than requiring tracking loss.
+	if support_hand.automatic:return left if left_handed else right
+	return null
 func only_one_controller()->bool:
 	return xr and left.get_has_tracking_data()!=right.get_has_tracking_data()
 func _update_controller_hand(dt:float)->void:
@@ -260,6 +270,7 @@ func _update_controller_hand(dt:float)->void:
 	else:controller_fallback_time=0
 func _process(_delta:float) -> void:
 	_update_controller_hand(_delta)
+	if not is_instance_valid(host_game):support_hand.update(_delta)
 	godview.update(_delta);club_radial.update();equipment.update();course_guide.update()
 	if telemetry.enabled:
 		var state:Dictionary={"focused":focused,"left_tracked":left.get_has_tracking_data(),"right_tracked":right.get_has_tracking_data(),"menu_open":menu_open,"fitting":fitting_club,"club":club_index}
@@ -370,6 +381,7 @@ func _save_preferences() -> void:
 		cfg.set_value("golf","club_offset_%d"%hand,club_offsets[hand])
 		cfg.set_value("golf","club_controller_mount_%d"%hand,club_controller_mount[hand])
 		cfg.set_value("golf","club_rotation_%d"%hand,club_rotations[hand])
+		cfg.set_value("golf","club_pose_rotation_%d"%hand,club_pose_rotations[hand])
 		cfg.set_value("golf","club_head_rotation_%d"%hand,club_head_rotations[hand])
 		cfg.set_value("golf","club_fitted_%d"%hand,club_fitted[hand])
 		cfg.set_value("golf","club_head_source_%d"%hand,club_head_sources[hand])
@@ -644,8 +656,14 @@ func _pointer_beam(start:Vector3,end:Vector3) -> void:
 	var up:=segment.normalized()
 	var axis:=Vector3.RIGHT if absf(up.dot(Vector3.UP))>.99 else up.cross(Vector3.UP).normalized()
 	pointer_laser.visible=true;pointer_laser.global_transform=Transform3D(Basis(axis,segment,axis.cross(up)),start+segment*.5)
+func club_pose_rotation(hand:int)->Vector3:
+	if fitting_club and fit_session.hand==hand and fit_session.candidate.has("pose_rotation"):
+		return fit_session.candidate.pose_rotation
+	return club_pose_rotations[hand]
 func club_grip_pose(hand:int)->Transform3D:
-	return calibration.pose(hand)*Transform3D(Basis.IDENTITY,club_offsets[hand])
+	# Address calibration rotates the whole implement, never its local offset
+	# or the head independently of the shaft.
+	return calibration.pose(hand)*Transform3D(Basis.from_euler(club_pose_rotation(hand)*PI/180),club_offsets[hand])
 func set_club_attachment(hand:int,field:String,axis:int,value:float)->void:
 	if hand not in [0,1] or axis<0 or axis>2 or not is_finite(value):return
 	if fitting_club:cancel_club_fit()
@@ -661,6 +679,7 @@ func set_club_attachment(hand:int,field:String,axis:int,value:float)->void:
 func reset_club_attachment(hand:int)->void:
 	if hand not in [0,1]:return
 	if fitting_club:cancel_club_fit()
+	club_pose_rotations[hand]=Vector3.ZERO
 	club_offsets[hand]=Vector3.ZERO;club_rotations[hand]=FIT_PROFILE.default_shaft_rotation(hand);club_head_rotations[hand]=Vector3.ZERO
 	club_fitted[hand]=false;club_controller_mount[hand]=false;club_head_sources[hand]="default"
 	_attachment_changed()
@@ -681,7 +700,7 @@ func _update_club_pose()->Vector3:
 		rotation=fit_session.candidate.rotation;reach=fit_session.candidate.reach
 	club.transform=club_grip_pose(hand)*Transform3D(Basis.from_euler(rotation*PI/180.0),Vector3.ZERO)
 	var length:float=1.13 if club_index<2 else .86 if club_index==7 else .93
-	club.scale=Vector3(reach,reach*float(CLUBS.BAG[club_index].length)/length,reach)
+	club.scale=Vector3(1,reach*float(CLUBS.BAG[club_index].length)/length,1)
 	apply_club_palm()
 	_sync_physical_head()
 	return physical_head.global_position
@@ -724,12 +743,13 @@ func begin_club_fit() -> void:
 	toggle_menu(false)
 	course_guide.dock();equipment.set_stowed(false)
 	fit_session.begin(club_reach,club_rotations,0 if left_handed else 1,club_head_rotations,club_fitted)
+	fit_session.baseline.pose_rotations=club_pose_rotations.duplicate()
 	fit_session.baseline.head_sources=club_head_sources.duplicate()
+	fit_session.baseline.effective_head=head_correction(0 if left_handed else 1)
 	fitting_club=true;body.blocked=true;reset_swing();fit_clearance_elapsed=1.0
-	status_text="Hold your natural address pose. Press trigger once, then hold steady."
+	status_text="Hold the controller comfortably at address. Trigger calibrates your grip orientation and club length."
 func _fit_button(action:String,striking_hand:bool)->void:
-	if action=="primary_click":fit_session.axis=posmod(fit_session.axis+1,3);return
-	if action=="grip_click":fit_session.adjust_head=not fit_session.adjust_head;return
+	if action in ["primary_click","grip_click"]:return
 	if striking_hand:
 		match action:
 			"trigger_click":finish_club_fit()
@@ -737,9 +757,6 @@ func _fit_button(action:String,striking_hand:bool)->void:
 				fit_accept_held[0 if left_handed else 1]=true
 				accept_club_fit()
 			"by_button":cancel_club_fit()
-	else:
-		match action:
-			"ax_button":fit_session.axis=posmod(fit_session.axis+1,3)
 
 func _update_fit_preview(dt:float)->void:
 	var controller:=left if left_handed else right
@@ -750,21 +767,18 @@ func _update_fit_preview(dt:float)->void:
 	if tracked:
 		var stick:=controller.get_vector2("primary")
 		if other.get_has_tracking_data() and other.get_vector2("primary").length()>stick.length():stick=other.get_vector2("primary")
-		if absf(stick.x)>.3 or absf(stick.y)>.3:
+		if absf(stick.y)>.3:
 			if fit_session.candidate.is_empty():
 				var hand:=0 if left_handed else 1
 				fit_session.stage({"reach":club_reach,"rotation":club_rotations[hand],"head_rotation":head_correction(hand),"target":ball.position-aim_direction()*.075})
-			fit_session.adjust(stick.x*35.0*dt if absf(stick.x)>.3 else 0.0,stick.y*.15*dt if absf(stick.y)>.3 else 0.0)
+			fit_session.adjust(stick.y*.15*dt)
 	var tip:=_update_club_pose()
 	var target:Vector3=ball.position-aim_direction()*.075 if fit_session.candidate.is_empty() else fit_session.candidate.target
 	var text:="Hold natural address pose\nPress trigger once, then hold steady"
 	if fit_session.capture_requested:text="Capturing when steady · %.0f%%\nKeep your address pose; no need to press again"%minf(100,fit_session.stable_seconds/.4*100)
 	if not fit_session.candidate.is_empty():
-		text="PREVIEW · not saved\nHead to marker: %.1f cm · reach %.2f m\nTrigger: recapture · %s: accept · %s: cancel\nEither stick: %s %s / reach · click: axis · grip: head/handle"%[tip.distance_to(target)*100,float(CLUBS.BAG[club_index].length)*float(fit_session.candidate.reach),"X" if left_handed else "A","Y" if left_handed else "B","head" if fit_session.adjust_head else "handle",["yaw","pitch","roll"][fit_session.axis]]
-	if ICONS.enabled:
-		text="PREVIEW · not saved\nHead offset %.1f cm · reach %.2f m"%[tip.distance_to(target)*100,float(CLUBS.BAG[club_index].length)*float(fit_session.candidate.reach)] if not fit_session.candidate.is_empty() else "HOLD ADDRESS POSE"
-	if ICONS.enabled and not fit_session.candidate.is_empty():text+="\n%s %s / reach · stick click: axis · grip: head/handle"%["Head" if fit_session.adjust_head else "Handle",["yaw","pitch","roll"][fit_session.axis]]
-	fit_preview.prompts.show_entries([["capture","L trigger" if left_handed else "R trigger"],["accept","X" if left_handed else "A"],["cancel","Y" if left_handed else "B"],["fit","Stick: adjust"],["orbit","Grip: head/handle"]])
+		text="GRIP AND LENGTH PREVIEW · not saved\nLength %.2f m\nTrigger: recapture · %s: accept · %s: cancel\nEither stick up/down: length · trigger: calibrate grip again"%[float(CLUBS.BAG[club_index].length)*float(fit_session.candidate.reach),"X" if left_handed else "A","Y" if left_handed else "B"]
+	fit_preview.prompts.show_entries([["capture","L trigger" if left_handed else "R trigger"],["accept","X" if left_handed else "A"],["cancel","Y" if left_handed else "B"],["fit","Stick: length"]])
 	if not fit_session.candidate.is_empty():
 		fit_clearance_elapsed+=dt
 		if fit_clearance_elapsed>=.1:
@@ -791,20 +805,17 @@ func _capture_stable_club_fit()->void:
 	if stable.is_empty():return
 	fit_session.capture_requested=false
 	var hand:=0 if left_handed else 1
-	var correction:Vector3=fit_session.candidate.get("head_rotation",head_correction(hand))
-	var source:String=fit_session.candidate.get("head_source",club_head_sources[hand])
-	var face:Vector3=-(stable.pose.basis.orthonormalized()*Basis.from_euler(correction*PI/180.0)*Basis(Vector3.RIGHT,head_shape.loft)).z
-	var fit_direction:=Vector3(face.x,0,face.z).normalized()
-	if fit_direction.length_squared()<.01:fit_direction=aim_direction()
-	var fit:Dictionary=preload("res://addons/golfminus/scripts/golf/club_fit.gd").solve_grounded(stable.pose,ball.position,fit_direction,float(CLUBS.BAG[club_index].length),head_shape,world.surface_height,correction)
-	if not fit_session.stage(fit):status_text="Address is out of reach. Move closer to the ball, then press trigger.";return
-	fit_session.candidate.head_source="explicit" if source=="explicit" else "fit"
+	var correction:Vector3=fit_session.baseline.effective_head
+	var rotation:Vector3=fit_session.baseline.rotations[hand]
+	var fit:Dictionary=preload("res://addons/golfminus/scripts/golf/club_fit.gd").solve_address(stable.pose,ball.position,aim_direction(),float(CLUBS.BAG[club_index].length),head_shape,world.surface_height,correction,rotation,club_pose_rotation(hand))
+	if not fit_session.stage(fit):status_text="Hold your hand at a comfortable address height, then recapture. Club length cannot reach the turf from here.";return
 	fit_session.candidate.address_position=head.global_position
 	telemetry.record("fit_preview",{"candidate":fit,"hand":hand})
-	status_text="Sole fitted above turf. Check the preview, then accept to save."
+	status_text="Sole fitted above turf. Grip orientation and length calibrated; accept to save."
 
 func _apply_fit(values:Dictionary)->void:
 	club_reach=values.reach;club_rotations.assign(values.rotations)
+	club_pose_rotations.assign(values.get("pose_rotations",club_pose_rotations))
 	club_head_rotations.assign(values.get("head_rotations",[Vector3.ZERO,Vector3.ZERO]))
 	club_fitted.assign(values.get("fitted",[true,true]))
 	club_head_sources.assign(values.get("head_sources",club_head_sources))
@@ -846,7 +857,7 @@ func undo_club_fit()->void:
 	_apply_fit(values);_save_preferences();status_text="Previous club fit restored."
 func flip_club_face() -> void:
 	var hand:=0 if left_handed else 1
-	fit_session.undo_state={"reach":club_reach,"rotations":club_rotations.duplicate(),"head_rotations":club_head_rotations.duplicate(),"fitted":club_fitted.duplicate(),"head_sources":club_head_sources.duplicate()}
+	fit_session.undo_state={"pose_rotations":club_pose_rotations.duplicate(),"reach":club_reach,"rotations":club_rotations.duplicate(),"head_rotations":club_head_rotations.duplicate(),"fitted":club_fitted.duplicate(),"head_sources":club_head_sources.duplicate()}
 	club_head_rotations[hand]=(Basis.from_euler(head_correction(hand)*PI/180)*Basis(Vector3.UP,PI)).get_euler()*180/PI
 	club_fitted[hand]=true;club_head_sources[hand]="explicit"
 	toggle_menu(false);reset_swing();swing.cooldown=.8;_save_preferences()

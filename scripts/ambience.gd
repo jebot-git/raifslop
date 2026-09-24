@@ -19,7 +19,12 @@ func setup(root: Node) -> void:
 	detail.stream=load("res://assets/audio/ambience/timber.ogg")
 	select_location(root.current_location)
 func select_location(id: String) -> void:
-	if LOCATIONS.find_location(id).is_empty() or location==id:return
+	if LOCATIONS.find_location(id).is_empty():return
+	# Golf suspends this node via stop(). Returning must restore both the
+	# crossfade processor and pier details, even when revisiting the same water.
+	set_process(true)
+	if detail.stream==null:detail.stream=load("res://assets/audio/ambience/timber.ogg")
+	if location==id and voices.has(id) and voices[id].player.playing:return
 	location=id;detail.stop();detail_wait=rng.randf_range(7,14)
 	detail.global_position=root_game.motor.safe_spawn+Vector3(-2,.15,-2)
 	if not voices.has(id):
@@ -31,7 +36,7 @@ func select_location(id: String) -> void:
 		current.player.stream.loop=true
 	if not current.player.playing:
 		current.player.volume_db=-80
-		current.player.play(rng.randf_range(0,30))
+		current.player.play(rng.randf_range(0,maxf(0,current.player.stream.get_length()-.1)))
 func _process(delta: float) -> void:
 	for id in voices:
 		var entry: Dictionary=voices[id]
@@ -57,8 +62,10 @@ func save() -> void:
 
 func stop() -> void:
 	set_process(false)
+	location=""
 	for entry in voices.values():
 		entry.player.stop();entry.player.stream=null
+		entry.player.queue_free()
 	voices.clear();detail.stop();detail.stream=null
 
 func _exit_tree() -> void:

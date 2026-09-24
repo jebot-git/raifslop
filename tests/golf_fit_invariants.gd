@@ -20,9 +20,10 @@ func _initialize()->void:
 			check(before.basis.is_equal_approx(grip.basis*Basis(Vector3.RIGHT,shape.loft)),"Auto fit preserves existing grip-relative head %d/%d"%[hand,index])
 			var session:=Session.new();session.begin(1.0,[Vector3.ZERO,Vector3.ZERO],hand);session.stage(fit)
 			for axis in 3:
-				session.axis=axis;session.adjust(12,.015)
+				session.adjust(.015)
 				var after:=Fit.head_pose(grip,session.candidate,length,shape)
-				check(after.basis.is_equal_approx(before.basis),"Handle adjustment cannot rotate head %d/%d/%d"%[hand,index,axis])
+				check(session.candidate.rotation==Vector3.ZERO,"Length adjustment retains initial shaft frame")
+				check(after.basis.is_equal_approx(before.basis),"Length adjustment cannot rotate head %d/%d/%d"%[hand,index,axis])
 				var shaft:Basis=grip.basis*Basis.from_euler(session.candidate.rotation*PI/180)
 				var end:Vector3=grip.origin-shaft.y*length*session.candidate.reach
 				check((after.origin-after.basis.x*.055).distance_to(end)<.00001,"Shaft stays connected to unscaled hosel %d/%d/%d"%[hand,index,axis])
@@ -36,15 +37,11 @@ func _initialize()->void:
 				var correction:=Vector3(7,112,-32)
 				var recaptured:=Fit.solve_grounded(grip,Vector3(0,.021335,0),aim,length,shape,func(_x,_z):return 0.0,correction)
 				check(not recaptured.is_empty() and Fit.head_pose(grip,recaptured,length,shape).basis.is_equal_approx(grip.basis*Basis.from_euler(correction*PI/180)*Basis(Vector3.RIGHT,shape.loft)),"Changed target cannot rotate existing head %d/%d/%s"%[hand,index,aim])
-			var manual:=Session.new();manual.begin(1.0,[Vector3.ZERO,Vector3.ZERO],hand);manual.stage(fit)
-			manual.adjust_head=true
-			for axis in 3:
-				manual.axis=axis;var previous:Vector3=manual.candidate.head_rotation;manual.adjust(10,0)
-				check(not manual.candidate.head_rotation.is_equal_approx(previous) and manual.candidate.rotation.is_equal_approx(fit.rotation),"Manual head axis works independently %d/%d/%d"%[hand,index,axis])
-			var intended:Vector3=manual.candidate.head_rotation
-			manual.stage(Fit.solve_grounded(grip,Vector3(0,.021335,0),Vector3.BACK,length,shape,func(_x,_z):return 0.0,intended))
-			check(manual.accept().head_rotations[hand].is_equal_approx(intended),"Recapture and accept preserve manual head orientation")
-			check(manual.undo().head_rotations[hand]==Vector3.ZERO,"Undo restores head before manual adjustment")
+			check(values.rotations==[Vector3.ZERO,Vector3.ZERO] and values.head_rotations==[Vector3.ZERO,Vector3.ZERO] and values.fitted==[false,false],"Accept changes length only, retaining per-club default head behavior")
+			var short:=Session.new();short.begin(1.0,[Vector3(5,10,15),Vector3(15,10,5)],hand)
+			short.stage(fit)
+			check(short.candidate.rotation==short.baseline.rotations[hand],"Preview cannot replace initial handle angle")
+
 	var cfg:=ConfigFile.new();var shaft:=Vector3(66,129,62);var correction:=Vector3(2.86,-1.45,-39.33)
 	cfg.set_value("golf","club_rotation_1",shaft);cfg.set_value("golf","club_head_rotation_1",correction);cfg.set_value("golf","club_fitted_1",true)
 	check(Profile.migrate(cfg),"Legacy fitting profile migrates once")

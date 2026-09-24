@@ -1,5 +1,8 @@
 extends Node3D
-## Reuses Fishing's stereo wildlife and sound controls; scenery stays cosmetic.
+## Course-only ambience shares the Sound controls; scenery stays cosmetic.
+const SOUNDSCAPES={"spyglass":"golf_woodland","poppy":"golf_woodland","pebble":"golf_links","cypress":"golf_links"}
+static func soundscape_path(course:String)->String:
+	return "res://assets/audio/ambience/%s.ogg"%SOUNDSCAPES.get(course,"golf_woodland")
 var activity:Node
 var birds:Node3D
 var insects:Node3D
@@ -14,7 +17,8 @@ func setup(a:Node)->void:
 	birds=preload("res://scripts/environment_life.gd").new();add_child(birds)
 	birds.configure("secluded_beach" if a.golf.course_id=="pebble" else "lakeside")
 	insects=preload("res://scripts/environment_life.gd").new();add_child(insects);insects.configure("gray_pier");insects.birds.hide()
-	add_child(sound);sound.stream=load("res://assets/audio/ambience/secluded_beach.ogg" if a.golf.course_id=="pebble" else "res://assets/audio/ambience/lakeside.ogg").duplicate();sound.stream.loop=true;sound.play()
+	add_child(sound);sound.stream=load(soundscape_path(a.golf.course_id)).duplicate();sound.stream.loop=true
+	_update_sound_volume();sound.play()
 	add_child(leaves);leaves.amount=28;leaves.lifetime=9;leaves.preprocess=2;leaves.emission_shape=CPUParticles3D.EMISSION_SHAPE_BOX;leaves.emission_box_extents=Vector3(14,3,14)
 	leaves.direction=Vector3(1,-.25,.3);leaves.spread=24;leaves.initial_velocity_min=.5;leaves.initial_velocity_max=1.3;leaves.gravity=Vector3(0,-.08,0);leaves.angular_velocity_min=-50;leaves.angular_velocity_max=70
 	var leaf_mesh:=PrismMesh.new();leaf_mesh.size=Vector3(.08,.015,.035);leaves.mesh=leaf_mesh
@@ -36,12 +40,14 @@ func _process(dt:float)->void:
 	marker.scale=Vector3.ONE*clampf(p.distance_to(g.model.pin())/180,1,6)
 	marker.position=g.model.pin()+Vector3.UP*(12+marker.scale.x*6);marker.text="▼\n%02d"%(g.model.index+1)
 	marker.visible=preload("res://addons/golfminus/scripts/golf/pictograms.gd").enabled and activity.clubhouse_round==null
-	sound.volume_db=-80 if activity.host.ambience.muted else linear_to_db(maxf(.0001,activity.host.ambience.volume)) - 7
+	_update_sound_volume()
 	for i in animals.size():
 		var at:=anchor+Vector3(16+i*6+sin(clock*.4+i)*2,0,12+cos(clock*.3+i)*3)
 		var lie:String=g.model.lie(at.x,at.z)
 		animals[i].visible=lie in ["rough","fairway"]
 		at.y=g.world.surface_height(at.x,at.z)+absf(sin(clock*5+i))*.025
 		animals[i].position=at;animals[i].rotation.y=sin(clock*.4+i)*.5
+func _update_sound_volume()->void:
+	sound.volume_db=-80 if activity.host.ambience.muted else linear_to_db(maxf(.0001,activity.host.ambience.volume)) - 7
 func _exit_tree()->void:
 	sound.stop();sound.stream=null

@@ -18,12 +18,12 @@ func run()->void:
 	check(fit.stage(proposal),"Valid fit can be previewed")
 	proposal.rotation=Vector3.ZERO
 	check(fit.candidate.rotation!=proposal.rotation and rotations[1]==Vector3(30,180,20),"Preview isolates candidate from live preferences and caller")
-	fit.adjust(2,.01)
+	fit.adjust(.01)
 	check(is_equal_approx(fit.candidate.reach,.96) and fit.baseline.reach==.8,"Fine adjustments affect preview only")
 	fit.cancel();check(fit.candidate.is_empty() and fit.undo_state.is_empty(),"Cancel discards preview without accepting or replacing undo")
 	fit.begin(.8,rotations,0);fit.stage(proposal)
 	var accepted:Dictionary=fit.accept()
-	check(accepted.rotations[0]==Vector3.ZERO and accepted.rotations[1]==rotations[1],"Accept changes selected hand only")
+	check(accepted.rotations==rotations,"Accept preserves both hand angles")
 	check(is_equal_approx(accepted.reach,.95),"Accept returns preview reach")
 	fit.begin(accepted.reach,accepted.rotations,0);fit.stage(proposal);fit.cancel()
 	var undone:Dictionary=fit.undo()
@@ -84,7 +84,7 @@ func run()->void:
 	game.fit_session.begin(game.club_reach,game.club_rotations,1);game.fit_session.stage(proposal)
 	game.fitting_club=true;game.body.blocked=true
 	game._left_button("ax_button")
-	check(game.fit_session.axis==1 and game.club_index==7,"Fitting consumes club-change button for fine-adjustment axis")
+	check(game.club_index==7 and game.fit_session.candidate.rotation==original_rotations[1],"Fitting consumes offhand button without changing angle or club")
 	check(not game.strike(Vector3.FORWARD,Vector3.FORWARD),"Preview cannot launch a ball")
 	game.accept_club_fit()
 	check(game.fitting_club and game.club_reach==original_reach,"Untracked controller cannot accept preview")

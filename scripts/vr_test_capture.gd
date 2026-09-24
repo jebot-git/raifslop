@@ -93,7 +93,7 @@ func _process(delta:float)->void:
 		row.golf.ground_normal=vector(golf.model.normal_at(golf.ball.position.x,golf.ball.position.z))
 		row.golf.stop_reason=golf.ball.stop_reason
 		row.golf.teed=golf.contact_effects.tee_armed
-		row.golf.adjusting_head=golf.fit_session.adjust_head
+		row.golf.grip_rotation=vector(golf.club_pose_rotation(0 if golf.left_handed else 1))
 		if is_instance_valid(golf.physical_head):row.golf.head=pose_data(golf.physical_head.global_transform)
 		if is_instance_valid(golf.club):row.golf.shaft=pose_data(golf.club.global_transform)
 	write_event("frame",row)

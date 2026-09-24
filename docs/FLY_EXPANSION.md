@@ -27,4 +27,4 @@ Validation:
 - Cardboard trees use the same alpha-tested, mipmapped, crossed planes as existing rivers; no camera-facing rotation is applied per eye. Glacial rocks share the established river boulder UVs and shading.
 - Godot GPU captures: `docs/fly_expansion/`. A live OpenXR check could not initialize the local runtime (XR error -51); physical-headset verification remains outstanding.
 
-Rebuild original fish with `tools/build_fly_expansion_fish.py` in Blender, scenery with `tools/build_fly_expansion_props.py`, and ambience with `python3 tools/build_fly_expansion_audio.py`. Reimport in Godot afterwards.
+Rebuild original fish with `tools/build_fly_expansion_fish.py` in Blender, the retained prototype scenery with `tools/build_fly_expansion_props.py` (live Cedar logs now share `tools/build_shore_dressing.py` geometry and materials), and ambience with `python3 tools/build_fly_expansion_audio.py`. Reimport in Godot afterwards.

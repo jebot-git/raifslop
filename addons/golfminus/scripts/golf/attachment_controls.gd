@@ -18,10 +18,10 @@ func _ready()->void:
 	hand_choice.item_selected.connect(func(index:int):hand=index;refresh())
 	mounted=CheckButton.new();mounted.text="Controller-mounted club / physical attachment";mounted.custom_minimum_size.y=46;add_child(mounted)
 	mounted.toggled.connect(func(value:bool):game.set_club_attachment(hand,"mounted",0,float(value)))
-	var hint:=Label.new();hint.text="Offsets use the calibrated controller's local axes. Mounted mode keeps the club at that position instead of snapping it to the avatar palm. Changes save immediately for the selected hand. Automatic fitting preserves the head angle. During fitting, press grip to switch between manual head and handle adjustment.";hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;add_child(hint)
+	var hint:=Label.new();hint.text="Offsets use the calibrated controller's local axes. Mounted mode keeps the club at that position instead of snapping it to the avatar palm. Changes save immediately for the selected hand. Fitting remembers your comfortable controller pose and sets club length. The shaft connects your hand to the address point behind the ball while keeping the face correctly oriented. Fine adjustments remain available below.";hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;add_child(hint)
 	profile_notice=Label.new();profile_notice.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;add_child(profile_notice)
 	show_preview=CheckButton.new();show_preview.text="Show cyan attachment preview in VR";show_preview.button_pressed=true;show_preview.custom_minimum_size.y=46;add_child(show_preview)
-	var fit:=Button.new();fit.text="Fit current swing hand from address pose";fit.custom_minimum_size.y=46;add_child(fit);fit.pressed.connect(game.begin_club_fit)
+	var fit:=Button.new();fit.text="Fit controller grip and club length";fit.custom_minimum_size.y=46;add_child(fit);fit.pressed.connect(game.begin_club_fit)
 	_make_preview()
 	for group in [["offset","Grip position (cm)",["X · right","Y · up","Z · back"],-100,100,.5],["rotation","Shaft rotation (degrees)",["Pitch · X","Yaw · Y","Roll · Z"],-180,180,1],["head","Clubface correction (degrees)",["Pitch · X","Yaw · Y","Roll · Z"],-180,180,1]]:
 		var label:=Label.new();label.text=group[1];add_child(label)
@@ -42,7 +42,7 @@ func _axis_row(field:String,axis:int,title:String,minimum:float,maximum:float,st
 func refresh()->void:
 	if not is_instance_valid(hand_choice):return
 	profile_notice.visible=game.club_head_sources[hand]=="legacy"
-	profile_notice.text="Your older fit has been kept. If its face angle needs correcting, use Clubface correction below or the manual head mode during fitting."
+	profile_notice.text="Your older fit has been kept. If its face angle needs correcting, use Clubface correction below, or reset this hand before fitting again."
 	hand_choice.select(hand);mounted.set_pressed_no_signal(game.club_controller_mount[hand])
 	for field in ["offset","rotation","head"]:
 		var values:Vector3=game.club_offsets[hand]*100 if field=="offset" else game.club_rotations[hand] if field=="rotation" else game.head_correction(hand)

@@ -31,7 +31,7 @@ func _initialize()->void:
 				var expected:=world*Basis(Vector3.RIGHT,shape.loft)
 				var actual:=grip.basis*Basis.from_euler(correction*PI/180)*Basis(Vector3.RIGHT,shape.loft)
 				check(actual.is_equal_approx(expected),"Natural grip squares face with authored loft before fitting %d/%d/%s"%[hand,index,yaw])
-				var fit:=Fit.solve_grounded(grip,Vector3(0,Ball.RADIUS,0),world*Vector3.FORWARD,Clubs.BAG[index].length,shape,func(_x,_z):return 0.0,correction)
+				var fit:=Fit.solve_grounded(grip,Vector3(0,Ball.RADIUS,0),world*Vector3.FORWARD,Clubs.BAG[index].length,shape,func(_x,_z):return 0.0,correction,Profile.default_shaft_rotation(hand))
 				check(not fit.is_empty() and Fit.head_pose(grip,fit,Clubs.BAG[index].length,shape).basis.is_equal_approx(expected),"Fitting preserves corrected default head %d/%d/%s"%[hand,index,yaw])
 	var cfg:=ConfigFile.new();cfg.load("res://tests/fixtures/quest19_golf_controls.cfg")
 	var shaft:Vector3=cfg.get_value("golf","club_rotation_1")

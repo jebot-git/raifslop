@@ -97,6 +97,9 @@ func touch_position()->Variant:
 		if controller.get_has_tracking_data():point=controller.global_transform*game.calibration.pose(hand)*Vector3(0,0,-.10)
 	if source!=touch_source:reset_touch();touch_source=source
 	return point
+func pickup_near(at:Vector3)->bool:
+	return at.distance_to(game.equipment.hip_pose(1.0 if game.left_handed else -1.0).origin)<.24
+
 func update()->void:
 	var hip:Transform3D=game.equipment.hip_pose(1.0 if game.left_handed else -1.0)
 	var basis:=hip.basis*Basis(Vector3.FORWARD,Vector3.DOWN,Vector3.LEFT)
@@ -107,10 +110,10 @@ func update()->void:
 		for hand in 2:
 			var controller:XRController3D=game.left if hand==0 else game.right
 			var tracked:=controller.get_has_tracking_data()
-			var down:=tracked and controller.get_float("grip")>(.35 if grip_down[hand] else .55)
+			var down:=tracked and (controller.get_float("grip")>(.35 if grip_down[hand] else .55) or controller.is_button_pressed("grip_click"))
 			var pose:Transform3D=controller.global_transform*game.calibration.pose(hand)
 			if held and held_hand==hand and not down:dock()
-			if not held and down and not grip_down[hand] and pose.origin.distance_to(hip.origin)<.24:toggle(hand)
+			if not held and down and not grip_down[hand] and pickup_near(pose.origin):toggle(hand)
 			grip_down[hand]=down if tracked else true
 		if held:
 			var controller:XRController3D=game.left if held_hand==0 else game.right
