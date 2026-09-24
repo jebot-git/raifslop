@@ -44,6 +44,8 @@ jobs:
             python3 tools/store_release.py steam --check-config
           fi
           python3 -m unittest discover -s tests -p 'test_store_release.py'
+          python3 -m unittest discover -s tests -p 'test_quest_expansion.py'
+          python3 tools/test_quest_expansion.py --godot "$GODOT_BIN"
       - name: Build and validate candidate
         env:
           STORE_KEYSTORE_PASSWORD: ${{ inputs.store == 'quest' && secrets.STORE_KEYSTORE_PASSWORD || '' }}
