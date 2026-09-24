@@ -72,8 +72,9 @@ Account enrollment and dashboard configuration were not performed here.
 
 ## Local checks and launch order
 
-Use `stores` synchronized with `integration/golf-fishing`; keep shared source
-changes on integrated and merge them into stores. Provision the existing
+Use `stores` synchronized with production `main`. Shared source changes can be
+validated on `integration/golf-fishing` before merging into `main` and `stores`.
+Provision the existing
 `STORE_KEYSTORE`, `STORE_KEYSTORE_ALIAS`, `STORE_KEYSTORE_PASSWORD`, `JAVA_HOME`,
 `ANDROID_SDK_ROOT` and `GODOT_BIN` as described in [STORE_RELEASE.md](STORE_RELEASE.md).
 

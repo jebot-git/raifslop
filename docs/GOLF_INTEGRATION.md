@@ -1,12 +1,12 @@
 # Fishing and golf integration
 
-Based on Fishing `b13646980ccdea259acef06a55a4878473e70d7c`, with GolfMinus `851fa6c` vendored under `addons/golfminus`. The integration branch retains the Fishing project and its existing player, networking, avatar, radio and BBQ systems.
+Based on Fishing `b13646980ccdea259acef06a55a4878473e70d7c`, with GolfMinus `851fa6c` vendored under `addons/golfminus`. Promoted to production `main` on 2026-09-24, retaining the Fishing project and its existing player, networking, avatar, radio and BBQ systems. The previous `main` is preserved at `archive/main-pre-integration-2026-09-24`.
 
 The Golf menu joins Spyglass Hill or Pebble Beach and swaps the rod for a club. Fishing, golf and clubhouse BBQ share the player session. Radio remains available across locations. The leaderboard page selects golf rankings on golfing courses, stored alongside fishing records. Golf includes turn notifications, retirement and a five-minute absence deadline that forfeits the current hole. Connected course worlds show other golfers across holes.
 
 ## Dedicated server
 
-Matching protocol-14 clients and servers are required. The server owns course enrollment, turn order, deadlines, scorecards and persistence. Ball flight remains simulated by the owning client; this is not server-side trajectory verification.
+Matching protocol-17 clients and servers are required. The server owns course enrollment, turn order, deadlines, scorecards and persistence. Ball flight remains simulated by the owning client; this is not server-side trajectory verification.
 
 Run `python3 tools/build_server.py`. The staged server contains the script dependency closure and course JSON, height and lie data needed for shared-world and clubhouse placement. It excludes client rendering assets and native extensions. The tested export contains nine course-data files (13,238,716 bytes), zero visual assets and zero native extensions.
 
