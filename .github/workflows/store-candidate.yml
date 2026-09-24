@@ -53,6 +53,7 @@ jobs:
           if [ "$RELEASE_STORE" = quest ]; then
             test -x "$JAVA_HOME/bin/java"
             export PATH="$JAVA_HOME/bin:$PATH"
+            python3 tools/store_release.py quest --check-config
             python3 tools/build_release.py --target Quest --store-release
             python3 tools/store_release.py quest
           else

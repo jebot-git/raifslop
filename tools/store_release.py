@@ -34,7 +34,7 @@ def verify(target, revision):
     return record
 
 
-def quest_checks(apk):
+def quest_checks(apk, report_only=False):
     sdk = Path(os.environ.get('ANDROID_SDK_ROOT', str(Path.home() / 'Android/Sdk')))
     bt = sdk / 'build-tools/36.1.0'
     badging = run(bt / 'aapt', 'dump', 'badging', apk)
@@ -46,10 +46,16 @@ def quest_checks(apk):
         errors.append('Expected ARM64-only APK')
     if apk.stat().st_size >= 1_000_000_000:
         errors.append('APK exceeds conservative 1 GB budget; reduce assets or implement expansion delivery')
-    feature = re.search(r'android:name[^\n]*="android.hardware.vr.headtracking"[^\n]*\n([^\n]+)', xml)
-    if not feature or '0xffffffff' not in feature[1]:
+    # aapt attribute order varies; keep each check inside its XML element.
+    elements = re.split(r'(?m)^\s*E: ', xml)
+    features = [e for e in elements if e.startswith('uses-feature ') and
+                '"android.hardware.vr.headtracking"' in e]
+    if len(features) != 1 or not re.search(r'android:required[^\n]*0xffffffff', features[0]):
         errors.append('Head tracking must be required')
-    if not re.search(r'android:excludeFromRecents[^\n]*0xffffffff', xml):
+    if len(features) != 1 or not re.search(r'android:version[^\n]*\(type 0x10\)0x1(?:\s|$)', features[0]):
+        errors.append('Head tracking feature version must be 1')
+    activities = [e for e in elements if e.startswith('activity ') and '.GodotApp"' in e]
+    if len(activities) != 1 or not re.search(r'android:excludeFromRecents[^\n]*0xffffffff', activities[0]):
         errors.append('Godot activity must be excluded from recents')
     if re.search(r'android:debuggable[^\n]*0xffffffff', xml):
         errors.append('Debuggable APK is forbidden')
@@ -61,13 +67,19 @@ def quest_checks(apk):
     # This is a packaging check, not proof of absence of all payment code.
     if 'com.android.vending.BILLING' in badging:
         errors.append('Billing permission conflicts with free/no-IAP release')
-    signing = run(bt / 'apksigner', 'verify', '--verbose', apk)
+    signing = run(bt / 'apksigner', 'verify', '--verbose', '--min-sdk-version', '21', apk)
+    if 'Verified using v1 scheme (JAR signing): true' not in signing:
+        errors.append('APK must have a valid v1 signature')
     if 'Verified using v2 scheme (APK Signature Scheme v2): true' not in signing:
         errors.append('APK must have a valid v2 signature')
     run(bt / 'zipalign', '-c', '-P', '16', '4', apk)
+    report = {'apk': str(apk.resolve()), 'bytes': apk.stat().st_size,
+              'errors': errors, 'manifest': xml, 'signing': signing, 'badging': badging}
+    if report_only:
+        return report
     if errors:
         raise ValueError('\n'.join(errors))
-    return {'manifest': xml, 'signing': signing, 'badging': badging}
+    return {name: report[name] for name in ['manifest', 'signing', 'badging']}
 
 
 def positive_id(value):
@@ -142,16 +154,26 @@ def main():
     parser.add_argument('--app-id', type=positive_id, default=os.environ.get('STEAM_APP_ID') or None)
     parser.add_argument('--windows-depot', type=positive_id, default=os.environ.get('STEAM_WINDOWS_DEPOT') or None)
     parser.add_argument('--linux-depot', type=positive_id, default=os.environ.get('STEAM_LINUX_DEPOT') or None)
-    parser.add_argument('--check-config', action='store_true', help='Validate Steam IDs before expensive exports; does not build or contact Steam')
+    parser.add_argument('--check-config', action='store_true', help='Validate store configuration before expensive exports; does not upload')
+    parser.add_argument('--inspect-apk', type=Path, help='Quest diagnostic only: inspect an existing APK without staging or asserting provenance')
     args = parser.parse_args()
+    if args.inspect_apk:
+        if args.store != 'quest' or args.check_config:
+            parser.error('--inspect-apk requires quest and cannot be combined with --check-config')
+        report = quest_checks(args.inspect_apk, report_only=True)
+        print(json.dumps(report, indent=2))
+        raise SystemExit(1 if report['errors'] else 0)
     if args.store == 'steam' and not all([args.app_id, args.windows_depot, args.linux_depot]):
         parser.error('Steam requires an assigned AppID and Windows/Linux depot IDs. Set STEAM_APP_ID, STEAM_WINDOWS_DEPOT and STEAM_LINUX_DEPOT or use the flags. Start onboarding at https://partner.steamgames.com/steamdirect')
     if args.store == 'steam':
         steam_vdf(args.app_id, args.windows_depot, args.linux_depot, 'configuration-check')
     if args.check_config:
-        if args.store != 'steam':
-            parser.error('--check-config is for Steam')
-        print('Steam ID syntax and distinctness passed. Ownership/account permissions still require Steamworks verification.')
+        if args.store == 'quest':
+            from quest_store_config import check_signing
+            check_signing()
+            print('Quest signing identity verified. Account, AppID, entitlement and hardware acceptance remain separate gates.')
+        else:
+            print('Steam ID syntax and distinctness passed. Ownership/account permissions still require Steamworks verification.')
         return
     if run('git', 'status', '--porcelain').strip():
         raise ValueError('Commit source before staging a Store candidate')
