@@ -14,6 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   candidate:
+    if: github.ref == 'refs/heads/stores'
     # Dedicated trusted runner with Godot/templates/native dependencies preinstalled.
     # Never expose this signing-capable runner to pull_request jobs.
     runs-on: [self-hosted, linux, x64, store-release]
@@ -25,7 +26,6 @@ jobs:
       ANDROID_SDK_ROOT: ${{ vars.ANDROID_SDK_ROOT }}
       STORE_KEYSTORE: ${{ vars.STORE_KEYSTORE }}
       STORE_KEYSTORE_ALIAS: ${{ vars.STORE_KEYSTORE_ALIAS }}
-      STORE_KEYSTORE_PASSWORD: ${{ secrets.STORE_KEYSTORE_PASSWORD }}
       STEAM_APP_ID: ${{ vars.STEAM_APP_ID }}
       STEAM_WINDOWS_DEPOT: ${{ vars.STEAM_WINDOWS_DEPOT }}
       STEAM_LINUX_DEPOT: ${{ vars.STEAM_LINUX_DEPOT }}
@@ -40,8 +40,13 @@ jobs:
           set -euo pipefail
           test -x "$GODOT_BIN"
           "$GODOT_BIN" --version | rg -q '^4\.7\.2\.'
+          if [ "$RELEASE_STORE" = steam ]; then
+            python3 tools/store_release.py steam --check-config
+          fi
           python3 -m unittest discover -s tests -p 'test_store_release.py'
       - name: Build and validate candidate
+        env:
+          STORE_KEYSTORE_PASSWORD: ${{ inputs.store == 'quest' && secrets.STORE_KEYSTORE_PASSWORD || '' }}
         shell: bash
         run: |
           set -euo pipefail

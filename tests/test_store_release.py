@@ -74,6 +74,41 @@ class StoreReleaseTests(unittest.TestCase):
         with self.assertRaises(Exception):
             store.positive_id('100"\n"SetLive" "default')
 
+    def test_steam_checks_launch_dependencies_and_permissions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            names = ['UltimateBoomerSimulator.x86_64', 'UltimateBoomerSimulator.pck',
+                     'libgodotopenxrvendors.so', 'libtwovoip.linux.template_release.x86_64.so']
+            for name in names:
+                (folder / name).write_bytes(b'fixture')
+            exe = folder / names[0]
+            exe.chmod(0o644)
+            with self.assertRaisesRegex(ValueError, 'permission'):
+                store.steam_checks(folder, 'Linux')
+            exe.chmod(0o755)
+            store.steam_checks(folder, 'Linux')
+            (folder / 'player.cfg').write_text('private data')
+            with self.assertRaisesRegex(ValueError, 'unexpected depot file'):
+                store.steam_checks(folder, 'Linux')
+            (folder / 'player.cfg').unlink()
+            (folder / names[-1]).unlink()
+            with self.assertRaisesRegex(ValueError, 'missing or empty'):
+                store.steam_checks(folder, 'Linux')
+
+    def test_steam_config_preflight_without_builds(self):
+        import subprocess
+        import sys
+        script = str(ROOT / 'tools/store_release.py')
+        with patch.dict('os.environ', {'STEAM_APP_ID': '', 'STEAM_WINDOWS_DEPOT': '', 'STEAM_LINUX_DEPOT': ''}):
+            missing = subprocess.run([sys.executable, script, 'steam', '--check-config'], capture_output=True, text=True)
+        self.assertNotEqual(missing.returncode, 0)
+        self.assertIn('steamdirect', missing.stderr)
+        good = subprocess.run([sys.executable, script, 'steam', '--check-config', '--app-id', '100', '--windows-depot', '101', '--linux-depot', '102'], capture_output=True, text=True)
+        self.assertEqual(good.returncode, 0, good.stderr)
+        bad = subprocess.run([sys.executable, script, 'steam', '--check-config', '--app-id', '100', '--windows-depot', '100', '--linux-depot', '102'], capture_output=True, text=True)
+        self.assertNotEqual(bad.returncode, 0)
+        self.assertIn('distinct', bad.stderr)
+
     def test_quest_rejects_old_manifest_and_billing(self):
         with tempfile.TemporaryDirectory() as tmp:
             apk = Path(tmp) / 'game.apk'
