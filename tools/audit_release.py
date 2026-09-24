@@ -46,9 +46,24 @@ class APK:
     def size(self, name): return self.entries[name].file_size
 
 
+class ExpandedAPK:
+    def __init__(self, path):
+        from quest_expansion import inspect, PREFIX
+        self.apk = APK(path)
+        record = inspect(path)
+        self.obb = Pack(path.parent / record['file']) if record else None
+        if self.obb:
+            assert len(self.obb.entries) == record['entries'], 'Expansion entry count mismatch'
+            assert all(n.startswith(PREFIX.removeprefix('assets/')) for n in self.obb.names()), 'Unexpected expansion content'
+            assert not set(self.apk.names()) & set(self.obb.names()), 'Overlapping APK/OBB resources'
+    def names(self): return list(self.apk.names()) + (list(self.obb.names()) if self.obb else [])
+    def read(self, name): return (self.apk if name in self.apk.entries else self.obb).read(name)
+    def size(self, name): return (self.apk if name in self.apk.entries else self.obb).size(name)
+
+
 def audit(path):
     mobile = path.suffix == '.apk'
-    pack = APK(path) if mobile else Pack(path)
+    pack = ExpandedAPK(path) if mobile else Pack(path)
     names = set(pack.names()); remaps = {}; hashes = {}; sizes = {}
     assert not any('hand_probe' in name for name in names), 'Hand-tracking diagnostic leaked into release'
     for name in sorted(names):

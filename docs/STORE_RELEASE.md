@@ -38,11 +38,14 @@ The Quest export explicitly targets Android API 34. This is distinct from the
 Android compile SDK and Horizon OS version. The stager checks current-commit
 hashes, packaged assets, target SDK, ARM64, release flags, launch categories,
 v1/v2 signatures, 16 KiB ZIP alignment and a conservative **1,000,000,000-byte APK
-budget**. If size fails, reduce packaged assets or implement/test expansion
-asset delivery; this workflow does not silently strip content or implement OBBs.
-The existing older APK is over this budget and is not a current candidate.
+budget**. Store exports now move texture payloads unchanged into a Godot resource
+pack carried as `main.<versionCode>.<package>.obb` (under 4 GB). The signed APK
+binds its size and SHA256; the bootstrap verifies and mounts it before game load.
+Audits validate the combined resource graph and original HDR bytes. The older
+monolithic APK remains over budget and is not a current candidate.
+See [expansion delivery](QUEST_EXPANSION.md) for installation and acceptance.
 
-Output: `builds/store/quest/<commit>/`, including APK, manifest inspection,
+Output: `builds/store/quest/<commit>/`, including APK, matching OBB, manifest inspection,
 signature report, notices, candidate metadata and SHA256SUMS. A failure produces
 no new staged candidate. Re-running an already staged revision refuses to
 replace it. Increment Android version code before an update upload.
@@ -56,8 +59,9 @@ In Meta Developer Dashboard:
    accurate descriptions/artwork. Configure User Reporting Service and an inbox
    and moderation process for multiplayer/avatars/leaderboards. Complete required
    data-use review; mixed-age targeting requires the age-category integration.
-3. Upload the exact staged APK to an internal testing release channel using Meta
-   Quest Developer Hub. Check dashboard validation and install from that channel.
+3. Upload the exact staged APK and matching OBB to an internal testing release
+   channel using Meta Platform CLI (expansion uploads require the CLI). Check
+   dashboard validation and install from that channel.
 4. Record physical-device acceptance below against this commit and APK hash.
 5. Submit the build and metadata for Store review; release publicly only after
    acceptance and review of the final free/no-IAP listing.

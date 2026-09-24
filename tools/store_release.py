@@ -186,6 +186,14 @@ def main():
     artifacts = [BUILD / t / ('UltimateBoomerSimulator.apk' if t == 'Quest' else 'UltimateBoomerSimulator.pck') for t in targets]
     subprocess.run([sys.executable, str(ROOT / 'tools/audit_release.py'), *map(str, artifacts)], cwd=ROOT, check=True)
     checked = quest_checks(artifacts[0]) if args.store == 'quest' else None
+    expansion = None
+    if args.store == 'quest':
+        from quest_expansion import inspect
+        expansion = inspect(artifacts[0])
+        if expansion:
+            package = re.search(r"package: name='([^']+)' versionCode='([0-9]+)'", checked['badging'])
+            if not package or package[1] != expansion['package'] or int(package[2]) != expansion['version_code']:
+                raise ValueError('APK and expansion package/version do not match')
     out = BUILD / 'store' / args.store / revision
     if out.exists():
         raise ValueError(f'Candidate already exists: {out}; retain it or explicitly remove it before restaging')
@@ -195,6 +203,9 @@ def main():
         stage.mkdir()
         if args.store == 'quest':
             shutil.copy2(artifacts[0], stage / 'UltimateBoomerSimulator.apk')
+            if expansion:
+                shutil.copy2(artifacts[0].parent / expansion['file'], stage / expansion['file'])
+                (stage / 'expansion.json').write_text(json.dumps(expansion, indent=2) + '\n')
             for name, value in checked.items():
                 (stage / (name + '.txt')).write_text(value)
             copy_notices(stage)

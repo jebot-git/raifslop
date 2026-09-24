@@ -50,15 +50,11 @@ performed by these repository changes.
 
 ## Engineering work before a candidate
 
-1. **Expansion delivery:** retain the existing texture quality and content while
-   splitting the APK below 1,000,000,000 bytes. Meta allows one OBB up to 4 GB,
-   named `main.<versionCode>.org.jebot.raifslop.quest.obb`, or required asset files.
-   Evaluate a Godot resource pack mounted before loading game resources. Implement
-   missing/corrupt/wrong-version handling and audit the combined APK/expansion
-   resource graph. Include both files in provenance and staging. Merely moving
-   textures outside the APK will break resource loading; no expansion delivery
-   exists in the current workflow. Test channel install, offline startup, upgrade
-   and interrupted download before accepting this solution.
+1. **Expansion delivery implemented; device acceptance pending:** Store builds
+   split unchanged texture payloads into a matching OBB, verify before mounting,
+   and audit/stage the pair. See [QUEST_EXPANSION.md](QUEST_EXPANSION.md). Test
+   channel install, offline startup, upgrade, missing/corrupt files and interrupted
+   download on physical Quest before accepting delivery.
 2. **Platform entitlement:** integrate Meta Platform SDK with the assigned AppID
    and implement the entitlement result/error path. The source audit found no
    application entitlement implementation. OpenXR vendor extensions alone do not
@@ -103,7 +99,7 @@ the runner/toolchains and signing secret. CI only prepares a candidate.
 
 After packaging passes, verify candidate hashes, upload to an internal release
 channel and install through that channel. Expansion builds require Meta's
-Platform CLI; the present APK-only stager must be extended before using it.
+Platform CLI; stage and upload the matching APK/OBB pair.
 Check the installed CLI's upload help for its current expansion options, and
 supply authentication through private configuration. Do not upload the old
 oversized APK as a release candidate.
