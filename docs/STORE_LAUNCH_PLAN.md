@@ -55,16 +55,17 @@ Its signing-certificate SHA-256 is
 `15f604964c24bd8edc02a2cde8407293c2fdc3b87939c4164ea317e929a9d380`.
 These identify the reference release, not an approved store candidate.
 
-Running the existing Quest checks against that APK produced four failures:
+The corrected Quest checks against that APK confirm three failures:
 
 1. It exceeds the repository's conservative 1,000,000,000-byte APK budget.
 2. Head tracking is not declared required.
 3. The Godot activity is not excluded from recents.
-4. It is validly v3-signed, but does not satisfy the stager's explicit v2 check.
-
-The size threshold and v2 requirement above describe this repository's current
-checker; they are not a new assertion about every accepted Meta upload format.
-Do not waive the checker simply because sideloading succeeds.
+The prior v2 failure was a verifier false positive: `apksigner` selected v3
+for the APK minimum SDK. Verification starting at API 21 confirms v1/v2/v3.
+Both the original artifact and a temporary explicitly re-signed copy passed.
+The original certificate and 16 KiB alignment were preserved.
+See [Quest onboarding](QUEST_ONBOARDING.md) for current Meta requirements,
+account steps, expansion delivery and entitlement integration blockers.
 
 ## Quest: ordered preparation and submission
 
@@ -73,11 +74,11 @@ Do not waive the checker simply because sideloading succeeds.
    implement supported expansion-asset delivery. For expansion delivery, include
    download/install, offline access, updates, checksums and failure recovery;
    extend staging and tests before treating an oversized APK as eligible.
-2. **Resolve signing in the shared builder.** Preserve the existing certificate;
-   explicitly enable v2 signing during final APK re-signing so the current stager
-   passes, retaining newer signing where supported. Add a meaningful regression
-   check. Android documents the `--v2-signing-enabled` option in
-   [apksigner](https://developer.android.com/tools/apksigner).
+2. **Signing checks implemented.** The shared builder explicitly enables v1/v2/v3,
+   and preflight checks the existing certificate before export. The corrected
+   verifier exercises all required schemes. Nine release regression tests pass;
+   a real temporary APK signing/verification/alignment check also passed. This
+   does not replace a fresh store export or headset upgrade test.
 3. **Apply and verify the existing store manifest path.** Build with
    `--store-release`, which calls `quest_store_manifest.py`. It sets required
    head tracking, excludes the activity from recents and disables debugging.
