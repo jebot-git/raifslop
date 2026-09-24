@@ -87,6 +87,13 @@ still lists 1000 for the full description; this draft conservatively stays below
 1000. The renderer also checks at most five single-token keywords of at most
 50 characters each. Dashboard limits remain authoritative.
 
+## Privacy policy draft
+
+The [privacy policy](PRIVACY_POLICY.md) covers current local storage, multiplayer,
+voice, tracking, avatars, platform checks and deletion. Complete the
+[publication review](PRIVACY_REVIEW.md) before publishing it; a public URL
+remains pending.
+
 ## Pending owner information and acceptance
 
 The owner confirmed on 2026-09-24 that publisher name, support contact and
