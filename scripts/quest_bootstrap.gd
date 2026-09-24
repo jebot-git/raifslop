@@ -92,7 +92,9 @@ func _process(_delta: float) -> void:
 		var error: String = worker.wait_to_finish()
 		if not error.is_empty():
 			_fail(error)
-		elif not ProjectSettings.load_resource_pack(expansion_path, false):
+		# Android's sparse APK index still lists textures moved into the OBB.
+		# The verified expansion must replace those entries with its real payloads.
+		elif not ProjectSettings.load_resource_pack(expansion_path, true):
 			_fail("Cannot open the game download.")
 		else:
 			_start_game()
