@@ -1,4 +1,4 @@
-# Quest expansion validation — 2026-09-24
+# Quest expansion validation — 2026-09-24 (historical version 17)
 
 Validated source: integrated commit `953cc565b07298fd34355157dbbd865830491dab`.
 Shared code is merged into `stores`; only release documentation differs. This
@@ -50,8 +50,9 @@ verification time, VR loading/error readability, clean install, signed upgrade,
 offline startup and damaged/interrupted-download recovery need physical-device
 acceptance. See [QUEST_EXPANSION.md](QUEST_EXPANSION.md).
 
-Meta account/AppID and entitlement integration, privacy/reporting and performance
-VRCs remain open. No store upload, submission, certification or public release
-was performed. The next engineering blocker is Platform SDK/AppID/entitlement
-integration; account-owner onboarding can proceed using
-[QUEST_ONBOARDING.md](QUEST_ONBOARDING.md).
+AppID `3428825797290213` and the entitlement startup gate have since been
+implemented; see [the version 18 validation record](QUEST_ENTITLEMENT_VALIDATION.md). Live entitlement,
+privacy/reporting and performance VRCs remain open. This record describes the
+historical version 17 expansion build. Working build manifests/logs may refer
+to newer revisions; use its immutable staged candidate for historical hashes.
+No store upload, submission, certification or public release was performed.

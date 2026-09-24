@@ -92,11 +92,14 @@ the historical monolithic v0.1.15 artifact.
    Validate the final merged APK, not just the template. Confirm the supported
    device list against devices actually tested. Meta documents these manifest
    requirements in its [release manifest specification](https://developers.meta.com/horizon/resources/publish-mobile-manifest/).
-4. **Prepare the publisher inputs.** Confirm the Meta app, organization access,
+4. **Configure and validate platform access.** AppID `3428825797290213` and
+   the SDK entitlement startup gate are implemented. See
+   [QUEST_ENTITLEMENT.md](QUEST_ENTITLEMENT.md) and the
+   [version 18 validation record](QUEST_ENTITLEMENT_VALIDATION.md). Confirm the Meta app, organization access,
    app/package association and test-channel users. Obtain the existing keystore
    through the secure local environment or CI secrets. Check the highest uploaded
    version code; allocate a higher unused code in the integrated source before
-   building an update. Code 16 is the reference release, not a reserved next code.
+   building an update. The configured candidate uses code 18; check it against the dashboard before upload.
 5. **Synchronize, commit, build and stage.** After steps 1–4, merge integrated
    changes into `stores`, run the synchronization checks above, then run:
 
