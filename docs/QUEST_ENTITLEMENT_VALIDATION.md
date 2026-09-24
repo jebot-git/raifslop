@@ -32,7 +32,8 @@ Package: `org.jebot.raifslop.quest`, version code **18**.
   unchanged icon loaded at 512×512.
 - Candidate staged successfully at
   `builds/store/quest/6d6a66aefc94eb805dcf3834298d12034fa5c45f/` in the integrated
-  worktree. No upload or public release performed.
+  worktree. Uploaded to the ALPHA internal channel on 2026-09-24; see
+  [QUEST_INTERNAL_UPLOAD.md](QUEST_INTERNAL_UPLOAD.md). No public release performed.
 
 Evidence: `test-results/quest-entitlement-candidate.log`,
 `test-results/quest-exported-resources.log`,
