@@ -1,0 +1,87 @@
+extends Node3D
+
+const Expansion = preload("res://scripts/quest_expansion.gd")
+var worker := Thread.new()
+var record: Dictionary = {}
+var expansion_path := ""
+var label: Label3D
+var status: Label
+
+func _ready() -> void:
+	if not FileAccess.file_exists("res://quest_expansion.json"):
+		_start_game.call_deferred()
+		return
+	_show_loading()
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://quest_expansion.json"))
+	if not parsed is Dictionary:
+		_fail("Invalid game download information.")
+		return
+	record = parsed
+	var error := Expansion.metadata_error(record)
+	if not error.is_empty():
+		_fail(error)
+		return
+	if not Engine.has_singleton("AndroidRuntime"):
+		_fail("Cannot access the game download folder.")
+		return
+	var context = Engine.get_singleton("AndroidRuntime").getApplicationContext()
+	if context == null or str(context.getPackageName()) != str(record.package):
+		_fail("The game download belongs to another app.")
+		return
+	var package_info = context.getPackageManager().getPackageInfo(str(record.package), 0)
+	if package_info == null or int(package_info.getLongVersionCode()) != int(record.version_code):
+		_fail("The game download belongs to another version.")
+		return
+	var folder = context.getObbDir()
+	if folder == null:
+		_fail("Cannot access the game download folder.")
+		return
+	expansion_path = str(folder.getAbsolutePath()).path_join(str(record.file))
+	if worker.start(Expansion.verify_file.bind(expansion_path, record)) != OK:
+		_fail("Cannot verify the game download.")
+
+func _show_loading() -> void:
+	var xr := XRServer.find_interface("OpenXR")
+	if xr and (xr.is_initialized() or xr.initialize()):
+		get_viewport().use_xr = true
+	var origin := XROrigin3D.new()
+	add_child(origin)
+	var camera := XRCamera3D.new()
+	origin.add_child(camera)
+	label = Label3D.new()
+	label.position = Vector3(0, 0, -1.5)
+	label.font_size = 36
+	label.pixel_size = 0.001
+	label.no_depth_test = true
+	camera.add_child(label)
+	status = Label.new()
+	status.position = Vector2(40, 40)
+	add_child(status)
+	_message("Checking game download…\nPlease wait.")
+
+func _message(text: String) -> void:
+	label.text = text
+	status.text = text
+
+func _process(_delta: float) -> void:
+	if worker.is_started() and not worker.is_alive():
+		var error: String = worker.wait_to_finish()
+		if not error.is_empty():
+			_fail(error)
+		elif not ProjectSettings.load_resource_pack(expansion_path, false):
+			_fail("Cannot open the game download.")
+		else:
+			_start_game()
+
+func _fail(reason: String) -> void:
+	push_error("Quest expansion: " + reason)
+	_message(reason + "\nClose the game and finish its download\nin your library, then launch it again.\nIf this persists, reinstall the game.")
+
+func _start_game() -> void:
+	# A string path prevents scene/script preloads from reaching moved textures early.
+	if get_tree().change_scene_to_file("res://scenes/main.tscn") != OK:
+		if label == null: _show_loading()
+		_fail("Cannot start the game.")
+
+func _exit_tree() -> void:
+	if worker.is_started(): worker.wait_to_finish()

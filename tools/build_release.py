@@ -88,13 +88,22 @@ for target in (TARGETS if a.target=='all' else [a.target]):
     if ext=='apk':
         unsigned = out/'compressed-unsigned.apk'
         aligned = out/'compressed-aligned.apk'
-        with zipfile.ZipFile(artifact) as source, zipfile.ZipFile(unsigned, 'w', compresslevel=9) as dest:
-            for info in source.infolist():
-                # v1 signatures are replaced by apksigner; v2+ signing blocks are
-                # outside ZIP entries and are removed automatically by rewriting.
-                if info.filename.upper().startswith('META-INF/') and info.filename.upper().endswith(('.RSA','.DSA','.EC','.SF','.MF')):
-                    continue
-                dest.writestr(info, source.read(info), compress_type=info.compress_type, compresslevel=9)
+        if a.store_release:
+            from quest_expansion import split
+            import re
+            badging = subprocess.check_output([str(sdk/'build-tools/36.1.0/aapt'), 'dump', 'badging', str(artifact)], text=True)
+            package = re.search(r"package: name='([^']+)' versionCode='([0-9]+)'", badging)
+            if not package: raise SystemExit('Cannot read APK package/version')
+            expansion = split(artifact, unsigned, package[1], package[2])
+            print('EXPANSION ' + json.dumps(expansion), flush=True)
+        else:
+            with zipfile.ZipFile(artifact) as source, zipfile.ZipFile(unsigned, 'w', compresslevel=9) as dest:
+                for info in source.infolist():
+                    # v1 signatures are replaced by apksigner; v2+ signing blocks are
+                    # outside ZIP entries and are removed automatically by rewriting.
+                    if info.filename.upper().startswith('META-INF/') and info.filename.upper().endswith(('.RSA','.DSA','.EC','.SF','.MF')):
+                        continue
+                    dest.writestr(info, source.read(info), compress_type=info.compress_type, compresslevel=9)
         run([str(sdk/'build-tools/36.1.0/zipalign'),'-f','-P','16','4',str(unsigned),str(aligned)],'recompress-align-'+target,child_env)
         run([str(sdk/'build-tools/36.1.0/apksigner'),'sign','--v1-signing-enabled','true','--v2-signing-enabled','true','--v3-signing-enabled','true','--ks',str(key),'--ks-key-alias',alias,'--ks-pass','env:FISHING_SIGNING_PASSWORD','--key-pass','env:FISHING_SIGNING_PASSWORD','--out',str(artifact),str(aligned)],'recompress-sign-'+target,child_env)
         unsigned.unlink(); aligned.unlink()

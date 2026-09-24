@@ -18,6 +18,7 @@ config/custom_user_dir_name.linux="godot/app_userdata/Real AI Fishing"
 config/version="0.1.15"
 config/icon="res://assets/icon.svg"
 run/main_scene="res://scenes/main.tscn"
+run/main_scene.quest_xr="res://scenes/quest_bootstrap.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 
 [audio]
