@@ -107,7 +107,7 @@ def inspect_apk(apk, expected):
         parsed.read_string(z.read('assets/eos.cfg').decode())
         actual = {section: {key: json.loads(value) for key, value in parsed.items(section)} for section in parsed.sections()}
         if actual != expected:raise ValueError('Packaged EOS config differs from the validated local config')
-        system = {'libc.so', 'libm.so', 'libdl.so', 'liblog.so', 'libandroid.so', 'libz.so'}
+        system = {'libc.so', 'libm.so', 'libdl.so', 'liblog.so', 'libandroid.so', 'libz.so', 'libGLESv3.so', 'libEGL.so', 'libOpenSLES.so'}
         for name in required[:2]:
             dependencies = elf_dependencies(z.read(name))
             if any(dep not in system and prefix + dep not in names for dep in dependencies):
