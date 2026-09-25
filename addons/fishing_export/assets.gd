@@ -11,6 +11,16 @@ func _export_begin(features: PackedStringArray, _debug: bool, _path: String, _fl
 	if features.has("android") and OS.get_environment("FISHING_STORE_RELEASE") == "1":
 		var config := {"app_id": OS.get_environment("META_QUEST_APP_ID"), "entitlement_required": true, "format": 1}
 		add_file("res://quest_store.json", JSON.stringify(config).to_utf8_buffer(), false)
+	if features.has("android") and not OS.get_environment("FISHING_EOS_CONFIG").is_empty():
+		var source_path:=OS.get_environment("FISHING_EOS_CONFIG")
+		var settings:=preload("res://scripts/network/eos/config.gd").read(source_path)
+		var error:=preload("res://scripts/network/eos/config.gd").validate(settings,"Android")
+		if not error.is_empty():push_error("Cannot export project: " + error);return
+		var config:=ConfigFile.new()
+		for key in ["product_id","sandbox_id","deployment_id","client_id","client_secret","relay"]:config.set_value("eos",key,settings[key])
+		config.set_value("identity","provider","meta")
+		for key in ["app_id","destination"]:config.set_value("meta",key,settings[key])
+		add_file("res://eos.cfg",config.encode_to_text().to_utf8_buffer(),false)
 	textures.clear()
 	emitted.clear()
 	desktop = features.has("pc")

@@ -37,7 +37,9 @@ func setup(owner_session:Node)->void:
   if id==lobby and not lobby.is_empty():loss_due=true)
 func config_path()->String:
  var args:=OS.get_cmdline_user_args();var index:=args.find("--eos-config")
- return args[index+1] if index>=0 and index+1<args.size() else "user://eos.cfg"
+ if index>=0 and index+1<args.size():return args[index+1]
+ if OS.get_name()=="Android" and FileAccess.file_exists("res://eos.cfg"):return "res://eos.cfg"
+ return "user://eos.cfg"
 func message(text:String)->void:
  session.status=text;session.changed.emit()
 func queue_invite(reference:String)->void:

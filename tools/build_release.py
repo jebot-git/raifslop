@@ -6,7 +6,15 @@ ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
 p.add_argument('--target', choices=['all', *TARGETS], default='all')
 p.add_argument('--store-release', action='store_true', help='Require an existing externally provisioned Android signing identity')
+p.add_argument('--eos-config', type=Path, help='Package validated EOS client configuration and Android bootstrap (Quest only)')
 a = p.parse_args()
+if a.eos_config and (a.target != 'Quest' or not a.store_release):
+    p.error('--eos-config requires --target Quest --store-release')
+eos_settings = None
+if a.eos_config:
+    from eos.android_export import read_config
+    from quest_store_config import check_app_id
+    eos_settings = read_config(a.eos_config, check_app_id())
 if subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip():
     raise SystemExit('Commit the source changes before building a release.')
 if a.store_release and (a.target == 'all' or a.target in ANDROID_TARGETS):
@@ -84,6 +92,12 @@ for target in (TARGETS if a.target=='all' else [a.target]):
             child_env['META_QUEST_APP_ID'] = check_app_id()
             from quest_store_manifest import configure
             configure(android/'src/main/AndroidManifest.xml')
+        from eos.android_export import configure as configure_eos
+        configure_eos(android, ROOT, eos_settings)
+        if eos_settings is not None:
+            child_env['FISHING_EOS_CONFIG'] = str(a.eos_config.resolve())
+        else:
+            child_env.pop('FISHING_EOS_CONFIG', None)
     ext={'Linux':'x86_64','Windows':'exe','Quest':'apk'}[target]
     artifact=out/('UltimateBoomerSimulator.'+ext)
     run([godot,'--headless','--path',str(ROOT),'--xr-mode','off','--export-release',target,str(artifact)],'export-'+target,child_env)
@@ -113,6 +127,9 @@ for target in (TARGETS if a.target=='all' else [a.target]):
         artifact.with_suffix('.apk.idsig').unlink(missing_ok=True)
         run([str(sdk/'build-tools/36.1.0/apksigner'),'verify','--verbose','--min-sdk-version','21','--print-certs',str(artifact)],'verify-'+target,child_env)
         run([str(sdk/'build-tools/36.1.0/zipalign'),'-c','-P','16','4',str(artifact)],'align-'+target,child_env)
+    if target == 'Quest' and eos_settings is not None:
+        from eos.android_export import inspect_apk
+        (build/'eos-android-checks.json').write_text(json.dumps(inspect_apk(artifact, eos_settings), indent=2)+'\n')
     print(f'BUILT {target}: {artifact.stat().st_size} bytes',flush=True)
     files = {str(path.relative_to(out)): digest(path)
              for path in sorted(out.rglob('*')) if path.is_file()}

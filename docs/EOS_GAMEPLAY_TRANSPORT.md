@@ -216,11 +216,9 @@ headset disconnect/reconnect have not been validated by the desktop tests.
 Meta DUC for User ID, User profile, Friends and Invites is granted, as confirmed
 by the application owner.
 
-The gameplay menu is VR-compatible, but Android EOS packaging still needs the
-EOS AAR/activity-thread bootstrap and manifest/lifecycle integration described
-in the [Quest packaging gate](../experiments/eos_meta/README.md#android--quest-packaging-gate).
-The Linux native install does not make a Quest EOS build ready. No APK was
-built, installed or published for this integration.
+The experimental Quest export now integrates the EOS AAR, ARM64 libraries,
+activity bootstrap and login intent resource. See [Android export](EOS_ANDROID_EXPORT.md).
+Hardware validation remains required before treating it as a production release.
 
 Next validate that Android bootstrap/package with entitled Quest accounts,
 then run eight-player WAN loss/jitter/reordering tests with actual voice and

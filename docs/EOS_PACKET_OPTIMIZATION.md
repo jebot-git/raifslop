@@ -170,8 +170,7 @@ and cancellation cases also passed deterministic offline tests.
 
 1. Harden EOSG native sender-ID/PUID binding before untrusted-lobby deployment;
    the pinned receiver discards that origin check (see the transport notes).
-2. Complete the EOS Android AAR/activity bootstrap and packaging gate, then
-   validate Meta entitlement, fresh proofs, profile/friends access, invites and
+2. Validate the integrated EOS Android AAR/activity bootstrap on Quest, including Meta entitlement, fresh proofs, profile/friends access, invites and
    Quest/desktop crossplay with real entitled accounts. No Quest was connected
    for this step. DUC for User ID, User profile, Friends and Invites is granted
    (application owner confirmation, 2026-09-25).
