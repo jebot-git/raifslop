@@ -17,7 +17,8 @@ The source configuration and generated Android project remain ignored by Git.
 
 The generated activity loads EOSSDK and calls EOSSDK.init before Godot starts,
 on the activity thread. The AAR registers its own lifecycle callbacks. Gradle
-includes the pinned AAR and its AndroidX dependencies; the AAR supplies its login
+includes the pinned AAR, its AndroidX dependencies and the core-library
+desugaring required by the AAR metadata; the AAR supplies its login
 activity and the generated resource supplies its login scheme. This follows the
 [EOSG Android initialization instructions](https://3ddelano.github.io/epic-online-services-godot/docs/topics/initialization).
 

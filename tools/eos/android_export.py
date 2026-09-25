@@ -47,7 +47,11 @@ def configure(android, project, values=None):
     gradle = android / 'build.gradle'
     activity = android / 'src/main/java/com/godot/game/GodotApp.java'
     resource = android / 'res/values/ubs_eos.xml'
-    gradle_text, gradle_block = block(gradle.read_text(), 'DEPENDENCIES', '''dependencies {
+    gradle_text, gradle_block = block(gradle.read_text(), 'DEPENDENCIES', '''android {
+    compileOptions { coreLibraryDesugaringEnabled true }
+}
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.security:security-crypto:1.0.0'
