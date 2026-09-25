@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install pinned native dependencies into the isolated lab, never production addons.
+"""Install pinned native dependencies into the lab, or explicitly into the game.
 
 Release archives include Epic's SDK; use is subject to its license. This tool does
 not configure portals, install APKs, launch VR or write credentials.
@@ -22,7 +22,7 @@ CHECKSUMS = {
 }
 
 
-def install(platform, cache):
+def install(platform, cache, project=LAB):
     name = f"epic-online-services-godot-{platform}-{COMMIT}.zip"
     archive = cache / name
     if not archive.exists():
@@ -30,7 +30,7 @@ def install(platform, cache):
             f"https://github.com/3ddelano/epic-online-services-godot/releases/download/2.3.1/{name}", archive)
     if hashlib.sha256(archive.read_bytes()).hexdigest() != CHECKSUMS[platform]:
         raise SystemExit(f"Checksum mismatch: {archive}")
-    target = LAB / "addons/epic-online-services-godot"
+    target = project / "addons/epic-online-services-godot"
     prefix = "epic-online-services-godot/addons/epic-online-services-godot/"
     with zipfile.ZipFile(archive) as bundle:
         for info in bundle.infolist():
@@ -50,19 +50,21 @@ def install(platform, cache):
         "release": "2.3.1", "commit": COMMIT, "sha256": CHECKSUMS[platform],
         "source": "https://github.com/3ddelano/epic-online-services-godot",
     }, indent=2) + "\n")
-    print(f"Installed EOSG 2.3.1 native {platform} bindings in lab only")
+    print(f"Installed EOSG 2.3.1 native {platform} bindings in {project.name}")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--platform", choices=CHECKSUMS, action="append", dest="platforms")
     parser.add_argument("--cache", type=Path, default=ROOT / "builds/eos-sdk-cache")
+    parser.add_argument("--game", action="store_true", help="Install native EOSG in the gameplay project instead of the isolated lab")
     args = parser.parse_args()
     args.cache.mkdir(parents=True, exist_ok=True)
     for platform in args.platforms or ["linux"]:
-        install(platform, args.cache)
-    shutil.copytree(ROOT / "addons/godot_meta_toolkit", LAB / "addons/godot_meta_toolkit", dirs_exist_ok=True)
-    print("Copied existing pinned Meta toolkit. No account configuration or headset launch performed.")
+        install(platform, args.cache, ROOT if args.game else LAB)
+    if not args.game:
+        shutil.copytree(ROOT / "addons/godot_meta_toolkit", LAB / "addons/godot_meta_toolkit", dirs_exist_ok=True)
+    print("Native setup complete. No account configuration or headset launch performed.")
 
 
 if __name__ == "__main__":

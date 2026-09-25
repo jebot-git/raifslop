@@ -174,6 +174,11 @@ scheduling real store-account acceptance tests. Do not publish credentials in
 this public repository. No portal configuration or agreements were changed by
 this research.
 
+Status update, 2026-09-25: the application owner confirmed Meta DUC approval for
+User ID, User profile, Friends and Invites. This satisfies the stated access
+prerequisite; it does not establish that runtime Quest identity, friend queries
+or invite/join tests have passed. See the [current implementation roadmap](EOS_PACKET_OPTIMIZATION.md).
+
 Suggested gates, in order:
 
 1. **Identity/package:** minimal Quest + desktop fixture initializes EOS and

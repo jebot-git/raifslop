@@ -26,7 +26,7 @@ func send_pose()->void:
  if not net.active:return
  pose.serial+=1
  net.states[net.multiplayer.get_unique_id()]=pose.duplicate(true)
- net._submit_pose.rpc_id(1,pose)
+ net._submit_pose.rpc_id(1,net.PoseCodec.encode(pose))
 func hand(at:Transform3D)->void:
  pose.right=Sites.pose(LOCATION)*at
  send_pose()

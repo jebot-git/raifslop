@@ -33,6 +33,13 @@ func _initialize():
  check(view.categories.size()==5 and not JSON.stringify(view).contains(token.sha256_text()),"Public rankings contain no identity secrets")
  for i in 60:restored.connect_player(100+i,"%064x"%i,"Angler %02d"%i)
  check(restored.snapshot().categories.catches.size()==50,"Network rankings remain bounded")
+ var before:Dictionary=restored.snapshot()
+ for row in restored.records.values():row.golf={"private_history":"x".repeat(10000)}
+ check(restored.snapshot()==before,"Golf history never enters fishing wire rankings")
+ for category in Board.CATEGORIES:
+  for row in before.categories[category]:check(Board.valid_projection(row,category),"Projected category validates")
+ var projected:Dictionary=before.categories.catches[0].duplicate(true);projected.golf={}
+ check(not Board.valid_projection(projected,"catches"),"Unexpected projected fields rejected")
  var corrupt:=FileAccess.open(path,FileAccess.WRITE);corrupt.store_string("broken");corrupt.close()
  restored.start(path);restored.connect_player(2,token,"One")
  check(restored.save()==ERR_FILE_CORRUPT and FileAccess.get_file_as_string(path)=="broken","Corrupt store is not overwritten")

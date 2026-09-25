@@ -47,7 +47,7 @@ func run():
   for n in (3-i):
    var d={"state":1,"location":"lakeside","species":i,"length":g.Session.SPECIES[i].length*1.14,"caught":false}
    board.observe(i+1,d);d.state=4;board.observe(i+1,d);d.state=5;d.caught=true;board.observe(i+1,d)
- g.network.leaderboard_view=board.snapshot();g.network.active=true
+ g.network.leaderboard=board;g.network.active=true
  if "--capture" in OS.get_cmdline_user_args():
   DirAccess.make_dir_recursive_absolute("res://test-results/quiet-interface")
   if g.xr:
@@ -57,7 +57,7 @@ func run():
   await capture(g,"leaderboard")
   check(g.avatar_menu.active_page=="leaderboard","Header opens leaderboard in menu")
   var page=g.avatar_menu.pages.leaderboard.page
-  page.category="exceptional";page.get_child(1).value="exceptional";page.get_child(1).update_label();page.refresh();await capture(g,"exceptional")
+  page.category="exceptional";page.get_child(1).value="exceptional";page.get_child(1).update_label();page.poll();await capture(g,"exceptional")
   g._toggle_avatar_menu();g.hud.hide();g.avatar.hide()
   g.avatar.process_mode=Node.PROCESS_MODE_DISABLED
   g.rod.show()

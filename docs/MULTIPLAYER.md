@@ -25,7 +25,7 @@ FPSloppa's TwoVoIP integration supplies 48 kHz mono Opus, 20 ms frames, RNNoise 
 
 FPSloppa’s shoulder radio supplies a second channel to **all anglers on the server**, regardless of water or distance. Reach to the **left shoulder**, squeeze grip to take the radio, and hold the **left trigger** to transmit. Release trigger to stop talking; release grip to dock it. While the radio is held, voice activation cannot leak speech onto the nearby channel. The rod remains in the right hand. Radio playback uses FPSloppa’s narrow-band filtering and on/off click cues; existing player mute, Mute all, Listen only, and host voice policy apply. Opening the menu, losing focus or controller tracking releases the radio.
 
-This development build uses **protocol 11**, including shared BBQ ownership/cooking/cooler snapshots, explicit terminal-tackle visibility/positions, server accomplishments and classic/feeder/lure rig selection. Update clients and server together; older clients cannot join. Avatar offer acknowledgements and transfer cancellation/recovery are retained.
+This development build uses **protocol 19**, including shared BBQ ownership/cooking/cooler deltas and time anchors, explicit terminal-tackle visibility/positions, server accomplishments and classic/feeder/lure rig selection. Update clients and server together; older clients cannot join. Avatar offer acknowledgements and transfer cancellation/recovery are retained.
 
 Android microphone capture requests `android.permission.RECORD_AUDIO` when enabled. The retained Quest development preset declares RECORD_AUDIO and INTERNET and includes TwoVoIP's ARM64 native library. Optional avatar tracking uses a shared vendor permission queue; retained Pico permission handling does not imply a maintained Pico build. Pico OS 6 support is a future goal only; see [tracking setup](AVATAR_TRACKING.md). Eye tracking never affects cast aim. Synthetic tests use generated tones, never the microphone.
 
@@ -35,7 +35,7 @@ The host relays owner-simulated fishing and locomotion. Twenty updates per secon
 
 This is cooperative replication, not an authoritative competitive simulation: bounds, types, membership, sequences and rate limits are validated, but clients can still falsify catches or movement. Remote players do not physically collide or affect another player's fish. Whole saved journals are never transmitted.
 
-Custom avatars use FPSloppa's server-mediated SHA-256 protocol: self-contained VRM validation, 25 MB maximum per file, 32 KiB chunks, eight-chunk windows, 2 MiB/s aggregate upload per transfer service, worker-thread disk operations, timeouts, and a 1 GB cache cap. Downloads and local imports share the external `data/vrm/` folder. Legacy caches are copied over without removing originals. A simple angler appears while a model downloads. Imported avatars selected for play are shared with session participants.
+Custom avatars use FPSloppa's server-mediated SHA-256 protocol: self-contained VRM validation, 25 MB maximum per file, 32 KiB disk chunks, independent 64 KiB acknowledgement windows, fair 192 KiB/s aggregate content upload per transfer service, worker-thread disk operations, timeouts, and a 1 GB cache cap. Downloads and local imports share the external `data/vrm/` folder. Legacy caches are copied over without removing originals. A simple angler appears while a model downloads. Imported avatars selected for play are shared with session participants.
 
 Source provenance is recorded in [FPSLOPPA_REUSE.md](FPSLOPPA_REUSE.md). ENet lifecycle/20 Hz replication conventions, voice capture/relay/playback, permissions/preferences, avatar verification/transfer and disk-worker code are reused or adapted; FPS combat, inventory and map systems are omitted.
 
@@ -51,9 +51,24 @@ The integration runner starts real independent ENet processes in isolated save d
 Native stereo/controller integration: `python3 tools/test_multiplayer_xr.py` runs a simulated Monado HMD host and a separate Vulkan desktop client. See [stereo captures and known shutdown diagnostics](VALIDATION.md#multiplayer-and-fpsloppa-reuse-2026-09-14).
 
 
+### EOS packet budget (experimental branch)
+
+Protocol 19 retains compact tracking introduced in protocol 18 and packs tracked poses into independently decodable binary snapshots
+(up to 468 bytes for current full tracking), uses plain unreliable pose delivery
+with wrap-safe serial rejection, and projects fishing rankings without duplicating
+other categories or golf history. Golf rankings are sent separately on change or
+join, rather than with every round update.
+
+The ENet worker exercises transport-independent framing below Godot RPCs: each
+send is at most 994 bytes, reserving six bytes for EOSG. Large reliable messages
+are reassembled with bounded sizes, reservations and deadlines; oversized
+unreliable messages fail explicitly. Avatar disk chunks stay at 32 KiB while the acknowledgement window is 64 KiB; framing subdivides chunks on the wire. The application scheduler paces traffic classes, coalesces superseded poses, and expires stale voice. See [traffic budgets and validation](EOS_TRAFFIC_SCHEDULING.md). These bounds are not a WAN latency guarantee. The game still uses ENet;
+live EOS gameplay integration and relay stress testing remain pending.
+See [implementation and measured sizes](EOS_PACKET_OPTIMIZATION.md).
+
 ### Transport threading
 
-`threaded_peer.gd` gives each ENet connection one socket-owning worker. Native ENet polling, acknowledgements and packet receipt continue through main-thread stalls. Bounded packet/event queues deliver to SceneMultiplayer on the main thread; game state, RPCs, avatar scene instantiation and voice dispatch stay there. This does not make gameplay simulation or microphone capture independent of frame stalls. Closing/leaving joins the worker. The seven existing channels remain compatible with stock ENet. Fishing’s application handshake is protocol 11; protocol 3 added radio, protocol 4 added avatar offer/cancel/recovery messages, and protocol 5 adds visible tackle state.
+`threaded_peer.gd` gives each ENet connection one socket-owning worker. Native ENet polling, acknowledgements and packet receipt continue through main-thread stalls. Bounded packet/event queues deliver to SceneMultiplayer on the main thread; game state, RPCs, avatar scene instantiation and voice dispatch stay there. This does not make gameplay simulation or microphone capture independent of frame stalls. Closing/leaving joins the worker. The seven logical channels remain. Gameplay sessions now opt into bounded packet framing; both endpoints must run protocol 19. Standalone unframed transport users retain stock ENet compatibility. Fishing’s application handshake is protocol 19; protocol 3 added radio, protocol 4 added avatar offer/cancel/recovery messages, and protocol 5 adds visible tackle state.
 
 FPSloppa checkout `8898d03a33f42e6eec472506fccce6d68dad83d1` threads disk jobs rather than its ENet peer. Its immutable-job/main-thread-completion pattern is retained here; the socket worker is a local addition. Its decoded-VRM cache pattern is also applied so repeated remote models reuse a decoded PackedScene.
 
@@ -72,3 +87,43 @@ Latest accepted avatar selection wins. Superseded transfers are cancelled; rejec
 ## Server accomplishments and separate binary
 
 Protocol 6 added persistent player identities and host-owned accomplishment rankings; 7 added feeder rigs and 8 added lure rigs; 9 expands the shared species roster to 38. See [dedicated server and leaderboard details](DEDICATED_SERVER.md). The menu header now opens Leaderboard; controls are in the [HTML manual](MANUAL.html).
+
+### Requested standings and BBQ replication (protocol 19)
+
+The leaderboard panel fetches ten rows for its selected fishing category or golf
+course, with Previous/Next controls across the existing top 50. It refreshes every
+two seconds while visible; joining and playing with the panel closed send no
+ranking rows. The server accepts two requests/second with a four-request burst
+per admitted player. Request IDs prevent old selections from replacing new ones.
+
+BBQ state starts with a reliable baseline at the player's location. Later messages
+carry changed items, cooler/revision metadata, and cooking time anchors. Cooking
+renders locally between five-second anchor corrections; ownership, reset timers
+and station expiry remain server-authoritative. Empty stations are sent once,
+and missing baselines trigger a rate-limited full resync. State is cleared on leave.
+
+### Online EOS lobbies
+
+The multiplayer menu now includes Host online, Join online, Copy invite, Invite
+friends and Accept invite. EOS initialization is opt-in and requires local
+configuration plus the optional pinned native extension. Use
+`--eos-config /absolute/path/eos.cfg`; existing IP host/join continues through ENet.
+See [EOS gameplay transport setup and validation](EOS_GAMEPLAY_TRANSPORT.md).
+Linux desktop direct/forced-relay checks passed. Quest Android bootstrap and
+entitled-account acceptance remain required before a headset EOS release.
+
+### Named online lobbies
+
+In **Together**, choose **Host a lobby**, enter its name, and optionally enable
+**Password protect**. **Open lobby** creates a listed EOS room for eight players,
+including the host. **Browse lobbies** shows names, occupancy and lock status;
+select a room, enter its password if required, and join. New rooms can take a
+moment to appear; use Refresh. Leaving as host ends the session.
+
+Use **Invite Meta friends** in the current lobby to open Meta's native invite
+panel. **Copy Meta invitation link + join code** prepares text to paste into a
+message: the Meta destination link opens the app, then the recipient selects
+the lobby in Together or pastes its join code. Send passwords separately.
+Pending Meta invitations require explicit acceptance, including a password for
+locked rooms. This experimental branch still requires the Android EOS package
+and real-headset acceptance checks in [EOS gameplay transport](EOS_GAMEPLAY_TRANSPORT.md).

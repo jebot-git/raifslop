@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Real ENet processes, isolated saves, FPSloppa Opus fixture; no microphone capture."""
-import os, pathlib, subprocess, tempfile, time, struct, json
+import os, pathlib, subprocess, tempfile, time, struct, json, re
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 GODOT=os.environ.get('GODOT_BIN','/home/blux/.local/bin/Godot_v4.7.2-stable_linux.x86_64')
 def main():
@@ -12,13 +12,17 @@ def main():
         header=json.dumps(doc,separators=(',',':')).encode(); header+=b' '*((-len(header))%4)
         payload=struct.pack('<II',len(header),0x4e4f534a)+header+data[20+size:]
         avatar=base/'custom.vrm'; avatar.write_bytes(struct.pack('<III',0x46546c67,2,len(payload)+12)+payload)
+        # Source upload plus two server-mediated downloads share the content budget.
+        budget_source=(ROOT/'scripts/network/bulk_read_budget.gd').read_text()
+        rate=int(re.search(r'const RATE := ([0-9_]+)',budget_source)[1].replace('_',''))
+        transfer_wait=max(35, 3*avatar.stat().st_size/rate+30)
         failures=[]
         for dedicated,port in [(True,28567),(False,28568)]:
             jobs=[]
             def launch(role,extra=()):
                 env=dict(os.environ,XDG_DATA_HOME=str(base/(str(port)+role)),XDG_CONFIG_HOME=str(base/'config'))
                 path=base/(str(port)+'-'+role+'.log'); stream=path.open('w')
-                args=[GODOT,'--headless','--xr-mode','off','--path',str(ROOT),'--script','res://tests/multiplayer.gd','--',role,str(port),str(avatar),*extra,'--asset-root',str(base/(str(port)+role)/'data')]
+                args=[GODOT,'--headless','--xr-mode','off','--path',str(ROOT),'--script','res://tests/multiplayer.gd','--',role,str(port),str(avatar),*extra,'--transfer-timeout',str(transfer_wait),'--asset-root',str(base/(str(port)+role)/'data')]
                 if role=='server' and os.environ.get('FISHING_SERVER_BIN'):
                     args=['stdbuf','-oL',os.environ['FISHING_SERVER_BIN'],'--verbose','--','--server','--port',str(port),'--asset-root',str(base/(str(port)+role)/'data'),'--leaderboard-path',str(base/'leaderboard.json')]
                 elif os.environ.get('TEST_VERBOSE'): args.insert(1,'--verbose')
@@ -37,7 +41,7 @@ def main():
                     if role=='server' and os.environ.get('FISHING_SERVER_BIN'):
                         if process.poll() is not None:failures.append((port,role,'server exited'))
                         continue
-                    try: process.wait(timeout=65)
+                    try: process.wait(timeout=transfer_wait*2+90)
                     except subprocess.TimeoutExpired: process.kill(); process.wait()
                     stream.close(); text=path.read_text()
                     print(f'--- {port} {role} ---\n{text}')

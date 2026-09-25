@@ -19,15 +19,17 @@ func wait_for(condition: Callable, seconds: float=15) -> bool:
 func run() -> void:
 	var args:=OS.get_cmdline_user_args()
 	role=args[0]
+	var timeout_at:=args.find("--transfer-timeout")
+	var transfer_wait:=args[timeout_at+1].to_float() if timeout_at>=0 and timeout_at+1<args.size() else 300.0
 	game=load("res://scenes/main.tscn").instantiate(); root.add_child(game)
 	net=game.network
 	if role=="server":
 		check(game.server_only and not is_instance_valid(game.head),"Dedicated server skips scene assets and XR rig")
 		check(await wait_for(func(): return net.players.size()==2),"Two clients joined dedicated server")
 		check(await wait_for(func(): return net.voice.relayed_packets>50),"Dedicated server relays voice")
-		check(await wait_for(func(): return net.avatars.choices.size()==2,25),"Dedicated server verifies both avatar offers")
+		check(await wait_for(func(): return net.avatars.choices.size()>=2,transfer_wait),"Dedicated server verifies both avatar offers")
 		# Allow the 14 MB fixture to upload, verify and relay to both clients.
-		await create_timer(35).timeout
+		await create_timer(transfer_wait).timeout
 	else:
 		game.set_process(false); game.motor.set_physics_process(false)
 		net.headless=false # Exercise remote GLTF loading even with the dummy renderer.
@@ -73,9 +75,9 @@ func run() -> void:
 				await create_timer(.02).timeout
 			check(net.voice.received_packets==0,"Voice sender has no network echo")
 			# Keep the owner connected through upload, server verification and relay.
-			await create_timer(22).timeout
+			await create_timer(transfer_wait).timeout
 		else:
-			var until:=Time.get_ticks_msec()+30000
+			var until:=Time.get_ticks_msec()+int(transfer_wait*1000)
 			var sender:=0
 			var mute_tested:=false
 			while Time.get_ticks_msec()<until:

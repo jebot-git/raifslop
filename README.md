@@ -125,7 +125,7 @@ Meta avatar option research: [Quest and PC feasibility](docs/META_AVATARS_FEASIB
 
 ## Multiplayer and voice
 
-Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**left stick click**) remain available. Voice is positional within each location. Grab the left-shoulder radio and hold its trigger to talk to all waters. Multiplayer requires matching protocol-17 server and clients.
+Open the **Together** tab to host or join up to eight anglers. Casts, catches, avatars, tracked head/hands and locomotion are shared; Fish Guide records stay local. Voice activation is the default for new profiles; saved choices are preserved. Listen only and push to talk (**left stick click**) remain available. Voice is positional within each location. Grab the left-shoulder radio and hold its trigger to talk to all waters. Multiplayer requires matching protocol-18 server and clients.
 
 Run `./run.sh --server --port 24567` for a headless dedicated server. LAN/Internet connections use direct UDP; Internet hosts need port forwarding or a reachable server. See [setup, controls and limitations](docs/MULTIPLAYER.md) and [FPSloppa code reuse](docs/FPSLOPPA_REUSE.md).
 
@@ -216,8 +216,14 @@ Open **Menu → BBQ** for shared cooking. Grip the tongs, hold trigger near food
 
 ## Golf integration branch
 
-This branch integrates GolfMinus into the existing Fishing menu, avatar, radio, shared records and clubhouse BBQ. See [integration notes](docs/GOLF_INTEGRATION.md) for dedicated-server packaging and verification. Current development clients and servers must both use protocol 17 (manual BBQ food handling). Published v0.1.17 packages use protocol 16.
+This branch integrates GolfMinus into the existing Fishing menu, avatar, radio, shared records and clubhouse BBQ. See [integration notes](docs/GOLF_INTEGRATION.md) for dedicated-server packaging and verification. Current development clients and servers must both use protocol 19 (compact poses, bounded packet framing, requested ranking pages and BBQ deltas). Published v0.1.17 packages use protocol 16.
 
 The integrated Golf page offers Spyglass Hill, Pebble Beach, Cypress Point and Poppy Hills, each with 18 holes in one connected world. See [course sources, hip tracking and validation](docs/HIP_TRACKING_AND_COURSES.md).
 
 Normal VR tracking uses real metres. Avatar size follows measured standing eye height; use **Tracking → Measure standing height — stand straight** to save an exact fit. Crouching and recentering do not shrink the avatar or raise the physical floor. Golf menus support the same trigger pointer as fishing; the clubhouse wall also accepts fingertip touch. The golf handedness toggle selects the club and menu hand. Grip or trigger enables club contact and locks stick movement until released. The club bag uses click-to-open, point-and-centre selection. See the [gameplay review and updated controls](docs/GAMEPLAY_REVIEW_2026-09-22.md).
+
+The experimental EOS branch now includes an opt-in gameplay transport and online
+lobby controls. Desktop direct/forced-relay tests passed; Quest packaging and
+Meta account/invite acceptance remain pending. See
+[EOS gameplay transport](docs/EOS_GAMEPLAY_TRANSPORT.md) for local configuration
+and validation commands. Existing ENet hosting remains available.

@@ -78,8 +78,9 @@ automatically create or modify portal resources.
    using the real Meta app identity. Put any Meta app secret into the provider's
    server-side portal configuration, never the APK, this repository or chat.
    Ensure test accounts can access the development sandbox.
-4. In the Meta developer dashboard, enable the user-ID access required for
-   logged-in identity/proofs, and configure a destination API name **eos_lab**.
+4. Meta DUC for **User ID, User profile, Friends and Invites** was confirmed
+   granted by the application owner on **2026-09-25**. Configure a destination
+   API name **eos_lab** in the Meta developer dashboard.
    Enable the appropriate joinability/invite behavior and eight-player group
    capacity. Use entitled test accounts and a channel/package/signing setup
    matching that Meta app. Set `app_id` and `destination` in the local config.
@@ -193,15 +194,15 @@ Local logs: `user://logs/eos-meta-lab.log`. RTT counters are visible in the lab;
 copied only through the explicit UI action. No generic SDK log callback dumps
 tokens or arbitrary platform payloads.
 
-## Next production integration step
+## Gameplay integration status
 
-After live identity/lobby/probe checks pass, add a transport factory to
-`scripts/network/session.gd`. Preserve host peer ID 1 and existing gameplay
-authority. Do not attach this prototype peer directly to the full game:
-current pose packets and 32 KiB avatar chunks exceed EOSG's packet budget, and
-its unreliable-ordered mode becomes reliable. Compact tracking updates, keep
-unreliable delivery with stale-serial rejection, and implement bounded bulk
-transfer before migrating gameplay, voice and avatars.
+The game now has a transport factory and bounded main-thread EOSG adapter, plus
+online lobby/menu integration. The lab remains a separate protocol-1 probe;
+its raw peer is not attached directly to gameplay. See
+[EOS gameplay transport](../../docs/EOS_GAMEPLAY_TRANSPORT.md) for setup,
+actual queue/channel handling, desktop direct/forced-relay results and remaining
+Quest gates. Protocol 19 retains compact tracking, framing, scheduling, requested
+ranking pages and BBQ deltas/time anchors.
 
 Pinned dependency: EOSG **2.3.1**, source commit
 `56238973e2cd7ac9ac99ca14f88934465f0a8997`; Meta toolkit **1.0.3-stable** from

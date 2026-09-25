@@ -10,12 +10,16 @@ func setup(owner_session: Node, back: Callable) -> void:
 	var heading:=Label.new(); heading.text="Fish together"; heading.add_theme_font_size_override("font_size",28); add_child(heading)
 	var name_input:=LineEdit.new(); name_input.placeholder_text="Your name"; name_input.text=session.display_name; name_input.max_length=32; add_child(name_input)
 	name_input.text_changed.connect(func(value: String): session.display_name=value;session.save_preferences())
-	var row:=HBoxContainer.new(); add_child(row)
+	var online_menu=preload("res://scripts/network/lobby_menu.gd").new();add_child(online_menu);online_menu.setup(session)
+	var lan_toggle:=CheckButton.new();lan_toggle.text="Direct IP / LAN";add_child(lan_toggle)
+	var lan:=VBoxContainer.new();add_child(lan);lan.visible=false
+	lan_toggle.toggled.connect(func(value:bool):lan.visible=value)
+	var row:=HBoxContainer.new(); lan.add_child(row)
 	var address:=LineEdit.new(); address.text=session.host_address; address.max_length=253; address.placeholder_text="Host IP or hostname"; address.size_flags_horizontal=SIZE_EXPAND_FILL; row.add_child(address)
 	var port:=SpinBox.new(); port.min_value=1024; port.max_value=65535; port.value=session.preferred_port; row.add_child(port)
 	address.text_changed.connect(func(value: String): session.host_address=value;session.save_preferences())
 	port.value_changed.connect(func(value: float): session.preferred_port=int(value);session.save_preferences())
-	var actions:=HBoxContainer.new(); add_child(actions)
+	var actions:=HBoxContainer.new(); lan.add_child(actions)
 	button(actions,"Host",func(): session.host(int(port.value)))
 	button(actions,"Join",func(): session.join(address.text,int(port.value)))
 	button(actions,"Disconnect",func(): session.leave())
@@ -37,7 +41,7 @@ func setup(owner_session: Node, back: Callable) -> void:
 	devices.configure(options,"Microphone device");devices.value=session.voice.input_device;devices.update_label()
 	devices.selected.connect(session.voice.select_input_device)
 	voice_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; add_child(voice_status)
-	var note:=Label.new(); note.text="Nearby voice: T / left stick click. Radio to all waters: hold B.\nVR radio: grab at left shoulder, hold trigger to talk, release grip to dock.\nSelect a player to mute them. Internet hosting needs UDP port forwarding."
+	var note:=Label.new(); note.text="Nearby voice: T / left stick click. Radio to all waters: hold B.\nVR radio: grab at left shoulder, hold trigger to talk, release grip to dock.\nSelect a player to mute them. IP hosting needs UDP port forwarding; online lobbies use EOS."
 	note.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_font_size_override("font_size",16); add_child(note)
 	var bottom:=HBoxContainer.new(); add_child(bottom)
@@ -51,6 +55,7 @@ func _process(delta: float) -> void:
 func refresh() -> void:
 	if not session: return
 	status.text=session.status
+	if not session.online.pending_reference.is_empty():status.text+="\nAn online invite is waiting. Open Join with code / invitation to accept."
 	voice_status.text=session.voice.message+(" · ALL WATERS RADIO" if session.voice.radio_active else " · speaking" if session.voice.transmitting else "")
 	if not session.avatars.message.is_empty(): voice_status.text+="\n"+session.avatars.message
 	roster.clear()

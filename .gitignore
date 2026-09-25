@@ -14,3 +14,6 @@ data/
 
 # Intermediate unbaked foreground exports; editable Blender sources are retained.
 source/models/locations/
+
+# Optional, pinned EOSG native bindings installed by tools/eos/setup_lab.py --game.
+addons/epic-online-services-godot/

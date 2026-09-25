@@ -25,7 +25,7 @@ func send_pose(course:bool,serial:int)->void:
  data.left_valid=true;data.right_valid=true
  check(schema.valid(data),"Activity pose passes shared schema validation")
  net.states[net.multiplayer.get_unique_id()]=data
- net._submit_event.rpc_id(1,data)
+ net._submit_event.rpc_id(1,net.PoseCodec.encode(data))
 func run()->void:
  var args:=OS.get_cmdline_user_args();role=args[0];var port:=int(args[1])
  # No render, microphone, or fake pose traffic: exercise the real ENet/session RPCs.
@@ -84,17 +84,17 @@ func run()->void:
    var state:Dictionary=net.states[net.multiplayer.get_unique_id()]
    var site:Transform3D=load("res://scripts/bbq/sites.gd").pose("golf_spyglass_clubhouse")
    state.serial+=1;state.right=site*Transform3D(Basis.IDENTITY,net.bbq.model.stations.golf_spyglass_clubhouse.items[6].pos)
-   net._submit_event.rpc_id(1,state);await create_timer(.25).timeout
+   net._submit_event.rpc_id(1,net.PoseCodec.encode(state));await create_timer(.25).timeout
    net.bbq.request("grab",6,1)
    check(await until(func():return net.bbq.model.stations.golf_spyglass_clubhouse.items[6].owner==net.multiplayer.get_unique_id()),"Shared BBQ grants remote tongs ownership")
    var food:Dictionary=net.bbq.model.stations.golf_spyglass_clubhouse.items[0]
    state.serial+=1;state.right=site*Transform3D(Basis.IDENTITY,load("res://scripts/bbq/model.gd").resting_pose(food).origin+Vector3(0,0,.25))
-   net._submit_event.rpc_id(1,state);await create_timer(.25).timeout
+   net._submit_event.rpc_id(1,net.PoseCodec.encode(state));await create_timer(.25).timeout
    net.bbq.request("clamp",0,1)
    check(await until(func():return net.bbq.model.stations.golf_spyglass_clubhouse.items[0].place=="tongs"),"Clubhouse food clamps to the held tongs")
    food=net.bbq.model.stations.golf_spyglass_clubhouse.items[0]
    state.serial+=1;state.right=site*Transform3D(Basis.IDENTITY,load("res://scripts/bbq/sites.gd").grill(1)-food.grip_offset.origin)
-   net._submit_event.rpc_id(1,state);await create_timer(.25).timeout
+   net._submit_event.rpc_id(1,net.PoseCodec.encode(state));await create_timer(.25).timeout
    net.bbq.request("unclamp",0,1)
    check(await until(func():return net.bbq.model.stations.golf_spyglass_clubhouse.items[0].cook[0]>0),"Server cooks golf BBQ food while course turn is pending")
    net.bbq.request("release")

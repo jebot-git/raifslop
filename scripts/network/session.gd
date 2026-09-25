@@ -2,7 +2,9 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 17 # Shared BBQ carries food with replicated tongs poses.
+const VERSION := 19 # Requested ranking pages and BBQ deltas/time anchors.
+const TransportFactory = preload("res://scripts/network/transport_factory.gd")
+const PoseCodec = preload("res://scripts/network/pose_codec.gd")
 const State = preload("res://scripts/network/state.gd")
 var leaderboard=preload("res://scripts/network/leaderboard.gd").new()
 var leaderboard_view:Dictionary={}
@@ -16,20 +18,11 @@ func publish_leaderboard()->void:
 	if not active or not multiplayer.is_server():return
 	leaderboard_view=leaderboard.snapshot();leaderboard_changed.emit()
 	if is_instance_valid(golf):golf.publish()
-	for peer in players:
-		if peer>1:_leaderboard.rpc_id(peer,leaderboard_view)
 	var result:int=leaderboard.save()
 	if result!=OK:push_warning("Server leaderboard save failed: "+error_string(result))
-@rpc("authority","call_remote","reliable",0)
-func _leaderboard(data:Dictionary)->void:
-	if multiplayer.is_server():return
-	if not data.get("categories") is Dictionary or data.categories.size()!=5:return
-	for category in leaderboard.CATEGORIES:
-		if not data.categories.get(category) is Array or data.categories[category].size()>50:return
-		for row in data.categories[category]:
-			if not leaderboard.valid_row(row):return
-	leaderboard_view=data.duplicate(true);leaderboard_changed.emit()
 
+var rankings = preload("res://scripts/network/rankings.gd").new()
+var online: Node
 var golf: Node
 var bbq: Node
 var root_game: Node
@@ -76,7 +69,9 @@ func setup(root: Node, server_only: bool = false) -> void:
 	headless = DisplayServer.get_name()=="headless"
 	if not dedicated: load_preferences()
 	name = "Network"
+	online=preload("res://scripts/network/eos/runtime.gd").new();add_child(online);online.setup(self)
 	golf=preload("res://addons/golfminus/scripts/golf/network_service.gd").new();add_child(golf);golf.setup(self)
+	add_child(rankings);rankings.setup(self)
 	bbq=preload("res://scripts/bbq/network.gd").new();add_child(bbq);bbq.setup(self)
 	add_child(permissions)
 	add_child(avatars); avatars.setup(self)
@@ -113,36 +108,39 @@ func save_preferences() -> void:
 func host(port: int = 24567, bind_address: String = "*") -> Error:
 	leave()
 	if port<1024 or port>65535: status="Use a port from 1024 to 65535"; return ERR_INVALID_PARAMETER
-	var peer := preload("res://scripts/network/threaded_peer.gd").new()
-	peer.set_bind_ip(bind_address)
-	var error := peer.create_server(port,SERVER_MAX_PLAYERS if dedicated else SERVER_MAX_PLAYERS-1,7)
-	if error!=OK: status="Cannot host: "+error_string(error); changed.emit(); return error
-	multiplayer.multiplayer_peer = peer
-	active = true
-	leaderboard.start(leaderboard_path())
-	if not dedicated:
-		players[1] = {"name":clean_name(display_name)}
-		leaderboard.connect_player(1,player_token,clean_name(display_name))
-	publish_leaderboard()
-	status = "Hosting on UDP %d%s" % [port," (dedicated)" if dedicated else ""]
-	voice.set_mode(voice.mode)
-	changed.emit()
-	print(status)
+	var result:=TransportFactory.host(port,SERVER_MAX_PLAYERS if dedicated else SERVER_MAX_PLAYERS-1,bind_address)
+	if result.error!=OK:status="Cannot host: "+error_string(result.error);changed.emit();return result.error
+	attach_transport(result.peer,true,"UDP %d"%port)
 	return OK
 
 func join(address: String, port: int = 24567) -> Error:
 	leave()
 	if address.strip_edges().is_empty() or port<1024 or port>65535: status="Enter a host address and port (1024–65535)"; return ERR_INVALID_PARAMETER
-	var peer := preload("res://scripts/network/threaded_peer.gd").new()
-	var error := peer.create_client(address.strip_edges(),port,7)
-	if error!=OK: status="Cannot join: "+error_string(error); changed.emit(); return error
-	multiplayer.multiplayer_peer = peer
-	connect_deadline = clock+15
-	status = "Connecting to %s:%d…" % [address,port]
-	changed.emit()
+	var result:=TransportFactory.join(address.strip_edges(),port)
+	if result.error!=OK:status="Cannot join: "+error_string(result.error);changed.emit();return result.error
+	attach_transport(result.peer,false,"%s:%d"%[address,port])
 	return OK
 
-func leave(reason: String = "Offline") -> void:
+func attach_transport(peer:MultiplayerPeer,hosting:bool,label:String)->void:
+	multiplayer.multiplayer_peer=peer
+	if hosting:
+		active=true;leaderboard.start(leaderboard_path())
+		if not dedicated:
+			players[1]={"name":clean_name(display_name)}
+			var identity:String=peer.identity_token(1) if peer.has_method("identity_token") else player_token
+			leaderboard.connect_player(1,identity,clean_name(display_name))
+		publish_leaderboard();voice.set_mode(voice.mode)
+		status="Hosting on "+label+(" (dedicated)" if dedicated else "")
+	else:
+		connect_deadline=clock+25;status="Connecting to "+label+"…"
+	changed.emit()
+	print(status)
+
+func leave(reason: String = "Offline",release_online:bool=true) -> void:
+	if is_instance_valid(online):
+		online.auth.reset()
+		if release_online:online.stop()
+	rankings.reset()
 	if is_instance_valid(golf):golf.reset()
 	if is_instance_valid(bbq):bbq.reset()
 	if active and multiplayer.is_server():leaderboard.save()
@@ -177,6 +175,10 @@ func _hello(version: int, player_name: String, token: String) -> void:
 	var id := multiplayer.get_remote_sender_id()
 	if not waiting.has(id): return
 	waiting.erase(id)
+	# EOS records bind to the authenticated native PUID, never a client-supplied
+	# installation token. Local ENet identities keep their existing persistence.
+	if multiplayer.multiplayer_peer.has_method("identity_token"):
+		token=multiplayer.multiplayer_peer.identity_token(id)
 	if version!=VERSION or players.size()>=SERVER_MAX_PLAYERS or not leaderboard.valid_token(token) or token.sha256_text() in leaderboard.peers.values():
 		multiplayer.multiplayer_peer.disconnect_peer(id)
 		return
@@ -184,7 +186,7 @@ func _hello(version: int, player_name: String, token: String) -> void:
 	leaderboard.connect_player(id,token,clean_name(player_name))
 	publish_leaderboard()
 	_publish_roster()
-	for owner in states: _state_event.rpc_id(id,owner,states[owner])
+	for owner in states: _state_event.rpc_id(id,owner,PoseCodec.encode(states[owner]))
 	avatars.sync_peer(id)
 
 func _publish_roster() -> void:
@@ -210,6 +212,8 @@ func _roster(data: Dictionary) -> void:
 	changed.emit()
 
 func _peer_left(id: int) -> void:
+	rankings.limits.erase(id)
+	if is_instance_valid(bbq):bbq.sent.erase(id);bbq.resync_limits.erase(id)
 	if is_instance_valid(golf):golf.disconnected(id)
 	if is_instance_valid(bbq):bbq.model.release_peer(id);bbq.limits.erase(id)
 	leaderboard.disconnect_player(id)
@@ -242,7 +246,7 @@ func _process(delta: float) -> void:
 		avatars.select_local(selected_path)
 	elapsed+=delta
 	if elapsed<.05: return
-	elapsed=fmod(elapsed,.05); serial+=1
+	elapsed=fmod(elapsed,.05); serial=(serial+1)&0x7fffffff
 	if is_instance_valid(root_game.golf_activity) and root_game.golf_activity.active and root_game.golf_activity.golf.godview.active:return
 	var data := State.capture(root_game,serial)
 	var event := State.event_key(data)
@@ -251,35 +255,44 @@ func _process(delta: float) -> void:
 	if multiplayer.is_server(): _accept(1,data,reliable)
 	else:
 		states[multiplayer.get_unique_id()]=data
-		if reliable: _submit_event.rpc_id(1,data)
-		else: _submit_pose.rpc_id(1,data)
+		if reliable: _submit_event.rpc_id(1,PoseCodec.encode(data))
+		else: _send_pose(1,multiplayer.get_unique_id(),PoseCodec.encode(data),false)
 
-@rpc("any_peer","call_remote","unreliable_ordered",1)
-func _submit_pose(data: Dictionary) -> void:
-	if multiplayer.is_server(): _accept(multiplayer.get_remote_sender_id(),data,false)
+# The origin is explicit metadata, not inferred by parsing Godot RPC bytes.
+func _send_pose(peer: int, owner: int, packed: PackedByteArray, relayed: bool) -> void:
+	var transport := multiplayer.multiplayer_peer
+	if transport.has_method("set_pose_source"): transport.call("set_pose_source",owner)
+	if relayed: _state_pose.rpc_id(peer,owner,packed)
+	else: _submit_pose.rpc_id(peer,packed)
+	if transport.has_method("set_pose_source"): transport.call("set_pose_source",0)
+
+@rpc("any_peer","call_remote","unreliable",1)
+func _submit_pose(data: PackedByteArray) -> void:
+	if multiplayer.is_server(): _accept(multiplayer.get_remote_sender_id(),PoseCodec.decode(data),false)
 @rpc("any_peer","call_remote","reliable",0)
-func _submit_event(data: Dictionary) -> void:
-	if multiplayer.is_server(): _accept(multiplayer.get_remote_sender_id(),data,true)
+func _submit_event(data: PackedByteArray) -> void:
+	if multiplayer.is_server(): _accept(multiplayer.get_remote_sender_id(),PoseCodec.decode(data),true)
 func _accept(id: int, data: Dictionary, reliable: bool) -> void:
 	if not players.has(id) or not State.valid(data): return
-	if states.has(id) and data.serial<=states[id].serial: return
+	if states.has(id) and not PoseCodec.newer(data.serial,states[id].serial): return
 	var guard: Dictionary=guards.get(id,{"time":clock,"tokens":8.0})
 	guard.tokens=minf(8,guard.tokens+maxf(0,clock-guard.time)*30); guard.time=clock; guards[id]=guard
 	if guard.tokens<1: return
 	guard.tokens-=1
 	if not data.location.begins_with("golf_"):leaderboard.observe(id,data)
 	_apply(id,data)
+	var packed := PoseCodec.encode(data)
 	for peer in players:
 		if peer<=1 or peer==id: continue
-		if reliable: _state_event.rpc_id(peer,id,data)
-		else: _state_pose.rpc_id(peer,id,data)
-@rpc("authority","call_remote","unreliable_ordered",1)
-func _state_pose(id: int, data: Dictionary) -> void: _apply(id,data)
+		if reliable: _state_event.rpc_id(peer,id,packed)
+		else: _send_pose(peer,id,packed,true)
+@rpc("authority","call_remote","unreliable",1)
+func _state_pose(id: int, data: PackedByteArray) -> void: _apply(id,PoseCodec.decode(data))
 @rpc("authority","call_remote","reliable",0)
-func _state_event(id: int, data: Dictionary) -> void: _apply(id,data)
+func _state_event(id: int, data: PackedByteArray) -> void: _apply(id,PoseCodec.decode(data))
 func _apply(id: int, data: Dictionary) -> void:
 	if not players.has(id) or not State.valid(data): return
-	if states.has(id) and data.serial<=states[id].serial: return
+	if states.has(id) and not PoseCodec.newer(data.serial,states[id].serial): return
 	if metrics_enabled:
 		var now:=Time.get_ticks_usec()
 		var row:Dictionary=state_arrivals.get(id,{"last":now,"count":0,"max_gap":0,"serial":-1})
@@ -299,6 +312,11 @@ func command_line() -> void:
 			"--join": address=args[i+1]
 			"--bind": bind_address=args[i+1]
 			"--name": display_name=args[i+1]
+	if "--eos-host" in args:
+		online.start(true);return
+	var eos_join:=args.find("--eos-join")
+	if eos_join>=0 and eos_join+1<args.size():
+		online.start(false,args[eos_join+1]);return
 	var error := OK
 	if "--host" in args or "--server" in args: error=host(port,bind_address)
 	elif "--join" in args: error=join(address,port)

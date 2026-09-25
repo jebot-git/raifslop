@@ -46,4 +46,7 @@ func _process(_delta: float) -> void:
 	if visible:
 		# Font/container minimum sizes settle after open_for; anchor the final size.
 		position = Vector2((get_viewport_rect().size.x-size.x)/2,get_viewport_rect().size.y-size.y-14)
-		preview.text = target.text.insert(target.caret_column,"│")
+		var display_text:=target.secret_character.repeat(target.text.length()) if target.secret else target.text
+		preview.text = display_text.insert(target.caret_column,"│")
+	else:
+		preview.text=""

@@ -1,5 +1,11 @@
 extends Node
 ## Server owns shared props and cooking; held meshes reuse replicated controller poses.
+const Replication=preload("res://scripts/bbq/replication.gd")
+var sent:Dictionary={}
+var received:Dictionary={}
+var resync_limits:Dictionary={}
+var anchor_age:=0.0
+var sync_due:=0.0
 const Model=preload("res://scripts/bbq/model.gd")
 const Sites=preload("res://scripts/bbq/sites.gd")
 var model=Model.new()
@@ -93,20 +99,53 @@ func broadcast() -> void:
   var who:=actor(peer)
   if who.is_empty():continue
   var location:String=who.location
-  _snapshot.rpc_id(peer,location,model.stations.get(location,{}),model.clock)
+  if not Sites.supported(location):
+   if sent.has(peer):sent[peer].location=""
+   continue
+  var update:=Replication.build(sent.get(peer,{}),location,model.stations.get(location,{}),model.clock)
+  if not update.is_empty():
+   sent[peer]=update.baseline
+   _delta.rpc_id(peer,update.data)
 
 @rpc("authority","call_remote","reliable",0)
-func _snapshot(location:String,state:Dictionary,clock:float) -> void:
- if not Sites.supported(location) or not is_finite(clock):return
- if state.is_empty():model.stations.erase(location)
- elif state.has("items") and state.items is Array and state.items.size()==10:
-  model.stations[location]=state.duplicate(true)
- model.clock=clock
+func _delta(data:Dictionary) -> void:
+ if multiplayer.is_server():return
+ var next:=Replication.apply(received,data)
+ if next.is_empty():
+  if Replication.valid(data) and (received.is_empty() or data.seq>received.seq) and Time.get_ticks_msec()>=sync_due:
+   sync_due=Time.get_ticks_msec()+1000
+   _resync.rpc_id(1)
+  return
+ received=next;anchor_age=0.0
+ _render_anchor()
  updated.emit()
+
+@rpc("any_peer","call_remote","reliable",0)
+func _resync() -> void:
+ if not session.active or not multiplayer.is_server():return
+ var peer:=multiplayer.get_remote_sender_id()
+ if not session.players.has(peer):return
+ var prior:Dictionary=sent.get(peer,{})
+ if prior.is_empty() or model.clock-float(resync_limits.get(peer,-10))<1:return
+ # Keep sequence monotonic when replacing an invalid/missing receiver baseline.
+ prior.location="";resync_limits[peer]=model.clock
+ broadcast()
+
+func _render_anchor() -> void:
+ model.stations.clear()
+ if received.is_empty():return
+ model.clock=received.clock+anchor_age
+ if not received.state.is_empty():
+  var state:Dictionary=received.state.duplicate(true)
+  Replication.cook(state,anchor_age)
+  model.stations[received.location]=state
 
 func _process(delta:float) -> void:
  if session==null:return
- if session.active and not multiplayer.is_server():return
+ if session.active and not multiplayer.is_server():
+  anchor_age+=maxf(0,delta);model.clock+=maxf(0,delta)
+  for state in model.stations.values():Replication.cook(state,delta)
+  return
  var occupied:Array=[]
  var peers:Array=session.players.keys() if session.active else [1]
  for peer in peers:
@@ -124,4 +163,4 @@ func _process(delta:float) -> void:
  if elapsed>=.25:elapsed=0;broadcast()
 
 func reset() -> void:
- model=Model.new();limits.clear();updated.emit()
+ model=Model.new();limits.clear();sent.clear();received.clear();resync_limits.clear();anchor_age=0;sync_due=0;elapsed=0;updated.emit()

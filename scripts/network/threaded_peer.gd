@@ -2,10 +2,20 @@ extends MultiplayerPeerExtension
 ## ENet has one owner thread. Following FPSloppa's disk-worker boundary, only
 ## packet bytes/events cross the queue; SceneMultiplayer and RPCs stay on main.
 ## This transport worker is fishing-specific; FPSloppa currently threads disk I/O.
+const Scheduler = preload("res://scripts/network/packet_scheduler.gd")
+const Frames = preload("res://scripts/network/packet_frames.gd")
 const MAX_BYTES := 8_388_608
 const MAX_PACKETS := 4096
 class Worker extends RefCounted:
 	var peer: ENetMultiplayerPeer
+	var framed := false
+	var frames := Frames.new()
+	var scheduler := Scheduler.new()
+	var queue_timeouts := 0
+	var wire_sent := 0
+	var wire_max := 0
+	var oversize := 0
+	var outgoing_oldest := 0
 	var mutex := Mutex.new()
 	var outgoing: Array = []
 	var incoming: Array = []
@@ -22,14 +32,14 @@ class Worker extends RefCounted:
 	var peer_stats: Dictionary = {}
 	var next_stats := 0
 	func connected(id: int) -> void: peers[id]=true;events.append([true,id])
-	func disconnected(id: int) -> void: peers.erase(id);events.append([false,id])
+	func disconnected(id: int) -> void: peers.erase(id);frames.drop(id);scheduler.drop(id);events.append([false,id])
 	func run() -> void:
 		peer.peer_connected.connect(connected)
 		peer.peer_disconnected.connect(disconnected)
 		while true:
 			mutex.lock()
 			if stopping:mutex.unlock();break
-			var work: Array=outgoing;outgoing=[];outgoing_bytes=0
+			var work: Array=outgoing;outgoing=[];outgoing_bytes=0;outgoing_oldest=0
 			# Signals from peer.poll synchronously append events under this lock.
 			for command in work:
 				match command[0]:
@@ -37,20 +47,32 @@ class Worker extends RefCounted:
 						if peer.get_connection_status()!=MultiplayerPeer.CONNECTION_CONNECTED:continue
 						if command[1]>0 and not peers.has(command[1]):continue
 						peer.set_target_peer(command[1]);peer.transfer_channel=command[2];peer.transfer_mode=command[3]
-						var error:=peer.put_packet(command[4])
-						if error==OK:sent+=1
-						elif error==ERR_OUT_OF_MEMORY:failed=true
-					"disconnect":peer.disconnect_peer(command[1],command[2])
+						var error := peer.put_packet(command[4])
+						if error == OK:
+							sent += 1; wire_sent += 1; wire_max = maxi(wire_max,command[4].size())
+						elif error == ERR_OUT_OF_MEMORY: failed = true
+					"disconnect":
+						scheduler.drop(command[1]);frames.drop(command[1]);peer.disconnect_peer(command[1],command[2])
 					"refuse":peer.refuse_new_connections=command[1]
+			if framed and peer.get_connection_status()==MultiplayerPeer.CONNECTION_CONNECTED:
+				pump(Time.get_ticks_msec())
 			if peer.get_connection_status()!=MultiplayerPeer.CONNECTION_DISCONNECTED:
 				peer.poll();polls+=1
 				while peer.get_available_packet_count()>0:
 					var id:=peer.get_packet_peer();var channel:=peer.get_packet_channel();var mode:=peer.get_packet_mode()
 					var bytes:=peer.get_packet()
+					if framed:
+						var decoded := frames.receive(id, channel, mode == MultiplayerPeer.TRANSFER_MODE_RELIABLE, bytes, Time.get_ticks_msec())
+						if decoded.has("error"):
+							scheduler.drop(id);peer.disconnect_peer(id); continue
+						if not decoded.has("packet"): continue
+						bytes = decoded.packet
 					if incoming_bytes+bytes.size()>MAX_BYTES or incoming.size()>=MAX_PACKETS:
 						# Never silently corrupt the reliable RPC stream on overflow.
 						failed=true;break
 					incoming.append([id,channel,mode,bytes]);incoming_bytes+=bytes.size();received+=1
+			if framed:
+				for id in frames.expire(Time.get_ticks_msec()): scheduler.drop(id);peer.disconnect_peer(id)
 			if Time.get_ticks_msec()>=next_stats:
 				next_stats=Time.get_ticks_msec()+1000;peer_stats.clear()
 				for id in peers:
@@ -64,6 +86,32 @@ class Worker extends RefCounted:
 			OS.delay_usec(2000)
 		peer.peer_connected.disconnect(connected);peer.peer_disconnected.disconnect(disconnected)
 		peer.close()
+	func pump(now: int) -> void:
+		for id in scheduler.maintain(now):
+			queue_timeouts += 1; frames.drop(id); peer.disconnect_peer(id)
+		var blocked: Dictionary = {}
+		# One fragment per choice allows control/realtime between bulk fragments.
+		# Bounded work keeps polling and the main-thread lock responsive.
+		for i in 32:
+			var item := scheduler.next(now, blocked)
+			if item.is_empty(): break
+			var row: Dictionary = item.row
+			if not peers.has(row.peer): scheduler.drop(row.peer); continue
+			peer.set_target_peer(row.peer); peer.transfer_channel=row.channel; peer.transfer_mode=row.mode
+			var error := peer.put_packet(item.packet)
+			if error == OK:
+				wire_sent += 1; wire_max = maxi(wire_max,item.packet.size())
+				if scheduler.commit(item): sent += 1
+			elif error in [ERR_BUSY, ERR_OUT_OF_MEMORY]:
+				# No commit: retain this exact frame and its token credit for retry.
+				scheduler.backpressure += 1; blocked[row.key] = true
+			else:
+				# A partial reliable message cannot be abandoned on a live stream.
+				scheduler.drop(row.peer); frames.drop(row.peer); peer.disconnect_peer(row.peer)
+
+var framed := false # Opt-in: raw ENet clients remain supported by standalone users.
+var pose_source := 0 # Explicit origin; relayed players must never coalesce together.
+func set_pose_source(id: int) -> void: pose_source=id
 var worker: Worker
 var thread: Thread
 var packets: Array=[]
@@ -89,7 +137,7 @@ func create_client(address: String,port: int,channels: int=7) -> Error:
 	return _start(native,false) if error==OK else error
 func _start(native: ENetMultiplayerPeer,hosting: bool) -> Error:
 	uid=native.get_unique_id();server=hosting;status=native.get_connection_status()
-	worker=Worker.new();worker.peer=native;worker.status=status
+	worker=Worker.new();worker.peer=native;worker.status=status;worker.framed=framed
 	thread=Thread.new();var error:=thread.start(worker.run)
 	if error!=OK:native.close();worker=null;thread=null;status=CONNECTION_DISCONNECTED
 	return error
@@ -119,8 +167,24 @@ func _notification(what: int) -> void:
 func _put_packet_script(buffer: PackedByteArray) -> Error:
 	if not worker or status!=CONNECTION_CONNECTED:return ERR_UNCONFIGURED
 	worker.mutex.lock()
+	if framed and (buffer.is_empty() or buffer.size() > Frames.MAX_MESSAGE or (mode != TRANSFER_MODE_RELIABLE and buffer.size() > Frames.CONTENT)):
+		worker.oversize += 1; worker.mutex.unlock(); return ERR_INVALID_PARAMETER
+	if framed:
+		var targets: Array = []
+		if target > 0:
+			if worker.peers.has(target): targets.append(target)
+		else:
+			for id in worker.peers:
+				if target == 0 or id != -target: targets.append(id)
+		var error := worker.scheduler.enqueue(targets,channel,mode,buffer,pose_source,Time.get_ticks_msec())
+		if error != OK and mode == TRANSFER_MODE_RELIABLE:
+			# SceneMultiplayer cannot retry arbitrary RPCs after admission failure.
+			# Fail the affected streams explicitly instead of silently losing control.
+			for id in targets: worker.outgoing.append(["disconnect",id,false])
+		worker.mutex.unlock(); return error
 	if worker.outgoing_bytes+buffer.size()>MAX_BYTES or worker.outgoing.size()>=MAX_PACKETS:
 		worker.mutex.unlock();return ERR_OUT_OF_MEMORY
+	if worker.outgoing.is_empty(): worker.outgoing_oldest = Time.get_ticks_msec()
 	worker.outgoing.append(["send",target,channel,mode,buffer.duplicate()]);worker.outgoing_bytes+=buffer.size()
 	worker.mutex.unlock();return OK
 func _get_packet_script() -> PackedByteArray:
@@ -151,5 +215,6 @@ func _is_refusing_new_connections() -> bool:return refusing
 func diagnostics() -> Dictionary:
 	if not worker:return {"running":false}
 	worker.mutex.lock()
-	var result:={"running":thread.is_started(),"polls":worker.polls,"received":worker.received,"sent":worker.sent,"queued_bytes":worker.incoming_bytes,"failed":worker.failed,"peers":worker.peer_stats.duplicate(true)}
+	var queue := worker.scheduler.diagnostics(Time.get_ticks_msec())
+	var result:={"running":thread.is_started(),"polls":worker.polls,"received":worker.received,"sent":worker.sent,"queued_bytes":worker.incoming_bytes,"outgoing_bytes":worker.scheduler.queued_bytes if framed else worker.outgoing_bytes,"outgoing_age_ms":queue.oldest_ms.values().max() if framed else (Time.get_ticks_msec()-worker.outgoing_oldest if worker.outgoing_oldest else 0),"wire_sent":worker.wire_sent,"wire_max_bytes":worker.wire_max,"oversize_rejected":worker.oversize,"reassembly_bytes":worker.frames.reserved,"malformed_frames":worker.frames.rejected,"scheduler":queue,"queue_timeouts":worker.queue_timeouts,"failed":worker.failed,"peers":worker.peer_stats.duplicate(true)}
 	worker.mutex.unlock();return result

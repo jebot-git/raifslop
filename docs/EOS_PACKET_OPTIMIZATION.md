@@ -1,8 +1,189 @@
 # Network packet optimization for EOS
 
-Measured 2026-09-25 on `experimental/eos-meta`, production networking protocol 17,
-Godot 4.7.2, EOSG 2.3.1. Investigation and benchmark only: no production packet
-formats, replication rates, gameplay or avatar transfer behavior were changed.
+2026-09-25 lobby follow-up: Together now hosts and discovers named eight-slot EOS
+rooms, with optional password admission before gameplay, Meta friends invites,
+and shareable destination-link/join-code text. Direct and forced-relay fixtures
+passed discovery, rejected-password, correct-password and reconnect checks.
+See [EOS gameplay transport](EOS_GAMEPLAY_TRANSPORT.md) for details and remaining
+Quest packaging, native sender-binding and eight-player acceptance gates.
+
+
+## Implemented on 2026-09-25 (current protocol 19)
+
+Continued from `0021d8e` on `experimental/eos-meta`. The game supports ENet and
+opt-in EOS gameplay; the isolated EOS lab remains separate. Both game endpoints and dedicated servers
+must update together. No deployed server or release package was changed.
+
+- `pose_codec.gd`: versioned binary snapshots, explicit body/face presence masks,
+  shared numeric location IDs, byte weights, float32 world/body positions, and
+  normalized signed-16 quaternion rotations. No previous packet is needed.
+  User height, fish length and reel angle retain float64 precision to preserve
+  validation boundaries and catch rewards. Native per-knuckle input remains
+  local, as in capture; the encoder rejects it rather than silently discarding it.
+  World tables must remain identical across matching protocol versions.
+- Pose submit/relay RPCs carry packed bytes and use plain unreliable delivery.
+  Reliable transition snapshots remain compact and on channel 0. Serial numbers
+  wrap in the existing 31-bit range; stale rejection uses half-range arithmetic.
+  Tracker removal is explicit on every snapshot. No world filtering or rate
+  reduction was introduced; the existing 20 Hz cadence remains.
+- Fishing rankings project only name, category value and its relevant fish detail.
+  Stored records and golf history remain intact. Fishing and golf rankings are
+  now requested ten-row pages, independent of routine round-state RPCs.
+- `packet_frames.gd`: 16-byte versioned header plus at most 978 content bytes.
+  The ENet worker applies it **after Godot serialization**, including cold RPC
+  path negotiation. Each native send is at most 994 bytes; adding the verified
+  six-byte EOSG header gives the conservative 1,000-byte target. This codec can
+  be reused above an EOS peer; ENet threading must not be copied into EOS SDK
+  integration without checking its thread requirements.
+- Reliable messages are bounded to 1 MiB, with at most 2 MiB of pending declared
+  lengths per peer and 8 MiB globally. Fragments require exact ordered offsets,
+  consistent IDs/lengths and an absolute 60-second deadline (raised for paced transfers). Disconnect, malformed
+  input and expiry release reservations. Invalid fragments disconnect their
+  sender. Unreliable messages are never fragmented; oversized sends return an
+  error. No objects are deserialized by framing or pose decoding.
+- The worker reports outgoing queued bytes/age, native packet count/maximum,
+  rejected oversized sends, malformed frames and pending reassembly reservations.
+  These are application/ENet worker metrics, not EOS SDK queue metrics.
+
+### Measurements
+
+The budget audit records native ENet payload sizes **after framing** and adds
+EOSG's six bytes analytically. These are not captures of live EOS relay traffic.
+The SDK header still defines 1,170 bytes and pinned EOSG still adds six bytes
+and converts unreliable-ordered to reliable (source rechecked 2026-09-25).
+
+| Fixture | Protocol 17 RPC + EOSG | Protocol 18 maximum framed packet + EOSG |
+| --- | ---: | ---: |
+| Full body + face relay | 2,163 bytes | 507 bytes, one packet |
+| Full body + face, cold RPC path | Not recorded | 515 bytes maximum, including path setup |
+| Golf full body + face | 2,171 bytes | 507 bytes, one packet |
+| Stocked BBQ | 3,142 bytes | 1,000 bytes, four fragments |
+| Existing 32 KiB avatar chunk | 32,863 bytes | 1,000 bytes, 34 fragments |
+| Maximum allowed voice payload | 429 bytes | 445 bytes, one packet |
+| Fishing top-50, populated golf history | 2,064,194 bytes | 1,000 bytes, 21 fragments (20,388-byte RPC) |
+
+Full pose application payload is 468 bytes (hard decoder cap 512). The full pose
+relay reduction is about 77%; the ranking stress fixture drops about 99% before
+framing. Rankings with actual fish details can be larger than this fixture, but
+retain the same framed packet bound. Cold path lengths vary by node hierarchy.
+The older combined golf-state/ranking fixture is retained as a fragmentation
+stress case, even though production now sends them separately.
+
+### Validation and reproduction
+
+Use Godot 4.7.2. Tests need writable isolated user data and loopback permission.
+
+```sh
+godot --headless --xr-mode off --path . --script tests/pose_codec.gd
+godot --headless --xr-mode off --path . --script tests/packet_frames.gd
+godot --headless --xr-mode off --path . --script tests/framed_network.gd
+godot --headless --xr-mode off --path . --script tests/network_packet_audit.gd -- --framed
+godot --headless --xr-mode off --path . --script tests/leaderboard.gd
+godot --headless --xr-mode off --path . --script tests/ranking_pages.gd
+godot --headless --xr-mode off --path . --script tests/bbq_replication.gd
+godot --headless --xr-mode off --path . --script tests/threaded_network.gd
+python3 tools/test_golf_network.py
+python3 tools/test_bbq_network.py
+python3 tools/build_server.py
+python3 tools/test_server_leaderboard.py
+python3 tools/test_golf_dedicated.py
+python3 tools/test_radio.py
+```
+
+The codec tests cover all catalog locations, controller/full body/face presence,
+world-coordinate extremes, exact reward scalars, rotation/weight precision,
+truncation and malformed input, tracker removal and serial wrap. Framing tests
+cover exact reconstruction through 1 MiB, wrong offsets/duplicates, bounds,
+per-peer/global reservations, deadlines and interleaved unreliable traffic.
+The loopback transport test transfers four 200 KB payloads alongside an
+unreliable full pose and checks native packet sizes and memory release.
+`test-results/eos-meta/packet-budget.json` contains the framed audit; the original
+unframed benchmark remains available without `--framed`. The existing single
+ObjectDB shutdown warning still occurs.
+
+### Traffic scheduling completed
+
+The application now uses `packet_scheduler.gd` between SceneMultiplayer and framed
+ENet sends. It interleaves traffic classes at fragment boundaries, reserves control
+capacity, paces bulk traffic fairly across peers, coalesces poses by recipient and
+originating player, expires stale realtime packets, and retries temporary native
+send failures without advancing offsets or consuming tokens. Reliable queue
+failures disconnect affected peers explicitly. Avatar disk reads have fair
+192 KiB/s aggregate admission and a separate 64 KiB acknowledgement window.
+
+See [traffic scheduling, budgets and validation](EOS_TRAFFIC_SCHEDULING.md).
+Scheduling retained the protocol-18 packet formats. The old ten-second assembly deadline is
+now sixty seconds to accommodate paced maximum-size messages across eight peers.
+
+### Ranking pages and BBQ deltas completed (protocol 19)
+
+- `rankings.gd` serves ten rows for one requested category/course, bounded to the
+  existing top 50. The menu polls only while visible and provides Previous/Next.
+  Responses carry request IDs; per-peer admission limits requests to two/second
+  with a burst of four. Reconnect clears cached pages and request state.
+- `bbq/replication.gd` maintains reliable per-recipient baselines and sequence
+  checks. First arrival, station creation and resync send full state; subsequent
+  messages include only changed items and station metadata. Empty stations and
+  expiry generate a single baseline/tombstone instead of repeated snapshots.
+- Clients extrapolate cooking from server anchors without deciding ownership,
+  food resets or station expiry. Cooking items receive corrections every five
+  seconds when otherwise unchanged. Location changes invalidate the baseline;
+  missing delta bases request a rate-limited full state. Disconnect releases
+  owned props and removes per-peer replication/request bookkeeping.
+
+Measured Godot RPC sizes (loopback; EOSG allowance remains analytical):
+
+| Fixture | RPC bytes | Framed packets | Largest packet including EOSG |
+| --- | ---: | ---: | ---: |
+| Fishing page, ten names/counts | 798 | 1 | 820 |
+| Golf page, ten rows | 1,674 | 2 | 1,000 |
+| BBQ full baseline with pose fields | 4,492 | 5 | 1,000 |
+| BBQ one changed item with pose fields | 632 | 1 | 654 |
+
+Fish-detail pages can be larger and use the same bounded fragmentation.
+Unchanged stations and closed ranking panels produce no periodic payloads.
+The audit retains old full-board/full-BBQ fixtures for comparison and stress.
+
+Validation: `tests/ranking_pages.gd` covers ordering, boundaries, empty pages,
+invalid/stale responses, golf history exclusion, and inherited menu visibility.
+`tests/bbq_replication.gd` covers baseline/delta recovery, ownership/disconnect,
+cooking anchors, malformed fields, expiry and location re-entry. Existing BBQ
+and golf loopback tests exercise dedicated/ad-hoc hosts, late joins and reconnect.
+The exported server leaderboard test requests categories explicitly and verifies
+saved records after restart and renamed reconnect.
+
+### EOS gameplay transport integrated (2026-09-25)
+
+The new transport factory and main-thread EOSG adapter reuse framing/scheduling,
+normalize EOSG channels and honor native queue feedback, including its actual
+`FAILED` queue-full result. The game has online lobby controls, cancellation,
+Meta identity/invite hooks and authenticated EOS record identities. ENet remains
+available. See [implementation, setup and validation](EOS_GAMEPLAY_TRANSPORT.md).
+
+Live Linux desktop gameplay checks passed direct and forced-relay routing,
+reconnect with one retained player record, ranking RPCs, compact poses and
+concurrent reliable transfers alongside voice-sized packets. Maximum native
+application payload remained 994 bytes (1,000 with EOSG). Native queue-pressure
+and cancellation cases also passed deterministic offline tests.
+
+### Remaining EOS integration work
+
+1. Harden EOSG native sender-ID/PUID binding before untrusted-lobby deployment;
+   the pinned receiver discards that origin check (see the transport notes).
+2. Complete the EOS Android AAR/activity bootstrap and packaging gate, then
+   validate Meta entitlement, fresh proofs, profile/friends access, invites and
+   Quest/desktop crossplay with real entitled accounts. No Quest was connected
+   for this step. DUC for User ID, User profile, Friends and Invites is granted
+   (application owner confirmation, 2026-09-25).
+3. Run eight-player WAN loss/jitter/reordering tests with actual voice and large
+   avatar transfers; measure main-thread stalls, tracking age/control latency and
+   tune budgets/deadlines on hardware. Desktop transport fixtures and the
+   deterministic scheduler test are not WAN or headset acceptance tests.
+
+## Original protocol-17 investigation
+
+The following benchmark and recommendations were recorded before the implementation
+above. They remain baseline context; implementation status is described above.
 
 ## Findings
 

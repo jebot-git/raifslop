@@ -9,6 +9,10 @@ func wait_for(test:Callable,seconds:=12.0)->bool:
   if test.call():return true
   await create_timer(.05).timeout
  return false
+func page(net:Node,category:String)->Dictionary:
+ net.rankings.request("fishing",category)
+ check(await wait_for(func():return net.rankings.view.get("key")==category),"Requested "+category+" page arrives")
+ return net.rankings.view
 func _initialize():run.call_deferred()
 func run():
  var args:=OS.get_cmdline_user_args();var role:String=args[0]
@@ -16,7 +20,8 @@ func run():
  var net=Net.new();game.add_child(net);net.setup(game,true);net.load_preferences()
  net.display_name="Returning angler" if role=="return" else role
  check(net.join("127.0.0.1",int(args[1]))==OK,"Connect")
- check(await wait_for(func():return net.active and not net.leaderboard_view.is_empty()),"Handshake and server standings")
+ check(await wait_for(func():return net.active),"Handshake completes without ranking transfer")
+ check(net.leaderboard_view.is_empty() and net.rankings.view.is_empty(),"No unsolicited fishing rankings")
  if role=="writer":
   var d:Dictionary={"user_height":1.78,"golf_club":-1,"golf_stowed":false,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"serial":0,"location":"fish_hoek_beach","rod_tier":0,"rig":2,"reel_angle":0.0,"state":0,"bait":2,"species":39,"length":Net.State.Fish.SPECIES[39].length*1.14,"caught":false,"in_hand":false,"xr":false,"left_valid":true,"right_valid":true,"bobber_visible":false,"bait_visible":true,"curl":0.0}
   for key in Net.State.TRANSFORMS:d[key]=Transform3D.IDENTITY
@@ -24,14 +29,26 @@ func run():
   check(Net.State.valid(d),"Wire fixture validates")
   for state in [1,2,3,4,5,5,5]:
    d.serial+=1;d.state=state;d.caught=state==5
-   net._submit_event.rpc_id(1,d);await create_timer(.12).timeout
+   net._submit_event.rpc_id(1,net.PoseCodec.encode(d));await create_timer(.12).timeout
  if role in ["writer","observer","return"]:
-  check(await wait_for(func():return not net.leaderboard_view.is_empty() and net.leaderboard_view.categories.catches[0].catches==1),"Server retains exactly one catch")
-  check(net.leaderboard_view.categories.longest[0].longest_fish.species==39 and net.leaderboard_view.categories.longest[0].longest_fish.name=="Ragged-tooth shark","Expanded species identity survives replication and restart")
-  check(net.leaderboard_view.categories.earned[0].earned>0,"Server supplies lifetime earnings")
-  check(net.leaderboard_view.categories.exceptional[0].exceptional==1,"Exceptional record visible")
+  var standings:Dictionary={}
+  var deadline:=Time.get_ticks_msec()+12000
+  while Time.get_ticks_msec()<deadline:
+   net.rankings.view.clear()
+   standings=await page(net,"catches")
+   if not standings.is_empty() and standings.rows[0].catches==1:break
+   await create_timer(.6).timeout
+  check(not standings.is_empty() and standings.rows[0].catches==1,"Server retains exactly one catch")
+  if role=="return":check(standings.rows[0].name=="Returning angler","Reconnect updates display name without duplicating totals")
+  standings=await page(net,"longest")
+  check(standings.rows[0].longest_fish.species==39 and standings.rows[0].longest_fish.name=="Ragged-tooth shark","Expanded species identity survives replication and restart")
+  await create_timer(.6).timeout
+  standings=await page(net,"earned")
+  check(standings.rows[0].earned>0,"Server supplies lifetime earnings")
+  await create_timer(.6).timeout
+  standings=await page(net,"exceptional")
+  check(standings.rows[0].exceptional==1,"Exceptional record visible")
   check(not FileAccess.file_exists("user://server/leaderboard.json"),"Client has no saved leaderboard")
-  if role=="return":check(net.leaderboard_view.categories.catches[0].name=="Returning angler","Reconnect updates display name without duplicating totals")
  await create_timer(.5).timeout
  net.leave();game.queue_free();await process_frame
  print("LEADERBOARD_NETWORK_RESULT ",role," ",failures);quit(0 if failures.is_empty() else 1)

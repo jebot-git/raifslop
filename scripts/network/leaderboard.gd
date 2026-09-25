@@ -91,10 +91,25 @@ func observe(peer:int,data:Dictionary)->bool:
 func snapshot()->Dictionary:
  var result:Dictionary={"players":records.size(),"categories":{}}
  for category in CATEGORIES:
-  var rows:Array=records.values().duplicate(true)
-  rows.sort_custom(func(a,b):return a.name.naturalnocasecmp_to(b.name)<0 if a[category]==b[category] else a[category]>b[category])
-  result.categories[category]=rows.slice(0,50)
+  result.categories[category]=category_rows(category)
  return result
+func category_rows(category:String)->Array:
+ if category not in CATEGORIES:return []
+ var rows:Array=records.values()
+ rows.sort_custom(func(a,b):return a.name.naturalnocasecmp_to(b.name)<0 if a[category]==b[category] else a[category]>b[category])
+ return rows.slice(0,50).map(func(row):return project_row(row,category))
+# Wire rows contain only fields rendered by this category; histories stay on disk.
+static func project_row(row:Dictionary,category:String)->Dictionary:
+ var result:Dictionary={"name":row.name,category:row[category]}
+ var detail:String={"heaviest":"biggest","longest":"longest_fish","exceptional":"noteworthy"}.get(category,"")
+ if not detail.is_empty():result[detail]=row[detail].duplicate(true)
+ return result
+static func valid_projection(row:Variant,category:String)->bool:
+ if category not in CATEGORIES or not row is Dictionary or not row.get("name") is String or row.name.length()>32:return false
+ var value=row.get(category)
+ if not (value is float or value is int) or not is_finite(value) or value<0 or value>1e12:return false
+ var detail:String={"heaviest":"biggest","longest":"longest_fish","exceptional":"noteworthy"}.get(category,"")
+ return row.size()==2 if detail.is_empty() else row.size()==3 and valid_fish(row.get(detail))
 func save()->Error:
  if not dirty or path.is_empty():return OK
  # A damaged file remains available for recovery, rather than being overwritten.

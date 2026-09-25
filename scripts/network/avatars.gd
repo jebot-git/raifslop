@@ -3,7 +3,7 @@ extends Node
 ## Server-mediated avatar sharing. Only announced SHA-256 assets can be requested.
 const Library = preload("res://scripts/network/avatar_library.gd")
 const CHUNK := 32_768
-const WINDOW := CHUNK*8
+const WINDOW := 65_536 # Independent of wire fragmentation and disk chunk size.
 const IO=preload("res://scripts/network/disk_worker.gd")
 const Jobs=preload("res://scripts/network/asset_jobs.gd")
 var disk=IO.new()
@@ -22,7 +22,7 @@ var message := ""
 var offer_times: Dictionary = {}
 var load_queue: Array = []
 var avatar_attempts: Dictionary={}
-var transfer_budget := 0.0
+var read_budget = preload("res://scripts/network/bulk_read_budget.gd").new()
 const REQUEST_TIMEOUT := 10_000
 const QUEUE_TIMEOUT := 90_000
 const MAX_RETRIES := 3
@@ -108,6 +108,7 @@ func setup(arena: Node) -> void:
 	add_child(library)
 
 func reset() -> void:
+	read_budget = preload("res://scripts/network/bulk_read_budget.gd").new()
 	generation+=1;checking.clear()
 	for key in incoming.keys(): drop_incoming(key)
 	incoming.clear()
@@ -154,23 +155,25 @@ func _process(delta: float) -> void:
 			next_offer=game.clock+3.2*pow(2,offer_attempts-1)
 			if multiplayer.is_server(): accept_offer(mine,offered,library.entries[offered].size)
 			else: send_avatar(1,"_offer",[offered,library.entries[offered].size])
-	# Limit aggregate upload to 2 MiB/s and eight unacknowledged chunks per peer.
-	transfer_budget = minf(transfer_budget+delta*2_097_152,WINDOW)
+	# Fair 192 KiB/s aggregate disk admission; transport bulk pacing includes headers.
+	var available: Dictionary = {}
 	for peer in outgoing.keys():
 		if not multiplayer.get_peers().has(peer): outgoing.erase(peer); continue
 		var transfer: Dictionary = outgoing[peer]
 		if Time.get_ticks_msec()-transfer.time>30000: outgoing.erase(peer); continue
-		if not transfer.get("reading",false) and transfer.sent-transfer.ack<WINDOW and transfer.sent<transfer.size and transfer_budget>=CHUNK:
-			var count:=mini(mini(WINDOW-(transfer.sent-transfer.ack),transfer.size-transfer.sent),int(transfer_budget/CHUNK)*CHUNK)
-			transfer.reading=true;transfer_budget-=count
-			if not disk.submit(IO.read.bind(transfer.path,transfer.sent,count,transfer.size),func(data):
-				if not is_same(outgoing.get(peer),transfer):return
-				transfer.reading=false
-				if data.size()!=count:outgoing.erase(peer);return
-				for offset in range(0,data.size(),CHUNK):
-					var part: PackedByteArray=data.slice(offset,offset+CHUNK)
-					send_avatar(peer,"_chunk",[transfer.hash,transfer.sent,part]);transfer.sent+=part.size()):
-				transfer.reading=false;transfer_budget+=count
+		if not transfer.get("reading",false):
+			available[peer] = maxi(0,mini(WINDOW-(transfer.sent-transfer.ack),transfer.size-transfer.sent))
+	var grants: Dictionary = read_budget.grants(available,delta)
+	for peer in grants:
+		var transfer: Dictionary = outgoing[peer]
+		var count: int = grants[peer]
+		transfer.reading=true
+		if not disk.submit(IO.read.bind(transfer.path,transfer.sent,count,transfer.size),func(data):
+			if not is_same(outgoing.get(peer),transfer):return
+			transfer.reading=false
+			if data.size()!=count:outgoing.erase(peer);return
+			send_avatar(peer,"_chunk",[transfer.hash,transfer.sent,data]);transfer.sent+=data.size()):
+			transfer.reading=false;read_budget.refund(count)
 
 	for hash in incoming.keys():
 		if not incoming.has(hash):continue

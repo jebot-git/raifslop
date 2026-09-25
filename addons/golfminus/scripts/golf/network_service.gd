@@ -85,14 +85,15 @@ func disconnected(peer:int)->void:
 	guards.erase(peer);publish.call_deferred()
 func publish()->void:
 	if not session.active or not multiplayer.is_server():return
-	var ranking:Dictionary=Records.snapshot(session.leaderboard.records)
+	board=Records.snapshot(session.leaderboard.records)
 	for peer in session.leaderboard.peers:
 		var state:Dictionary=rules.view(session.leaderboard.peers[peer])
 		if not state.is_empty():state["remaining"]=maxf(0,float(state.get("deadline",0))-now)
-		if peer==multiplayer.get_unique_id():_receive(state,ranking)
-		else:_receive.rpc_id(peer,state,ranking)
+		if peer==multiplayer.get_unique_id():_receive(state)
+		else:
+			_receive.rpc_id(peer,state)
 @rpc("authority","call_remote","reliable",0)
-func _receive(state:Dictionary,ranking:Dictionary)->void:
-	view=state.duplicate(true);board=ranking.duplicate(true);changed.emit()
+func _receive(state:Dictionary)->void:
+	view=state.duplicate(true);changed.emit()
 func can_shoot()->bool:
 	return not view.is_empty() and view.get("your_turn",false) and view.get("present",false) and not view.get("done",true) and not view.get("flight",false) and not view.get("retired",true) and not view.get("finished",true)

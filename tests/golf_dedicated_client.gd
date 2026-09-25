@@ -21,17 +21,19 @@ func pose(location:String,serial:int,offset:=Vector3.ZERO,tier:=0,club_index:=0)
  for key in ["caught","in_hand","xr","bobber_visible","bait_visible"]:data[key]=false
  data.left_valid=true;data.right_valid=true
  check(Net.State.valid(data),"Mapped activity state validates")
- net.states[net.multiplayer.get_unique_id()]=data;net._submit_event.rpc_id(1,data)
+ net.states[net.multiplayer.get_unique_id()]=data;net._submit_event.rpc_id(1,net.PoseCodec.encode(data))
 func run()->void:
  var args:=OS.get_cmdline_user_args();var role:String=args[0];var verify:=role=="verify"
  var owner:=Node.new();owner.name="RealAIFishing";root.add_child(owner)
  net=Net.new();owner.add_child(net);net.setup(owner,true);net.voice_enabled=false
  net.player_token=("a" if role in ["A","verify"] else "b").repeat(64);net.display_name=role
  net.join("127.0.0.1",int(args[1]))
- check(await until(func():return net.active and not net.golf.board.is_empty()),"Exported server handshake and golf hook")
+ check(await until(func():return net.active),"Exported server handshake and golf hook")
+ net.rankings.request("golf","spyglass")
+ check(await until(func():return not net.rankings.view.is_empty()),"Requested golf ranking page arrives")
  if verify:
-  check(await until(func():return net.golf.board.spyglass.size()==2),"Golf rankings survive exported server restart")
-  check(net.golf.board.spyglass.all(func(r):return r.best==18 and r.rounds==1),"Both full scorecards persist exactly once")
+  check(await until(func():return net.rankings.view.rows.size()==2),"Golf rankings survive exported server restart")
+  check(net.rankings.view.rows.all(func(r):return r.best==18 and r.rounds==1),"Both full scorecards persist exactly once")
  else:
   var join_rejected:Array=[]
   var waiting_seen:=[false]
@@ -93,7 +95,7 @@ func run()->void:
    hand_pose.right=Transform3D(Basis.IDENTITY,preload("res://scripts/bbq/sites.gd").pose("golf_spyglass_clubhouse")*net.bbq.model.stations.golf_spyglass_clubhouse.items[6].pos)
    check(Net.State.valid(hand_pose),"Tracked tongs grab pose validates")
    net.states[net.multiplayer.get_unique_id()]=hand_pose
-   net._submit_event.rpc_id(1,hand_pose)
+   net._submit_event.rpc_id(1,net.PoseCodec.encode(hand_pose))
    net.bbq.request("grab",6,1)
    check(await until(func():return net.bbq.model.stations.golf_spyglass_clubhouse.items[6].owner==net.multiplayer.get_unique_id()),"Dedicated server grants tongs ownership")
    net.bbq.request("release")
@@ -114,7 +116,11 @@ func run()->void:
      net.golf.request("settled",{"epoch":last_epoch,"holed":true})
    await create_timer(.18).timeout
   check(net.golf.view.get("finished",false) and net.golf.view.scores.size()==18,"Dedicated hooks complete all 18 turns and holes")
-  check(await until(func():return net.golf.board.spyglass.size()==2),"Completed golf scorecards published to both clients")
+  for attempt in 10:
+   net.rankings.request("golf","spyglass")
+   await create_timer(.6).timeout
+   if net.rankings.view.rows.size()==2:break
+  check(net.rankings.view.rows.size()==2,"Completed golf scorecards returned on request")
   net.golf.request("retire")
   check(await until(func():return net.golf.view.get("retired",false)),"Retirement works on exported server")
   await create_timer(.6).timeout
