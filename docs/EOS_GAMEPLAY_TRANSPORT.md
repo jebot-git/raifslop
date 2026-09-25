@@ -223,3 +223,11 @@ Hardware validation remains required before treating it as a production release.
 Next validate that Android bootstrap/package with entitled Quest accounts,
 then run eight-player WAN loss/jitter/reordering tests with actual voice and
 large avatar transfers. Tune frame-time, pose age and control latency on hardware.
+
+### Leaderboard service preparation
+
+The opt-in [EOS source / Meta mirror integration](EOS_LEADERBOARDS.md) prepares
+personal best-score synchronization and bounded EOS ranking queries. Dedicated
+servers retain their own records and rankings. Cumulative totals await a trusted
+idempotent event aggregator; portal configuration and live Quest validation remain
+required before activation.

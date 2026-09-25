@@ -4,6 +4,7 @@ const Config=preload("res://scripts/network/eos/config.gd")
 const Factory=preload("res://scripts/network/transport_factory.gd")
 var backend=preload("res://scripts/network/eos/eos_backend.gd").new()
 var meta=preload("res://scripts/network/eos/meta_provider.gd").new()
+var leaderboards=preload("res://scripts/network/leaderboards/service.gd").new()
 var session:Node
 var config:Dictionary={}
 var auth=preload("res://scripts/network/eos/lobby_auth.gd").new()
@@ -29,6 +30,7 @@ func setup(owner_session:Node)->void:
  auth.rejected.connect(backend.reject_member)
  auth.failed.connect(func():admission_failed=true)
  add_child(backend);add_child(meta)
+ add_child(leaderboards);leaderboards.setup(self)
  backend.expired.connect(func():refresh_due=true)
  backend.session_lost.connect(func():loss_due=true)
  backend.membership_changed.connect(func():presence_due=true)
@@ -66,6 +68,7 @@ func services(settings:Dictionary)->String:
  config=settings
  var error:String=backend.initialize(config)
  if error.is_empty() and backend.product_user_id.is_empty():error=await authenticate()
+ if error.is_empty():leaderboards.start(config,backend,meta)
  return error
 func browse_lobbies(path:String="")->void:
  if busy or Time.get_ticks_msec()<search_ready_at:return
@@ -145,6 +148,7 @@ func fail(error:String)->Error:
 func cancelled()->Error:
  await cleanup();busy=false;stop_due=false;return ERR_SKIP
 func stop()->void:
+ leaderboards.stop()
  auth.reset()
  generation+=1;stop_due=true
 func invite()->void:

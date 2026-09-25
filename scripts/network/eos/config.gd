@@ -11,10 +11,12 @@ static func read(path: String) -> Dictionary:
 	result.provider = file.get_value("identity", "provider", "meta")
 	result.app_id = file.get_value("meta", "app_id", "")
 	result.destination = file.get_value("meta", "destination", "eos_game")
+	result.leaderboards_enabled = file.get_value("leaderboards", "enabled", false)
 	return result
 
 static func validate(config: Dictionary, platform: String = OS.get_name()) -> String:
 	if config.has("error"): return str(config.error)
+	if not config.get("leaderboards_enabled", false) is bool: return "Leaderboard enabled setting must be a boolean."
 	for key in ["product_id", "sandbox_id", "deployment_id", "client_id", "client_secret"]:
 		if not config.get(key) is String or config[key].strip_edges().is_empty(): return "Missing EOS setting: " + key
 	if config.get("relay") not in ["auto", "force"]: return "Relay must be auto or force."

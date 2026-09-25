@@ -18,7 +18,9 @@ func eos(sdk: Object, method: String, signal_name: String, options: Object) -> D
 	while replies.is_empty() and Time.get_ticks_msec() < end: await get_tree().process_frame
 	sdk.disconnect(signal_name, receive)
 	if replies.is_empty():
-		abandoned[tag] = true
+		# Only lobby creation/join needs late-success cleanup. Repeated stats/query
+		# timeouts must not accumulate identifiers that can never be consumed.
+		if method in ["lobby_interface_create_lobby", "lobby_interface_join_lobby_by_id"]: abandoned[tag] = true
 		return {"result_code":27}
 	return replies[0]
 

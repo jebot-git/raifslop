@@ -95,5 +95,6 @@ func publish()->void:
 @rpc("authority","call_remote","reliable",0)
 func _receive(state:Dictionary)->void:
 	view=state.duplicate(true);changed.emit()
+	if is_instance_valid(session.get("online")):session.online.leaderboards.observe_golf(view)
 func can_shoot()->bool:
 	return not view.is_empty() and view.get("your_turn",false) and view.get("present",false) and not view.get("done",true) and not view.get("flight",false) and not view.get("retired",true) and not view.get("finished",true)

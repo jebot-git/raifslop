@@ -5,6 +5,7 @@ var sdk: Object
 var requests := preload("res://scripts/network/eos/requests.gd").new()
 var destination := ""
 var enabled := false
+var user_id := ""
 var settings:Dictionary={}
 
 func _ready() -> void: add_child(requests)
@@ -26,13 +27,14 @@ func identity(config: Dictionary) -> Dictionary:
 	var user: Object = user_message.get_user()
 	var proof_message: Object = await requests.meta(sdk.user_get_user_proof_async())
 	if proof_message == null or proof_message.get_user_proof() == null: return {"error":"Meta proof request failed."}
-	var user_id := str(user.get_id())
+	var resolved_id := str(user.get_id())
 	var nonce := str(proof_message.get_user_proof().get_nonce())
-	if not user_id.is_valid_int() or int(user_id) <= 0 or nonce.is_empty(): return {"error":"Meta returned an invalid identity."}
+	if not resolved_id.is_valid_int() or int(resolved_id) <= 0 or nonce.is_empty(): return {"error":"Meta returned an invalid identity."}
 	if not sdk.is_connected("notification_received", _on_platform_notification): sdk.connect("notification_received", _on_platform_notification)
+	user_id = resolved_id
 	enabled = true
 	_read_intent(sdk.application_lifecycle_get_launch_details())
-	return {"type":13,"token":user_id + "|" + nonce} # EOS_ECT_OCULUS_USERID_NONCE
+	return {"type":13,"token":resolved_id + "|" + nonce} # EOS_ECT_OCULUS_USERID_NONCE
 
 func _read_intent(details: Object) -> void:
 	if details == null or str(details.get_destination_api_name()) != destination: return

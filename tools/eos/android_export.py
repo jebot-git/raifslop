@@ -25,6 +25,13 @@ def read_config(path, app_id):
             if not isinstance(value, str) or not value.strip():
                 raise ValueError('Empty EOS configuration field: ' + section + '.' + key)
             values[section][key] = value
+    try:
+        enabled = json.loads(source.get('leaderboards', 'enabled', fallback='false'))
+    except ValueError:
+        raise ValueError('Invalid leaderboard enabled setting') from None
+    if not isinstance(enabled, bool):
+        raise ValueError('Leaderboard enabled setting must be a boolean')
+    values['leaderboards'] = {'enabled': enabled}
     if values['identity']['provider'] != 'meta':
         raise ValueError('Quest EOS builds require Meta identity; device test credentials are forbidden')
     if values['meta']['app_id'] != app_id:

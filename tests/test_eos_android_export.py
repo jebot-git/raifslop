@@ -19,6 +19,14 @@ class AndroidEosTests(unittest.TestCase):
             write()
             self.assertNotIn('app_secret', read_config(path, '123')['meta'])
             with self.assertRaises(ValueError): read_config(path, '456')
+            self.assertFalse(read_config(path, '123')['leaderboards']['enabled'])
+            values['leaderboards'] = {'enabled': True}
+            write()
+            self.assertTrue(read_config(path, '123')['leaderboards']['enabled'])
+            values['leaderboards']['enabled'] = 'true'
+            write()
+            with self.assertRaises(ValueError): read_config(path, '123')
+            values['leaderboards']['enabled'] = False
             values['identity']['provider'] = 'device'
             write()
             with self.assertRaises(ValueError): read_config(path, '123')

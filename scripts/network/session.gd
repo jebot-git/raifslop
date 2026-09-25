@@ -249,6 +249,7 @@ func _process(delta: float) -> void:
 	elapsed=fmod(elapsed,.05); serial=(serial+1)&0x7fffffff
 	if is_instance_valid(root_game.golf_activity) and root_game.golf_activity.active and root_game.golf_activity.golf.godview.active:return
 	var data := State.capture(root_game,serial)
+	if is_instance_valid(online):online.leaderboards.observe_state(data)
 	var event := State.event_key(data)
 	var reliable := event!=last_event
 	last_event=event
