@@ -20,6 +20,10 @@ func _initialize()->void:
  assert(received.size()==2)
  intent.destination="eos_game";intent.message="";intent.lobby="";provider._read_intent(intent)
  assert(received.size()==2) # Destination-only links do not invent a lobby target.
+ intent.destination="water_meadow_bend";intent.lobby="river-lobby";provider._read_intent(intent)
+ assert(received.size()==3 and Config.parse_reference(provider.settings,received[2])=="river-lobby")
+ intent.destination="course_spyglass";intent.lobby="course-lobby";provider._read_intent(intent)
+ assert(received.size()==4 and Config.parse_reference(provider.settings,received[3])=="course-lobby")
  provider.requests.free();provider.free()
  print("META_LOBBY_INVITES_RESULT intent routing passed; no live Meta calls")
  quit()

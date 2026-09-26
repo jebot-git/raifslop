@@ -62,6 +62,11 @@ class LoginSDK extends RefCounted:
 	func connect_interface_login(options: Object) -> void:
 		login_count += 1; types.append(options.get("credentials").get("type"))
 		tokens.append(options.get("credentials").get("token"))
+		# Match the native SDK: Oculus and Device ID both require login info.
+		var info: Object = options.get("user_login_info")
+		if types.back() in [10, 13] and (info == null or str(info.get("display_name")).strip_edges().is_empty()):
+			connect_interface_login_callback.emit({"client_data":options.get("client_data"),"result_code":10})
+			return
 		connect_interface_login_callback.emit({"client_data":-1,"result_code":0,"local_user_id":"wrong"})
 		connect_interface_login_callback.emit({"client_data":options.get("client_data"),"result_code":failure if failure else (3 if login_count == 1 else 0),"continuance_token":RefCounted.new(),"local_user_id":"native-user"})
 	func connect_interface_create_user(options: Object) -> void:

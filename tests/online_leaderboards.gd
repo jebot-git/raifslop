@@ -50,7 +50,7 @@ class Sdk extends RefCounted:
  func leaderboards_interface_copy_leaderboard_definition_by_leaderboard_id(options:Object)->Dictionary:
   for definition in Catalog.boards().values():
    if definition.board==options.values.leaderboard_id:
-    return {"result_code":0,"definition":{"stat_name":definition.stat,"aggregation":2 if wrong_definition else (0 if definition.aggregation=="MIN" else 1),"start_time":start_time,"end_time":end_time}}
+    return {"result_code":0,"definition":{"stat_name":definition.stat,"aggregation":2 if wrong_definition else Catalog.aggregation_code(definition.aggregation),"start_time":start_time,"end_time":end_time}}
   return {"result_code":18}
  func stats_interface_copy_stat_by_name(options:Object)->Dictionary:
   return {"result_code":0,"stat":{"value":4321}} if options.values.name=="ubs_v1_heaviest_g" else {"result_code":18}
@@ -88,23 +88,32 @@ func fresh(name:String)->RefCounted:
  DirAccess.remove_absolute(path);value.open(path,"fixture");return value
 func _initialize()->void:run.call_deferred()
 func run()->void:
- check(Catalog.boards().size()==8,"Bounded best-score catalog")
+ check(Catalog.boards().size()==35,"Fishing and golf stat parity catalog")
  var portal=JSON.parse_string(FileAccess.get_file_as_string("res://docs/EOS_LEADERBOARDS.example.json"))
  for definition in portal.boards:
   var local:Dictionary=Catalog.boards()[definition.key]
   check(local.stat==definition.eos_stat_name and local.board==definition.eos_leaderboard_id and local.meta==definition.meta_api_name and local.aggregation==definition.eos_stat_aggregation and definition.eos_start_time==Catalog.START_TIME and definition.eos_end_time==-1,"Portal provisioning template matches " + definition.key)
  check(Catalog.encode("heaviest",1.234)==1234 and Catalog.encode("longest",123.4)==1234,"Stable grams and millimetres encoding")
- check(Catalog.encode("catches",10)==0 and Catalog.encode("heaviest",INF)==0 and Catalog.encode("heaviest",1e12)==0,"No counters, nonfinite scores or overflow")
+ check(Catalog.encode("catches",10)==10 and Catalog.encode("heaviest",INF)==0 and Catalog.encode("heaviest",1e12)==0,"Counter encoding rejects nonfinite scores and overflow")
  var state=fresh("persistence")
  check(state.offer("heaviest",1200) and not state.offer("heaviest",1100),"MAX keeps best")
  check(state.offer("golf/spyglass",80) and state.offer("golf/spyglass",75) and not state.offer("golf/spyglass",85),"MIN keeps best")
  check(state.save()==OK,"Outbox persists atomically")
+ state.add("catches",2)
+ state.rebase_counters({"catches":100})
+ check(state.targets.catches==102 and state.increments.is_empty(),"New catches reconcile against existing EOS total")
+ check(state.save()==OK,"Absolute counter target persists before submission")
  var restored=Outbox.new();restored.open(state.path,"fixture")
  check(restored.pending()==state.pending(),"Restart retries unacknowledged scores")
  state.observe({"heaviest":1100});check(state.pending().heaviest==1200,"Eventual consistency never clears a newer pending score")
  state.offer("heaviest",1300);state.observe({"heaviest":1200})
  check(state.pending().heaviest==1300 and state.mirror_jobs({"heaviest":1200}).heaviest==1200,"Mirror only EOS-confirmed value, not newer local value")
- state.observe({"heaviest":1300,"golf/spyglass":75});check(state.pending().is_empty(),"Read-back acknowledges both aggregation types")
+ state.observe({"heaviest":1300,"golf/spyglass":75,"catches":102});check(state.pending().is_empty(),"Read-back acknowledges both aggregation types")
+ state.offer("golf_last/spyglass",72);state.observe({"golf_last/spyglass":72})
+ state.observe({"golf_last/spyglass":80})
+ check(state.pending().is_empty(),"Acknowledged LATEST value cannot overwrite a later remote round")
+ state.offer("golf_last/spyglass",76);state.observe({"golf_last/spyglass":80})
+ check(state.pending().get("golf_last/spyglass")==76,"Delayed read retains a newly pending latest round")
  var wrong=Outbox.new();wrong.open(state.path,"different-account")
  check(not wrong.error.is_empty() and wrong.save()==ERR_FILE_CORRUPT,"Account mismatch cannot overwrite existing outbox")
  var file:=FileAccess.open(state.path,FileAccess.WRITE);file.store_string("broken");file.close()
@@ -131,17 +140,24 @@ func run()->void:
  check(provider.mirrors.size()-before==4 and provider.mirrors[before][0]!=provider.mirrors[before+2][0],"Two writes per cycle and fair retry rotation")
  await service.query_page("heaviest",0);await service.query_page("heaviest",0)
  check(provider.pages==1,"Repeated UI requests use a bounded cache")
- check((await service.query_page("catches",0)).has("error") and (await service.query_page("heaviest",5)).has("error"),"Unsupported categories and pages rejected")
+ check((await service.query_page("unknown",0)).has("error") and (await service.query_page("heaviest",5)).has("error"),"Unsupported categories and pages rejected")
  var values_before:Dictionary=service.outbox.confirmed.duplicate()
  provider.hold=true;provider.scores={"heaviest":99999};service.synchronize()
  await process_frame
  service.stop();provider.release.emit();await process_frame
  check(service.outbox.confirmed==values_before and not service.busy,"Late response after leaving cannot mutate account state")
  service.enabled=true
- var golf_card:Dictionary={"finished":true,"retired":false,"course":"spyglass","scores":[]}
+ var golf_card:Dictionary={"id":"fixture-round-1","finished":true,"retired":false,"course":"spyglass","scores":[]}
  for i in 18:golf_card.scores.append(4)
  service.observe_golf(golf_card);check(service.outbox.targets.get("golf/spyglass")==72,"Only completed own golf card is collected")
- golf_card.scores[0]=-1;service.observe_golf(golf_card)
+ service.observe_golf(golf_card)
+ check(service.outbox.increments.get("golf_rounds/spyglass")==1,"Repeated completed view cannot count a round twice")
+ check(service.outbox.targets.get("golf_last/spyglass")==72 and service.outbox.targets.has("golf_handicap/spyglass"),"Latest round and rolling handicap are tracked")
+ var replay=Outbox.new();replay.open(service.outbox.path,"fixture")
+ check(replay.error.is_empty() and replay.rounds==service.outbox.rounds,"Round deduplication survives restart")
+ golf_card.id="fixture-round-forfeit";golf_card.scores[0]=-1;golf_card.forfeit_holes=[0];service.observe_golf(golf_card)
+ service.observe_golf(golf_card)
+ check(service.outbox.increments.get("golf_forfeits/spyglass")==1,"Forfeited hole counts only once")
  check(service.outbox.targets.get("golf/spyglass")==72,"Forfeit does not create lower golf score")
  service.collector.connect_player(1,"local","Local player")
  var wire:Dictionary={"user_height":1.78,"golf_club":-1,"golf_stowed":false,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"serial":0,"location":"fish_hoek_beach","rod_tier":0,"rig":2,"reel_angle":0.0,"state":0,"bait":2,"species":39,"length":Service.Board.Fish.SPECIES[39].length*1.14,"caught":false,"in_hand":false,"xr":false,"left_valid":true,"right_valid":true,"bobber_visible":false,"bait_visible":true,"curl":0.0}
@@ -151,7 +167,7 @@ func run()->void:
  for phase in [1,4,5]:
   wire.serial+=1;wire.state=phase;wire.caught=phase==5;service.observe_state(wire)
  check(service.outbox.targets.get("longest")==Catalog.encode("longest",wire.length) and service.outbox.targets.heaviest>1800,"Live local fishing sequence collects personal bests")
- check(not service.outbox.targets.has("earned") and not service.outbox.targets.has("catches"),"Server-local counters never become global totals")
+ check(service.outbox.increments.get("catches")==1 and service.outbox.increments.get("earned",0)>0 and service.outbox.increments.get("exceptional")==1,"Validated catches collect matching account-scoped counters")
  var backend=Backend.new();var meta=Meta.new();var adapters=Providers.new();adapters.bind(backend,meta)
  backend.sdk.wrong_definition=true
  check(not await adapters.ingest({"heaviest":1234}) and backend.calls.size()==1,"Mismatched EOS aggregation blocks writes")

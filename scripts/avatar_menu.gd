@@ -306,6 +306,9 @@ var tracking_page: VBoxContainer
 func attach_tracking(manager: Node) -> void:
 	tracking_page=VBoxContainer.new(); tracking_page.add_theme_constant_override("separation",14); _register_page("tracking","Tracking",tracking_page)
 	var heading:=Label.new(); heading.text="AVATAR TRACKING & CALIBRATION"; heading.add_theme_font_size_override("font_size",26); tracking_page.add_child(heading)
+	var hands:=Label.new();hands.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	hands.text="Hands: hold thumb + middle finger together to open or close the menu. Point and pinch thumb + index to select; use ↑ / ↓ to scroll.\nCast: hold a right index pinch, sweep back then forward, and release. Reel: pinch or curl your left hand at the reel and turn it; pinch and pull the fly line to strip.\nGolf: curl the striking hand and swing the club through the ball. Open the hand to disarm. Walk within your playspace or pick up controllers to move farther."
+	tracking_page.add_child(hands)
 	for row in [["Tracked body",manager.tracking.enabled],["Animate planted tracked legs when walking",manager.tracked_leg_animation],["Eye and face expressions",manager.expressions_enabled],["Seated play",manager.seated]]:
 		var toggle:=CheckButton.new(); toggle.text=row[0]; toggle.button_pressed=row[1]; tracking_page.add_child(toggle)
 		toggle.toggled.connect(func(value: bool):
@@ -357,6 +360,10 @@ func attach_leaderboard(session:Node) -> void:
 	leaderboard_button.size_flags_horizontal=SIZE_SHRINK_END
 	leaderboard_button.custom_minimum_size=Vector2(160,44)
 	show_page(active_page)
+
+func attach_achievements(progress:Node,destinations:Node)->void:
+	var page=preload("res://scripts/progress/menu.gd").new();page.progress=progress;page.destinations=destinations
+	_register_page("achievements","Achievements",page)
 
 func _register_page(id: String, title: String, page: VBoxContainer) -> void:
 	var scroll=preload("res://scripts/ui/drag_scroll.gd").new();content.add_child(scroll);scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

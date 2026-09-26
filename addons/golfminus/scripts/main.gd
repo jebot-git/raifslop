@@ -660,7 +660,10 @@ func club_pose_rotation(hand:int)->Vector3:
 	if fitting_club and fit_session.hand==hand and fit_session.candidate.has("pose_rotation"):
 		return fit_session.candidate.pose_rotation
 	return club_pose_rotations[hand]
+func optical_hand(hand:int)->bool:
+	return is_instance_valid(host_game) and is_instance_valid(host_game.get("hand_actions")) and host_game.hand_actions.active[hand]
 func club_grip_pose(hand:int)->Transform3D:
+	if optical_hand(hand):return Transform3D.IDENTITY
 	# Address calibration rotates the whole implement, never its local offset
 	# or the head independently of the shaft.
 	return calibration.pose(hand)*Transform3D(Basis.from_euler(club_pose_rotation(hand)*PI/180),club_offsets[hand])
@@ -694,7 +697,7 @@ func _attachment_changed()->void:
 	if is_instance_valid(hud.attachment_controls):hud.attachment_controls.refresh()
 func _update_club_pose()->Vector3:
 	var hand:=0 if left_handed else 1
-	var rotation:Vector3=club_rotations[hand]
+	var rotation:Vector3=FIT_PROFILE.default_shaft_rotation(hand) if optical_hand(hand) else club_rotations[hand]
 	var reach:float=club_reach
 	if fitting_club and not fit_session.candidate.is_empty():
 		rotation=fit_session.candidate.rotation;reach=fit_session.candidate.reach
@@ -711,12 +714,13 @@ func club_world_grip_pose()->Transform3D:
 	var hand:=0 if left_handed else 1
 	var controller:XRController3D=left if left_handed else right
 	var pose:Transform3D=controller.global_transform*club_grip_pose(hand)
+	if optical_hand(hand):return pose # Physical joints, independent of avatar IK lag.
 	if club_controller_mount[hand] or not is_instance_valid(host_game):return pose
 	var grip=host_game.avatar.hand_grip_pose(left_handed)
 	if grip is Transform3D:pose.origin=grip.origin+(controller.global_basis*calibration.pose(hand).basis)*club_offsets[hand]
 	return pose
 func head_correction(hand:int)->Vector3:
-	if club_fitted[hand]:return club_head_rotations[hand]
+	if club_fitted[hand] and not optical_hand(hand):return club_head_rotations[hand]
 	# Default grip-relative head orientation before an address fit.
 	# Shaft corrections are independent; explicit face controls may override it.
 	return FIT_PROFILE.default_head_rotation(hand,club_index)
@@ -735,6 +739,7 @@ func _sync_physical_head()->void:
 	var head_basis:=grip_basis*Basis.from_euler(correction*PI/180.0)*Basis(Vector3.RIGHT,head_shape.loft)
 	physical_head.global_transform=Transform3D(head_basis,club.to_global(Vector3(0,-length,0))+head_basis.x*.055)
 func begin_club_fit() -> void:
+	if optical_hand(0 if left_handed else 1):status_text="Pick up a controller to adjust its club attachment. Hands use a natural grip.";return
 	godview.exit_view()
 	club_radial.close()
 	if not xr:status_text="Club fitting requires tracked VR controllers.";return

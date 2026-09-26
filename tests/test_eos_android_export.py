@@ -27,6 +27,13 @@ class AndroidEosTests(unittest.TestCase):
             write()
             with self.assertRaises(ValueError): read_config(path, '123')
             values['leaderboards']['enabled'] = False
+            values['achievements'] = {'enabled': False}
+            write()
+            self.assertFalse(read_config(path, '123')['achievements']['enabled'])
+            values['achievements']['enabled'] = 'true'
+            write()
+            with self.assertRaises(ValueError): read_config(path, '123')
+            values['achievements']['enabled'] = True
             values['identity']['provider'] = 'device'
             write()
             with self.assertRaises(ValueError): read_config(path, '123')

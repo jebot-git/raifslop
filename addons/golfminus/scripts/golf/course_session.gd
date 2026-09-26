@@ -31,7 +31,7 @@ func command(key:String,name:String,action:String,data:Dictionary,now:float)->bo
 		if g.members.values().filter(func(p):return not p.retired).size()>=8:return false
 		var scores:Array=[]
 		for i in g.hole:scores.append(-1)
-		g.members[key]={"name":name,"handicap":roundi(Handicap.index(stats.get(key,{}))),"present":false,"scores":scores,"strokes":0,"done":false,"retired":false}
+		g.members[key]={"name":name,"handicap":roundi(Handicap.index(stats.get(key,{}))),"present":false,"scores":scores,"forfeit_holes":[],"strokes":0,"done":false,"retired":false}
 		g.order.append(key)
 		if g.started and g.turn.is_empty():_next(g,now)
 		return true
@@ -84,6 +84,7 @@ func tick(now:float)->bool:
 		if g.finished or g.turn.is_empty() or g.deadline<=0 or now<g.deadline:continue
 		var key:String=g.turn;var p:Dictionary=g.members[key]
 		p.done=true;p.strokes=Handicap.cap(g.course,g.hole,p.handicap);p.scores.append(p.strokes);g.flight=false
+		p.forfeit_holes.append(g.hole)
 		forfeited.emit(key,g.course,g.hole)
 		_next(g,now);changed=true
 	return changed
@@ -121,4 +122,4 @@ func view(key:String)->Dictionary:
 	for member in g.order:
 		var row:Dictionary=g.members[member]
 		roster.append({"name":row.name,"handicap":row.handicap,"net":Handicap.net(m.course,row.scores,row.handicap),"scores":row.scores.duplicate(),"retired":row.retired,"present":row.present})
-	return {"course":m.course,"mode":g.mode,"started":g.started,"owner":g.owner==key,"handicap":p.handicap,"cap":Handicap.cap(m.course,mini(g.hole,17),p.handicap),"id":g.id,"hole":g.hole,"epoch":g.epoch,"your_turn":g.turn==key,"turn_name":g.members[g.turn].name if not g.turn.is_empty() else "","deadline":g.deadline,"present":p.present,"retired":p.retired,"finished":g.finished,"done":p.done,"strokes":p.strokes,"scores":p.scores.duplicate(),"roster":roster,"flight":g.flight}
+	return {"course":m.course,"mode":g.mode,"started":g.started,"owner":g.owner==key,"handicap":p.handicap,"cap":Handicap.cap(m.course,mini(g.hole,17),p.handicap),"id":g.id,"hole":g.hole,"epoch":g.epoch,"your_turn":g.turn==key,"turn_name":g.members[g.turn].name if not g.turn.is_empty() else "","deadline":g.deadline,"present":p.present,"retired":p.retired,"finished":g.finished,"done":p.done,"strokes":p.strokes,"scores":p.scores.duplicate(),"forfeit_holes":p.forfeit_holes.duplicate(),"roster":roster,"flight":g.flight}

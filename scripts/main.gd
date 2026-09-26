@@ -11,9 +11,12 @@ const AvatarMenu = preload("res://scripts/avatar_menu.gd")
 const Locations = preload("res://scripts/locations.gd")
 var golf_activity: Node
 var tracking_manager: Node
+var hand_actions: Node
 var ambience: Node
 var shoulder_radio: Node3D
 var network: Node
+var progress:Node
+var destinations:Node
 var rod_status: Node3D
 var server_only := false
 var fish_guide: Node3D
@@ -136,6 +139,7 @@ func _ready() -> void:
 	add_child(fish_guide)
 	_load_journal()
 	game.tackle.load_profile()
+	progress=preload("res://scripts/progress/service.gd").new();add_child(progress);progress.setup(self)
 	avatar_menu.attach_tackle(game)
 	audio = AudioStreamPlayer.new()
 	add_child(audio)
@@ -158,6 +162,8 @@ func _ready() -> void:
 	bbq=preload("res://scripts/bbq/activity.gd").new();add_child(bbq);bbq.setup(self)
 	golf_activity = preload("res://addons/golfminus/scripts/golf/fishing_host.gd").new()
 	add_child(golf_activity); golf_activity.setup(self)
+	destinations=preload("res://scripts/progress/destinations.gd").new();add_child(destinations);destinations.setup(self)
+	avatar_menu.attach_achievements(progress,destinations)
 	print("Ultimate Boomer Simulator ready | ", "OpenXR" if xr else "XR test fixture", " | panorama + location foreground loaded")
 
 func material(color: Color, metal := 0.0) -> StandardMaterial3D:
@@ -295,6 +301,7 @@ func _build_rig() -> void:
 	right.name = "RightHand"
 	origin.add_child(right)
 	left.button_pressed.connect(_left_button)
+	left.button_released.connect(_left_released)
 	right.button_pressed.connect(_right_pressed)
 	right.button_released.connect(_right_released)
 	for controller in [left, right]:
@@ -431,6 +438,8 @@ func _select_bait(index: int) -> void:
 
 func _left_button(button: String) -> void:
 	if is_instance_valid(golf_activity) and golf_activity.active: return
+	if menu_open and button == "trigger_click" and not right.get_has_tracking_data():
+		_menu_click(true); return
 	if is_instance_valid(bbq) and bbq.holds(0) and not fish_guide.held and not menu_open:
 		if button=="ax_button":bbq.use(0,bbq.hovered,true)
 		return
@@ -448,6 +457,10 @@ func _left_button(button: String) -> void:
 		_select_bait((game.bait + 1) % game.bait_count())
 	elif button == "by_button":
 		_primary_action()
+
+func _left_released(button: String) -> void:
+	if is_instance_valid(golf_activity) and golf_activity.active: return
+	if menu_open and button == "trigger_click" and not right.get_has_tracking_data(): _menu_click(false)
 
 func _right_pressed(button: String) -> void:
 	if is_instance_valid(golf_activity) and golf_activity.active: return
@@ -674,6 +687,8 @@ func _projected_cast_target() -> Vector3:
 		var direction: Vector3 = origin.global_basis * cast_motion.swing_travel
 		direction.y = 0.0
 		if direction.length_squared()<.000001:return Vector3(INF,INF,INF)
+		if game.is_fly_fishing():
+			return preload("res://scripts/cast_target.gd").fit(cast_aim_anchor,direction,cast_motion.swing_distance(),_cast_target_valid)
 		return cast_aim_anchor + direction.normalized() * cast_motion.swing_distance()
 	# Trigger-down freezes both the visible marker and the release destination.
 	if casting: return cast_aim_target
@@ -895,6 +910,7 @@ func _process(delta: float) -> void:
 			_tone(880, 0.18)
 		elif game.state == Session.State.LANDED:
 			_show_fish()
+			progress.caught(Session.SPECIES[game.fish_index],float(game.journal.back().length))
 			_save_journal()
 			if game.tackle.save_profile() != OK:
 				game.message += "\nCould not save shekels."
@@ -1428,6 +1444,7 @@ func _import_avatar(path: String) -> void:
 func _attach_rod_to_hand(grip: Transform3D, source: Node3D) -> void:
 	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if not xr or source != avatar or rod_holster.stowed: return
+	if is_instance_valid(hand_actions) and hand_actions.active[1]:grip=controller_pose(1)
 	rod.top_level = true
 	rod.global_transform = grip * rod_holster.HELD_POSE
 	# Skeleton modifiers run after ordinary processing; keep tackle and line at
@@ -1505,6 +1522,12 @@ func _menu_click(pressed: bool, cancel := false) -> void:
 	if not pressed and not menu_mouse_down: return
 	# Click the displayed cursor; do not resample a newly curled trigger finger.
 	var pos := Vector2(-100,-100) if cancel else menu_last_position
+	if cancel:
+		# Clear the hovered control before releasing. A release position alone
+		# can still activate the button that held the mouse capture.
+		var leave:=InputEventMouseMotion.new();leave.position=pos;leave.global_position=pos
+		leave.relative=pos-menu_last_position;leave.button_mask=MOUSE_BUTTON_MASK_LEFT
+		avatar_menu_view.push_input(leave,true)
 	menu_mouse_down = pressed
 	var event := InputEventMouseButton.new()
 	event.position = pos
@@ -1523,6 +1546,8 @@ func _start_network() -> void:
 		avatar_menu.attach_multiplayer(network)
 		tracking_manager=preload("res://scripts/tracking/manager.gd").new()
 		add_child(tracking_manager); tracking_manager.setup(self)
+		hand_actions=preload("res://scripts/tracking/hand_actions.gd").new()
+		add_child(hand_actions);hand_actions.setup(self)
 		avatar_menu.attach_tracking(tracking_manager)
 		avatar_menu.attach_sound(ambience)
 		avatar_menu.attach_leaderboard(network)

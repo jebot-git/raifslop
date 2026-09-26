@@ -167,6 +167,9 @@ func preserve_mirror()->void:
 	host.spectator.camera.far=host.head.far
 func update_player(delta: float) -> void:
 	if not active:return
+	if is_instance_valid(host.get("progress")):
+		var forfeits:Array=service.view.get("forfeit_holes",[]) if host.network.active else []
+		host.progress.golf(golf.course_id,golf.round_state.scores,golf.round_state.finished,forfeits)
 	golf.update_club_style()
 	preserve_mirror()
 	if is_instance_valid(host.avatar) and avatar_bound!=host.avatar:

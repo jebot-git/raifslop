@@ -21,6 +21,7 @@ func _export_begin(features: PackedStringArray, _debug: bool, _path: String, _fl
 		config.set_value("identity","provider","meta")
 		for key in ["app_id","destination"]:config.set_value("meta",key,settings[key])
 		config.set_value("leaderboards","enabled",settings.get("leaderboards_enabled",false))
+		config.set_value("achievements","enabled",settings.get("achievements_enabled",true))
 		add_file("res://eos.cfg",config.encode_to_text().to_utf8_buffer(),false)
 	textures.clear()
 	emitted.clear()

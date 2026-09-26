@@ -5,6 +5,7 @@ const Factory=preload("res://scripts/network/transport_factory.gd")
 var backend=preload("res://scripts/network/eos/eos_backend.gd").new()
 var meta=preload("res://scripts/network/eos/meta_provider.gd").new()
 var leaderboards=preload("res://scripts/network/leaderboards/service.gd").new()
+var achievements=preload("res://scripts/progress/online_achievements.gd").new()
 var session:Node
 var config:Dictionary={}
 var auth=preload("res://scripts/network/eos/lobby_auth.gd").new()
@@ -31,6 +32,7 @@ func setup(owner_session:Node)->void:
  auth.failed.connect(func():admission_failed=true)
  add_child(backend);add_child(meta)
  add_child(leaderboards);leaderboards.setup(self)
+ add_child(achievements);achievements.setup(self)
  backend.expired.connect(func():refresh_due=true)
  backend.session_lost.connect(func():loss_due=true)
  backend.membership_changed.connect(func():presence_due=true)
@@ -54,6 +56,7 @@ func join_reference()->String:
 func authenticate()->String:
  var identity:Dictionary=await meta.identity(config) if config.provider=="meta" else {"type":10}
  if identity.has("error"):return identity.error
+ if session.get("display_name") is String:identity["display_name"]=session.display_name
  var result:String=await backend.login(identity,meta.identity.bind(config))
  identity.clear();return result
 func settings_error(settings:Dictionary)->String:
@@ -68,7 +71,8 @@ func services(settings:Dictionary)->String:
  config=settings
  var error:String=backend.initialize(config)
  if error.is_empty() and backend.product_user_id.is_empty():error=await authenticate()
- if error.is_empty():leaderboards.start(config,backend,meta)
+ if error.is_empty():
+  leaderboards.start(config,backend,meta);achievements.start(config,backend,meta)
  return error
 func browse_lobbies(path:String="")->void:
  if busy or Time.get_ticks_msec()<search_ready_at:return
@@ -87,7 +91,8 @@ func browse_lobbies(path:String="")->void:
   if error.is_empty():lobbies=result.get("lobbies",[])
  busy=false;session.changed.emit()
 func share_invitation()->String:
- var link:=Config.meta_destination_link(config)
+ var settings:=presence_settings();settings.destination=settings.get("activity_destination",config.get("destination",""))
+ var link:=Config.meta_destination_link(settings)
  if lobby.is_empty() or link.is_empty():return ""
  return "Join me in %s (up to 8 players).\n%s\nOpen Together and select this lobby, or paste this join code:\n%s%s"%[title,link,join_reference(),"\nAsk the host for the password." if locked else ""]
 func start(hosting:bool,reference:String="",path:String="",lobby_title:String="Fishing together",password:String="")->Error:
@@ -128,11 +133,19 @@ func start(hosting:bool,reference:String="",path:String="",lobby_title:String="F
  auth.install(session.multiplayer,hosting,password)
  password=""
  session.attach_transport(result.peer,hosting,"EOS online")
- presence_ready=await meta.publish(config,lobby,answer.get("available_slots",0)>0) if hosting else false
+ presence_ready=await meta.publish(presence_settings(),lobby,answer.get("available_slots",0)>0) if hosting else false
  if not hosting:presence_due=true
  if current!=generation:return await cancelled()
  busy=false;session.changed.emit()
+ if is_instance_valid(session.get("root_game")) and is_instance_valid(session.root_game.get("destinations")):
+  session.root_game.destinations.travel.call_deferred()
  return OK
+func presence_settings()->Dictionary:
+ var settings:=config.duplicate()
+ if is_instance_valid(session.get("root_game")):
+  var destination:=preload("res://scripts/progress/destination_catalog.gd").for_location(str(session.root_game.get("current_location")))
+  if not destination.is_empty():settings.activity_destination=destination
+ return settings
 func cleanup()->void:
  auth.reset()
  presence_ready=false;lobby="";title="";locked=false;hosting_lobby=false;admission_failed=false
@@ -149,6 +162,7 @@ func cancelled()->Error:
  await cleanup();busy=false;stop_due=false;return ERR_SKIP
 func stop()->void:
  leaderboards.stop()
+ achievements.stop()
  auth.reset()
  generation+=1;stop_due=true
 func invite()->void:
@@ -169,7 +183,7 @@ func _process(_delta:float)->void:
  if presence_due and not lobby.is_empty() and session.active:
   presence_due=false;busy=true
   var info:Dictionary=backend.snapshot()
-  presence_ready=await meta.publish(config,lobby,not info.has("error") and info.get("available_slots",0)>0)
+  presence_ready=await meta.publish(presence_settings(),lobby,not info.has("error") and info.get("available_slots",0)>0)
   busy=false;return
  if refresh_due and backend.initialized:
   refresh_due=false;busy=true

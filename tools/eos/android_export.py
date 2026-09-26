@@ -32,6 +32,13 @@ def read_config(path, app_id):
     if not isinstance(enabled, bool):
         raise ValueError('Leaderboard enabled setting must be a boolean')
     values['leaderboards'] = {'enabled': enabled}
+    try:
+        achievements = json.loads(source.get('achievements', 'enabled', fallback='true'))
+    except ValueError:
+        raise ValueError('Invalid achievement enabled setting') from None
+    if not isinstance(achievements, bool):
+        raise ValueError('Achievement enabled setting must be a boolean')
+    values['achievements'] = {'enabled': achievements}
     if values['identity']['provider'] != 'meta':
         raise ValueError('Quest EOS builds require Meta identity; device test credentials are forbidden')
     if values['meta']['app_id'] != app_id:

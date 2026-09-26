@@ -26,7 +26,8 @@ func run()->void:
   t.set_input("grip",0.0);t.set_input("trigger",0.0);t.set_input("primary",Vector2.ZERO);t.set_input("trigger_click",false)
   pose(side,Vector3(-.3,1.2,-.3) if side==0 else hand)
  g.xr=true;g.tracking_manager.calibration_pending=false;g.tracking_manager.focused=true
- for location in ["meadow_bend","boulder_run"]:
+ g.head.position=Vector3(0,1.65,.65)
+ for location in ["meadow_bend","boulder_run","cedar_creek","glacier_run"]:
   g.game.reset();g._select_location(location,false);g.head.rotation=Vector3(-.25,0,0)
   for i in 8:await settle()
   for input in ["grip","trigger"]:
@@ -59,6 +60,22 @@ func run()->void:
   check(g.aim_marker.global_position.is_equal_approx(extended),"Head motion cannot move the deliberately extended aim marker")
   trackers[1].set_input("trigger_click",false)
   check(g.game.state==g.Session.State.CASTING and g.cast_target.is_equal_approx(extended),"Released fly lands at the displayed extended target")
+  g.game.reset();g.head_aimed_casting=false;await settle()
+  var anchor:Vector3=g._casting_anchor()
+  var direction:=Vector3.ZERO
+  for i in 24:
+   var candidate:=Basis(Vector3.UP,i*TAU/24)*Vector3.FORWARD
+   if g._cast_target_valid(anchor+candidate*6) and not g._cast_target_valid(anchor+candidate*24):direction=candidate;break
+  check(direction.length_squared()>.5,location+": river has a reachable short cast that overshoots at full range")
+  if direction.length_squared()>.5:
+   g._begin_cast();g.cast_motion.raised=true;g.cast_motion.phase=g.cast_motion.Phase.COMMITTED
+   g.cast_motion.swing_travel=g.origin.global_basis.inverse()*direction*2.8;g.cast_motion.swing_speed=35;g.game.fly.strokes=1
+   var target:Vector3=g._projected_cast_target()
+   check(target.is_finite() and g._cast_target_valid(target) and target.distance_to(anchor)<24,"Fast fly stroke finds reachable water before the far bank")
+   check((target-anchor).normalized().dot(direction)>.999,"River landing preserves controller heading")
+   g._right_released("trigger_click")
+   check(g.game.state==g.Session.State.CASTING,"Recognized fast motion cast releases into the river")
+  g.head_aimed_casting=true
  for t in trackers:XRServer.remove_tracker(t)
  g.queue_free();await process_frame;await create_timer(.2).timeout
  print("FLY_CONTROLS_RESULT ",failures);quit(0 if failures.is_empty() else 1)

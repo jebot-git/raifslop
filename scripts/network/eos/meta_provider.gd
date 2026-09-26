@@ -37,12 +37,14 @@ func identity(config: Dictionary) -> Dictionary:
 	return {"type":13,"token":resolved_id + "|" + nonce} # EOS_ECT_OCULUS_USERID_NONCE
 
 func _read_intent(details: Object) -> void:
-	if details == null or str(details.get_destination_api_name()) != destination: return
+	if details == null or not _known_destination(str(details.get_destination_api_name())): return
 	var reference := str(details.get_deeplink_message())
 	if reference.is_empty() and details.has_method("get_lobby_session_id"):
 		var lobby:=str(details.get_lobby_session_id())
 		if not lobby.is_empty():reference=preload("res://scripts/network/eos/config.gd").join_reference(settings,lobby)
 	if not reference.is_empty(): join_requested.emit(reference)
+func _known_destination(value:String)->bool:
+	return value==destination or preload("res://scripts/progress/destination_catalog.gd").all().has(value)
 
 func _on_platform_notification(message: Object) -> void:
 	if message == null or message.is_error(): return
@@ -51,13 +53,13 @@ func _on_platform_notification(message: Object) -> void:
 		2000194038: _read_intent(message.get_group_presence_join_intent())
 		1194846749:
 			var intent: Object = message.get_group_presence_leave_intent()
-			if intent != null and str(intent.get_destination_api_name()) == destination:
+			if intent != null and _known_destination(str(intent.get_destination_api_name())):
 				leave_requested.emit(str(intent.get_lobby_session_id()))
 
 func publish(config: Dictionary, lobby: String, joinable: bool) -> bool:
 	if not enabled: return true
 	var options: Object = ClassDB.instantiate("MetaPlatformSDK_GroupPresenceOptions")
-	options.set_destination_api_name(destination)
+	options.set_destination_api_name(config.get("activity_destination",destination))
 	options.set_lobby_session_id(lobby)
 	options.set_is_joinable(joinable)
 	options.set_deeplink_message_override(preload("res://scripts/network/eos/config.gd").join_reference(config, lobby))

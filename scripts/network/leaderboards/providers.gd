@@ -25,7 +25,7 @@ func verify_definitions()->bool:
   var copied:Dictionary=backend.sdk.leaderboards_interface_copy_leaderboard_definition_by_leaderboard_id(Options.new({"leaderboard_id":definition.board}))
   if copied.get("result_code")!=0 or not copied.get("definition") is Dictionary:return false
   var remote:Dictionary=copied.definition
-  if remote.get("stat_name")!=definition.stat or remote.get("aggregation")!=(0 if definition.aggregation=="MIN" else 1):return false
+  if remote.get("stat_name")!=definition.stat or remote.get("aggregation")!=Catalog.aggregation_code(definition.aggregation):return false
   if remote.get("start_time")!=Catalog.START_TIME or remote.get("end_time")!=-1:return false
  definitions_verified=true;return true
 func ingest(values:Dictionary)->bool:
@@ -60,7 +60,7 @@ func mirror(key:String,score:int)->bool:
  var viewer:Object=await meta.requests.meta(meta.sdk.user_get_logged_in_user_async())
  if viewer==null or viewer.get_user()==null or str(viewer.get_user().get_id())!=meta_id or not ready() or not can_mirror():return false
  # force_update=false keeps best according to the configured board sort order.
- var request:Object=meta.sdk.leaderboard_write_entry_async(Catalog.boards()[key].meta,score,PackedByteArray(),false)
+ var request:Object=meta.sdk.leaderboard_write_entry_async(Catalog.boards()[key].meta,score,PackedByteArray(),Catalog.boards()[key].aggregation=="LATEST")
  return await meta.requests.meta(request)!=null and can_mirror()
 func page(key:String,page_index:int)->Dictionary:
  if not ready() or not Catalog.boards().has(key) or page_index<0 or page_index>4:return {"error":"Invalid online ranking request."}

@@ -1,5 +1,5 @@
 extends Node
-## Opt-in client-attested best-score integration. Dedicated/ENet records never enter this service.
+## Opt-in client-attested records. Dedicated/ENet records never enter this service.
 const Catalog=preload("res://scripts/network/leaderboards/catalog.gd")
 const Outbox=preload("res://scripts/network/leaderboards/state.gd")
 const Board=preload("res://scripts/network/leaderboard.gd")
@@ -45,12 +45,34 @@ func persist()->bool:
  stop();status="Online leaderboard outbox could not be saved.";changed.emit();return false
 func observe_state(data:Dictionary)->void:
  if not eligible() or not preload("res://scripts/network/state.gd").valid(data) or data.location.begins_with("golf_"):return
+ var before:Dictionary=collector.records.values()[0].duplicate(true)
  if not collector.observe(1,data):return
  var row:Dictionary=collector.records.values()[0]
  for key in ["heaviest","longest"]:offer(key,Catalog.encode(key,float(row[key])))
+ for key in ["catches","earned","exceptional"]:outbox.add(key,int(row[key])-int(before[key]))
+ persist()
 func observe_golf(view:Dictionary)->void:
- if not eligible() or view.get("finished")!=true or view.get("retired",true)!=false:return
+ if not eligible():return
  var key:String="golf/"+str(view.get("course",""))
+ var id:String=str(view.get("id",""))
+ if not Catalog.boards().has(key) or id.is_empty() or id.length()>128:return
+ id=str(view.course)+":"+id
+ var progress:Dictionary=outbox.rounds.get(id,{"complete":false,"forfeits":0})
+ var forfeits=view.get("forfeit_holes",[])
+ if not forfeits is Array or forfeits.size()>18:return
+ var unique:Array=[]
+ var forfeits_changed:=false
+ for hole in forfeits:
+  if not hole is int or hole<0 or hole>=18 or hole in unique:return
+  unique.append(hole)
+ if forfeits.size()>progress.forfeits:
+  outbox.add("golf_forfeits/"+view.course,forfeits.size()-progress.forfeits);progress.forfeits=forfeits.size()
+  forfeits_changed=true
+ if not outbox.rounds.has(id) and outbox.rounds.size()>=128:outbox.rounds.erase(outbox.rounds.keys()[0])
+ outbox.rounds[id]=progress
+ if view.get("finished")!=true or view.get("retired",true)!=false or progress.complete:
+  if forfeits_changed:persist()
+  return
  var scores=view.get("scores")
  if not Catalog.boards().has(key) or not scores is Array or scores.size()!=18:return
  var total:=0
@@ -58,6 +80,15 @@ func observe_golf(view:Dictionary)->void:
   if not score is int or score<1 or score>1000:return # Reject DNF, partial and malformed cards.
   total+=score
  offer(key,total)
+ progress.complete=true
+ outbox.add("golf_rounds/"+view.course,1)
+ var records:Dictionary={"local":{"golf":outbox.golf}}
+ preload("res://addons/golfminus/scripts/golf/server_records.gd").finish(records,"local",view.course,scores,false)
+ outbox.golf=records.local.golf
+ offer("golf_last/"+view.course,total)
+ var handicap:float=preload("res://addons/golfminus/scripts/golf/handicap.gd").index(outbox.golf)
+ for course in outbox.golf:offer("golf_handicap/"+course,Catalog.encode("golf_handicap/"+course,handicap))
+ persist()
 func _process(_delta:float)->void:
  if not eligible() or runtime.busy or busy or Time.get_ticks_msec()<due:return
  await synchronize()
@@ -65,6 +96,13 @@ func synchronize()->void:
  if not eligible() or busy:return
  busy=true
  var current:=generation
+ if not outbox.increments.is_empty():
+  var baseline:Dictionary=await provider.read_scores()
+  if current!=generation:busy=false;return
+  if baseline.has("error") or not Outbox.valid_scores(baseline.get("scores",{})):
+   status="Online totals could not be reconciled; will retry.";due=Time.get_ticks_msec()+60000;busy=false;changed.emit();return
+  outbox.rebase_counters(baseline.get("scores",{}))
+  if not persist():busy=false;return
  var values:Dictionary=outbox.pending()
  var ok:=true
  if not values.is_empty():ok=await provider.ingest(values)

@@ -1,131 +1,92 @@
-# EOS source and Meta leaderboard mirror
+# EOS and dedicated-server stat parity
 
-Prepared on `experimental/eos-meta`. Disabled by default. EOS and Meta definitions are
-provisioned. EOS is verified with live SDK reads; no leaderboard scores were submitted.
+The game tracks the same fishing categories and golf fields for dedicated-server
+records and EOS sessions. The rankings panel reads server records during ENet
+play and EOS rankings during an EOS lobby. Server history remains server-local;
+new EOS play contributes to the authenticated account's online totals.
 
-Dedicated servers continue to own `--leaderboard-path` / `user://server/leaderboard.json`.
-Their fishing totals, golf records, persistence, requested ranking pages and UI
-stay independent. ENet sessions do not collect or submit cloud scores. Existing
-server history is never imported into EOS or Meta.
+| Activity | Fields | EOS representation |
+| --- | --- | --- |
+| Fishing | Catches, catch earnings before spending, exceptional catches | Absolute MAX counters |
+| Fishing | Heaviest catch, longest catch | MAX grams / millimetres |
+| Golf, per course | Best completed score | MIN strokes |
+| Golf, per course | Completed rounds, forfeited holes | Absolute MAX counters |
+| Golf, per course | Latest completed score, current handicap | LATEST strokes / tenths plus one |
 
-```mermaid
-flowchart LR
-  Play[Local player in an EOS lobby] --> Best[Validated personal best]
-  Best --> Outbox[Account-scoped persistent outbox]
-  Outbox --> Stats[EOS MIN/MAX stats]
-  Stats --> Read[Read confirmed EOS scores]
-  Read --> Mirror[Logged-in Meta player's entry]
-  Stats --> Ranks[EOS global ranking queries]
-  Dedicated[Dedicated server] --> Local[Server-owned records and rankings]
-```
+There are 35 stat/board definitions: five fishing categories and five fields for
+each of six courses. Existing `ubs_v1_*` personal-best IDs are retained. Added
+fields use `ubs_v2_*`. Destinations expose the four currently playable named golf
+courses; records also retain support for the two legacy fictional courses.
 
-## Prepared functionality
+Fishing uses the same cast/fight/landing collector and reward/exceptional rules
+as the dedicated server. It consumes each landing once. Golf deduplicates
+finished cards and forfeited holes by the authority's round ID, persists that
+progress across restarts, and derives handicap using the existing rolling-history
+calculator. Capped timeout holes count as forfeits and completed cards follow the
+same rules as server records. Retired/incomplete cards do not become best scores.
 
-- Eight versioned, non-expiring boards: heaviest catch (integer grams), longest catch
-  (integer millimetres), and lowest completed 18-hole score for each of six golf
-  courses. Fishing stores kg/cm internally; conversion happens once at the cloud
-  boundary. Ingest values must fit positive signed int32, the narrower EOS range.
-- Only EOS lobby play collects new local personal bests. Fishing uses the existing
-  cast/fight/landing validation; golf accepts a completed, non-retired 18-hole card
-  with no forfeited holes. These are **client-attested testing scores**, not a
-  trusted anti-cheat or competition authority.
-- The outbox is separate from server records. Its filename hashes the schema,
-  product, sandbox, deployment, EOS PUID, Meta application ID and Meta viewer ID. It retains pending
-  scores across crashes, writes atomically and preserves corrupt files for recovery.
-- EOS ingests use absolute values with MIN/MAX aggregation. A timeout can safely
-  retry the same best score. A success callback alone never clears a pending
-  score: a subsequent EOS query must show that score or a better one.
-- Meta receives only values returned by a successful EOS stats query. It writes
-  the authenticated viewer's entry with `force_update=false` and no extra identity
-  payload, rechecking the SDK viewer before each write. Meta failures do not resend
-  already-confirmed EOS ingests. Each login
-  reconciles Meta again, including EOS scores earned on another linked device.
-- Healthy synchronization runs at most once per minute, using one batched ingest
-  and one batched score query, with at most two Meta writes per pass. Failures back
-  off to five minutes; mirror jobs rotate so a failing board cannot starve others.
-  Queries and writes are serialized within the service. No gameplay RPC or pose
-  payload was added.
-- `session.online.leaderboards.query_page(key, page)` prepares the EOS rankings
-  API: ten rows per page, pages 0–4, a one-minute cache and a five-second query
-  throttle. Rows omit PUIDs; `rank` preserves the native EOS value and `position`
-  is the one-based list position. The existing rankings panel remains server-only;
-  adding an explicit Online/Server view is a subsequent UI step.
-- Leaving/changing sessions invalidates pending completions. Provider calls bind
-  to the authenticated account and reject identity changes. SDK work remains on
-  the main thread and never blocks frame processing while awaiting a callback.
+## Persistence and synchronization
 
-Meta is a **per-viewer mirror**, not a second global identity directory. PC-only
-players appear in EOS; their Meta entry can synchronize when that same linked EOS
-account signs in on Quest. Never merge identities by display name. The current
-PC device-login path remains a development identity, not production account linking.
+Account files are isolated by product, sandbox, deployment, EOS user, Meta app and
+Meta user. No server balances or journal histories are imported. New counter
+increments are saved locally, reconciled with a fresh EOS read, then converted
+into an absolute target and saved before ingestion. Retrying after an ambiguous
+acknowledgement sends that same MAX target instead of repeating a SUM increment.
+A subsequent EOS read confirms delivery. Corrupt outboxes are preserved.
 
-## Provisioning and activation
+MIN/MAX fields keep best values. LATEST fields compare for equality and replace
+Meta entries only after an EOS read; other Meta entries use keep-best writes.
+Handicap zero is stored as 1, with a scale of 10 and offset of 1, to distinguish
+zero handicap from an unset stat. The UI decodes it before display. Only the
+currently authenticated Meta viewer's entry can be written.
+
+These are client-attested records. Absolute counters support one active writer
+per account; concurrent play from multiple devices can lose increments, and
+rolling handicap history is local to that account on this installation. A trusted
+transactional event service is required for cross-device concurrent aggregation
+or competitive anti-cheat. Server records retain their existing authority model.
+
+Synchronization is bounded to one batched ingest and read per minute, plus a
+baseline read when new counters need reconciliation. At most two Meta writes run
+per cycle, with fair rotation and backoff. Ranking pages contain ten rows, stop
+at the top 50, use a one-minute cache and never expose PUIDs. Leaving a session
+invalidates late callbacks.
+
+## Provisioning
 
 Use [EOS_LEADERBOARDS.example.json](EOS_LEADERBOARDS.example.json) as the exact
-provisioning specification. It is a review template, not an automatic portal importer.
+35-definition specification. All 35 definitions were provisioned and read back on 2026-09-26.
+A live desktop SDK probe verified every EOS ID, stat, aggregation and time window,
+plus personal stat and ranking queries; it submitted no scores. Meta read-back
+verified all IDs, sorting, hidden visibility and disabled notifications. This file is a specification, not an automatic portal importer.
 
-1. In the intended EOS deployment, create all eight named stats with the indicated
-   **stat aggregation**, then all eight leaderboards with the matching IDs, stats,
-   aggregation and v1 window: start `1790330760` (2026-09-25 10:06 UTC), end `-1`
-   (never expires). The portal requires a start date; `-1` is a query wildcard,
-   not the start stored by its creation form. No v1 scores predate this window.
-   Do not use SUM or LATEST, or substitute a later start date for this namespace.
-   Grant the game's EOS client policy self-stat ingest, stat query and leaderboard
-   query access. The adapter checks leaderboard definitions before its first
-   write, but the Stats API does not expose the underlying stat aggregation: verify
-   that setting in the portal as well.
-2. In the matching Meta application, create each exact API name with numeric
-   scores (Meta Point type), Client Authoritative entry writes, and application
-   access limited to Ultimate Boomer Simulator. Keep User facing and friend
-   notifications off during testing. Fishing sorts higher-first; golf sorts
-   lower-first. Verify entitlement and applicable platform data access with test users.
-   Incorrect sort order breaks keep-best semantics and must be fixed before enabling.
-3. Confirm Meta-to-EOS identity linking on entitled Quest accounts. No upload app
-   secret belongs in the client, outbox or leaderboard entries.
-4. In the local `eos.cfg`, add:
+1. Create EOS stats with the specified aggregation, then matching leaderboards
+   with the same IDs/stat names and aggregation. Keep start `1790330760` and end
+   `-1` for the non-expiring windows. v1 best scores use MIN/MAX; v2 last/handicap
+   explicitly use LATEST. Do not change an existing stat's meaning.
+2. Give the client policy self-stat ingest, stat reads, and leaderboard queries.
+   The native adapter verifies every board definition before use. Check the
+   underlying stat aggregation in the portal as well.
+3. Create matching Meta numeric, client-authoritative boards with the exact
+   sort/update policy in the JSON. Keep public display and friend notifications
+   disabled during ALPHA testing. The game never needs the Meta app secret.
+4. Set `[leaderboards] enabled=true` in the private EOS config. It is false when
+   absent, and the Android exporter preserves this boolean.
+5. Verify a catch and completed round on an entitled Quest account, EOS read-back,
+   Meta mirrors, reconnect, interrupted uploads, account switching and a forfeit.
 
-   ```ini
-   [leaderboards]
-   enabled=true
-   ```
+Offline checks:
 
-   The Android EOS exporter explicitly carries this boolean into the APK. Missing
-   means false; strings such as `"true"` are rejected. Desktop development uses
-   the same setting with its existing explicit test-identity flag.
-5. Validate in a test deployment: submit a new best, query EOS until visible, check
-   Meta ordering/score, restart with an interrupted upload, test a Meta outage,
-   switch account, and confirm dedicated-server play never changes either cloud
-   board. Query propagation can delay mirroring across multiple passes.
+```sh
+godot --headless --xr-mode off --path . --script tests/online_leaderboards.gd
+godot --headless --xr-mode off --path . --script tests/leaderboard.gd
+godot --headless --xr-mode off --path . --script tests/ranking_pages.gd
+```
 
-The versioned board namespace is intentional. An administrative score reduction,
-ban, deletion or season reset is not propagated by keep-best writes. A new season
-needs a new namespace; moderation/corrections need a trusted reconciliation path.
-Do not enable production boards until those policies and on-device behavior are tested.
+Achievements and activity destinations are described in
+[ONLINE_PROGRESS.md](ONLINE_PROGRESS.md).
 
-## Cumulative categories: next integration stage
-
-`catches`, `earned`, `exceptional`, golf rounds and forfeits remain server-local.
-Publishing the maximum of server totals would lose catches across servers;
-retrying SUM increments after an ambiguous timeout would duplicate catches.
-
-Prepare a trusted event aggregator before enabling those global categories:
-
-- Accept authenticated events with stable event IDs and verified EOS actor IDs.
-  Award values are derived by the authority, never taken from client balances.
-- Deduplicate on `(deployment, actor, event_id)` in a durable event ledger.
-  Atomically update the actor's aggregate and an export outbox in one transaction.
-- Export **absolute aggregate snapshots** to EOS MAX stats; retries remain
-  idempotent. Serialize/reconcile per actor and handle the EOS int32 ceiling.
-  The existing client should only read these EOS totals and mirror its own entry.
-- Do not automatically enlist dedicated servers or upload their historical files.
-  Keep their local rankings independent; any future event producer is a separate,
-  explicitly configured trust boundary.
-
-This preparation supplies SDK adapters, lifecycle hooks, a durable best-score
-outbox, a bounded reader and failure tests. It does not deploy an event backend
-or replace the ranking UI. Portal and live validation status is recorded below.
-
-## Portal setup, 2026-09-25
+## Prior portal setup, 2026-09-25 (original eight boards only)
 
 Configured through official Playwright MCP 0.0.82 attached to an isolated Vivaldi
 profile, with interactive developer authentication.

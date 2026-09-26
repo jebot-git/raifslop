@@ -2,7 +2,9 @@ extends RefCounted
 ## Local grip corrections, independent for each controller. Stored in metres/degrees.
 var offsets := [Vector3.ZERO, Vector3.ZERO]
 var angles := [Vector3.ZERO, Vector3.ZERO]
+var optical_hands := [false, false] # Runtime source; never persisted as calibration.
 func pose(hand: int) -> Transform3D:
+	if optical_hands[hand]: return Transform3D.IDENTITY
 	return Transform3D(Basis.from_euler(angles[hand] * PI / 180.0), offsets[hand])
 func load_config(cfg: ConfigFile) -> void:
 	for hand in 2:

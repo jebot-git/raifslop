@@ -1,0 +1,76 @@
+{
+  "achievements": [
+    {
+      "description": "Land your first fish.",
+      "eos_achievement_id": "ubs_first_catch",
+      "id": "ubs_first_catch",
+      "locked_icon": "assets/ui/achievements/art/locked.png",
+      "meta_api_name": "ubs_first_catch",
+      "name": "First catch",
+      "secret": false,
+      "type": "SIMPLE",
+      "unlock_method": "client_unlock",
+      "unlocked_icon": "assets/ui/achievements/art/ubs_first_catch.png"
+    },
+    {
+      "description": "Land ten fish.",
+      "eos_achievement_id": "ubs_ten_catches",
+      "id": "ubs_ten_catches",
+      "locked_icon": "assets/ui/achievements/art/locked.png",
+      "meta_api_name": "ubs_ten_catches",
+      "name": "Getting the hang of it",
+      "secret": false,
+      "type": "SIMPLE",
+      "unlock_method": "client_unlock",
+      "unlocked_icon": "assets/ui/achievements/art/ubs_ten_catches.png"
+    },
+    {
+      "description": "Land a fish at 112% of typical length, or a rare predator.",
+      "eos_achievement_id": "ubs_exceptional_catch",
+      "id": "ubs_exceptional_catch",
+      "locked_icon": "assets/ui/achievements/art/locked.png",
+      "meta_api_name": "ubs_exceptional_catch",
+      "name": "Something special",
+      "secret": false,
+      "type": "SIMPLE",
+      "unlock_method": "client_unlock",
+      "unlocked_icon": "assets/ui/achievements/art/ubs_exceptional_catch.png"
+    },
+    {
+      "description": "Finish an 18-hole golf round without forfeiting a hole.",
+      "eos_achievement_id": "ubs_first_round",
+      "id": "ubs_first_round",
+      "locked_icon": "assets/ui/achievements/art/locked.png",
+      "meta_api_name": "ubs_first_round",
+      "name": "Around the course",
+      "secret": false,
+      "type": "SIMPLE",
+      "unlock_method": "client_unlock",
+      "unlocked_icon": "assets/ui/achievements/art/ubs_first_round.png"
+    },
+    {
+      "description": "Score a birdie or better on a completed golf hole.",
+      "eos_achievement_id": "ubs_birdie",
+      "id": "ubs_birdie",
+      "locked_icon": "assets/ui/achievements/art/locked.png",
+      "meta_api_name": "ubs_birdie",
+      "name": "Under par",
+      "secret": false,
+      "type": "SIMPLE",
+      "unlock_method": "client_unlock",
+      "unlocked_icon": "assets/ui/achievements/art/ubs_birdie.png"
+    },
+    {
+      "description": "Visit three different waters or courses.",
+      "eos_achievement_id": "ubs_explorer",
+      "id": "ubs_explorer",
+      "locked_icon": "assets/ui/achievements/art/locked.png",
+      "meta_api_name": "ubs_explorer",
+      "name": "New horizons",
+      "secret": false,
+      "type": "SIMPLE",
+      "unlock_method": "client_unlock",
+      "unlocked_icon": "assets/ui/achievements/art/ubs_explorer.png"
+    }
+  ]
+}

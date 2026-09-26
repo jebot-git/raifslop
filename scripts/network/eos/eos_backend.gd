@@ -69,7 +69,15 @@ func login(identity: Dictionary, refresh_identity: Callable = Callable()) -> Str
 		var device := await _call("connect_interface_create_device_id", {"device_model":"UBS desktop test"})
 		if device.get("result_code") not in [0, 24]: return "EOS device identity failed (%d)." % device.get("result_code", -1)
 	var credentials := Options.new({"type":identity.type,"token":identity.get("token")})
-	var options := {"credentials":credentials,"user_login_info":Options.new({"display_name":"UBS Tester","nsa_id_token":""}) if identity.type == 10 else null}
+	# EOS requires UserLoginInfo for OculusUseridNonce as well as Device ID.
+	# The display name is informational; identity still comes from the Meta proof.
+	var display_name:=""
+	for character in str(identity.get("display_name","UBS Player")).strip_edges():
+		if character.unicode_at(0)<32 or character.unicode_at(0)==127:continue
+		if (display_name+character).to_utf8_buffer().size()>32:break
+		display_name+=character
+	if display_name.is_empty():display_name="UBS Player"
+	var options := {"credentials":credentials,"user_login_info":Options.new({"display_name":display_name,"nsa_id_token":""}) if identity.type in [10, 13] else null}
 	var answer := await _call("connect_interface_login", options)
 	if answer.get("result_code") == 3 and answer.get("continuance_token") != null:
 		var created := await _call("connect_interface_create_user", {"continuance_token":answer.continuance_token})

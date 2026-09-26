@@ -93,5 +93,8 @@ func send_click(pressed:bool,hit:Vector2)->void:
 	var click:=InputEventMouseButton.new();click.position=hit;click.global_position=hit;click.button_index=MOUSE_BUTTON_LEFT;click.pressed=pressed;click.button_mask=MOUSE_BUTTON_MASK_LEFT if pressed else 0;viewport.push_input(click,true)
 
 func cancel_input()->void:
-	if down:send_click(false,Vector2(-100,-100))
+	if down:
+		var leave:=InputEventMouseMotion.new();leave.position=Vector2(-100,-100);leave.global_position=leave.position
+		leave.button_mask=MOUSE_BUTTON_MASK_LEFT;viewport.push_input(leave,true)
+		send_click(false,Vector2(-100,-100))
 	touching=false;last_hit=Vector2(-100,-100)
