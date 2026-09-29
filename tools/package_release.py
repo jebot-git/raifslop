@@ -15,6 +15,7 @@ OUT = BUILD / 'release'
 VERSION = re.search(r'^config/version="([^"]+)"', (ROOT / 'project.godot').read_text(), re.M)[1]
 from release_targets import TARGETS, ANDROID_TARGETS
 parser = argparse.ArgumentParser()
+parser.add_argument('--prerelease', action='store_true', help='Mark the complete candidate as a prerelease')
 parser.add_argument('--prototype', action='store_true', help='Package PC VR clients and dedicated server only')
 args = parser.parse_args()
 if args.prototype:
@@ -105,12 +106,14 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
     print('PACKAGED Server', flush=True)
     for target in ANDROID_TARGETS:
         shutil.copy2(BUILD / target / 'UltimateBoomerSimulator.apk', result / f'UltimateBoomerSimulator-{VERSION}-{target}.apk')
+        for expansion in (BUILD / target).glob('*.obb'):
+            shutil.copy2(expansion, result / expansion.name)
     notices = stage / 'Notices'
     notices.mkdir()
     copy_notices(notices)
     archive(notices, result / f'UltimateBoomerSimulator-{VERSION}-Notices.zip')
     (result / 'build-manifest.json').write_text(json.dumps(
-        {'version': VERSION, 'commit': revision, 'prerelease': args.prototype, 'targets': records}, indent=2) + '\n')
+        {'version': VERSION, 'commit': revision, 'prerelease': args.prototype or args.prerelease, 'targets': records}, indent=2) + '\n')
     (result / 'SHA256SUMS').write_text(''.join(
         digest(p) + '  ' + p.name + '\n' for p in sorted(result.iterdir()) if p.is_file()))
     if OUT.exists():

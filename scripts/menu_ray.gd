@@ -4,7 +4,7 @@ static func sample(game) -> Dictionary:
 	if not game.xr or not game.tracking_manager.focused: return {}
 	var controller:XRController3D=game.right if game.right.get_has_tracking_data() or not game.left.get_has_tracking_data() else game.left
 	var activity=game.get("golf_activity")
-	if is_instance_valid(activity) and activity.active and is_instance_valid(activity.golf):controller=activity.golf.pointer_controller()
+	if is_instance_valid(activity) and activity.active:controller=activity.pointer_controller()
 	var right_hand:bool=controller==game.right
 	var controller_valid: bool = controller.get_has_tracking_data()
 	var hand := XRServer.get_tracker("/user/hand_tracker/right" if right_hand else "/user/hand_tracker/left") as XRHandTracker

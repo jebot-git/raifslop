@@ -1,0 +1,1142 @@
+{
+  "version": 2,
+  "id": "blouberg_sunrise_2",
+  "water": "blouberg_sunrise_2",
+  "name": "Dawn Dunes",
+  "theme": "dune",
+  "turf": "#6e9882",
+  "trim": "#e2b584",
+  "holes": [
+    {
+      "number": 1,
+      "name": "Dawn Opening Bank",
+      "par": 2,
+      "width": 4.0,
+      "length": 7.25,
+      "tee": [
+        0.38,
+        -0.65
+      ],
+      "cup": [
+        -0.48,
+        -6.5
+      ],
+      "obstacles": [
+        {
+          "center": [
+            0.75,
+            -4.713
+          ],
+          "radius": 0.22
+        }
+      ],
+      "rails": [
+        {
+          "a": [
+            0.55,
+            -3.118
+          ],
+          "b": [
+            -0.55,
+            -3.915
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [],
+      "lost_ball": [
+        -2.6,
+        -1.45
+      ],
+      "hint": "Bank off the left rail, or leave a short approach right.",
+      "design": "Opening Bank"
+    },
+    {
+      "number": 2,
+      "name": "Dawn Dogleg",
+      "par": 3,
+      "width": 4.15,
+      "length": 8.4,
+      "tee": [
+        -0.38,
+        -0.65
+      ],
+      "cup": [
+        0.48,
+        -7.65
+      ],
+      "obstacles": [
+        {
+          "center": [
+            -0.62,
+            -6.048
+          ],
+          "radius": 0.3
+        }
+      ],
+      "rails": [
+        {
+          "a": [
+            -2.075,
+            -3.024
+          ],
+          "b": [
+            0.58,
+            -3.024
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            0.58,
+            -3.024
+          ],
+          "b": [
+            0.58,
+            -5.04
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [],
+      "lost_ball": [
+        2.675,
+        -3.108
+      ],
+      "hint": "Play around the dogleg, then use the far cushion.",
+      "design": "Dogleg"
+    },
+    {
+      "number": 3,
+      "name": "Dawn Twin Gates",
+      "par": 3,
+      "width": 4.3,
+      "length": 9.55,
+      "tee": [
+        0.38,
+        -0.65
+      ],
+      "cup": [
+        -0.48,
+        -8.8
+      ],
+      "obstacles": [],
+      "rails": [
+        {
+          "a": [
+            2.15,
+            -3.438
+          ],
+          "b": [
+            0.89,
+            -3.438
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            0.21,
+            -3.438
+          ],
+          "b": [
+            -2.15,
+            -3.438
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            2.15,
+            -6.112
+          ],
+          "b": [
+            -0.21,
+            -6.112
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            -0.89,
+            -6.112
+          ],
+          "b": [
+            -2.15,
+            -6.112
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [],
+      "lost_ball": [
+        -2.75,
+        -5.157
+      ],
+      "hint": "Staggered gates reward a placed first shot.",
+      "design": "Twin Gates"
+    },
+    {
+      "number": 4,
+      "name": "Dune Crossfall",
+      "par": 3,
+      "width": 4.0,
+      "length": 10.7,
+      "tee": [
+        -0.38,
+        -0.65
+      ],
+      "cup": [
+        0.48,
+        -9.95
+      ],
+      "obstacles": [
+        {
+          "center": [
+            0.48,
+            -5.885
+          ],
+          "radius": 0.34
+        }
+      ],
+      "rails": [],
+      "hazards": [],
+      "bumps": [
+        {
+          "center": [
+            -0.65,
+            -5.243
+          ],
+          "radius": 3.2099999999999995,
+          "axes": [
+            2.3,
+            3.2099999999999995
+          ],
+          "height": 0.42
+        }
+      ],
+      "ramps": [],
+      "lost_ball": [
+        2.6,
+        -7.597
+      ],
+      "hint": "Aim uphill of your line: the crossfall bends the putt.",
+      "design": "Crossfall"
+    },
+    {
+      "number": 5,
+      "name": "Dune Crest",
+      "par": 3,
+      "width": 4.15,
+      "length": 11.85,
+      "tee": [
+        0.38,
+        -0.65
+      ],
+      "cup": [
+        -0.48,
+        -11.1
+      ],
+      "obstacles": [],
+      "rails": [
+        {
+          "a": [
+            2.075,
+            -6.043
+          ],
+          "b": [
+            0.45,
+            -6.043
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            -0.45,
+            -6.043
+          ],
+          "b": [
+            -2.075,
+            -6.043
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [
+        {
+          "start": 2.844,
+          "end": 5.214,
+          "height": 0.425
+        },
+        {
+          "start": 6.28,
+          "end": 8.769,
+          "height": -0.425
+        }
+      ],
+      "lost_ball": [
+        -2.675,
+        -2.37
+      ],
+      "hint": "Clear the crest with enough pace, then let it run downhill.",
+      "design": "Crest"
+    },
+    {
+      "number": 6,
+      "name": "Dune Split Decision",
+      "par": 3,
+      "width": 4.3,
+      "length": 7.25,
+      "tee": [
+        -0.38,
+        -0.65
+      ],
+      "cup": [
+        0.48,
+        -6.5
+      ],
+      "obstacles": [],
+      "rails": [
+        {
+          "a": [
+            -0.35,
+            -2.03
+          ],
+          "b": [
+            -0.35,
+            -5.002
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            0.35,
+            -2.03
+          ],
+          "b": [
+            0.35,
+            -5.002
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [
+        {
+          "center": [
+            0,
+            -3.48
+          ],
+          "size": [
+            0.54,
+            1.0
+          ]
+        }
+      ],
+      "bumps": [
+        {
+          "center": [
+            0.97,
+            -3.843
+          ],
+          "radius": 1.74,
+          "axes": [
+            0.66,
+            1.74
+          ],
+          "height": 0.26
+        }
+      ],
+      "ramps": [],
+      "lost_ball": [
+        2.75,
+        -2.683
+      ],
+      "hint": "The middle is water. Choose the flat left or raised right route.",
+      "design": "Split Decision"
+    },
+    {
+      "number": 7,
+      "name": "Surf Keyhole",
+      "par": 3,
+      "width": 4.0,
+      "length": 8.4,
+      "tee": [
+        0.38,
+        -0.65
+      ],
+      "cup": [
+        -0.48,
+        -7.65
+      ],
+      "obstacles": [],
+      "rails": [
+        {
+          "a": [
+            2.0,
+            -4.2
+          ],
+          "b": [
+            0.27,
+            -4.2
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            -0.27,
+            -4.2
+          ],
+          "b": [
+            -2.0,
+            -4.2
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            0.8,
+            -2.52
+          ],
+          "b": [
+            0.27,
+            -4.2
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            -0.8,
+            -2.52
+          ],
+          "b": [
+            -0.27,
+            -4.2
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [
+        {
+          "start": 2.016,
+          "end": 3.696,
+          "height": 0.425
+        }
+      ],
+      "lost_ball": [
+        -2.6,
+        -4.536
+      ],
+      "hint": "The funnel leads to a tight gate and a raised finishing green.",
+      "design": "Keyhole"
+    },
+    {
+      "number": 8,
+      "name": "Surf Saddle",
+      "par": 3,
+      "width": 4.15,
+      "length": 9.55,
+      "tee": [
+        -0.38,
+        -0.65
+      ],
+      "cup": [
+        0.48,
+        -8.8
+      ],
+      "obstacles": [
+        {
+          "center": [
+            0,
+            -6.494
+          ],
+          "radius": 0.25
+        }
+      ],
+      "rails": [],
+      "hazards": [],
+      "bumps": [
+        {
+          "center": [
+            -0.9,
+            -4.584
+          ],
+          "radius": 2.865,
+          "axes": [
+            1.2,
+            2.865
+          ],
+          "height": 0.4
+        },
+        {
+          "center": [
+            0.9,
+            -5.539
+          ],
+          "radius": 2.483,
+          "axes": [
+            1.2,
+            2.483
+          ],
+          "height": 0.4
+        }
+      ],
+      "ramps": [],
+      "lost_ball": [
+        2.675,
+        -6.78
+      ],
+      "hint": "Read both side slopes and choose which way around the marker.",
+      "design": "Saddle"
+    },
+    {
+      "number": 9,
+      "name": "Surf Causeway",
+      "par": 3,
+      "width": 4.3,
+      "length": 10.7,
+      "tee": [
+        0.38,
+        -0.65
+      ],
+      "cup": [
+        -0.48,
+        -9.95
+      ],
+      "obstacles": [],
+      "rails": [],
+      "hazards": [
+        {
+          "center": [
+            1.265,
+            -5.564
+          ],
+          "size": [
+            1.77,
+            3.852
+          ]
+        },
+        {
+          "center": [
+            -1.265,
+            -5.564
+          ],
+          "size": [
+            1.77,
+            3.852
+          ]
+        }
+      ],
+      "bumps": [],
+      "ramps": [
+        {
+          "start": 2.782,
+          "end": 4.601,
+          "height": 0.425
+        },
+        {
+          "start": 6.634,
+          "end": 8.346,
+          "height": -0.425
+        }
+      ],
+      "lost_ball": [
+        -2.75,
+        -2.14
+      ],
+      "hint": "Stay on the narrow raised causeway and control the downhill exit.",
+      "design": "Causeway"
+    },
+    {
+      "number": 10,
+      "name": "Windward Switchback",
+      "par": 3,
+      "width": 4.0,
+      "length": 11.85,
+      "tee": [
+        -0.38,
+        -0.65
+      ],
+      "cup": [
+        0.48,
+        -11.1
+      ],
+      "obstacles": [],
+      "rails": [
+        {
+          "a": [
+            -2.0,
+            -3.318
+          ],
+          "b": [
+            0.55,
+            -3.318
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            2.0,
+            -5.688
+          ],
+          "b": [
+            -0.55,
+            -5.688
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            -2.0,
+            -8.058
+          ],
+          "b": [
+            0.55,
+            -8.058
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [],
+      "lost_ball": [
+        2.6,
+        -4.385
+      ],
+      "hint": "Three alternating corners: plan your next resting place.",
+      "design": "Switchback"
+    },
+    {
+      "number": 11,
+      "name": "Windward Sunken Garden",
+      "par": 3,
+      "width": 4.15,
+      "length": 7.25,
+      "tee": [
+        0.38,
+        -0.65
+      ],
+      "cup": [
+        -0.48,
+        -6.5
+      ],
+      "obstacles": [
+        {
+          "center": [
+            0,
+            -3.625
+          ],
+          "radius": 0.47
+        }
+      ],
+      "rails": [
+        {
+          "a": [
+            2.075,
+            -5.075
+          ],
+          "b": [
+            0.45,
+            -5.075
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [
+        {
+          "start": 1.667,
+          "end": 3.118,
+          "height": -0.425
+        },
+        {
+          "start": 4.64,
+          "end": 6.018,
+          "height": 0.425
+        }
+      ],
+      "lost_ball": [
+        -2.675,
+        -3.915
+      ],
+      "hint": "Descend around the island, saving pace for the climb out.",
+      "design": "Sunken Garden"
+    },
+    {
+      "number": 12,
+      "name": "Windward Double Cushion",
+      "par": 3,
+      "width": 4.3,
+      "length": 8.4,
+      "tee": [
+        -0.38,
+        -0.65
+      ],
+      "cup": [
+        0.48,
+        -7.65
+      ],
+      "obstacles": [
+        {
+          "center": [
+            0.65,
+            -6.468
+          ],
+          "radius": 0.25
+        }
+      ],
+      "rails": [
+        {
+          "a": [
+            -2.15,
+            -2.52
+          ],
+          "b": [
+            0.3,
+            -3.612
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            2.15,
+            -5.208
+          ],
+          "b": [
+            -0.3,
+            -4.368
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [],
+      "lost_ball": [
+        2.75,
+        -5.964
+      ],
+      "hint": "Two angled cushions can set up the final approach.",
+      "design": "Double Cushion"
+    },
+    {
+      "number": 13,
+      "name": "Sunrise Island Hopping",
+      "par": 4,
+      "width": 4.0,
+      "length": 9.55,
+      "tee": [
+        0.38,
+        -0.65
+      ],
+      "cup": [
+        -0.48,
+        -8.8
+      ],
+      "obstacles": [],
+      "rails": [],
+      "hazards": [
+        {
+          "center": [
+            -0.6,
+            -3.056
+          ],
+          "size": [
+            1.92,
+            1.098
+          ]
+        },
+        {
+          "center": [
+            0.6,
+            -4.966
+          ],
+          "size": [
+            1.92,
+            1.098
+          ]
+        },
+        {
+          "center": [
+            -0.6,
+            -6.876
+          ],
+          "size": [
+            1.92,
+            1.098
+          ]
+        }
+      ],
+      "bumps": [
+        {
+          "center": [
+            0.72,
+            -4.775
+          ],
+          "radius": 1.35,
+          "axes": [
+            0.7,
+            1.35
+          ],
+          "height": 0.22
+        }
+      ],
+      "ramps": [],
+      "lost_ball": [
+        -2.6,
+        -1.91
+      ],
+      "hint": "Alternating water pockets leave a winding dry route.",
+      "design": "Island Hopping"
+    },
+    {
+      "number": 14,
+      "name": "Sunrise Needle Ridge",
+      "par": 4,
+      "width": 4.15,
+      "length": 10.7,
+      "tee": [
+        -0.38,
+        -0.65
+      ],
+      "cup": [
+        0.48,
+        -9.95
+      ],
+      "obstacles": [
+        {
+          "center": [
+            -0.95,
+            -5.029
+          ],
+          "radius": 0.32
+        },
+        {
+          "center": [
+            0.95,
+            -6.848
+          ],
+          "radius": 0.32
+        }
+      ],
+      "rails": [
+        {
+          "a": [
+            -0.35,
+            -3.21
+          ],
+          "b": [
+            -0.35,
+            -7.704
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            0.35,
+            -3.21
+          ],
+          "b": [
+            0.35,
+            -7.704
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [
+        {
+          "center": [
+            0,
+            -5.457
+          ],
+          "radius": 2.3539999999999996,
+          "axes": [
+            0.34,
+            2.3539999999999996
+          ],
+          "height": 0.4
+        }
+      ],
+      "ramps": [],
+      "lost_ball": [
+        2.675,
+        -3.959
+      ],
+      "hint": "Take the narrow ridge shortcut or go around the outside.",
+      "design": "Needle Ridge"
+    },
+    {
+      "number": 15,
+      "name": "Sunrise Terraces",
+      "par": 4,
+      "width": 4.3,
+      "length": 11.85,
+      "tee": [
+        0.38,
+        -0.65
+      ],
+      "cup": [
+        -0.48,
+        -11.1
+      ],
+      "obstacles": [],
+      "rails": [
+        {
+          "a": [
+            2.15,
+            -4.74
+          ],
+          "b": [
+            -0.45,
+            -4.74
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            -2.15,
+            -8.413
+          ],
+          "b": [
+            0.45,
+            -8.413
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [
+        {
+          "start": 2.252,
+          "end": 4.029,
+          "height": 0.276
+        },
+        {
+          "start": 5.688,
+          "end": 7.584,
+          "height": 0.276
+        }
+      ],
+      "lost_ball": [
+        -2.75,
+        -6.399
+      ],
+      "hint": "Two climbs and offset exits: pace each landing separately.",
+      "design": "Terraces"
+    },
+    {
+      "number": 16,
+      "name": "Horizon Ricochet Alley",
+      "par": 4,
+      "width": 4.0,
+      "length": 7.25,
+      "tee": [
+        -0.38,
+        -0.65
+      ],
+      "cup": [
+        0.48,
+        -6.5
+      ],
+      "obstacles": [
+        {
+          "center": [
+            0.65,
+            -5.873
+          ],
+          "radius": 0.24
+        }
+      ],
+      "rails": [
+        {
+          "a": [
+            -2.0,
+            -1.958
+          ],
+          "b": [
+            0.45,
+            -2.61
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            2.0,
+            -3.335
+          ],
+          "b": [
+            -0.45,
+            -3.988
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            -2.0,
+            -4.713
+          ],
+          "b": [
+            0.45,
+            -5.365
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [],
+      "lost_ball": [
+        2.6,
+        -5.147
+      ],
+      "hint": "Use the diagonal banks; a straight blast returns toward you.",
+      "design": "Ricochet Alley"
+    },
+    {
+      "number": 17,
+      "name": "Horizon Volcano",
+      "par": 4,
+      "width": 4.15,
+      "length": 8.4,
+      "tee": [
+        0.38,
+        -0.65
+      ],
+      "cup": [
+        0,
+        -7.65
+      ],
+      "obstacles": [],
+      "rails": [
+        {
+          "a": [
+            2.075,
+            -3.528
+          ],
+          "b": [
+            0.48,
+            -4.704
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            -2.075,
+            -3.528
+          ],
+          "b": [
+            -0.48,
+            -4.704
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [],
+      "bumps": [],
+      "ramps": [
+        {
+          "start": 3.192,
+          "end": 5.712,
+          "height": 0.574
+        }
+      ],
+      "lost_ball": [
+        -2.675,
+        -1.68
+      ],
+      "hint": "Climb through the throat onto the high, flat cup plateau.",
+      "design": "Volcano"
+    },
+    {
+      "number": 18,
+      "name": "Horizon Final Approach",
+      "par": 4,
+      "width": 4.3,
+      "length": 9.55,
+      "tee": [
+        -0.38,
+        -0.65
+      ],
+      "cup": [
+        0.48,
+        -8.8
+      ],
+      "obstacles": [
+        {
+          "center": [
+            0.75,
+            -7.545
+          ],
+          "radius": 0.26
+        }
+      ],
+      "rails": [
+        {
+          "a": [
+            -2.15,
+            -4.011
+          ],
+          "b": [
+            0.35,
+            -4.584
+          ],
+          "radius": 0.075
+        },
+        {
+          "a": [
+            2.15,
+            -6.494
+          ],
+          "b": [
+            -0.35,
+            -5.921
+          ],
+          "radius": 0.075
+        }
+      ],
+      "hazards": [
+        {
+          "center": [
+            -1.83,
+            -7.545
+          ],
+          "size": [
+            0.6,
+            1.0
+          ]
+        }
+      ],
+      "bumps": [],
+      "ramps": [
+        {
+          "start": 1.91,
+          "end": 3.534,
+          "height": 0.425
+        },
+        {
+          "start": 5.157,
+          "end": 6.972,
+          "height": -0.276
+        }
+      ],
+      "lost_ball": [
+        2.75,
+        -3.534
+      ],
+      "hint": "Combine an uphill bank with a controlled downhill approach.",
+      "design": "Final Approach"
+    }
+  ]
+}

@@ -5,6 +5,7 @@ render_mode ambient_light_disabled;
 uniform bool ground_projection = false;
 uniform mat3 sky_inverse = mat3(1.0);
 uniform float sky_energy = 1.0;
+uniform bool minigolf_ground=false;
 uniform vec4 ground_bounds = vec4(0.0,3.0,5.0,6.0);
 uniform vec3 projection_origin = vec3(0.0,1.65,.65);
 uniform vec2 transition_width = vec2(6.0);
@@ -47,6 +48,10 @@ void fragment() {
  if (ground_projection) {
   vec2 outside_ground=max(abs(world_position.xz-ground_bounds.xy)-ground_bounds.zw,vec2(0.0));
   float photo_weight=max(smoothstep(.5,transition_width.x,outside_ground.x),smoothstep(.5,transition_width.y,outside_ground.y));
+ if(minigolf_ground){
+  float course_outer=max(smoothstep(36.0,70.0,abs(world_position.x)),smoothstep(80.0,120.0,world_position.z));
+  photo_weight*=1.0-smoothstep(8.0,15.0,world_position.z)*(1.0-course_outer);
+ }
   vec3 incident=normalize(world_position-projection_origin);
   float far_blend=smoothstep(45.0,85.0,length(world_position.xz-projection_origin.xz));
   incident=normalize(mix(incident,-normalize(mat3(INV_VIEW_MATRIX)*VIEW),far_blend));

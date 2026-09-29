@@ -1,3 +1,5 @@
+> Current release: protocol 21 includes revised minigolf layouts, shared-water play and fitted putter poses. See [Minigolf](MINIGOLF.md). Earlier validation below describes its recorded release.
+
 # EOS gameplay transport integration
 
 Implemented on `experimental/eos-meta`, 2026-09-25. Gameplay remains protocol 19.

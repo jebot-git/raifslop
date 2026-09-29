@@ -11,19 +11,16 @@ config_version=5
 [application]
 
 config/name="Ultimate Boomer Simulator"
-; Preserve existing saves/settings independently of the display name.
+config/version="0.1.19-rc.1"
+run/main_scene="res://scenes/main.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="Godot/app_userdata/Real AI Fishing"
-config/custom_user_dir_name.linux="godot/app_userdata/Real AI Fishing"
-config/version="0.1.18-eos.2"
-config/icon="res://assets/icon.svg"
-boot_splash/image="res://assets/ui/store_logo.png"
-boot_splash/bg_color=Color(0.063, 0.122, 0.133, 1)
-boot_splash/fullsize=true
-boot_splash/use_filter=true
-run/main_scene="res://scenes/main.tscn"
-run/main_scene.quest_xr="res://scenes/quest_bootstrap.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
+boot_splash/bg_color=Color(0.063, 0.122, 0.133, 1)
+boot_splash/image="res://assets/ui/store_logo.png"
+config/icon="res://assets/icon.svg"
+config/custom_user_dir_name.linux="godot/app_userdata/Real AI Fishing"
+run/main_scene.quest_xr="res://scenes/quest_bootstrap.tscn"
 
 [audio]
 
@@ -41,7 +38,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/vrm/plugin.cfg", "res://addons/fishing_export/plugin.cfg")
+enabled=PackedStringArray("res://addons/fishing_export/plugin.cfg", "res://addons/godot_ai/plugin.cfg", "res://addons/vrm/plugin.cfg")
 
 [physics]
 
@@ -49,21 +46,23 @@ common/physics_ticks_per_second=90
 
 [rendering]
 
-textures/vram_compression/import_etc2_astc=true
-
 renderer/rendering_method="mobile"
-; Keep PC OpenXR on the Vulkan path used by the headset renderer.
-rendering_device/driver.windows="vulkan"
+textures/vram_compression/import_etc2_astc=true
 
 [xr]
 
 openxr/enabled=true
-openxr/default_action_map="res://openxr_action_map.tres"
 openxr/extensions/hand_tracking=true
 openxr/extensions/hand_tracking_unobstructed_data_source=true
 openxr/extensions/hand_tracking_controller_data_source=true
 openxr/extensions/eye_gaze_interaction=true
+shaders/enabled=true
 openxr/extensions/meta/body_tracking=true
 openxr/extensions/meta/face_tracking=true
 openxr/extensions/automatically_request_runtime_permissions=false
-shaders/enabled=true
+
+[importer_defaults]
+
+texture={
+"mipmaps/generate": true
+}

@@ -10,8 +10,7 @@ static func material(texture:String,color:Color)->StandardMaterial3D:
 static func box(root:Node3D,at:Vector3,size:Vector3,mat:Material,collision:=true):
  var n:=MeshInstance3D.new();var mesh:=BoxMesh.new();mesh.size=size;n.mesh=mesh;n.position=at;n.material_override=mat;root.add_child(n)
  if collision:n.create_trimesh_collision()
-static func create(id:String)->Node3D:
- var root:=Node3D.new();root.name="RiverForeground";root.set_meta("location_id",id);root.set_meta("spawn",Vector3(0,0,1))
+static func bank_material(id:String)->ShaderMaterial:
  var alpine:bool=id=="glacier_run"
  var cedar:bool=id=="cedar_creek"
  var gravel=material("gray_pier_gravelly_sand_Diffuse.jpg",Color("849caa") if alpine else Color("c0b7a1"))
@@ -29,6 +28,13 @@ static func create(id:String)->Node3D:
   bank.set_shader_parameter("irradiance",load(bake_path))
   bank.set_shader_parameter("bank_ao",load("res://assets/textures/lighting/"+id+"_ao.png"))
   bank.set_shader_parameter("has_bake",true)
+ return bank
+static func create(id:String)->Node3D:
+ var root:=Node3D.new();root.name="RiverForeground";root.set_meta("location_id",id);root.set_meta("spawn",Vector3(0,0,1))
+ var alpine:bool=id=="glacier_run"
+ var cedar:bool=id=="cedar_creek"
+ var gravel=material("gray_pier_gravelly_sand_Diffuse.jpg",Color("849caa") if alpine else Color("c0b7a1"))
+ var bank:=bank_material(id)
  var prototype:Node3D=load("res://assets/environment/rivers/river_boulder.glb").instantiate()
  var rock_node:MeshInstance3D=prototype.find_children("*","MeshInstance3D",true,false)[0]
  var rock_mesh:Mesh=rock_node.mesh

@@ -22,7 +22,8 @@ func setup(game:Node)->void:
 		for id in data.unlocked:
 			if not Catalog.ALL.has(id) or data.unlocked[id]!=true:error="Saved achievements are invalid.";return
 		for id in data.visits:
-			if not id is String or not Destinations.all().has(id):error="Saved destinations are invalid.";return
+			if not id is String:error="Saved destinations are invalid.";return
+		data.visits=data.visits.filter(func(id):return Destinations.all().has(id))
 		unlocked=data.unlocked;visits=data.visits;catches=int(count)
 func save()->void:
 	if not error.is_empty():return
@@ -51,12 +52,12 @@ func caught(species:Dictionary,length:float)->void:
 	if length/float(species.length)>=1.12 or int(species.get("rarity",0))>=4:unlock("ubs_exceptional_catch")
 	save()
 func golf(course:String,scores:Array,finished:bool,forfeits:Array=[])->void:
-	if course not in preload("res://addons/golfminus/scripts/golf/catalog.gd").ALL or scores.size()>18:return
+	if course not in preload("res://scripts/minigolf/catalog.gd").ALL or scores.size()>18:return
 	var changed_before:=unlocked.size()
 	for score in scores:
 		if not score is int or score<1 or score>1000:return
 	for i in scores.size():
 		var score:int=scores[i]
-		if i not in forfeits and score<preload("res://addons/golfminus/scripts/golf/handicap.gd").par(course,i):unlock("ubs_birdie")
+		if i not in forfeits and score<preload("res://scripts/minigolf/handicap.gd").par(course,i):unlock("ubs_birdie")
 	if finished and scores.size()==18 and forfeits.is_empty():unlock("ubs_first_round")
 	if unlocked.size()!=changed_before:save()

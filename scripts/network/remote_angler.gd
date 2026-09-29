@@ -11,6 +11,7 @@ var right := Node3D.new()
 var rod := Node3D.new()
 var rod_visual: Node3D
 var golf_club:Node3D
+var golf_head:Node3D
 var golf_ball:=MeshInstance3D.new()
 var golf_index:=-1
 var caught := Node3D.new()
@@ -91,7 +92,7 @@ func _build_fish(index: int, length_cm: float) -> void:
 
 func _process(delta: float) -> void:
 	if target.is_empty(): return
-	visible=preload("res://addons/golfminus/scripts/golf/host_locations.gd").same_world(target.location,session.root_game.current_location)
+	visible=preload("res://scripts/minigolf/host_locations.gd").same_world(target.location,session.root_game.current_location)
 	if not visible: return
 	if target.caught and fish_key!=[target.species,target.length]:
 		fish_key=[target.species,target.length]
@@ -114,12 +115,16 @@ func _process(delta: float) -> void:
 		if is_instance_valid(golf_club):golf_club.queue_free();golf_club=null
 		golf_index=target.golf_club
 		if golf_index>=0:
-			var kind:String="putter" if golf_index==7 else "driver" if golf_index<2 else "iron"
-			golf_club=load("res://addons/golfminus/assets/models/%s.glb"%kind).instantiate();add_child(golf_club)
+			var kind:String="putter"
+			golf_club=load("res://assets/minigolf/models/%s.glb"%kind).instantiate();add_child(golf_club)
+			for part in golf_club.get_children():
+				if "finished head" in str(part.name):golf_head=part;break
 	if is_instance_valid(golf_club):
-		preload("res://addons/golfminus/scripts/golf/club_style.gd").apply(golf_club,target.rod_tier)
+		preload("res://scripts/minigolf/club_style.gd").apply(golf_club,target.rod_tier)
 		golf_club.global_transform=rendered.rod
-		if target.golf_stowed:golf_club.scale*=.65
+		golf_club.scale.y=clampf(target.reel_angle,.35,1.6)
+		if is_instance_valid(golf_head):golf_head.global_transform=rendered.fish
+		golf_club.visible=not target.golf_stowed
 	caught.visible=target.caught
 	float_mesh.global_position=rendered.bobber
 	var fly_mode:bool=Fish.Fly.river(target.location) and target.rig==0
@@ -173,8 +178,7 @@ func _draw_line() -> void:
 			if bait_visual.visible and target.rig!=1:line.surface_add_vertex(rendered.bait_position)
 		line.surface_end()
 
-func _attach_golf_to_hand(source:Node3D)->void:
-	if source!=avatar or target.is_empty() or target.golf_club<0 or target.golf_stowed or not is_instance_valid(golf_club):return
-	var use_left:bool=rendered.rod.origin.distance_to(rendered.left.origin)<rendered.rod.origin.distance_to(rendered.right.origin)
-	var grip=avatar.hand_grip_pose(use_left)
-	if grip is Transform3D:golf_club.global_position=grip.origin
+func _attach_golf_to_hand(_source:Node3D)->void:
+	# Protocol 20 sends the accepted controller/shaft and independent face poses.
+	# Avatar IK must not override mounted offsets or the calibrated club length.
+	pass

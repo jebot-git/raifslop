@@ -85,17 +85,10 @@ func _process(delta:float)->void:
 		if g.tracking_manager.body.get("hips") is Transform3D:row.hips_local=pose_data(g.tracking_manager.body.hips)
 	if g.casting:
 		row.cast={"tip":vector(g._tracked_cast_tip()),"axis":vector(g.cast_swing_axis),"strokes":g.game.fly.strokes,"back_m":g.game.fly.cast_back_travel,"forward_m":g.game.fly.cast_forward_travel,"swing":vector(g.cast_motion.swing_travel),"speed":g.cast_motion.swing_speed}
-	if is_instance_valid(g.golf_activity) and g.golf_activity.active and is_instance_valid(g.golf_activity.golf):
-		var golf=g.golf_activity.golf
-		row.golf={"course":golf.course_id,"hole":golf.round_state.hole,"strokes":golf.round_state.strokes,"club":golf.club_index,"left_handed":golf.left_handed,"fitting":golf.fitting_club,"reach":golf.club_reach,"menu":golf.menu_open,"armed":golf.club_collision_enabled(),"ball":vector(golf.ball.position),"velocity":vector(golf.ball.velocity),"spin":vector(golf.ball.spin),"moving":golf.ball.moving}
-		row.golf.grounded=golf.ball.grounded
-		row.golf.lie=golf.model.lie(golf.ball.position.x,golf.ball.position.z)
-		row.golf.ground_normal=vector(golf.model.normal_at(golf.ball.position.x,golf.ball.position.z))
-		row.golf.stop_reason=golf.ball.stop_reason
-		row.golf.teed=golf.contact_effects.tee_armed
-		row.golf.grip_rotation=vector(golf.club_pose_rotation(0 if golf.left_handed else 1))
-		if is_instance_valid(golf.physical_head):row.golf.head=pose_data(golf.physical_head.global_transform)
-		if is_instance_valid(golf.club):row.golf.shaft=pose_data(golf.club.global_transform)
+	if is_instance_valid(g.golf_activity) and g.golf_activity.active:
+		var golf=g.golf_activity
+		row.minigolf={"course":golf.course_id,"hole":golf.hole,"strokes":golf.strokes,"ball":vector(golf.ball_position()),"velocity":[golf.ball.velocity.x,golf.ball.velocity.y],"moving":golf.ball.moving,"fitting":golf.fitting.active,"head":pose_data(golf.physical_head.global_transform) if is_instance_valid(golf.physical_head) else {}}
+
 	write_event("frame",row)
 	if flush_elapsed>=1:
 		file.flush();flush_elapsed=0

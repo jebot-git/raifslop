@@ -9,6 +9,9 @@ var texture_count:=0
 var model_textures:=0
 func _initialize()->void:run.call_deferred()
 func gather(path:String)->void:
+	# Match the game export: generated builds, source art and local avatar caches
+	# are not runtime inputs. Never audit a stale copy inside an Android build.
+	if path in ["res://android","res://builds","res://data","res://tools","res://tests","res://test-results","res://addons/godot_ai"] or FileAccess.file_exists(path.path_join(".gdignore")):return
 	for file in DirAccess.get_files_at(path):
 		if not file.ends_with(".import"):continue
 		var config:=ConfigFile.new()
@@ -19,7 +22,7 @@ func gather(path:String)->void:
 	for folder in DirAccess.get_directories_at(path):
 		if not folder.begins_with(".") and folder!="test-results":gather(path.path_join(folder))
 func is_ui_only(path:String)->bool:
-	return path=="res://assets/icon.svg" or path.begins_with("res://addons/vrm/node_constraint/icons/") or path.ends_with("_preview.jpg")
+	return path.begins_with("res://addons/vrm/node_constraint/icons/")
 func verify_texture(texture:Texture2D,label:String,required:bool)->void:
 	if texture==null:failures.append(label+": could not load texture");return
 	var image:=texture.get_image()

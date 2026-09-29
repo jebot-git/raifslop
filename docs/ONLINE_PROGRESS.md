@@ -3,7 +3,7 @@
 The Achievements tab shows six persistent local milestones: a first catch, ten
 catches, an exceptional catch, a clean 18-hole round, a birdie or better, and visits
 to three different waters or courses. Fishing uses the dedicated leaderboard's
-exceptional-catch rule. Forfeited golf holes cannot earn a birdie or a clean round.
+exceptional-catch rule. Forfeited minigolf holes cannot earn a birdie or a clean round.
 
 `user://achievements.json` stores local progress. Invalid files are preserved and
 reported in the menu. A milestone earned during an authenticated EOS lobby is
@@ -21,13 +21,12 @@ enabled=true` enables the online outbox (also the default); setting it false
 keeps local milestones available without online submissions.
 
 [DESTINATIONS.example.json](DESTINATIONS.example.json) specifies twelve waters
-and the four playable named courses. These names are allowlisted by the game.
+and twelve waterfront minigolf courses. These names are allowlisted by the game.
 Current activity is published through Meta group presence, and shared activity
 links use that destination. Cold destination-only launches travel directly when
 the player is idle. Warm launch requests appear in the Achievements tab with an
 explicit travel action. Lobby invitations retain the existing join confirmation;
-after joining, the pending destination is applied. A cast or enrolled online golf
-round prevents travel until the player can safely leave it. Unknown destination
+after joining, the pending destination is applied. A cast or moving minigolf ball prevents travel until the player can safely leave it. Unknown destination
 names are ignored. The existing `eos_game` destination remains compatible.
 
 Portal definitions and a rebuilt Quest application are both required for live
@@ -74,3 +73,9 @@ Everyone, and deeplinks enabled. No external review remains pending. The native
 EOS SDK also read back all six achievement definitions without unlocking any.
 The Meta invite-panel and chat-link headset retest follows rehosting the lobby
 so group presence is republished with the new definitions.
+
+## Minigolf migration (2026-09-29)
+
+The old `course_spyglass`, `course_pebble`, `course_cypress` and `course_poppy` destinations are removed from Meta. All twelve `water_*` destinations remain. New `course_<water>` entries route to minigolf at the corresponding water, using the same location and network session as fishing and BBQ. Old destination names are no longer allowlisted.
+
+The first-round and birdie achievement descriptions refer to minigolf; their existing IDs and previously earned unlocks are preserved. Current portal readbacks are stored in `test-results/minigolf-providers/`.

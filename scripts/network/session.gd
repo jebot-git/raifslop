@@ -2,7 +2,7 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 19 # Requested ranking pages and BBQ deltas/time anchors.
+const VERSION := 21 # Shared-water minigolf and fitted putter poses.
 const TransportFactory = preload("res://scripts/network/transport_factory.gd")
 const PoseCodec = preload("res://scripts/network/pose_codec.gd")
 const State = preload("res://scripts/network/state.gd")
@@ -70,7 +70,7 @@ func setup(root: Node, server_only: bool = false) -> void:
 	if not dedicated: load_preferences()
 	name = "Network"
 	online=preload("res://scripts/network/eos/runtime.gd").new();add_child(online);online.setup(self)
-	golf=preload("res://addons/golfminus/scripts/golf/network_service.gd").new();add_child(golf);golf.setup(self)
+	golf=preload("res://scripts/minigolf/network_service.gd").new();add_child(golf);golf.setup(self)
 	add_child(rankings);rankings.setup(self)
 	bbq=preload("res://scripts/bbq/network.gd").new();add_child(bbq);bbq.setup(self)
 	add_child(permissions)
@@ -225,7 +225,7 @@ func _peer_left(id: int) -> void:
 	changed.emit()
 
 func same_location(a: int, b: int) -> bool:
-	return states.has(a) and states.has(b) and preload("res://addons/golfminus/scripts/golf/host_locations.gd").same_world(states[a].location,states[b].location)
+	return states.has(a) and states.has(b) and preload("res://scripts/minigolf/host_locations.gd").same_world(states[a].location,states[b].location)
 
 func _process(delta: float) -> void:
 	clock+=delta
@@ -247,7 +247,6 @@ func _process(delta: float) -> void:
 	elapsed+=delta
 	if elapsed<.05: return
 	elapsed=fmod(elapsed,.05); serial=(serial+1)&0x7fffffff
-	if is_instance_valid(root_game.golf_activity) and root_game.golf_activity.active and root_game.golf_activity.golf.godview.active:return
 	var data := State.capture(root_game,serial)
 	if is_instance_valid(online):online.leaderboards.observe_state(data)
 	var event := State.event_key(data)
@@ -280,7 +279,7 @@ func _accept(id: int, data: Dictionary, reliable: bool) -> void:
 	guard.tokens=minf(8,guard.tokens+maxf(0,clock-guard.time)*30); guard.time=clock; guards[id]=guard
 	if guard.tokens<1: return
 	guard.tokens-=1
-	if not data.location.begins_with("golf_"):leaderboard.observe(id,data)
+	if data.golf_club<0:leaderboard.observe(id,data)
 	_apply(id,data)
 	var packed := PoseCodec.encode(data)
 	for peer in players:

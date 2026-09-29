@@ -15,7 +15,7 @@ var online_error:=""
 var online_busy:=false
 var golf_category:="best"
 const FISH_CHOICES=[{"id":"catches","title":"Most fish caught"},{"id":"earned","title":"Most shekels earned"},{"id":"heaviest","title":"Heaviest catch"},{"id":"longest","title":"Longest catch"},{"id":"exceptional","title":"Exceptional catches"}]
-const GOLF_CHOICES=[{"id":"best","title":"Best completed score"},{"id":"rounds","title":"Completed rounds"},{"id":"forfeits","title":"Forfeited holes"},{"id":"last","title":"Latest completed score"},{"id":"handicap","title":"Current handicap"}]
+const GOLF_CHOICES=[{"id":"best","title":"Best completed score"},{"id":"rounds","title":"Completed rounds"},{"id":"forfeits","title":"Forfeited holes"},{"id":"last","title":"Latest completed score"}]
 func _ready()->void:
  add_theme_constant_override("separation",14)
  summary=Label.new();summary.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;add_child(summary)
@@ -44,7 +44,7 @@ func poll()->void:
  due=2.0
  var activity=session.root_game.get("golf_activity")
  var kind:String="golf" if is_instance_valid(activity) and activity.active else "fishing"
- var key:String=activity.golf.course_id if kind=="golf" else category
+ var key:String=activity.course_id if kind=="golf" else category
  var selection:=kind+":"+key
  if is_online():
   var online_key:String=("golf/" if golf_category=="best" else "golf_"+golf_category+"/")+key if kind=="golf" else key
@@ -73,7 +73,7 @@ func refresh()->void:
  var data:Dictionary=session.rankings.view
  var golf_active:bool=is_instance_valid(activity) and activity.active
  var kind:String="golf" if golf_active else "fishing"
- var key:String=activity.golf.course_id if golf_active else category
+ var key:String=activity.course_id if golf_active else category
  var ready:bool=not data.is_empty() and data.kind==kind and data.key==key and data.page==page
  previous.disabled=page==0
  next.disabled=not ready or (page+1)*10>=int(data.get("total",0))
@@ -84,12 +84,12 @@ func refresh()->void:
   summary.text="Loading rankings…";return
  var board:Array=data.rows
  if golf_active:
-  summary.text="Golf leaderboard · "+activity.golf.model.course.name+" · lowest completed score"
+  summary.text="Minigolf leaderboard · "+preload("res://scripts/minigolf/catalog.gd").NAMES[activity.course_id]+" · lowest completed score"
   if board.is_empty():
    var empty:=Label.new();empty.text="No completed rounds yet.";rows.add_child(empty)
   for i in board.size():
    var entry:Dictionary=board[i];var label:=Label.new()
-   label.text="%d. %s · %d strokes · %d rounds\nLast: %d · Forfeited holes: %d · Handicap: %.1f"%[page*10+i+1,entry.name,entry.best,entry.rounds,entry.last,entry.forfeits,entry.handicap];label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;rows.add_child(label)
+   label.text="%d. %s · %d strokes · %d rounds\nLast: %d · Forfeited holes: %d"%[page*10+i+1,entry.name,entry.best,entry.rounds,entry.last,entry.forfeits];label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;rows.add_child(label)
   return
  summary.text="Server accomplishments · %d anglers · Top 50 per category\nRecords include disconnected players. Earnings count catch rewards before spending."%int(data.get("players",0))
  if board.is_empty():

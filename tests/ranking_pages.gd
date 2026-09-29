@@ -17,17 +17,17 @@ func run()->void:
   net.leaderboard.connect_player(i+1,"%064x"%i,"Angler %02d"%i)
   var row:Dictionary=net.leaderboard.records.values()[i];row.catches=100-i
   var scores:Array=[];scores.resize(18);scores.fill(i+1)
-  Pages.Golf.finish(net.leaderboard.records,net.leaderboard.peers[i+1],"spyglass",scores)
+  Pages.Golf.finish(net.leaderboard.records,net.leaderboard.peers[i+1],"lakeside",scores)
  var names:Array=[]
  for p in 5:
   var data:Dictionary=net.rankings.make_page("fishing","catches",p)
   check(Pages.valid_page(data) and data.rows.size()==10 and data.total==50 and data.players==63,"Bounded fishing page %d"%p)
   for row in data.rows:names.append(row.name)
  check(names.size()==50 and names[0]=="Angler 00" and names[49]=="Angler 49","Pages preserve sorted rank without overlaps")
- var golf:Dictionary=net.rankings.make_page("golf","spyglass",1)
+ var golf:Dictionary=net.rankings.make_page("golf","lakeside",1)
  check(Pages.valid_page(golf) and golf.rows[0].best==198 and not str(golf).contains("history"),"Golf page excludes score history and other courses")
  for bad in [-1,5,999]:check(net.rankings.make_page("fishing","catches",bad).is_empty(),"Reject out-of-range page")
- check(not Pages.valid_query("fishing","spyglass",0) and not Pages.valid_query("golf","catches",0),"Reject wrong category/course")
+ check(not Pages.valid_query("fishing","lakeside",0) and not Pages.valid_query("golf","catches",0),"Reject wrong category/course")
  net.rankings.serial=3
  net.rankings._receive(2,golf)
  check(net.rankings.view.is_empty(),"Stale response cannot replace newer selection")

@@ -123,37 +123,21 @@ func run()->void:
 	g.tracking_manager.focused=false;await tick()
 	check(not g.hand_actions.active[0] and not g.hand_actions.active[1],"Focus loss releases both hands")
 	g.tracking_manager.focused=true;await neutral()
-	# Golf uses the same optical grip and the existing physical strike gate.
-	await g.golf_activity.join_course("spyglass");g.golf_activity.start_play("solo")
-	var golf=g.golf_activity.golf;golf.set_process(false);golf.set_physics_process(false);golf.focused=true;golf.toggle_menu(false)
-	await neutral();golf.reset_swing()
-	check(not golf.club_input_active(),"An open hand leaves golf strikes disarmed")
-	pose(1,false,false,true);await tick(3)
-	check(golf.club_input_active() and golf.club_collision_enabled(),"Curling striking hand arms the real golf club")
-	var old_head:Vector3=golf._update_club_pose();positions[1].x+=.08;pose(1,false,false,true);await tick()
-	check(golf._update_club_pose().distance_to(old_head)>.06,"Optical wrist motion drives physical golf club head")
+	# The replacement putter consumes the same optical controller grip state.
+	g.golf_activity.enter(g.current_location)
+	var golf=g.golf_activity;golf.set_physics_process(false);golf.toggle_menu(false)
+	g.tracking_manager.calibration_pending=false;g.tracking_manager.startup_settle_frames=0
+	golf.fitting.mounted[1]=true
+	await neutral();golf.update_player(.02)
+	check(not golf.swing.armed_before,"An open hand leaves minigolf disarmed")
+	pose(1,false,false,true);await tick(3);golf.update_player(.02)
+	check(golf.swing.armed_before,"Curling the striking hand arms minigolf")
+	var old_head:Vector3=golf.physical_head.global_position
+	positions[1].x+=.08;pose(1,false,false,true);await tick();golf.update_player(.02)
+	check(golf.physical_head.global_position.distance_to(old_head)>.06,"Optical wrist moves the fitted putter")
+	pose(1);await tick();golf.update_player(.02)
+	check(not golf.swing.armed_before,"Opening the hand disarms the putter")
 
-	# Sweep the real hand-driven physical club into a ball, then apply the hit.
-	golf.set_club(7);golf._update_club_pose()
-	var face:Vector3=-golf.physical_head.global_basis.z.normalized()
-	var ball_start:Vector3=golf.ball.position
-	var shift:Vector3=ball_start-face*.20-golf.physical_head.global_position
-	positions[1]+=g.origin.global_basis.inverse()*shift
-	await neutral();pose(1,false,false,true);await tick(3);golf._update_club_pose()
-	golf.swing.reset();golf.swing.cooldown=0
-	golf.swing.sample_pose(golf.physical_head.global_transform,golf.head_shape,golf.ball.position,.02,golf.club_collision_enabled())
-	var contact:Dictionary={}
-	for step in 12:
-		positions[1]+=g.origin.global_basis.inverse()*face*.035
-		pose(1,false,false,true);await tick();golf._update_club_pose()
-		contact=golf.swing.sample_pose(golf.physical_head.global_transform,golf.head_shape,golf.ball.position,.02,golf.club_collision_enabled())
-		if not contact.is_empty():break
-	check(not contact.is_empty(),"Optical hand swing produces physical club-ball contact")
-	if not contact.is_empty():check(golf.strike(contact.velocity,contact.normal,contact) and golf.ball.moving,"Hand-driven club contact launches the golf ball")
-	golf.ball.place(ball_start)
-	pose(1);await tick();check(not golf.club_input_active(),"Opening striking hand disarms immediately")
-	pose(1,false,false,true);await tick();hands[1].has_tracking_data=false;hardware[1].invalidate_pose("grip");await tick()
-	check(not golf.club_input_active(),"Lost hand tracking cannot strike a golf ball")
 	g.golf_activity.leave();g.queue_free();await process_frame
 	for hand in hands:XRServer.remove_tracker(hand)
 	for device in hardware:XRServer.remove_tracker(device)

@@ -264,8 +264,9 @@ static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := 
 	var blend := ShaderMaterial.new()
 	blend.shader = preload("res://assets/environment/harbour_ground.gdshader")
 	blend.set_shader_parameter("authored_bridge",root.get_meta("location_id","")=="lake_pier")
-	blend.set_shader_parameter("far_projection_fade",root.get_meta("location_id","")=="fish_hoek_beach")
+	blend.set_shader_parameter("far_projection_fade",root.get_meta("location_id","")!="lake_pier")
 	blend.set_shader_parameter("ground_bounds", bounds)
+	blend.set_shader_parameter("minigolf_ground",root.get_meta("location_id","")!="lake_pier")
 	blend.set_shader_parameter("transition_width", transition_width)
 	blend.set_shader_parameter("projection_origin", root.get_meta("spawn",Vector3(0,.02,.65))+Vector3.UP*1.63)
 	for setting in ["panorama", "sky_inverse", "sky_energy", "detail_strength", "vibrance", "shadow_lift"]:
@@ -284,7 +285,7 @@ static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := 
 				if not source.resource_name.begins_with("FG_concrete"):continue
 			if mat is ShaderMaterial and root.get_meta("location_id","")=="fish_hoek_beach" and source.resource_name.begins_with("FG_sand"):
 				mat.set_shader_parameter("ground_projection",true)
-				for setting in ["ground_bounds","transition_width","projection_origin","panorama","sky_inverse","sky_energy","detail_strength","vibrance","shadow_lift"]:
+				for setting in ["minigolf_ground","ground_bounds","transition_width","projection_origin","panorama","sky_inverse","sky_energy","detail_strength","vibrance","shadow_lift"]:
 					mat.set_shader_parameter(setting,blend.get_shader_parameter(setting))
 			elif mat: mat.next_pass = blend
 

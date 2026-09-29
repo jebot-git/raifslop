@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build an isolated Linux dedicated-server project from shared protocol scripts.
 No client scenes, bundled VRMs, textures, audio, XR plugins or codec extensions.
-Golf routing and numerical terrain data are included for authoritative locations.
+Minigolf routing and course data are included for authoritative locations.
 """
 import argparse, hashlib, json, os, pathlib, re, shutil, subprocess
 ROOT=pathlib.Path(__file__).resolve().parents[1]
@@ -21,15 +21,12 @@ def main():
     # Keep the same small numerical surface data as clients so BBQ anchors and
     # shared-world visibility never depend on missing render assets.
     data_files=[]
-    for pattern in ['addons/golfminus/courses/*.json',
-                    'addons/golfminus/assets/course_data/*/height.bin',
-                    'addons/golfminus/assets/course_data/*/lies.bin',
-                    'addons/golfminus/assets/course_data/CREDITS.md']:
+    for pattern in ['assets/minigolf/courses/*.json']:
         for source in ROOT.glob(pattern):
             relative=source.relative_to(ROOT);dest=stage/relative
             dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,dest)
             data_files.append(relative.as_posix())
-    if not data_files:raise SystemExit('Golf integration data is missing; install addons/golfminus before building this branch')
+    if not data_files:raise SystemExit('Minigolf course data is missing')
     # Clear files from earlier dependency closures without touching user data.
     for old in stage.rglob('*.gd'):
         if old.relative_to(stage).as_posix() not in seen:old.unlink()
@@ -56,7 +53,7 @@ runnable=true
 dedicated_server=true
 custom_features="dedicated_server"
 export_filter="all_resources"
-include_filter="addons/golfminus/courses/*.json,addons/golfminus/assets/course_data/**/*.bin,addons/golfminus/assets/course_data/CREDITS.md"
+include_filter="assets/minigolf/courses/*.json"
 exclude_filter=""
 export_path="../UltimateBoomerSimulatorServer.x86_64"
 script_export_mode=0

@@ -30,16 +30,6 @@
     "bytes": 175347
   },
   {
-    "file": "assets/audio/ambience/golf_links.ogg",
-    "sha256": "54ed63db0903251baf5d68cf072310cda3cfeea8f2c40c7385c6d48ede921b30",
-    "bytes": 1577474
-  },
-  {
-    "file": "assets/audio/ambience/golf_woodland.ogg",
-    "sha256": "15be6947655f2787975a582ac5879d2fc8ce47ceb9a533b58104d97c7c6ff86d",
-    "bytes": 1689359
-  },
-  {
     "file": "assets/audio/ambience/gray_pier.ogg",
     "sha256": "168011cf7b829a403bf4bf0d8ff4bb5bbd6b1e3bc3f20d71f01b775585854a3f",
     "bytes": 1659872

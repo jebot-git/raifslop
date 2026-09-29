@@ -29,8 +29,8 @@ func run()->void:
 	for i in 3:await process_frame
 	for i in 4:await process_frame
 	check(g.origin.transform.is_equal_approx(origin) and g.head.transform.is_equal_approx(head),"Recording never moves tracking origin or headset")
-	await g.golf_activity.join_course("spyglass")
-	g.golf_activity.golf.set_process(false);g.golf_activity.golf.set_physics_process(false);g.motor.set_physics_process(false)
+	g.golf_activity.enter(g.current_location)
+	g.golf_activity.set_process(false);g.golf_activity.set_physics_process(false);g.motor.set_physics_process(false)
 	for i in 4:await process_frame
 	var in_golf:int=capture.sequence
 	for i in 6:await process_frame
@@ -50,7 +50,7 @@ func run()->void:
 	check(input_rows.any(func(row):return row.data.pressed) and input_rows.any(func(row):return not row.data.pressed),"Press and release are timestamped independently of frame polling")
 	check(frames.any(func(row):return row.data.right.get("linear_velocity",[])==[1.0,2.0,3.0] and row.data.right.stick==[.25,-.5]),"Runtime velocities and stick values survive serialization")
 	check(frames.any(func(row):return not row.data.left.tracked and row.data.right.tracked),"Offhand tracking loss is recorded explicitly")
-	check(frames.any(func(row):return row.data.has("golf") and row.data.golf.has("head") and row.data.golf.has("ball")),"Golf club, ball and fitting context share the controller timeline")
+	check(frames.any(func(row):return row.data.has("minigolf") and row.data.minigolf.has("head") and row.data.minigolf.has("ball")),"Golf club, ball and fitting context share the controller timeline")
 	var ordered:=true
 	for i in range(1,rows.size()):ordered=ordered and rows[i].seq>rows[i-1].seq and rows[i].us>=rows[i-1].us
 	check(ordered and rows.back().type=="capture_stopped","Capture flushes ordered records and an explicit stop event")

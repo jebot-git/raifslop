@@ -37,7 +37,7 @@
       "unlocked_icon": "assets/ui/achievements/art/ubs_exceptional_catch.png"
     },
     {
-      "description": "Finish an 18-hole golf round without forfeiting a hole.",
+      "description": "Finish an 18-hole minigolf round without forfeiting a hole.",
       "eos_achievement_id": "ubs_first_round",
       "id": "ubs_first_round",
       "locked_icon": "assets/ui/achievements/art/locked.png",
@@ -49,7 +49,7 @@
       "unlocked_icon": "assets/ui/achievements/art/ubs_first_round.png"
     },
     {
-      "description": "Score a birdie or better on a completed golf hole.",
+      "description": "Score a birdie or better on a completed minigolf hole.",
       "eos_achievement_id": "ubs_birdie",
       "id": "ubs_birdie",
       "locked_icon": "assets/ui/achievements/art/locked.png",

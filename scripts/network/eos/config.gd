@@ -1,5 +1,5 @@
 extends RefCounted
-const PROTOCOL := 19 # Gameplay schema; kept in sync with session.VERSION.
+const PROTOCOL := 21 # Gameplay schema; kept in sync with session.VERSION.
 const MAX_MEMBERS := 8
 
 static func read(path: String) -> Dictionary:

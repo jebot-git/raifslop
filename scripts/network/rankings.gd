@@ -3,8 +3,8 @@ extends Node
 const PAGE_SIZE := 10
 const MAX_PAGE := 4 # Preserve the existing top-50 limit.
 const Fish = preload("res://scripts/network/leaderboard.gd")
-const Golf = preload("res://addons/golfminus/scripts/golf/server_records.gd")
-const Courses = preload("res://addons/golfminus/scripts/golf/catalog.gd")
+const Golf = preload("res://scripts/minigolf/server_records.gd")
+const Courses = preload("res://scripts/minigolf/catalog.gd")
 var session:Node
 var limits:Dictionary={}
 var view:Dictionary={}

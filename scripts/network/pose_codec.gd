@@ -1,7 +1,7 @@
 extends RefCounted
 ## Independently decodable protocol-18 snapshots. No object/Variant deserialization.
 const State = preload("res://scripts/network/state.gd")
-const Locations = preload("res://addons/golfminus/scripts/golf/host_locations.gd")
+const Locations = preload("res://scripts/minigolf/host_locations.gd")
 const FORMAT := 1
 const MAX_BYTES := 512
 const BODY = ["hips", "chest", "left_foot", "right_foot", "left_knee", "right_knee", "left_elbow", "right_elbow", "left_hand", "right_hand"]

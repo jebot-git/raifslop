@@ -1,0 +1,13 @@
+{
+  "location": "cedar_creek",
+  "resolution": 2048,
+  "samples": 24,
+  "lighting_source": "cedar_creek_4k.hdr (full HDR, single solar contribution)",
+  "surfaces": 736,
+  "triangles": 139216,
+  "uv_set": "UV2",
+  "passes": [
+    "direct + indirect diffuse irradiance (without albedo)",
+    "ambient occlusion"
+  ]
+}

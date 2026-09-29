@@ -35,19 +35,13 @@ func run()->void:
 	host.avatar_menu._open_import()
 	check(host.avatar_menu.vrm_browser.visible,"Avatar import opens the in-world browser")
 	host.avatar_menu.close_overlays()
-	await host.golf_activity.join_course("spyglass")
-	var golf=host.golf_activity.golf;golf.set_process(false);golf.set_physics_process(false)
-	check(not golf.has_method("_input") and not golf.course_guide.has_method("camera_key"),"Golf has no keyboard swing, club, Godview or camera handlers")
-	var club:int=golf.club_index;var hole:int=golf.round_state.hole
-	pose=host.head.transform
+	host.golf_activity.enter(host.current_location)
+	var golf=host.golf_activity;golf.set_physics_process(false);host.xr=true
+	var hole:int=golf.hole;pose=host.head.transform
 	keys();await process_frame
-	check(golf.club_index==club and golf.round_state.hole==hole and not golf.ball.moving and not golf.course_guide.held and not golf.godview.active and host.head.transform==pose,"Keyboard/mouse cannot alter golf play or viewpoint")
-	check(golf.ui_viewport!=null and golf.hud.get_viewport()==golf.ui_viewport,"Golf keeps only its spatial menu")
-	# Controller-routed shutter remains available without binding a keyboard key.
-	golf.course_guide.toggle();golf._left_button("trigger_click")
-	check(golf.course_guide.photo_camera.active,"Controller trigger still opens golf camera")
-	golf._right_button("ax_button")
-	check(golf.course_guide.photo_camera.selfie,"Controller button still selects selfie lens")
-	golf.course_guide.dock();host.golf_activity.leave();host.ambience.stop();host.queue_free()
+	check(golf.hole==hole and not golf.ball.moving and not golf.guide.held and host.head.transform==pose,"Desktop test controls do not affect VR play")
+	check(host.avatar_menu.pages.has("minigolf"),"Minigolf uses the shared spatial menu")
+	golf.leave();host.ambience.stop();host.queue_free()
+
 	await process_frame;await create_timer(.2).timeout
 	print("VR_ONLY_RESULT ",failures);quit(0 if failures.is_empty() else 1)

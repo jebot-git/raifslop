@@ -1,3 +1,5 @@
+> Current release: protocol 21 includes revised minigolf layouts, shared-water play and fitted putter poses. See [Minigolf](MINIGOLF.md). Earlier validation below describes its recorded release.
+
 # Fishing together
 
 Open the avatar menu (**right B**), then **Together**. Enter a name and use **Host**, or enter the host's IP/hostname and use **Join**. The limit is eight players: eight clients on a dedicated server, or the host plus seven guests for ad-hoc hosting. Everyone can travel independently; choose the same location in the Locations page to see one another and hear nearby speech. The radio reaches anglers in every water. The player list shows each angler's location. Fish Guide entries and personal records stay on each device.

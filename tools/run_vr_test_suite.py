@@ -28,18 +28,13 @@ def main():
     env = dict(os.environ, VR_TEST_OUTPUT=str(run), GODOT_BIN=args.godot)
     results = []
     focused = ['rec4_cast_replay', 'cast_direction', 'cast_tolerance', 'tracked_cast',
-               'golf_fit_invariants', 'golf_fitting_analytics', 'golf_attachment',
-               'golf_controls_feedback', 'golf_vr_input', 'golf_tree_collision',
-               'rec4_golf_replay', 'golf_head_contact', 'golf_physical_club',
-               'golf_physics_review', 'golf_physics', 'golf_turf_contact',
-               'golf_contact_effects', 'golf_physics_stress', 'golf_loading',
-               'golf_courses', 'golf_surface_alignment', 'vr_test_capture']
+               'minigolf', 'minigolf_address_line', 'minigolf_fit_invariants', 'minigolf_runtime', 'vr_test_capture']
     if args.focus == 'rec5':
-        focused += ['rec5_cast_replay', 'rec5_terrain']
+        focused += ['rec5_cast_replay']
     commands = [('gameplay', ['python3', 'tools/test_vr_fixes.py'] +
                  (focused if args.focus != 'full' else []))]
     if args.focus == 'full':
-        commands.append(('network', ['python3', 'tools/test_golf_network.py', '--godot', args.godot, '--output', str(out / 'network-details')]))
+        commands.append(('network', ['python3', 'tools/test_minigolf_network.py']))
     for name, command in commands:
         with (out / (name + '.log')).open('w') as log:
             process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=subprocess.PIPE,
@@ -55,7 +50,6 @@ def main():
     report = {'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
               'utc': stamp, 'focus': args.focus, 'working_tree_changed': bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip()), 'mode': 'synthetic XR, headless; not hardware certification',
               'profiles_and_logs': str(run), 'results': results}
-    subprocess.run(['python3', 'tools/review_golf_contacts.py', 'tests/fixtures/rec4_contacts.json', '--output', str(out / 'contact-review.html')], cwd=ROOT, check=True)
     (out / 'suite-results.json').write_text(json.dumps(report, indent=2) + '\n')
     return int(any(r['exit'] for r in results))
 

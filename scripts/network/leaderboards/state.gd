@@ -7,24 +7,26 @@ var mirrored:Dictionary={}
 var increments:Dictionary={}
 var rounds:Dictionary={}
 var golf:Dictionary={}
+var archived_scores:Dictionary={}
 var path:=""
 var scope:=""
 var error:=""
 func open(file_path:String,account_scope:String)->void:
- path=file_path;scope=account_scope;targets.clear();confirmed.clear();mirrored.clear();increments.clear();rounds.clear();golf.clear();error=""
+ path=file_path;scope=account_scope;targets.clear();confirmed.clear();mirrored.clear();increments.clear();rounds.clear();golf.clear();archived_scores.clear();error=""
  if not FileAccess.file_exists(path):return
  var file:=FileAccess.open(path,FileAccess.READ)
  if file==null or file.get_length()>131072:error="Online leaderboard outbox could not be read.";return
  var parser:=JSON.new()
  if parser.parse(file.get_as_text())!=OK:error="Online leaderboard outbox is invalid.";return
  var data=parser.data
+ if data is Dictionary and data.get("scope")==scope:migrate_archived(data)
  if not data is Dictionary or data.get("version")!=1 or data.get("scope")!=scope or not valid_scores(data.get("targets")) or not valid_scores(data.get("confirmed")):
   error="Online leaderboard outbox is invalid or belongs to another account.";return
  targets=data.targets;confirmed=data.confirmed
  var pending_counts=data.get("increments",{})
  var saved_rounds=data.get("rounds",{})
  var saved_golf=data.get("golf",{})
- if not valid_scores(pending_counts) or not saved_rounds is Dictionary or saved_rounds.size()>128 or not preload("res://addons/golfminus/scripts/golf/server_records.gd").valid(saved_golf):
+ if not valid_scores(pending_counts) or not saved_rounds is Dictionary or saved_rounds.size()>128 or not preload("res://scripts/minigolf/server_records.gd").valid(saved_golf):
   error="Online leaderboard progress is invalid.";return
  for key in pending_counts:
   if not Catalog.boards()[key].get("counter",false):error="Invalid online counter.";return
@@ -78,7 +80,25 @@ func save()->Error:
  if code!=OK:return code
  var file:=FileAccess.open(path+".tmp",FileAccess.WRITE)
  if file==null:return FileAccess.get_open_error()
- file.store_string(JSON.stringify({"version":1,"scope":scope,"targets":targets,"confirmed":confirmed,"increments":increments,"rounds":rounds,"golf":golf}));file.flush()
+ file.store_string(JSON.stringify({"version":1,"scope":scope,"targets":targets,"confirmed":confirmed,"increments":increments,"rounds":rounds,"golf":golf,"archived_scores":archived_scores}));file.flush()
  code=file.get_error();file.close()
  if code==OK:code=DirAccess.rename_absolute(path+".tmp",path)
  return code
+
+func migrate_archived(data:Dictionary)->void:
+ # Preserve retired full-golf outbox entries without poisoning fishing/minigolf sync.
+ var archived=data.get("archived_scores",{})
+ if archived is Dictionary:archived_scores=archived.duplicate(true)
+ for field in ["targets","confirmed","increments"]:
+  var values=data.get(field,{})
+  if not values is Dictionary:continue
+  for key in values.keys():
+   if not key is String or not Catalog.valid_score(values[key]):continue
+   var retired:bool=key.begins_with("golf_handicap/")
+   for id in Catalog.Courses.ARCHIVED:
+    for prefix in ["golf/","golf_rounds/","golf_forfeits/","golf_last/","golf_handicap/"]:
+     if key==prefix+id:retired=true
+   if retired:
+    if not archived_scores.has(field):archived_scores[field]={}
+    if archived_scores[field] is Dictionary:archived_scores[field][key]=values[key]
+    values.erase(key)

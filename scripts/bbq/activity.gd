@@ -187,7 +187,10 @@ func refresh() -> void:
  status.text="A shared BBQ is running here. Come and go whenever you like." if active else "Start a gathering at this water. Anyone can join."
 
 func visit() -> void:
- if is_instance_valid(g.golf_activity) and g.golf_activity.active and not g.golf_activity.prepare_clubhouse():return
+ if is_instance_valid(g.golf_activity) and g.golf_activity.active:
+  if g.golf_activity.ball.moving:return
+  g.golf_activity.guide.dock();g.golf_activity.swing.reset()
+  if g.network.active:g.golf_activity.service.request("presence",{"present":false})
  if transitioning:return
  if g.game.state!=g.Session.State.READY:
   status.text="Finish your cast and release the catch before visiting.";return
@@ -196,21 +199,21 @@ func visit() -> void:
   return_yaw=atan2(g.head.global_basis.z.x,g.head.global_basis.z.z)
  visiting=true
  if is_instance_valid(g.golf_activity) and g.golf_activity.active:
-  g.golf_activity.golf.course_guide.dock();g.golf_activity.golf.equipment.set_stowed(true)
+  g.golf_activity.club.hide()
  g.fish_guide.dock();g.shoulder_radio.reset();g.rod_holster.set_stowed(true)
  service.request("start")
  var seat:int=(service.local_id()-1)%8
  _move(Sites.arrival(location,seat))
 
 func return_to_water() -> void:
- if is_instance_valid(g.golf_activity) and g.golf_activity.active and g.golf_activity.clubhouse_round!=null:g.golf_activity.return_from_clubhouse();return
+ if is_instance_valid(g.golf_activity) and g.golf_activity.active and g.network.active:g.golf_activity.service.request("presence",{"present":true})
  if transitioning or not visiting:return
  release_all();visiting=false
  _move(return_at if return_location==location else g.foreground.get_meta("spawn",Vector3(0,.02,.65)),true)
 
 func _move(destination:Vector3,returning:=false) -> void:
  transitioning=true
- if is_instance_valid(g.golf_activity) and g.golf_activity.settings_open:g.golf_activity.close_settings()
+
  if g.menu_open:g._toggle_avatar_menu()
  g.motor.blocked=true
  var move_location:=location

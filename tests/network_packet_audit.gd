@@ -1,7 +1,7 @@
 extends SceneTree
 ## Offline fixtures + loopback RPC serialization. No VR, EOS login or game scene.
 const State = preload("res://scripts/network/state.gd")
-const Courses = preload("res://addons/golfminus/scripts/golf/catalog.gd")
+const Courses = preload("res://scripts/minigolf/catalog.gd")
 class Tap extends "res://scripts/network/threaded_peer.gd":
 	var sizes: Array = []
 	func _put_packet_script(bytes: PackedByteArray) -> Error:
@@ -115,14 +115,14 @@ func _run() -> void:
 	model.apply("lakeside",2,1,"grab",6)
 	var update:Dictionary=replication.build(initial.baseline,"lakeside",model.stations.lakeside,121.0)
 	await sample("bbq_one_item_delta", "delta", [update.data])
-	var game := preload("res://addons/golfminus/scripts/golf/course_session.gd").new()
+	var game := preload("res://scripts/minigolf/course_session.gd").new()
 	for i in 8: assert(game.command(str(i), "Player %d" % i,"join",{"course":Courses.ALL[0],"mode":"competition"},0))
 	assert(game.command("0","Player 0","start",{},0))
 	var records: Dictionary = {}
 	for i in 50:
 		records[str(i)] = {"name":"Player %02d" % i,"golf":{}}
 		for course in Courses.ALL: records[str(i)].golf[course] = {"rounds":5,"forfeits":1,"best":72,"last":76}
-	var ranking := preload("res://addons/golfminus/scripts/golf/server_records.gd").snapshot(records)
+	var ranking := preload("res://scripts/minigolf/server_records.gd").snapshot(records)
 	await sample("golf_competition_no_records", "golf", [game.view("0"),{}])
 	await sample("golf_competition_50_records_per_course", "golf", [game.view("0"),ranking])
 	var board := preload("res://scripts/network/leaderboard.gd").new()

@@ -307,7 +307,7 @@ func attach_tracking(manager: Node) -> void:
 	tracking_page=VBoxContainer.new(); tracking_page.add_theme_constant_override("separation",14); _register_page("tracking","Tracking",tracking_page)
 	var heading:=Label.new(); heading.text="AVATAR TRACKING & CALIBRATION"; heading.add_theme_font_size_override("font_size",26); tracking_page.add_child(heading)
 	var hands:=Label.new();hands.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-	hands.text="Hands: hold thumb + middle finger together to open or close the menu. Point and pinch thumb + index to select; use ↑ / ↓ to scroll.\nCast: hold a right index pinch, sweep back then forward, and release. Reel: pinch or curl your left hand at the reel and turn it; pinch and pull the fly line to strip.\nGolf: curl the striking hand and swing the club through the ball. Open the hand to disarm. Walk within your playspace or pick up controllers to move farther."
+	hands.text="Hands: hold thumb + middle finger together to open or close the menu. Point and pinch thumb + index to select; use ↑ / ↓ to scroll.\nCast: hold a right index pinch, sweep back then forward, and release. Reel: pinch or curl your left hand at the reel and turn it; pinch and pull the fly line to strip.\nMinigolf: curl the striking hand and swing the putter through the ball. Open the hand to disarm. Walk within your playspace or pick up controllers to move farther."
 	tracking_page.add_child(hands)
 	for row in [["Tracked body",manager.tracking.enabled],["Animate planted tracked legs when walking",manager.tracked_leg_animation],["Eye and face expressions",manager.expressions_enabled],["Seated play",manager.seated]]:
 		var toggle:=CheckButton.new(); toggle.text=row[0]; toggle.button_pressed=row[1]; tracking_page.add_child(toggle)
@@ -431,7 +431,7 @@ func attach_tackle(session) -> void:
 	tackle_balance.add_theme_font_size_override("font_size", 26)
 	page.add_child(tackle_balance)
 	var hint := Label.new()
-	hint.text = "Earn shekels for each catch. Rarer and larger fish pay more.\nBetter rods withstand strain and tire fish faster.\nGolf clubs match your equipped finish; golf performance stays the same."
+	hint.text = "Earn shekels for each catch. Rarer and larger fish pay more.\nBetter rods withstand strain and tire fish faster.\nYour minigolf putter matches your equipped finish; putting performance stays the same."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(hint)
 	for index in range(session.Tackle.RODS.size()):

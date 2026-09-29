@@ -215,3 +215,9 @@ logo, `docs/quest-store/media/logo.png` on the `stores` branch. It combines the
 existing game icon with Almonte lettering by Raymond Larabie (CC0 1.0). The store
 media package retains the font source and author-issued license; no font binary
 is required for this raster logo.
+
+## Waterfront minigolf
+
+The retained putter, eight original Blender MCP waterfront props, and procedural deck/turf materials are documented in [minigolf material credits](assets/minigolf/MATERIAL_CREDITS.md). Full-size golf course assets, drivers and irons are removed from the active project.
+
+Minigolf location props and Krita-authored material maps are original project artwork; see [minigolf material credits](assets/minigolf/MATERIAL_CREDITS.md).

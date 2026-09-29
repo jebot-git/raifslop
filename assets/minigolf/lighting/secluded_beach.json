@@ -1,0 +1,13 @@
+{
+  "location": "secluded_beach",
+  "resolution": 2048,
+  "samples": 24,
+  "lighting_source": "source/locations/secluded_beach_lighting.blend",
+  "surfaces": 655,
+  "triangles": 111440,
+  "uv_set": "UV2",
+  "passes": [
+    "direct + indirect diffuse irradiance (without albedo)",
+    "ambient occlusion"
+  ]
+}

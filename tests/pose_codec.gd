@@ -10,7 +10,7 @@ func _initialize() -> void:
 		for count in [0,4,10]:
 			var input := Fixture.player(count, true)
 			input.location = location
-			if location.begins_with("golf_"): input.golf_club = 7
+			if location.begins_with("minigolf_"): input.golf_club = 7
 			input.serial = 2147483647
 			input.head.origin = Vector3(2047.99,-2047.99,.00001)
 			input.length = 111.123456789; input.reel_angle = TAU; input.user_height = .6

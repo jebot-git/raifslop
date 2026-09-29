@@ -4,7 +4,7 @@ func run():
 	var g=load("res://scenes/main.tscn").instantiate();root.add_child(g)
 	await create_timer(.5).timeout
 	g.game.tackle.shekels=321
-	g.golf_activity.join_course("cypress")
+	g.golf_activity.enter(g.current_location)
 	g._toggle_avatar_menu()
 	g.avatar_menu.quit_button.pressed.emit()
 	if not g.golf_activity.loading_course.is_empty() or g.golf_activity.pending_loader!=null:

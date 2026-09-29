@@ -1,5 +1,9 @@
 shader_type spatial;
 render_mode ambient_light_disabled;
+#include "res://shaders/panorama_sampling.gdshaderinc"
+uniform bool course_backdrop=false;
+uniform mat3 sky_inverse=mat3(1.0);
+uniform float sky_energy=1.0;
 uniform sampler2D cover : source_color,filter_linear_mipmap_anisotropic,repeat_enable;
 uniform sampler2D gravel : source_color,filter_linear_mipmap_anisotropic,repeat_enable;
 uniform sampler2D grass : source_color,filter_linear_mipmap_anisotropic,repeat_enable;
@@ -43,6 +47,12 @@ void fragment(){
  vec3 baked=texture(irradiance,bake_uv).rgb*.86;
  float microshade=clamp(1.0+(NORMAL_MAP.x-.5)*.2+(NORMAL_MAP.y-.5)*.16,.87,1.13);
  EMISSION=ALBEDO*mix(vec3(ambient_fill),baked*microshade,bake_weight)*contact;
+ if(course_backdrop){
+  float fade=max(smoothstep(90.0,170.0,world.z),smoothstep(70.0,118.0,abs(world.x)));
+  vec3 backdrop=panorama_sample(sky_inverse*-normalize(mat3(INV_VIEW_MATRIX)*VIEW),true)*sky_energy;
+  EMISSION=mix(EMISSION,backdrop,fade);
+  ALBEDO*=1.0-fade;
+ }
 }
 void light(){
  DIFFUSE_LIGHT+=ALBEDO*LIGHT_COLOR*ATTENUATION*max(dot(NORMAL,LIGHT),0.0)*(1.0-bake_weight)/PI;

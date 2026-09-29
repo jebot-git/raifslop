@@ -5,12 +5,12 @@ import argparse, hashlib, http.client, json, os, shutil, subprocess, urllib.pars
 from release_targets import TARGETS, ANDROID_TARGETS
 
 root=Path(__file__).resolve().parents[1]
-parser=argparse.ArgumentParser();parser.add_argument('--prototype',action='store_true');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--prototype',action='store_true');parser.add_argument('--prerelease',action='store_true');args=parser.parse_args()
 assets_dir=root/('builds/prototype-release' if args.prototype else 'builds/release')
 if args.prototype:
     TARGETS=['Linux','Windows','Server'];ANDROID_TARGETS=[]
 manifest=json.loads((assets_dir/'build-manifest.json').read_text())
-assert bool(manifest.get('prerelease',False)) == args.prototype
+assert bool(manifest.get('prerelease',False)) == (args.prototype or args.prerelease)
 assert sorted(item['target'] for item in manifest['targets'])==sorted(TARGETS), 'Release contains missing or retired targets; rebuild and repackage'
 version='v'+manifest['version']
 repo='jebot-git/raifslop'
@@ -22,6 +22,9 @@ number=manifest['version']
 allowed_assets={f'UltimateBoomerSimulator-{number}-{target}-x86_64.zip' for target in ['Linux','Windows']}
 allowed_assets.update({f'UltimateBoomerSimulator-{number}-Server-Linux-x86_64.zip',f'UltimateBoomerSimulator-{number}-Notices.zip','build-manifest.json','SHA256SUMS'})
 allowed_assets.update(f'UltimateBoomerSimulator-{number}-{target}.apk' for target in ANDROID_TARGETS)
+for record in manifest['targets']:
+    if record['target'] in ANDROID_TARGETS:
+        allowed_assets.update(name for name in record['files'] if name.endswith('.obb'))
 assert {p.name for p in assets_dir.iterdir()}==allowed_assets, 'Missing or excluded release artifact; repackage before publishing'
 expected_files={line.split('  ',1)[1] for line in (assets_dir/'SHA256SUMS').read_text().splitlines()}
 assert {p.name for p in assets_dir.iterdir()}==expected_files|{'SHA256SUMS'}
@@ -53,7 +56,7 @@ if release is None:
         if release is not None or len(candidates)<100:break
         page+=1
 if release is None:
-    release=api('POST',base,{'tag_name':version,'target_commitish':commit,'name':'Ultimate Boomer Simulator '+version.removeprefix('v'),'body':(root/'docs'/('RELEASE_NOTES_'+version.removeprefix('v')+'.md')).read_text(),'draft':True,'prerelease':args.prototype})
+    release=api('POST',base,{'tag_name':version,'target_commitish':commit,'name':'Ultimate Boomer Simulator '+version.removeprefix('v'),'body':(root/'docs'/('RELEASE_NOTES_'+version.removeprefix('v')+'.md')).read_text(),'draft':True,'prerelease':args.prototype or args.prerelease})
 assert release['draft'], 'Release already published; refusing to modify it'
 expected=[]
 for name in sorted(p.name for p in assets_dir.iterdir() if p.is_file()):

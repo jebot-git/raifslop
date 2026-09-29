@@ -8,10 +8,11 @@ class Intent extends RefCounted:
 class Activity extends Node:
 	var active:=false
 	var member:=false
-	var golf:Dictionary={"course_id":""}
+	var course_id:=""
+	var ball:Dictionary={"moving":false}
 	func enrolled()->bool:return member
 	func leave()->void:active=false
-	func enter(id:String)->void:active=true;golf.course_id=id
+	func enter(id:String)->void:active=true;course_id=id
 class Host extends Node:
 	var casting:=false
 	var avatar_loading:=false
@@ -31,11 +32,11 @@ func run()->void:
 	assert(host.selected.is_empty() and not router.pending.is_empty())
 	host.casting=false;await router.travel()
 	assert(host.selected=="meadow_bend" and router.pending.is_empty())
-	intent.destination="course_spyglass";router.read_intent(intent);await router.travel()
-	assert(host.golf_activity.active and host.golf_activity.golf.course_id=="spyglass")
-	host.golf_activity.member=true;intent.destination="water_lakeside";router.read_intent(intent);await router.travel()
+	intent.destination="course_lake_pier";router.read_intent(intent);await router.travel()
+	assert(host.golf_activity.active and host.golf_activity.course_id=="lake_pier")
+	host.golf_activity.ball.moving=true;intent.destination="water_lakeside";router.read_intent(intent);await router.travel()
 	assert(router.pending=="water_lakeside" and host.golf_activity.active)
-	host.golf_activity.member=false;await router.travel()
+	host.golf_activity.ball.moving=false;await router.travel()
 	assert(host.selected=="lakeside" and not host.golf_activity.active)
 	intent.destination="unknown";router.read_intent(intent,true);await process_frame
 	assert(router.pending.is_empty())

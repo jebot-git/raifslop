@@ -1,9 +1,8 @@
 # Ultimate Boomer Simulator
 
-`main` is the production codebase, promoted from `integration/golf-fishing` on
-2026-09-24. Use `integration/golf-fishing` for integration work and merge shared
-fixes into `stores` for store packaging. The previous fishing-only `main` is
-preserved at `archive/main-pre-integration-2026-09-24`.
+`main` follows the EOS release codebase. `integration/golf-fishing` is archived.
+Waterfront minigolf replaces the full-size golf integration; fishing, BBQ and
+minigolf share each water location.
 
 [Quest standalone hosting tests and Meta invite assessment](docs/QUEST_MULTIPLAYER_ASSESSMENT.md).
 
@@ -214,16 +213,10 @@ The catalogue now has **40 species**, including huchen and ragged-tooth shark pr
 
 Open **Menu → BBQ** for shared cooking. Grip the tongs, hold trigger near food to clamp it, turn your wrist, and release trigger over the grate or prep table. Take a serving and trigger near your mouth to eat. Trigger the cooler lid to open it, grip a can, then trigger to open and sip near your mouth. [Controls, assets, and validation](docs/BBQ.md).
 
-## Golf integration branch
+## Waterfront minigolf
 
-This branch integrates GolfMinus into the existing Fishing menu, avatar, radio, shared records and clubhouse BBQ. See [integration notes](docs/GOLF_INTEGRATION.md) for dedicated-server packaging and verification. Current development clients and servers must both use protocol 19 (compact poses, bounded packet framing, requested ranking pages and BBQ deltas). Published v0.1.17 packages use protocol 16.
+Open **Menu → Minigolf** at any of the 12 waters to join its original 18-hole course. Golfers share the same world with anglers and BBQ players. Putting uses grip-to-putt, ball teleport, bank shots, rolling slopes, water penalties and stroke scoring. The existing controller-angle/length fitting and handheld guide are retained for minigolf.
 
-The integrated Golf page offers Spyglass Hill, Pebble Beach, Cypress Point and Poppy Hills, each with 18 holes in one connected world. See [course sources, hip tracking and validation](docs/HIP_TRACKING_AND_COURSES.md).
+See [courses, controls, fitting, scores and validation](docs/MINIGOLF.md). Full-size courses and extra clubs are archived. Development clients and servers now use protocol **21**.
 
-Normal VR tracking uses real metres. Avatar size follows measured standing eye height; use **Tracking → Measure standing height — stand straight** to save an exact fit. Crouching and recentering do not shrink the avatar or raise the physical floor. Golf menus support the same trigger pointer as fishing; the clubhouse wall also accepts fingertip touch. The golf handedness toggle selects the club and menu hand. Grip or trigger enables club contact and locks stick movement until released. The club bag uses click-to-open, point-and-centre selection. See the [gameplay review and updated controls](docs/GAMEPLAY_REVIEW_2026-09-22.md).
-
-The experimental EOS branch now includes an opt-in gameplay transport and online
-lobby controls. Desktop direct/forced-relay tests passed; Quest packaging and
-Meta account/invite acceptance remain pending. See
-[EOS gameplay transport](docs/EOS_GAMEPLAY_TRANSPORT.md) for local configuration
-and validation commands. Existing ENet hosting remains available.
+The EOS gameplay transport and lobby controls are retained; ENet hosting remains available. See [EOS gameplay transport](docs/EOS_GAMEPLAY_TRANSPORT.md) for configuration. New minigolf leaderboard/destination definitions need provisioning in the provider portals before cloud publication.

@@ -44,7 +44,7 @@ func persist()->bool:
  if code==OK:return true
  stop();status="Online leaderboard outbox could not be saved.";changed.emit();return false
 func observe_state(data:Dictionary)->void:
- if not eligible() or not preload("res://scripts/network/state.gd").valid(data) or data.location.begins_with("golf_"):return
+ if not eligible() or not preload("res://scripts/network/state.gd").valid(data) or data.golf_club>=0:return
  var before:Dictionary=collector.records.values()[0].duplicate(true)
  if not collector.observe(1,data):return
  var row:Dictionary=collector.records.values()[0]
@@ -83,11 +83,9 @@ func observe_golf(view:Dictionary)->void:
  progress.complete=true
  outbox.add("golf_rounds/"+view.course,1)
  var records:Dictionary={"local":{"golf":outbox.golf}}
- preload("res://addons/golfminus/scripts/golf/server_records.gd").finish(records,"local",view.course,scores,false)
+ preload("res://scripts/minigolf/server_records.gd").finish(records,"local",view.course,scores,false)
  outbox.golf=records.local.golf
  offer("golf_last/"+view.course,total)
- var handicap:float=preload("res://addons/golfminus/scripts/golf/handicap.gd").index(outbox.golf)
- for course in outbox.golf:offer("golf_handicap/"+course,Catalog.encode("golf_handicap/"+course,handicap))
  persist()
 func _process(_delta:float)->void:
  if not eligible() or runtime.busy or busy or Time.get_ticks_msec()<due:return

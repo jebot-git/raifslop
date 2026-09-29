@@ -27,7 +27,6 @@ func _export_begin(features: PackedStringArray, _debug: bool, _path: String, _fl
 	emitted.clear()
 	desktop = features.has("pc")
 	_scan_textures("res://assets", features)
-	_scan_textures("res://addons/golfminus/assets", features)
 
 func _scan_textures(folder: String, features: PackedStringArray) -> void:
 	for name in DirAccess.get_files_at(folder):
@@ -50,7 +49,7 @@ func _export_file(path: String, _type: String, _features: PackedStringArray) -> 
 		add_file(path, FileAccess.get_file_as_bytes(path), false)
 	elif textures.has(path):
 		var imported: String = textures[path]
-		if path.get_extension() in ["hdr", "exr"] and not path.begins_with("res://addons/golfminus/"):
+		if path.get_extension() in ["hdr", "exr"]:
 			var compressed := HDR.export_path(path, imported, desktop)
 			if compressed.is_empty(): return # Error is reported; build tooling rejects it.
 			imported = compressed

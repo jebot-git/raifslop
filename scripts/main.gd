@@ -160,7 +160,7 @@ func _ready() -> void:
 		spectator.setup(self)
 	_start_network()
 	bbq=preload("res://scripts/bbq/activity.gd").new();add_child(bbq);bbq.setup(self)
-	golf_activity = preload("res://addons/golfminus/scripts/golf/fishing_host.gd").new()
+	golf_activity = preload("res://scripts/minigolf/activity.gd").new()
 	add_child(golf_activity); golf_activity.setup(self)
 	destinations=preload("res://scripts/progress/destinations.gd").new();add_child(destinations);destinations.setup(self)
 	avatar_menu.attach_achievements(progress,destinations)
@@ -1471,7 +1471,18 @@ func _update_avatar(delta: float) -> void:
 		avatar.tracked_leg_animation = tracking_manager.tracked_leg_animation if is_instance_valid(tracking_manager) else false
 		avatar.apply_tracking(motor.global_transform, tracking_manager.body if is_instance_valid(tracking_manager) else {}, tracking_manager.face if is_instance_valid(tracking_manager) else {})
 		var right_hand:Node3D=calibrated_hands[1]
-		avatar.update_targets(head, calibrated_hands[0], right_hand, motor.global_position.y, motor.last_motion, delta)
+		var left_hand:Node3D=calibrated_hands[0]
+		var support=null
+		if is_instance_valid(golf_activity) and golf_activity.active and golf_activity.support_hand.engaged:
+			support=golf_activity.support_hand
+			if support.hand==0:left_hand=support
+			else:right_hand=support
+		avatar.update_targets(head, left_hand, right_hand, motor.global_position.y, motor.last_motion, delta)
+		if support!=null:
+			# Visual IK only: putting still samples the real striking controller.
+			var side:String="left" if support.hand==0 else "right"
+			for suffix in ["_hand","_elbow","_finger_rotations"]:avatar.xr_pose.body.erase(side+suffix)
+			avatar.xr_pose.body[side+"_curls"]=PackedFloat32Array([.8,.8,.8,.8,.8])
 		avatar.left_curl = left.get_float("grip") * 0.8
 		avatar_menu.update_preview(avatar)
 

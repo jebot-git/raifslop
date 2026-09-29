@@ -1,7 +1,6 @@
 extends SceneTree
 const Ambience=preload("res://scripts/ambience.gd")
 const Locations=preload("res://scripts/locations.gd")
-const CourseLife=preload("res://addons/golfminus/scripts/golf/course_life.gd")
 class Motor extends Node3D:
 	var safe_spawn:=Vector3.ZERO
 class Host extends Node3D:
@@ -41,10 +40,6 @@ func run()->void:
 		var path:="res://assets/audio/ambience/%s.ogg"%entry.id
 		paths[path]=Locations.water_type(entry.id)
 		check(stream!=null and stream.loop and stream.get_length()>29,"Water has its own looping bed: %s / %s"%[Locations.water_type(entry.id),entry.id])
-	for course in ["spyglass","pebble","cypress","poppy"]:
-		var path:=CourseLife.soundscape_path(course)
-		var stream:=load(path) as AudioStreamOggVorbis
-		check(not paths.has(path) and stream!=null and stream.get_length()>127,"Golf never borrows a fishing-water bed: "+course)
-	check(CourseLife.soundscape_path("pebble")!=CourseLife.soundscape_path("poppy"),"Open coastal courses differ from woodland courses")
+
 	ambience.stop();host.queue_free();await process_frame
 	print("AMBIENCE_LIFECYCLE_RESULT ",failures);quit(0 if failures.is_empty() else 1)

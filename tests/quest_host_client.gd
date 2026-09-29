@@ -78,7 +78,7 @@ func run()->void:
     check(await until(func():return item(0).get("place")=="grill" and item(0).side==expected_side),"Quest resolves a physical half turn on release")
     check(await until(func():return item(0).cook[expected_side]>.01),"Quest advances cooking while rendering VR")
    net.bbq.request("release")
-  net.golf.request("join",{"course":"spyglass","mode":"solo"})
+  net.golf.request("join",{"course":"lakeside","mode":"solo"})
   check(await until(func():return not net.golf.view.is_empty()),"Quest creates remote solo golf round")
   net.golf.request("presence",{"present":true})
   if check(await until(func():return net.golf.can_shoot()),"Quest grants golf turn"):
