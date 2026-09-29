@@ -107,7 +107,10 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
     for target in ANDROID_TARGETS:
         shutil.copy2(BUILD / target / 'UltimateBoomerSimulator.apk', result / f'UltimateBoomerSimulator-{VERSION}-{target}.apk')
         for expansion in (BUILD / target).glob('*.obb'):
-            shutil.copy2(expansion, result / expansion.name)
+            with zipfile.ZipFile(result / (expansion.name + '.zip'), 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as bundle:
+                bundle.write(expansion, expansion.name)
+            with zipfile.ZipFile(result / (expansion.name + '.zip')) as bundle:
+                assert bundle.testzip() is None
     notices = stage / 'Notices'
     notices.mkdir()
     copy_notices(notices)

@@ -9,3 +9,5 @@ Protocol 21 requires matching clients and dedicated servers. New provider leader
 Validation includes automated putting/terrain/fitting and save migration checks, all-course lightmap checks, native synthetic Monado activity transitions and 180° stereo pans, and three clients simultaneously fishing, cooking and playing minigolf. Synthetic checks do not establish human VR comfort or standalone Quest performance.
 
 Meta candidate: version 0.1.19-rc.1, Android code 26, existing signing identity, RC channel. Publication and upload results are recorded separately after completion.
+
+GitHub distributes the Quest expansion in a lossless ZIP to stay below its per-file limit. Extract the original `main.26.org.jebot.raifslop.quest.obb` for sideloading; Meta RC installs the expansion automatically.

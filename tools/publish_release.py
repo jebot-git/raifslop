@@ -24,7 +24,7 @@ allowed_assets.update({f'UltimateBoomerSimulator-{number}-Server-Linux-x86_64.zi
 allowed_assets.update(f'UltimateBoomerSimulator-{number}-{target}.apk' for target in ANDROID_TARGETS)
 for record in manifest['targets']:
     if record['target'] in ANDROID_TARGETS:
-        allowed_assets.update(name for name in record['files'] if name.endswith('.obb'))
+        allowed_assets.update(name + '.zip' for name in record['files'] if name.endswith('.obb'))
 assert {p.name for p in assets_dir.iterdir()}==allowed_assets, 'Missing or excluded release artifact; repackage before publishing'
 expected_files={line.split('  ',1)[1] for line in (assets_dir/'SHA256SUMS').read_text().splitlines()}
 assert {p.name for p in assets_dir.iterdir()}==expected_files|{'SHA256SUMS'}
@@ -61,6 +61,7 @@ assert release['draft'], 'Release already published; refusing to modify it'
 expected=[]
 for name in sorted(p.name for p in assets_dir.iterdir() if p.is_file()):
     path=assets_dir/name
+    assert path.stat().st_size < 2 * 1024**3, ('GitHub asset exceeds 2 GiB', name)
     with path.open('rb') as f:digest='sha256:'+hashlib.file_digest(f,'sha256').hexdigest()
     expected.append((name,digest,path.stat().st_size))
     existing=next((a for a in release['assets'] if a['name']==name),None)
