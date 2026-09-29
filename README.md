@@ -4,10 +4,12 @@
 Waterfront minigolf replaces the full-size golf integration; fishing, BBQ and
 minigolf share each water location.
 
+[0.1.19-rc.1 release](https://github.com/jebot-git/raifslop/releases/tag/v0.1.19-rc.1) · Meta RC build 26 · [Migration and validation](docs/MINIGOLF.md).
+
 [Quest standalone hosting tests and Meta invite assessment](docs/QUEST_MULTIPLAYER_ASSESSMENT.md).
 
 Formerly Real AI Fishing. Existing saves and Android package identity are retained; the game icon is unchanged.
-A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. Freshwater and marine fish, six bait choices per habitat, eight photographed waterside settings plus two rivers, distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
+A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. Freshwater and marine fish, six bait choices per habitat, eight photographed waterside settings plus four rivers, distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
 
 Open `project.godot` in Godot 4.7.2 and press F6/F5, or launch:
 
@@ -148,7 +150,7 @@ All eight photographed foregrounds use baked sky/bounce lighting, static sun sha
 
 ## Release downloads
 
-This release provides Windows, Linux, Quest standalone and a separate Linux dedicated-server package on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). PC archives include VR and dedicated-server launchers. Quest 3 standalone performance passed device testing; hand-tracking controls remain in planning. See [release and build instructions](docs/RELEASE.md).
+This release provides Windows, Linux, Quest standalone and a separate Linux dedicated-server package on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). PC archives include VR and dedicated-server launchers. The minigolf RC includes optical hand controls and has passed synthetic VR, multiplayer and packaging checks; standalone Quest performance and human putter-feel testing remain separate from those automated checks. See [release and build instructions](docs/RELEASE.md).
 
 Pico standalone builds are retired from future releases following a reported startup crash on standard Pico 4 (black screen, then immediate exit). Pico OS 6 support is a future goal only, pending suitable hardware and direct testing; current Pico compatibility is not claimed. Historical release artifacts remain available.
 

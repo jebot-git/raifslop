@@ -79,3 +79,7 @@ so group presence is republished with the new definitions.
 The old `course_spyglass`, `course_pebble`, `course_cypress` and `course_poppy` destinations are removed from Meta. All twelve `water_*` destinations remain. New `course_<water>` entries route to minigolf at the corresponding water, using the same location and network session as fishing and BBQ. Old destination names are no longer allowlisted.
 
 The first-round and birdie achievement descriptions refer to minigolf; their existing IDs and previously earned unlocks are preserved. Current portal readbacks are stored in `test-results/minigolf-providers/`.
+
+All 24 destinations are now published: twelve `water_*` entries and twelve `course_<water>` entries, with no errors in the bulk review. EOS Live and Meta each have 48 new minigolf boards (best, latest, rounds and forfeits for every water); the five fishing boards remain active. Historical full-golf boards retain their records. Both providers have verified minigolf wording for first-round and birdie achievements.
+
+Meta RC serves `0.1.19-rc.1`, code 26, build ID `3434863236686469`; automated postprocessing passed. The existing store draft has updated descriptions, five screenshots covering fishing/BBQ/minigolf, a 32-second trailer and a matching minigolf trailer cover. These draft edits are distinct from a production Store submission.

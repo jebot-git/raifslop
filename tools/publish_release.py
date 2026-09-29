@@ -89,7 +89,7 @@ for name in sorted(p.name for p in assets_dir.iterdir() if p.is_file()):
 release=api('GET',base+'/'+str(release['id']))
 actual={(a['name'],a.get('digest'),a['size']) for a in release['assets']}
 assert actual==set(expected), 'Release asset list differs from local manifest'
-release=api('PATCH',base+'/'+str(release['id']),{'draft':False,'make_latest':'false' if args.prototype else 'true'})
+release=api('PATCH',base+'/'+str(release['id']),{'draft':False,'make_latest':'false' if args.prototype or args.prerelease else 'true'})
 report={'url':release['html_url'],'version':version,'commit':commit,'assets':[{'name':a['name'],'sha256':a.get('digest'),'bytes':a['size']} for a in release['assets']]}
 (root/'test-results/release-published.json').write_text(json.dumps(report,indent=2)+'\n')
 print('PUBLISHED',release['html_url'],flush=True)
