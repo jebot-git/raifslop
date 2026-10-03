@@ -221,3 +221,7 @@ is required for this raster logo.
 The retained putter, eight original Blender MCP waterfront props, and procedural deck/turf materials are documented in [minigolf material credits](assets/minigolf/MATERIAL_CREDITS.md). Full-size golf course assets, drivers and irons are removed from the active project.
 
 Minigolf location props and Krita-authored material maps are original project artwork; see [minigolf material credits](assets/minigolf/MATERIAL_CREDITS.md).
+
+## Interface and course sign fonts
+
+Noto Sans Regular and Noto Serif Regular — Copyright 2022 The Noto Project Authors (https://github.com/notofonts/latin-greek-cyrillic), SIL Open Font License 1.1. Unmodified font files and license are bundled in `assets/ui/fonts/`.

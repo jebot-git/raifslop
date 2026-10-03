@@ -63,26 +63,35 @@ func setup(game:Node3D)->void:
 			for key in balls:
 				if key is String and balls[key]==true:collected[key]=true
 	var page:=VBoxContainer.new();page.add_theme_constant_override("separation",14)
-	var intro:=Label.new();intro.text="Waterfront Minigolf\n18 holes at every water · one putter · lowest score wins";page.add_child(intro)
+	host.avatar_menu._register_page("minigolf","Minigolf",page)
+	var intro:=Label.new();intro.text="Waterfront Minigolf\n18 holes at every water · one putter · lowest score wins";intro.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_child(intro)
 	_button(page,"Join minigolf at this water",func():enter(host.current_location))
 	status=Label.new();status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_child(status)
 	_button(page,"Teleport to ball",teleport_to_ball)
-	_button(page,"Find nearby lost ball",collect_nearby)
-	_button(page,"Return to fishing",leave)
-	_button(page,"Join shared round at this water",join_competition)
 	_button(page,"Open minigolf guide",func():
 		if active:toggle_menu(false);guide.toggle())
-	_button(page,"Fit controller angle and putter length",begin_club_fit)
-	_button(page,"Undo last fitting",undo_club_fit)
-	_button(page,"Start shared round (host)",func():
+	_button(page,"Return to fishing",leave)
+	var round_page:=VBoxContainer.new();round_page.add_theme_constant_override("separation",14)
+	host.avatar_menu._register_page("minigolf_round","Shared round",round_page)
+	_button(round_page,"Join shared round at this water",join_competition)
+	_button(round_page,"Start shared round (host)",func():
 		if active and host.network.active:service.request("start"))
-	var hand:=CheckButton.new();hand.text="Left-handed putter";hand.button_pressed=left_handed;page.add_child(hand);hand.toggled.connect(func(value):left_handed=value;swing.reset();save_settings())
-	var length_label:=Label.new();length_label.text="Putter length";page.add_child(length_label)
-	var length:=HSlider.new();length.min_value=.35;length.max_value=1.6;length.step=.01;length.value=fitting.reach;page.add_child(length);length.value_changed.connect(func(value):club_length=value;fitting.reach=value;fitting.save_profile();swing.reset();save_settings())
-	var help:=Label.new();help.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;help.text="Hold grip to arm the putter; release to practice. Trigger: teleport to your ball. A/X: collect a nearby lost ball. B/Y: menu and scorecard. Move and turn with the stick.\nDesktop: arrows aim, hold/release Space to putt, T to teleport, C to collect, Esc for menu.";page.add_child(help)
-	scorecard=Label.new();scorecard.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_child(scorecard)
-	fit_controls=preload("res://scripts/minigolf/fit_controls.gd").new();fit_controls.activity=self;page.add_child(fit_controls)
-	host.avatar_menu._register_page("minigolf","Minigolf",page)
+	var scores_page:=VBoxContainer.new();scores_page.add_theme_constant_override("separation",14)
+	host.avatar_menu._register_page("minigolf_scores","Scorecard & lost balls",scores_page)
+	_button(scores_page,"Find nearby lost ball",collect_nearby)
+	scorecard=Label.new();scorecard.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;scores_page.add_child(scorecard)
+	var equipment:=VBoxContainer.new();equipment.add_theme_constant_override("separation",14)
+	host.avatar_menu._register_page("putter","Putter & fitting",equipment)
+	_button(page,"Putter & fitting →",func():host.avatar_menu.show_page("putter"))
+	_button(equipment,"Fit controller angle and putter length",begin_club_fit)
+	_button(equipment,"Undo last fitting",undo_club_fit)
+	var hand:=CheckButton.new();hand.text="Left-handed putter";hand.button_pressed=left_handed;equipment.add_child(hand);hand.toggled.connect(func(value):left_handed=value;swing.reset();save_settings())
+	var length_label:=Label.new();length_label.text="Putter length";equipment.add_child(length_label)
+	var length:=HSlider.new();length.min_value=.35;length.max_value=1.6;length.step=.01;length.value=fitting.reach;length.custom_minimum_size.y=46;equipment.add_child(length);length.value_changed.connect(func(value):club_length=value;fitting.reach=value;fitting.save_profile();swing.reset();save_settings())
+	var help:=Label.new();help.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;help.text="Hold grip to putt and steady your stance. Release grip and center the stick to walk and turn; move freely between putts. Trigger: teleport to your ball. A/X: collect a nearby lost ball. B/Y: menu and scorecard.";equipment.add_child(help)
+	var alignment:=VBoxContainer.new();alignment.add_theme_constant_override("separation",14)
+	host.avatar_menu._register_page("putter_alignment","Physical attachment alignment",alignment)
+	fit_controls=preload("res://scripts/minigolf/fit_controls.gd").new();fit_controls.activity=self;alignment.add_child(fit_controls)
 	for controller in [host.left,host.right]:
 		controller.button_pressed.connect(controller_pressed.bind(controller))
 		controller.button_released.connect(controller_released.bind(controller))
@@ -116,8 +125,8 @@ func enter(id:String)->void:
 	guide=preload("res://scripts/minigolf/guide.gd").new();guide.activity=self;add_child(guide)
 	ball_mesh=MeshInstance3D.new();var sphere:=SphereMesh.new();sphere.radius=Ball.RADIUS;sphere.height=Ball.RADIUS*2;sphere.radial_segments=16;sphere.rings=8;ball_mesh.mesh=sphere;ball_mesh.material_override=World.material(Color("ffedbe"),.25);add_child(ball_mesh)
 	ball_label=Label3D.new();ball_label.text="YOUR BALL";ball_label.font_size=28;ball_label.pixel_size=.0018;ball_label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;add_child(ball_label)
-	readout=Label3D.new();readout.pixel_size=.0025;readout.font_size=40;readout.billboard=BaseMaterial3D.BILLBOARD_ENABLED;add_child(readout)
-	host.motor.single_controller_controls=true;host.motor.single_controller_hand=pointer_controller;host.motor.stick_lock=putt_grip_held
+	readout=Label3D.new();readout.font=preload("res://scripts/ui/waterside_theme.gd").BODY_FONT;readout.pixel_size=.0025;readout.font_size=40;readout.billboard=BaseMaterial3D.BILLBOARD_ENABLED;add_child(readout)
+	host.motor.single_controller_controls=true;host.motor.single_controller_hand=locomotion_controller;host.motor.stick_lock=putt_grip_held;host.motor.stick_release_pending=false
 	host.motor.catch_controls=false;host.motor.turn_reserved=false;host.motor.radial_open=false
 	load_hole(0);host.motor.relocate(Locations.pose(id).origin);toggle_menu(false)
 	if host.network.active:
@@ -170,6 +179,10 @@ func pointer_controller()->XRController3D:
 	var preferred:XRController3D=host.left if left_handed else host.right
 	var other:XRController3D=host.right if left_handed else host.left
 	return preferred if preferred.get_has_tracking_data() or not other.get_has_tracking_data() else other
+func locomotion_controller()->XRController3D:
+	var held:=pointer_controller()
+	var other:XRController3D=host.right if held==host.left else host.left
+	return held if not other.get_has_tracking_data() or support_hand.automatic else null
 func allows_calibration()->bool:return not active or not ball.moving
 func toggle_menu(value:bool)->void:
 	if host.menu_open!=value:host._toggle_avatar_menu()
@@ -225,6 +238,8 @@ func update_player(dt:float)->void:
 		shaft_visual.global_transform=transforms.shaft
 		if is_instance_valid(physical_head):physical_head.global_transform=transforms.head
 		armed=armed and (controller.get_float("grip")>.55 or controller.is_button_pressed("grip_click"))
+		# Disarm contact until motion from the last walking step has stopped.
+		armed=armed and host.motor.last_motion.length()<.2
 		var impulse:Vector2=swing.sample(transforms.head.origin,ball_position(),-transforms.head.basis.z,dt,armed)
 		if impulse.length()>.01:request_putt(impulse)
 	else:
@@ -248,7 +263,7 @@ func update_player(dt:float)->void:
 	readout.global_position=Catalog.origin(hole)+Vector3(0,1.4,1.1)
 	var turn:String=""
 	if host.network.active and not service.view.is_empty():turn="\n"+("Your turn" if service.can_shoot() else "Waiting for "+str(service.view.get("turn_name","players")))
-	readout.text="%s\nHole %d / 18 · Par %d · Strokes %d\n%s%s"%[Catalog.NAMES[course_id],hole+1,ball.layout.par,strokes,"Round complete" if finished else "Power %d%%"%roundi(power*100) if charging else "Grip to putt · Trigger to ball",turn]
+	readout.text=("Round complete" if finished else "Power %d%%"%roundi(power*100) if charging else "Strokes %d"%strokes)+turn
 	if fitting.active:readout.text=fitting.message
 func _physics_process(dt:float)->void:
 	if not active:return

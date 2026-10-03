@@ -110,14 +110,14 @@ func refresh()->void:
  var flow=session.online
  var occupied:bool=not flow.lobby.is_empty()
  current.visible=occupied
- cancel_button.visible=flow.busy and not occupied
+ cancel_button.visible=flow.busy and not occupied and not flow.stop_due
  if occupied and shown_lobby!=flow.lobby:page(home)
  shown_lobby=flow.lobby
- home_host.disabled=flow.busy or occupied;home_browse.disabled=flow.busy
- create_button.disabled=flow.busy or occupied or Config.clean_title(title_input.text).is_empty() or (protect.button_pressed and host_password.text.is_empty())
+ home_host.disabled=occupied;home_browse.disabled=flow.busy
+ create_button.disabled=occupied or Config.clean_title(title_input.text).is_empty() or (protect.button_pressed and host_password.text.is_empty())
  refresh_button.disabled=flow.busy or Time.get_ticks_msec()<flow.search_ready_at
- code_button.disabled=flow.busy
- accept_button.disabled=flow.busy or flow.pending_reference.is_empty()
+ code_button.disabled=false
+ accept_button.disabled=flow.pending_reference.is_empty()
  accept_button.text="Accept Meta invitation" if not flow.pending_reference.is_empty() else "No pending Meta invitation"
  if not flow.pending_reference.is_empty() and not joining.visible:notice.text="A Meta invitation is waiting. Open Join with code / invitation to accept."
  if rows!=flow.lobbies:
@@ -128,7 +128,7 @@ func refresh()->void:
  var available:=false
  for entry in rows:
   if entry.id==selected:available=entry.members<8 and entry.id!=flow.lobby
- join_button.disabled=flow.busy or not available
+ join_button.disabled=not available
  list_status.text="Searching…" if flow.busy else flow.browse_error if not flow.browse_error.is_empty() else "No lobbies found. New lobbies may take a moment to appear; refresh to try again." if rows.is_empty() else "Select a lobby to join."
  current_status.text="%s · %d/8 · %s%s"%[flow.title,flow.backend.members.size(),"Password protected" if flow.locked else "Open", " · You are hosting" if flow.hosting_lobby else ""]
  friends_button.disabled=flow.busy or not occupied or not flow.presence_ready or flow.config.get("provider")!="meta"

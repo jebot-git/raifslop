@@ -18,7 +18,7 @@ func run():
 		menu.show_page(id);await process_frame
 		check(menu.pages.values().filter(func(row):return row.view.visible).size()==1,"Only selected page visible: "+id)
 		check(menu.pages[id].button.button_pressed,"Selected tab stays highlighted: "+id)
-	menu.show_page("together");await process_frame
+	menu.show_page("together");menu.multiplayer_page.show_section("voice");await process_frame
 	var choices=menu.multiplayer_page.find_children("*","VBoxContainer",true,false).filter(func(n):return n.get_script()==preload("res://scripts/ui/choice.gd"))
 	check(choices.size()==2,"Voice selectors use in-panel FPSloppa controls")
 	if not choices.is_empty():

@@ -139,7 +139,7 @@ def steam_checks(folder, target):
 
 def copy_notices(destination):
     shutil.copy2(ROOT / 'ASSET_CREDITS.md', destination / 'ASSET_CREDITS.md')
-    for folder in ['addons', 'assets/avatars', 'assets/audio', 'source/audio']:
+    for folder in ['addons', 'assets/avatars', 'assets/audio', 'assets/ui/fonts', 'source/audio']:
         for source in (ROOT / folder).rglob('*'):
             if source.is_file() and any(word in source.name.upper() for word in
                                       ['LICENSE', 'LICENCE', 'COPYING', 'NOTICE', 'CREDITS', 'REUSE']):

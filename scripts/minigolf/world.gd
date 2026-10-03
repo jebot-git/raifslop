@@ -10,7 +10,7 @@ var ambient_fill:=0.0
 var prop_scenes:Dictionary={}
 var prop_materials:Dictionary={}
 var lost_balls:Array[MeshInstance3D]=[]
-var labels:Array[Label3D]=[]
+var signs:Array[Node3D]=[]
 var green:Material
 var trim:StandardMaterial3D
 var wood:Material
@@ -41,7 +41,7 @@ func setup(id:String)->void:
 	for i in 18:build_hole(i)
 	for x in [-2.0,2.0]:box(self,Vector3(x,2.7,28),Vector3(.13,1.5,.13),wood)
 	box(self,Vector3(0,3.3,28),Vector3(4.3,.9,.12),trim)
-	var course_sign:=Label3D.new();course_sign.text=course.name+"\nWATERFRONT MINIGOLF · 18 HOLES";course_sign.font_size=52;course_sign.pixel_size=.004;course_sign.position=Vector3(0,3.3,28.075);course_sign.modulate=Color("f4f0dd");course_sign.outline_modulate=Color("20352e");add_child(course_sign)
+	var course_sign:=Label3D.new();course_sign.text=course.name+"\nWATERFRONT MINIGOLF · 18 HOLES";course_sign.font=preload("res://scripts/ui/waterside_theme.gd").DISPLAY_FONT;course_sign.font_size=52;course_sign.pixel_size=.004;course_sign.position=Vector3(0,3.3,28.075);course_sign.modulate=Color("f4f0dd");course_sign.outline_modulate=Color("20352e");add_child(course_sign)
 	preload("res://scripts/minigolf/lightmaps.gd").apply(self)
 
 func box(parent:Node3D,at:Vector3,size:Vector3,mat:Material,solid:=false)->MeshInstance3D:
@@ -105,7 +105,8 @@ func build_hole(index:int)->void:
 	cylinder(root,Vector3(cup.x,ball.height(cup)+.002,cup.y),Ball.CUP_RADIUS,.006,dark)
 	var ring:=MeshInstance3D.new();var torus:=TorusMesh.new();torus.inner_radius=.065;torus.outer_radius=.073;torus.rings=16;torus.ring_segments=8;ring.mesh=torus;ring.material_override=pearl;root.add_child(ring);ring.position=Vector3(cup.x,ball.height(cup)+.005,cup.y)
 	var tee:=Catalog.point(hole.tee);cylinder(root,Vector3(tee.x,ball.height(tee)+.004,tee.y),.08,.005,pearl)
-	var label:=Label3D.new();label.text="%02d  %s\nPAR %d"%[index+1,hole.name,hole.par];label.position=Vector3(-w/2-.4,1.0,.35);label.pixel_size=.003;label.font_size=38;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;root.add_child(label);labels.append(label)
+	var sign:=preload("res://scripts/minigolf/tee_sign.gd").new();root.add_child(sign)
+	sign.build(index+1,hole);sign.position=Vector3(-w/2-.4,-.035,.35);signs.append(sign)
 	var secret:=MeshInstance3D.new();var sphere:=SphereMesh.new();sphere.radius=.028;sphere.height=.056;secret.mesh=sphere;secret.material_override=material(Color.from_hsv(index/18.0,.65,1));root.add_child(secret);var at:=Catalog.point(hole.lost_ball);secret.position=Vector3(at.x,.015,at.y);lost_balls.append(secret)
 	if Catalog.origin(index).x<19:side_garden(root,w,length,index)
 	# Visible supports root the deck in its water location.

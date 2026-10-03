@@ -4,16 +4,27 @@ var status := Label.new()
 var roster := preload("res://scripts/ui/vr_item_list.gd").new()
 var voice_status := Label.new()
 var refresh_time := 0.0
+var sections:Dictionary={}
+var section_home:=VBoxContainer.new()
+func show_section(id:String)->void:
+	section_home.visible=id.is_empty()
+	for key in sections:sections[key].visible=key==id
+func section(id:String,title:String)->VBoxContainer:
+	var box:=VBoxContainer.new();box.add_theme_constant_override("separation",12);add_child(box);sections[id]=box
+	button(section_home,title+"   →",show_section.bind(id))
+	button(box,"← Together",show_section.bind(""))
+	return box
 func setup(owner_session: Node, back: Callable) -> void:
 	session=owner_session
 	add_theme_constant_override("separation",12)
-	var heading:=Label.new(); heading.text="Fish together"; heading.add_theme_font_size_override("font_size",28); add_child(heading)
+	var heading:=Label.new(); heading.text="Together"; heading.add_theme_font_size_override("font_size",28); add_child(heading)
 	var name_input:=LineEdit.new(); name_input.placeholder_text="Your name"; name_input.text=session.display_name; name_input.max_length=32; add_child(name_input)
 	name_input.text_changed.connect(func(value: String): session.display_name=value;session.save_preferences())
-	var online_menu=preload("res://scripts/network/lobby_menu.gd").new();add_child(online_menu);online_menu.setup(session)
-	var lan_toggle:=CheckButton.new();lan_toggle.text="Direct IP / LAN";add_child(lan_toggle)
-	var lan:=VBoxContainer.new();add_child(lan);lan.visible=false
-	lan_toggle.toggled.connect(func(value:bool):lan.visible=value)
+	status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;add_child(status)
+	add_child(section_home);section_home.add_theme_constant_override("separation",16)
+	var online:=section("online","Online lobbies")
+	var online_menu=preload("res://scripts/network/lobby_menu.gd").new();online.add_child(online_menu);online_menu.setup(session)
+	var lan:=section("lan","Direct IP / LAN")
 	var row:=HBoxContainer.new(); lan.add_child(row)
 	var address:=LineEdit.new(); address.text=session.host_address; address.max_length=253; address.placeholder_text="Host IP or hostname"; address.size_flags_horizontal=SIZE_EXPAND_FILL; row.add_child(address)
 	var port:=SpinBox.new(); port.min_value=1024; port.max_value=65535; port.value=session.preferred_port; row.add_child(port)
@@ -23,32 +34,32 @@ func setup(owner_session: Node, back: Callable) -> void:
 	button(actions,"Host",func(): session.host(int(port.value)))
 	button(actions,"Join",func(): session.join(address.text,int(port.value)))
 	button(actions,"Disconnect",func(): session.leave())
-	status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; add_child(status)
-	roster.custom_minimum_size.y=120; add_child(roster)
+	var voice:=section("voice","Players & voice chat")
+	roster.custom_minimum_size.y=120; voice.add_child(roster)
 	roster.item_selected.connect(func(index: int):
 		var id: int=roster.get_item_metadata(index)
 		if id!=session.multiplayer.get_unique_id(): session.voice.set_muted(id,not session.voice.muted.has(id)))
-	var voice_row:=HBoxContainer.new(); add_child(voice_row)
+	var voice_row:=HBoxContainer.new(); voice.add_child(voice_row)
 	var mode=preload("res://scripts/ui/choice.gd").new();voice_row.add_child(mode);mode.size_flags_horizontal=SIZE_EXPAND_FILL
 	mode.configure([{"id":"0","title":"Listen only"},{"id":"1","title":"Push to talk · T / left stick"},{"id":"2","title":"Voice activation"}],"Microphone")
 	mode.value=str(session.voice.mode);mode.update_label()
 	mode.selected.connect(func(value: String): session.voice.set_mode(value.to_int(),true))
 	var mute:=CheckButton.new(); mute.text="Mute all"; mute.button_pressed=session.voice.muted_all; voice_row.add_child(mute)
 	mute.toggled.connect(func(value: bool): session.voice.muted_all=value; session.voice.save_preferences())
-	var devices=preload("res://scripts/ui/choice.gd").new();add_child(devices)
+	var devices=preload("res://scripts/ui/choice.gd").new();voice.add_child(devices)
 	var options: Array=[]
 	for device in AudioServer.get_input_device_list(): options.append({"id":device,"title":"Microphone · "+device})
 	devices.configure(options,"Microphone device");devices.value=session.voice.input_device;devices.update_label()
 	devices.selected.connect(session.voice.select_input_device)
-	voice_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; add_child(voice_status)
+	voice_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART; voice.add_child(voice_status)
 	var note:=Label.new(); note.text="Nearby voice: T / left stick click. Radio to all waters: hold B.\nVR radio: grab at left shoulder, hold trigger to talk, release grip to dock.\nSelect a player to mute them. IP hosting needs UDP port forwarding; online lobbies use EOS."
 	note.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-	note.add_theme_font_size_override("font_size",16); add_child(note)
-	var bottom:=HBoxContainer.new(); add_child(bottom)
+	note.add_theme_font_size_override("font_size",16); voice.add_child(note)
+	var bottom:=HBoxContainer.new(); voice.add_child(bottom)
 	button(bottom,"Retry microphone access",session.voice.retry_access)
-	refresh()
+	show_section("");refresh()
 func button(parent: Node,title: String,action: Callable) -> void:
-	var control:=Button.new(); control.text=title; control.custom_minimum_size=Vector2(150,40); parent.add_child(control); control.pressed.connect(action)
+	var control:=Button.new(); control.text=title; control.custom_minimum_size=Vector2(150,52); parent.add_child(control); control.pressed.connect(action)
 func _process(delta: float) -> void:
 	refresh_time+=delta
 	if refresh_time>.5 and is_visible_in_tree(): refresh_time=0; refresh()

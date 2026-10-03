@@ -1,4 +1,6 @@
 extends RefCounted
+const BODY_FONT=preload("res://assets/ui/fonts/NotoSans-Regular.ttf")
+const DISPLAY_FONT=preload("res://assets/ui/fonts/NotoSerif-Regular.ttf")
 const INK=Color("e4ead7")
 const MUTED=Color("abc5b5")
 const BRASS=Color("d5b777")
@@ -6,7 +8,7 @@ static func panel(radius: int=12) -> StyleBoxFlat:
 	var box:=StyleBoxFlat.new();box.bg_color=Color("142e28");box.border_color=Color("466052");box.set_border_width_all(1);box.set_corner_radius_all(radius)
 	box.set_content_margin_all(16);return box
 static func theme() -> Theme:
-	var t:=Theme.new();t.default_font_size=21
+	var t:=Theme.new();t.default_font_size=21;t.default_font=BODY_FONT
 	for kind in ["Label","Button","CheckButton","LineEdit","SpinBox","ItemList"]:
 		t.set_color("font_color",kind,INK)
 		t.set_color("font_hover_color",kind,Color("fff2cc"))

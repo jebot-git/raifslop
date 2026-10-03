@@ -57,5 +57,5 @@ func run()->void:
 	activity.leave();await process_frame
 	check(not activity.active and host.current_location==water and host.motor.global_position.distance_to(before)<.1,"Returns to fishing at original pose")
 	check(is_instance_valid(activity.world),"Course stays visible to anglers and BBQ players")
-	host.ambience.stop();host.queue_free();await process_frame
+	host.ambience.stop();host.queue_free();await process_frame;await create_timer(.3).timeout
 	print("MINIGOLF RUNTIME failures: ",failures);quit(0 if failures.is_empty() else 1)

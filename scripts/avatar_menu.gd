@@ -22,7 +22,9 @@ var calibration_sliders: Array[HSlider] = []
 var calibration_reset: Button
 var content: Control
 var pages: Dictionary={}
-var active_page := "avatar"
+const PAGE_GROUPS={"waters":"activities","minigolf":"activities","bbq":"activities","avatar":"player","tackle":"player","tracking":"settings","controls":"settings","sound":"settings","leaderboard":"progress","achievements":"progress","putter":"settings","minigolf_round":"minigolf","minigolf_scores":"minigolf","putter_alignment":"putter","alignment":"settings"}
+const GROUP_TITLES={"activities":"Activities","player":"Player","settings":"Settings","progress":"Progress","minigolf":"Minigolf","putter":"Putter & fitting"}
+var active_page := "activities"
 var avatar_page: VBoxContainer
 var locations_page: VBoxContainer
 var location_list: ItemList
@@ -129,16 +131,18 @@ func _ready() -> void:
 
 func _build_turn_controls() -> void:
 	var page := VBoxContainer.new()
-	page.add_theme_constant_override("separation",22)
+	page.add_theme_constant_override("separation",10)
 	_register_page("controls","Controls",page)
-	pictograms_toggle=CheckButton.new();pictograms_toggle.text="Show pictograms";page.add_child(pictograms_toggle)
+	pictograms_toggle=CheckButton.new();pictograms_toggle.text="Show pictograms"
 	var title := Label.new();title.text="Turning";title.add_theme_font_size_override("font_size",28);page.add_child(title)
 	turn_mode.reparent(page)
 	smooth_turn_speed=_turn_slider(page,"Smooth turn speed",30,360,15,75,"°/s")
 	snap_turn_angle=_turn_slider(page,"Snap turn angle",15,90,15,30,"°")
+	page.add_child(pictograms_toggle)
 	var hint := Label.new();hint.text="Turn with the right stick. Snap turning waits for the stick to return to center.";hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_child(hint)
 	head_aimed_casting = CheckButton.new(); head_aimed_casting.text = "Head-aimed casting"; page.add_child(head_aimed_casting)
 	var casting_hint := Label.new(); casting_hint.text = "VR casting: on uses the center of your headset view. Off uses your controller swing for direction and speed for distance. Hold trigger, swing back then forward, and release."; casting_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; page.add_child(casting_hint)
+	page=VBoxContainer.new();page.add_theme_constant_override("separation",16);_register_page("alignment","Controller alignment",page)
 	var calibration_title := Label.new(); calibration_title.text = "Controller alignment"; calibration_title.add_theme_font_size_override("font_size", 28); page.add_child(calibration_title)
 	var calibration_hint := Label.new(); calibration_hint.text = "Adjust each grip to match your controller. Offsets follow the controller: X right, Y up, Z toward you. Rotation: pitch, yaw, roll."; calibration_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; page.add_child(calibration_hint)
 	for hand in ["Left controller", "Right / casting controller"]:
@@ -328,8 +332,8 @@ func attach_tracking(manager: Node) -> void:
 func _build_shell() -> void:
 	shell=VBoxContainer.new();shell.add_theme_constant_override("separation",12);add_child(shell)
 	var top:=HBoxContainer.new();shell.add_child(top)
-	var title:=Label.new();title.text="Field station";var serif:=SystemFont.new();serif.font_names=PackedStringArray(["DejaVu Serif"]);title.add_theme_font_override("font",serif);title.add_theme_font_size_override("font_size",28);title.add_theme_color_override("font_color",Color("d5b777"));top.add_child(title)
-	var subtitle:=Label.new();subtitle.text="Make yourself at home outdoors";subtitle.size_flags_horizontal=SIZE_EXPAND_FILL;subtitle.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT;subtitle.add_theme_font_size_override("font_size",16);top.add_child(subtitle)
+	var title:=Label.new();title.text="Field station";title.add_theme_font_override("font",preload("res://scripts/ui/waterside_theme.gd").DISPLAY_FONT);title.add_theme_font_size_override("font_size",28);title.add_theme_color_override("font_color",Color("d5b777"));top.add_child(title)
+	var subtitle:=Label.new();subtitle.text="Release Candidate";subtitle.size_flags_horizontal=SIZE_EXPAND_FILL;subtitle.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT;subtitle.add_theme_font_size_override("font_size",16);top.add_child(subtitle)
 	tabs=HBoxContainer.new();tabs.add_theme_constant_override("separation",8);shell.add_child(tabs)
 	content=Control.new();content.clip_contents=true;content.size_flags_vertical=SIZE_EXPAND_FILL;shell.add_child(content)
 	var bottom:=HBoxContainer.new();shell.add_child(bottom)
@@ -356,9 +360,6 @@ func attach_leaderboard(session:Node) -> void:
 	page.session=session
 	_register_page("leaderboard","Leaderboard",page)
 	leaderboard_button=pages.leaderboard.button
-	leaderboard_button.reparent(shell.get_child(0))
-	leaderboard_button.size_flags_horizontal=SIZE_SHRINK_END
-	leaderboard_button.custom_minimum_size=Vector2(160,44)
 	show_page(active_page)
 
 func attach_achievements(progress:Node,destinations:Node)->void:
@@ -366,10 +367,24 @@ func attach_achievements(progress:Node,destinations:Node)->void:
 	_register_page("achievements","Achievements",page)
 
 func _register_page(id: String, title: String, page: VBoxContainer) -> void:
+	var group:String=PAGE_GROUPS.get(id,"")
+	if not group.is_empty() and not pages.has(group):
+		var section:=VBoxContainer.new();section.add_theme_constant_override("separation",16)
+		_register_page(group,GROUP_TITLES[group],section)
+		var heading:=Label.new();heading.text=GROUP_TITLES[group];heading.add_theme_font_size_override("font_size",28);section.add_child(heading)
+	if not group.is_empty():
+		var back:=Button.new();back.text="← "+str(GROUP_TITLES[group]);back.custom_minimum_size.y=46
+		page.add_child(back);page.move_child(back,0);back.pressed.connect(show_page.bind(group))
 	var scroll=preload("res://scripts/ui/drag_scroll.gd").new();content.add_child(scroll);scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scroll.size_flags_horizontal=SIZE_EXPAND_FILL;page.size_flags_horizontal=SIZE_EXPAND_FILL;scroll.add_child(page)
-	var button:=Button.new();button.text=title;button.toggle_mode=true;button.size_flags_horizontal=SIZE_EXPAND_FILL;button.custom_minimum_size.y=46;tabs.add_child(button)
+	var button:=Button.new();button.text=title;button.toggle_mode=true;button.size_flags_horizontal=SIZE_EXPAND_FILL;button.custom_minimum_size.y=58 if not group.is_empty() else 46
+	if group.is_empty():tabs.add_child(button)
+	else:pages[group].page.add_child(button);button.text=title+"   →"
 	pages[id]={"view":scroll,"page":page,"button":button}
+	var order:=["activities","player","together","settings","progress"]
+	var at:=0
+	for key in order:
+		if pages.has(key):tabs.move_child(pages[key].button,at);at+=1
 	button.pressed.connect(func(): show_page(id))
 	show_page(active_page)
 
@@ -382,10 +397,14 @@ func show_page(id: String) -> void:
 	active_page=id
 	if is_instance_valid(avatar_actions): avatar_actions.visible = id == "avatar"
 	if is_instance_valid(location_actions): location_actions.visible = id == "waters" and not water_category.is_empty()
+	var selected_sections:Array[String]=[id]
+	var parent_id:String=PAGE_GROUPS.get(id,"")
+	while not parent_id.is_empty():
+		selected_sections.append(parent_id);parent_id=PAGE_GROUPS.get(parent_id,"")
 	for key in pages:
 		pages[key].view.visible=key==id
 		pages[key].page.visible=key==id
-		pages[key].button.set_pressed_no_signal(key==id)
+		pages[key].button.set_pressed_no_signal(key in selected_sections)
 	for selector in get_tree().get_nodes_in_group("fishing_selectors"):
 		if selector.get_viewport()==get_viewport():selector.popup.hide()
 
@@ -402,7 +421,7 @@ Each location has its own soundscape.";description.autowrap_mode=TextServer.AUTO
 		var b:=Button.new();b.text="−" if amount<0 else "+";b.custom_minimum_size=Vector2(64,48);row.add_child(b)
 		b.pressed.connect(func(): ambience.set_volume(ambience.volume+amount);level.text="%d%%" % roundi(ambience.volume*100))
 	var mute:=CheckButton.new();mute.text="Quiet surroundings";mute.button_pressed=ambience.muted;mute.toggled.connect(ambience.set_muted);sound_page.add_child(mute)
-	var voice:=Button.new();voice.text="Voice chat & microphone →";voice.pressed.connect(func(): show_page("together"));sound_page.add_child(voice)
+	var voice:=Button.new();voice.text="Voice chat & microphone →";voice.pressed.connect(func(): show_page("together");multiplayer_page.show_section("voice"));sound_page.add_child(voice)
 	show_page(active_page)
 
 func _bind_keyboard(node: Node) -> void:

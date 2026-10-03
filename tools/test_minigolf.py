@@ -4,7 +4,7 @@ import os,subprocess,tempfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 GODOT=os.environ.get('GODOT_BIN','/home/blux/.local/bin/Godot_v4.7.2-stable_linux.x86_64')
-suites=['minigolf','minigolf_terrain','minigolf_compile','minigolf_lightmaps','minigolf_address_line','minigolf_fit_invariants','minigolf_runtime','pose_codec','ranking_pages','online_leaderboards','progress','destinations','network_guards','run_tests']
+suites=['minigolf','minigolf_terrain','minigolf_compile','minigolf_lightmaps','minigolf_address_line','minigolf_fit_invariants','minigolf_runtime','minigolf_locomotion','pose_codec','ranking_pages','online_leaderboards','progress','destinations','network_guards','run_tests']
 failed=[]
 out=ROOT/'test-results/minigolf';out.mkdir(parents=True,exist_ok=True)
 with tempfile.TemporaryDirectory(prefix='minigolf-tests-') as temp:

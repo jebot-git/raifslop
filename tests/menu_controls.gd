@@ -64,6 +64,7 @@ func run():
 	check(menu.pages.together.view.scroll_vertical==scroll,"Keyboard presses with cursor movement cannot drag the page behind it")
 	check(menu.keyboard.get_global_rect().end.y<=720 and menu.keyboard.preview.text.contains("q "),"Keyboard fits viewport and shows text being edited")
 	await key(menu,"Done");check(not menu.keyboard.visible,"Done dismisses keyboard")
+	menu.multiplayer_page.show_section("voice");await settle()
 	var heading:Control=menu.multiplayer_page.get_child(0)
 	at=heading.get_global_rect().get_center();motion(at);await settle();button(at,true);motion(at-Vector2(0,45),true);await settle();button(at-Vector2(0,45),false);await settle()
 	check(menu.pages.together.view.scroll_vertical>scroll,"Empty page background still supports deliberate drag scrolling")
@@ -108,18 +109,19 @@ func run():
 	check(not g.head_aimed_casting and not cfg.get_value("controls", "head_aimed_casting", true), "Head-aimed casting can be disabled and saved through a pointer click")
 	await click(menu.head_aimed_casting)
 	check(g.head_aimed_casting, "Head-aimed casting can be re-enabled through a pointer click")
+	menu.show_page("alignment");await settle()
 	var offset: HSlider = menu.calibration_sliders[6]
-	menu.pages.controls.view.ensure_control_visible(offset.get_parent()); await settle()
+	menu.pages.alignment.view.ensure_control_visible(offset.get_parent()); await settle()
 	await click(offset.get_parent().get_child(2))
 	check(is_equal_approx(g.controller_calibration.offsets[1].x,.01), "Scrolled controller offset plus button adjusts casting hand")
 	var pitch: HSlider = menu.calibration_sliders[9]
-	menu.pages.controls.view.ensure_control_visible(pitch.get_parent()); await settle()
+	menu.pages.alignment.view.ensure_control_visible(pitch.get_parent()); await settle()
 	await click(pitch.get_parent().get_child(0))
 	check(g.controller_calibration.angles[1].x==-1, "Scrolled controller rotation minus button works")
 	if "--capture" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw
 		view.get_texture().get_image().save_png("res://docs/controller_alignment.png")
-	menu.pages.controls.view.ensure_control_visible(menu.calibration_reset); await settle()
+	menu.pages.alignment.view.ensure_control_visible(menu.calibration_reset); await settle()
 	await click(menu.calibration_reset)
 	check(g.controller_calibration.pose(1).is_equal_approx(Transform3D.IDENTITY), "Reachable reset button clears controller calibration")
 	menu.close_overlays();menu.reparent(g);view.queue_free();g.queue_free();await settle();await create_timer(.3).timeout

@@ -2,7 +2,7 @@ extends RefCounted
 static func nodes(world:Node3D)->Array[MeshInstance3D]:
  var result:Array[MeshInstance3D]=[]
  for node in world.find_children("*","MeshInstance3D",true,false):
-  if node in world.lost_balls or node.name=="CourseBankExtension":continue
+  if node in world.lost_balls or node.name=="CourseBankExtension" or node.get_meta("skip_lightmap",false):continue
   result.append(node)
  return result
 static func signature(world:Node3D,node:MeshInstance3D)->int:

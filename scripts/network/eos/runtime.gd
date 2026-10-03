@@ -96,7 +96,6 @@ func share_invitation()->String:
  if lobby.is_empty() or link.is_empty():return ""
  return "Join me in %s (up to 8 players).\n%s\nOpen Together and select this lobby, or paste this join code:\n%s%s"%[title,link,join_reference(),"\nAsk the host for the password." if locked else ""]
 func start(hosting:bool,reference:String="",path:String="",lobby_title:String="Fishing together",password:String="")->Error:
- if busy:return ERR_BUSY
  var settings:=Config.read(config_path() if path.is_empty() else path)
  var error:=settings_error(settings)
  lobby_title=Config.clean_title(lobby_title)
@@ -107,12 +106,15 @@ func start(hosting:bool,reference:String="",path:String="",lobby_title:String="F
   id=Config.parse_reference(settings,reference)
   if id.is_empty():error="Invalid invite reference or different deployment/protocol."
  if not error.is_empty():message(error);return ERR_INVALID_PARAMETER
+ # A new explicit host/join replaces any previous attempt. Drain the old
+ # operation before opening another SDK lobby; late callbacks cannot own it.
+ session.leave("Connecting to online services…")
+ var requested:=generation
+ while busy or stop_due:
+  await get_tree().process_frame
+  if requested!=generation:return ERR_SKIP
  busy=true;generation+=1
  var current:=generation
- session.leave("Connecting to online services…",false)
- await cleanup()
- if current!=generation:return await cancelled()
- stop_due=false
  error=await services(settings)
  if current!=generation:return await cancelled()
  if not error.is_empty():return await fail(error)
@@ -165,6 +167,14 @@ func stop()->void:
  achievements.stop()
  auth.reset()
  generation+=1;stop_due=true
+ # Clear local membership immediately; backend cleanup is serialized below.
+ lobby="";title="";locked=false;hosting_lobby=false;presence_ready=false
+ presence_due=false;loss_due=false
+ if not busy:finish_stop()
+func finish_stop()->void:
+ busy=true
+ await cleanup()
+ stop_due=false;busy=false;session.changed.emit()
 func invite()->void:
  if busy or lobby.is_empty() or not presence_ready or config.get("provider")!="meta":return
  busy=true
@@ -175,11 +185,12 @@ func invite()->void:
 func _process(_delta:float)->void:
  if admission_failed:
   admission_failed=false;session.leave("Lobby admission failed. Check the password and try again.");return
+ if loss_due:
+  loss_due=false
+  session.leave("Online session ended. The host or service disconnected." if session.active else "Lobby admission failed. Check the password and try again.");return
  if busy:return
  if stop_due:
-  stop_due=false;busy=true;await cleanup();busy=false;return
- if loss_due and not lobby.is_empty():
-  session.leave("Online session ended. The host or service disconnected." if session.active else "Lobby admission failed. Check the password and try again.");return
+  await finish_stop();return
  if presence_due and not lobby.is_empty() and session.active:
   presence_due=false;busy=true
   var info:Dictionary=backend.snapshot()

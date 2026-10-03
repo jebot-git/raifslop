@@ -35,7 +35,7 @@ def copy_notices(dest):
         target = dest / 'notices/audio' / source.relative_to(ROOT / 'source/audio')
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
-    for folder in [ROOT / 'addons', ROOT / 'assets/avatars', ROOT / 'assets/audio']:
+    for folder in [ROOT / 'addons', ROOT / 'assets/avatars', ROOT / 'assets/audio', ROOT / 'assets/ui/fonts']:
         for source in folder.rglob('*'):
             if source.is_file() and (any(word in source.name.upper() for word in
                                         ['LICENSE', 'LICENCE', 'COPYING', 'NOTICE', 'NOTES', 'SHA256', 'CREDITS'])

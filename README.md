@@ -4,12 +4,12 @@
 Waterfront minigolf replaces the full-size golf integration; fishing, BBQ and
 minigolf share each water location.
 
-[0.1.19-rc.1 release](https://github.com/jebot-git/raifslop/releases/tag/v0.1.19-rc.1) · Meta RC build 26 · [Migration and validation](docs/MINIGOLF.md).
+[0.1.19-rc.2 release](https://github.com/jebot-git/raifslop/releases/tag/v0.1.19-rc.2) · Meta RC build 27 · [Migration and validation](docs/MINIGOLF.md).
 
 [Quest standalone hosting tests and Meta invite assessment](docs/QUEST_MULTIPLAYER_ASSESSMENT.md).
 
 Formerly Real AI Fishing. Existing saves and Android package identity are retained; the game icon is unchanged.
-A Godot 4.7 VR fishing prototype built with Godot MCP and Blender MCP. Freshwater and marine fish, six bait choices per habitat, eight photographed waterside settings plus four rivers, distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
+A Godot 4.7 VR fishing and minigolf release candidate built with Godot MCP and Blender MCP. Freshwater and marine fish, six bait choices per habitat, eight photographed waterside settings plus four rivers, distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
 
 Open `project.godot` in Godot 4.7.2 and press F6/F5, or launch:
 
@@ -24,7 +24,7 @@ OpenXR. See [Windows setup, runtime logs and capture troubleshooting](docs/WINDO
 
 In PC VR, the desktop window automatically shows a third-person streaming view. Capture the game window in your streaming software to show the full angler from an elevated rear angle. The camera smooths walking and turning, avoids solid scenery, and resets after teleporting. Feeding-indicator ripples appear only in the player's view; actual fish wakes and splashes remain visible in the stream. The headset keeps its tracked stereo view and spatial audio. This adds a separate scene render; standalone Android VR does not enable it.
 
-Catches now earn **shekels** based on species rarity and specimen size. Open **Field station → Tackle** to buy rods with stronger lines and faster fish fatigue. Species have different stamina capacities; successful counters stop runs and delay the next escape attempt. [Rewards and tackle](docs/TACKLE_AND_REWARDS.md).
+Catches now earn **shekels** based on species rarity and specimen size. Open **Field station → Player → Tackle** to buy rods with stronger lines and faster fish fatigue. Species have different stamina capacities; successful counters stop runs and delay the next escape attempt. [Rewards and tackle](docs/TACKLE_AND_REWARDS.md).
 
 ## Controls
 
@@ -47,10 +47,10 @@ Catches now earn **shekels** based on species rarity and specimen size. Open **F
 | Inspect caught fish | Hold left grip to bring fish to left hand; release grip to hang it from rod |
 | Rotate caught fish | Either joystick: spin around vertical axis |
 | Release / retry | Left trigger while holding fish with grip; Right A / left Y also work |
-| Server leaderboard | Right B → Leaderboard |
+| Server leaderboard | Right B → Progress → Leaderboard |
 | Quit | Right B → Quit game |
 
-VR casting defaults to projecting the **center of the headset view** onto the water; eye gaze does not steer it. Turn off **Controls → Head-aimed casting** to cast using only the motion controller: the forward swing sets direction and its speed sets distance. The setting saves immediately. The water marker previews the landing destination, within a 5–24 metre reach; in controller-only mode it appears after a valid back/forward swing. Hold the trigger, sweep the rod back then forward, and release. Aiming at real ground rejects the cast; invisible player barriers and underwater fish clearance do not block water-surface aiming. Under **Controls → Controller alignment**, adjust and save each controller’s position and rotation offsets. [Casting comfort, fish boundaries and guide discovery](docs/FISHING_COMFORT.md).
+VR casting defaults to projecting the **center of the headset view** onto the water; eye gaze does not steer it. Turn off **Settings → Controls → Head-aimed casting** to cast using only the motion controller: the forward swing sets direction and its speed sets distance. The setting saves immediately. The water marker previews the landing destination, within a 5–24 metre reach; in controller-only mode it appears after a valid back/forward swing. Hold the trigger, sweep the rod back then forward, and release. Aiming at real ground rejects the cast; invisible player barriers and underwater fish clearance do not block water-surface aiming. Under **Settings → Controller alignment**, adjust and save each controller’s position and rotation offsets. [Casting comfort, fish boundaries and guide discovery](docs/FISHING_COMFORT.md).
 
 In VR, landed fish hang head-up below the rod tip on the line. Hold left grip to grasp the string 8 cm above the fish’s mouth; lift your hand to inspect the fish hanging beneath it; releasing grip returns it to the rod. The fish stays vertical and head-up in both positions, regardless of hand tilt. While holding the fish, either joystick spins it around the vertical axis at up to about 103°/s; stick walking and turning pause only during hand inspection. A fish hanging from the rod leaves locomotion available. Press left trigger while gripping the fish to release it, or use Right A / left Y. Physical room-scale movement remains available.
 
@@ -136,9 +136,9 @@ The **Tracking** tab enables FPSloppa-derived body tracking (native XR, Vive rol
 
 ## Field station menu and ambience
 
-Open the menu with **right B**. Seven tabs—**Avatar**, **Waters**, **Tackle**, **Together**, **Tracking**, **Sound**, and **Controls**—share a pine-green, cream and brass field-station theme. FPSloppa-derived selectors and drag scrolling work inside the VR panel; focusing a connection text field opens a controller-operated keyboard.
+Open the menu with **right B**. Five sections—**Activities**, **Player**, **Together**, **Settings**, and **Progress**—share a pine-green, cream and brass field-station theme. Activities contains Waters, Minigolf and BBQ; Settings separates movement, controller alignment, tracking, sound and putter fitting. Together separates online lobbies, direct IP / LAN, and players / voice. Leaving a lobby cancels its connection automatically, and a new host or join request waits for cleanup. FPSloppa-derived selectors and drag scrolling work inside the VR panel; focusing a connection text field opens a controller-operated keyboard.
 
-Each location has a distinct 128-second water, bird and wind soundscape. Travel crossfades the surroundings over two seconds; occasional timber creaks have a position in the pier or boat scene. **Sound** controls environment volume and mute independently of voice chat. Preferences persist locally. See [sources, preparation and checks](docs/PRESENTATION.md).
+Each location has a distinct 128-second water, bird and wind soundscape. Travel crossfades the surroundings over two seconds; occasional timber creaks have a position in the pier or boat scene. **Settings → Sound** controls environment volume and mute independently of voice chat. Preferences persist locally. See [sources, preparation and checks](docs/PRESENTATION.md).
 
 ## Fishing feedback
 
@@ -161,7 +161,7 @@ The latest visual pass adds [thirteen reconstructed fish](docs/PHOTOGRAPHIC_FISH
 
 VR interaction fixes: the Guide's handle docks at the left hip, its held pose follows the controller's thumb/palm axes, and its two buttons accept right-index fingertip presses, using native hand tracking or the visible avatar finger with controllers. In camera mode, ‹ toggles selfie and › takes a photo. Reel animation follows both directions of physical winding. Menu pages support right-stick scrolling, visible scrollbars, trigger dragging, and fixed ↑/↓ buttons. The fixed menu header has a Leaderboard button. Instructions are available in the repository’s [HTML manual](docs/MANUAL.html). [Tracking refresh and tests](docs/AVATAR_TRACKING.md#september-2026-tracking-refresh).
 
-Tester feedback update: counters drain hidden resistance through sustained pulls, with rumble for bites, fights and tension rises. Catch models match reported length. The Fish Guide now holds location, shekels and equipment status; instructions are in the repository’s [HTML manual](docs/MANUAL.html), and brief rod cues use pictograms. **Controls → Show pictograms** toggles rod, radio and HUD symbols and saves the choice; bait and catch text remain available. The menu footer has **Quit game**. Location ambience and panorama-matched water have been rebuilt. [Behavior and validation](docs/TESTER_FEEDBACK.md).
+Tester feedback update: counters drain hidden resistance through sustained pulls, with rumble for bites, fights and tension rises. Catch models match reported length. The Fish Guide now holds location, shekels and equipment status; instructions are in the repository’s [HTML manual](docs/MANUAL.html), and brief rod cues use pictograms. **Settings → Controls → Show pictograms** toggles rod, radio and HUD symbols and saves the choice; bait and catch text remain available. The menu footer has **Quit game**. Location ambience and panorama-matched water have been rebuilt. [Behavior and validation](docs/TESTER_FEEDBACK.md).
 
 Rod holster: bring the right hand to the right hip and squeeze grip to fold/stash the rod; release and squeeze again there to pick it up. Stashing cancels the current line and rearms the selected bait. Fully retrieving an empty line also readies the next cast. The hand remains free while the rod is stashed.
 
@@ -217,7 +217,7 @@ Open **Menu → BBQ** for shared cooking. Grip the tongs, hold trigger near food
 
 ## Waterfront minigolf
 
-Open **Menu → Minigolf** at any of the 12 waters to join its original 18-hole course. Golfers share the same world with anglers and BBQ players. Putting uses grip-to-putt, ball teleport, bank shots, rolling slopes, water penalties and stroke scoring. The existing controller-angle/length fitting and handheld guide are retained for minigolf.
+Open **Menu → Activities → Minigolf** at any of the 12 waters to join its original 18-hole course. Golfers share the same world with anglers and BBQ players. Putting uses grip-to-putt, optional ball teleport, bank shots, rolling slopes, water penalties and stroke scoring. Holding grip steadies your stance by locking stick movement. Release grip and center the stick to walk and turn again, with one or two controllers. Small fixed tee signs show each hole name and par. The existing controller-angle/length fitting and handheld guide are retained for minigolf.
 
 See [courses, controls, fitting, scores and validation](docs/MINIGOLF.md). Full-size courses and extra clubs are archived. Development clients and servers now use protocol **21**.
 

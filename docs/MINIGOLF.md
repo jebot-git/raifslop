@@ -2,7 +2,7 @@
 
 `main` follows the EOS branch. The full-size Golf Minus integration is archived; its courses, terrain, club bag, drivers, irons and full-swing physics are removed. Shared avatars, identity, voice, fishing, BBQ, controller calibration and score services remain.
 
-Open **Menu → Minigolf → Join minigolf at this water**. The course occupies connected waterfront decks in the same location. Joining never changes the player's network water ID. Other players can fish, cook, talk and see golfers without enrolling. In multiplayer, participants join the water's shared round; its owner presses **Start shared round**. A round supports one to eight golfers. Offline play starts immediately and resumes a saved card.
+Open **Menu → Activities → Minigolf → Join minigolf at this water**. The course occupies connected waterfront decks in the same location. Joining never changes the player's network water ID. Other players can fish, cook, talk and see golfers without enrolling. In multiplayer, participants join the water's shared round; its owner presses **Shared round → Start shared round**. A round supports one to eight golfers. Offline play starts immediately and resumes a saved card.
 
 | Water | Course | Character |
 | --- | --- | --- |
@@ -23,11 +23,11 @@ Each course has 18 different shot puzzles with par, fixed tees and cups, rail ba
 
 ## Play and fitting
 
-- Hold the striking-hand **grip** to enable contact. Release to practice. Trigger teleports beside your stationary ball; A/X collects a nearby hidden ball; B/Y opens the shared menu. Hand tracking uses the existing optical grip gesture.
+- Hold the striking-hand **grip** to enable contact and lock stick movement for a steady putt. Release grip and center the sticks to resume walking and turning. Two active controllers use left-stick movement and right-stick turning; one-controller play uses the held stick for forward/back movement and turning. Trigger teleports beside your stationary ball; A/X collects a nearby hidden ball; B/Y opens the shared menu. Hand tracking uses the existing optical grip gesture.
 - The ball rolls with slope acceleration and friction. Swept putter contact and fixed physics substeps reject tracking jumps and prevent tunnelling. Fast putts can cross the cup; sufficiently slow entries drop. Water returns the ball to its previous lie and adds one stroke. The limit is 12 strokes per hole.
 - **Fit controller angle and putter length** retains the original stable-address solver. Hold your address pose, press trigger to capture, then A/X to accept or B/Y to cancel. Preview does not change the accepted profile; Undo restores the previous fit. Manual per-hand controller, shaft and face angles, position offsets and physical-mount mode remain available.
 - Accepted values are read from the existing `user://golf_controls.cfg`. Fishing controller calibration remains independent. Left-handed play and optional manual teleport-to-ball are supported. Hole changes, settled shots and fitting never reposition the player; manual teleport preserves facing. The former visual support-hand snap is retained, including a controller set down or untracked, while putter physics continues sampling the striking hand.
-- Pick up the existing-style guide at the opposite hip. Its three pages show the current hole map/par, your 18-hole scorecard, and participating players' scores. Thumbstick or physical page buttons change pages. The shared menu can also open it. The guide camera and selfie controls remain available.
+- Pick up the existing-style guide at the opposite hip. Its three pages show the current hole map/par, your 18-hole scorecard, and participating players' scores. Thumbstick or physical page buttons change pages. The shared menu can also open it. Hole names and pars appear on fixed tee signs. **Settings → Putter & fitting** contains handedness, length and fitting controls, with physical attachment alignment in its own subsection. The guide camera and selfie controls remain available.
 - Visiting BBQ makes a golfer temporarily absent and hides/disarms the putter. Fishing and BBQ users have no minigolf turn restrictions. Returning restores participation; leaving minigolf restores the original fishing pose.
 
 The controls and short-course play draw on the public [Walkabout resources](https://www.mightycoconut.com/wmg-resources) and [grip-to-putt description](https://www.mightycoconut.com/gtp). Course layouts, art and sound are this project's own. Desktop keyboard controls exist only for non-XR testing; production startup still requires VR.

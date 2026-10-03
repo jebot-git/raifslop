@@ -10,6 +10,14 @@ func run() -> void:
 		var world = preload("res://scripts/minigolf/world.gd").new()
 		root.add_child(world)
 		world.setup(id)
+		if world.signs.size()!=18:failures.append(id+": missing tee signs")
+		for i in world.signs.size():
+			var sign=world.signs[i]
+			var title:Label3D=sign.get_node("HoleName")
+			if title.text!=world.course.holes[i].name or sign.get_node("Par").text!="PAR %d"%world.course.holes[i].par:
+				failures.append(id+": incorrect sign "+str(i))
+			if title.billboard!=BaseMaterial3D.BILLBOARD_DISABLED or title.no_depth_test:
+				failures.append(id+": floating sign lettering")
 		if not world.get_meta("lightmap_applied", false):
 			failures.append(id + ": missing or stale bake")
 		else:

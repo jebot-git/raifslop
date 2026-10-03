@@ -43,6 +43,8 @@ func run():
 	g.right.tracker=controller.name;g.right.pose="grip"
 	var compositor:=Compositor.new();compositor.compositor_effects=[effect];g.head.compositor=compositor
 	g._toggle_avatar_menu();await settle()
+	await click(g.avatar_menu.pages.player.button)
+	await click(g.avatar_menu.pages.avatar.button)
 	await click(g.avatar_menu.import_button)
 	check(g.avatar_menu.vrm_browser.visible,"Laser opens headset VRM browser")
 	await capture("vrm-browser")

@@ -35,9 +35,12 @@ class Meta extends Node:
  signal leave_requested(lobby:String)
  var publishes:=0
  var clears:=0
+ var hold_publish:=false
  func identity(_config:Dictionary)->Dictionary:return {"type":10}
  func publish(_config:Dictionary,_lobby:String,_joinable:bool)->bool:
-  publishes+=1;await get_tree().process_frame;return true
+  publishes+=1
+  while hold_publish:await get_tree().process_frame
+  await get_tree().process_frame;return true
  func clear()->bool:clears+=1;await get_tree().process_frame;return true
  func invite()->bool:return true
 class Session extends Node:
@@ -78,6 +81,10 @@ func run()->void:
  check(not Runtime.Config.parse_reference(flow.config,reference).is_empty(),"Gameplay-scoped invite reference")
  flow.queue_invite(Runtime.Config.join_reference(flow.config,"other-lobby"))
  check(not flow.pending_reference.is_empty() and flow.backend.creates==1,"Invite cannot replace active game automatically")
+ session.leave()
+ check(flow.lobby.is_empty() and not flow.presence_ready,"Leave clears local membership immediately")
+ check(await flow.start(true,"","user://eos-test.cfg")==OK,"Immediate rehost waits for cleanup automatically")
+ check(await flow.start(false,reference,"user://eos-test.cfg")==OK,"Join replaces existing lobby automatically")
  session.leave();await settle(flow)
  check(flow.lobby.is_empty() and flow.backend.peer==null and not flow.presence_ready,"Leave clears lobby, native peer and presence")
  var attached:int=session.attaches
@@ -87,6 +94,21 @@ func run()->void:
  await settle(flow)
  check(session.attaches==attached and not session.active and flow.lobby.is_empty(),"Cancellation during authentication cannot attach late peer")
  check(await flow.start(true,"","user://eos-test.cfg")==OK,"Reconnect after cancellation")
+ # Replace a request while its create callback is still pending.
+ var creates:int=flow.backend.creates
+ flow.start(true,"","user://eos-test.cfg")
+ while flow.backend.creates==creates:await process_frame
+ attached=session.attaches
+ check(await flow.start(false,reference,"user://eos-test.cfg")==OK and session.attaches==attached+1,"Joining supersedes pending host without attaching its late peer")
+ # A leave during Meta publication must also drain before the next host.
+ flow.meta.hold_publish=true
+ var publishes:int=flow.meta.publishes
+ flow.start(true,"","user://eos-test.cfg")
+ while flow.meta.publishes==publishes:await process_frame
+ session.leave()
+ check(not session.active and flow.lobby.is_empty(),"Leave during presence publication clears session immediately")
+ flow.meta.hold_publish=false
+ check(await flow.start(true,"","user://eos-test.cfg")==OK and not flow.stop_due and not flow.busy,"Host after pending publication needs no manual cancel")
  flow.backend.session_lost.emit();await settle(flow)
  check(not session.active and flow.lobby.is_empty(),"Host/service loss leaves the gameplay session")
  session.queue_free();await process_frame
