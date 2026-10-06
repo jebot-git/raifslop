@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Build an isolated Linux dedicated-server project from shared protocol scripts.
-No client scenes, bundled VRMs, textures, audio, XR plugins or codec extensions.
-Minigolf routing and course data are included for authoritative locations.
+No client scenes, bundled VRMs, textures, audio or XR plugins.
+The optional numerical/codec extension is included when available.
+Fishing and BBQ share numerical location geometry.
 """
 import argparse, hashlib, json, os, pathlib, re, shutil, subprocess
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--godot',default=os.environ.get('GODOT_BIN','/home/blux/.local/bin/Godot_v4.7.2-stable_linux.x86_64'));parser.add_argument('--output',type=pathlib.Path,default=ROOT/'builds/Server');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--without-native',action='store_true');parser.add_argument('--godot',default=os.environ.get('GODOT_BIN','/home/blux/.local/bin/Godot_v4.7.2-stable_linux.x86_64'));parser.add_argument('--output',type=pathlib.Path,default=ROOT/'builds/Server');args=parser.parse_args()
     out=args.output.resolve();stage=out/'project';stage.mkdir(parents=True,exist_ok=True)
     pending=['scripts/network/server_main.gd'];seen=set()
     while pending:
@@ -17,16 +18,21 @@ def main():
         for dep in re.findall(r'preload\("res://([^"\n]+)"\)',text):
             if not dep.endswith('.gd'):raise SystemExit('Unexpected server resource dependency: '+dep)
             pending.append(dep)
-    # Dynamic course reads are not visible to the preload dependency walk.
-    # Keep the same small numerical surface data as clients so BBQ anchors and
-    # shared-world visibility never depend on missing render assets.
     data_files=[]
-    for pattern in ['assets/minigolf/courses/*.json']:
-        for source in ROOT.glob(pattern):
-            relative=source.relative_to(ROOT);dest=stage/relative
-            dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,dest)
-            data_files.append(relative.as_posix())
-    if not data_files:raise SystemExit('Minigolf course data is missing')
+    native_files=[]
+    (stage/'.godot/extension_list.cfg').unlink(missing_ok=True)
+    native_stage=stage/'addons/fishing_native'
+    if native_stage.exists():shutil.rmtree(native_stage)
+    if not args.without_native and (ROOT/'addons/fishing_native/bin/libfishing_native.so').exists():
+        from build_fishing_native import require_build
+        library=require_build('linux')
+        for source in [library,*(ROOT/'addons/fishing_native').glob('*LICENSE*')]:
+            name=source.relative_to(ROOT).as_posix()
+            destination=stage/name;destination.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(source,destination);native_files.append(name)
+        descriptor='addons/fishing_native/fishing_native.gdextension'
+        (stage/descriptor).write_text('[configuration]\nentry_symbol="fishing_native_init"\ncompatibility_minimum="4.7"\n[libraries]\nlinux.x86_64="res://addons/fishing_native/bin/libfishing_native.so"\n')
+        native_files.append(descriptor)
     # Clear files from earlier dependency closures without touching user data.
     for old in stage.rglob('*.gd'):
         if old.relative_to(stage).as_posix() not in seen:old.unlink()
@@ -53,7 +59,7 @@ runnable=true
 dedicated_server=true
 custom_features="dedicated_server"
 export_filter="all_resources"
-include_filter="assets/minigolf/courses/*.json"
+include_filter="*LICENSE*,*NOTICE*"
 exclude_filter=""
 export_path="../UltimateBoomerSimulatorServer.x86_64"
 script_export_mode=0
@@ -77,7 +83,8 @@ texture_format/etc2_astc=false
         with log.open('w') as stream:result=subprocess.run([args.godot,'--headless','--xr-mode','off','--path',str(stage),*command],stdout=stream,stderr=subprocess.STDOUT,env=env)
         if result.returncode or any(x in log.read_text() for x in ['SCRIPT ERROR','Parse Error','Export failed']):raise SystemExit('Build failed: '+str(log))
     binary=out/'UltimateBoomerSimulatorServer.x86_64'
-    manifest={'files':sorted(seen|set(data_files)|{'project.godot','server.tscn'}),'binary_bytes':binary.stat().st_size,'sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'bundled_assets':0,'course_data_files':len(data_files),'course_data_bytes':sum((stage/f).stat().st_size for f in data_files),'bundled_native_extensions':0}
+    manifest={'files':sorted(seen|set(data_files)|set(native_files)|{'project.godot','server.tscn'}),'binary_bytes':binary.stat().st_size,'sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'bundled_assets':0,'course_data_files':len(data_files),'course_data_bytes':sum((stage/f).stat().st_size for f in data_files),'bundled_native_extensions':1 if native_files else 0}
+    manifest['native_libraries']={name:{'bytes':(out/name).stat().st_size,'sha256':hashlib.sha256((out/name).read_bytes()).hexdigest()} for name in (['libfishing_native.so'] if native_files else [])}
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps(manifest,indent=2))
 if __name__=='__main__':main()

@@ -19,17 +19,11 @@ static func save(photo: Image,filename: String) -> Error:
 	if java.get_exception()!=null:return ERR_INVALID_DATA
 	var uri=resolver.insert(media.EXTERNAL_CONTENT_URI,values)
 	if java.get_exception()!=null or uri==null:return ERR_CANT_CREATE
-	var descriptor=resolver.openFileDescriptor(uri,"w")
-	if java.get_exception()!=null or descriptor==null:
-		resolver.delete(uri,null,null);java.get_exception();return ERR_CANT_OPEN
-	var fd: int=descriptor.getFd()
-	var error:=ERR_CANT_OPEN
-	if java.get_exception()==null and fd>=0:
-		# Opening our own descriptor through proc duplicates it; save_png closes
-		# that duplicate while the MediaStore descriptor stays owned here.
-		error=photo.save_png("/proc/self/fd/"+str(fd))
-	descriptor.close()
-	if java.get_exception()!=null:error=ERR_FILE_CANT_WRITE
+	var file:=FileAccess.open(str(uri.toString()),FileAccess.WRITE)
+	var error:=FileAccess.get_open_error() if file==null else OK
+	if file!=null:
+		file.store_buffer(photo.save_png_to_buffer())
+		file.flush();error=file.get_error();file.close()
 	if error==OK:
 		values.clear();values.put("is_pending","0")
 		if java.get_exception()!=null:error=ERR_FILE_CANT_WRITE

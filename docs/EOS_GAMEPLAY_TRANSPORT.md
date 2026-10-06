@@ -1,4 +1,4 @@
-> Current release: protocol 21 includes revised minigolf layouts, shared-water play and fitted putter poses. See [Minigolf](MINIGOLF.md). Earlier validation below describes its recorded release.
+> Current protocol: 22. Fishing and shared BBQ; minigolf was removed.
 
 # EOS gameplay transport integration
 
@@ -9,7 +9,7 @@ and the asset-free dedicated server.
 ## Implemented
 
 - `transport_factory.gd` creates framed ENet peers or the new `eos_peer.gd` adapter.
-  `session.gd` attaches either transport to the same gameplay, golf, BBQ, voice,
+  `session.gd` attaches either transport to the same gameplay, BBQ, voice,
   avatar and ranking RPCs. Host authority remains peer 1.
 - `scripts/network/eos/` promotes the lab's configuration, callback correlation,
   Meta identity/proofs, EOS Connect login and lobby workflow into the game.
@@ -104,7 +104,7 @@ intended client policy permissions.
 
 Use the online menu or `--eos-host` / `--eos-join '<reference>'`. Desktop device
 identity is explicitly test-only: it requires both `provider="device"` in the
-config and `--eos-device-test`. Quest always requires `provider="meta"`.
+config. Desktop device login no longer requires a test flag. Quest always requires `provider="meta"`.
 The live test runner makes a private temporary desktop/relay override; it does
 not change the owner's real configuration.
 
@@ -233,3 +233,13 @@ personal best-score synchronization and bounded EOS ranking queries. Dedicated
 servers retain their own records and rankings. Cumulative totals await a trusted
 idempotent event aggregator; portal configuration and live Quest validation remain
 required before activation.
+
+
+Desktop release configuration: pass `--eos-config /path/to/eos.cfg` to
+`tools/build_release.py --target Linux` or `--target Windows`. The export hook
+embeds the supplied client configuration and selects Device ID for desktop;
+Quest retains Meta identity and entitlement. Runtime overrides resolve in order:
+`--eos-config`, `user://eos.cfg`, then packaged `res://eos.cfg`. Do not commit
+credentials. A build without EOS configuration continues to support LAN, but
+cannot connect to EOS. Device IDs identify this installation, not a portable
+Steam/Epic account. Builds must include the EOSG native extension for their target.

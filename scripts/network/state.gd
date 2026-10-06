@@ -15,7 +15,7 @@ static func capture(root: Node, serial: int) -> Dictionary:
 	# The existing in_hand flag describes the catch when landed, or the fly line
 	# otherwise. Protocol 5 also carries exact tackle visibility and lure position.
 	var tackle_active:bool=root.game.state in [Fish.State.READY,Fish.State.CASTING,Fish.State.WAITING,Fish.State.BITE,Fish.State.FIGHT]
-	var result:Dictionary={"user_height":root.tracking_manager.user_height if is_instance_valid(root.tracking_manager) else 1.65,"golf_club":-1,"golf_stowed":false,"body":body,"face":root.tracking_manager.face if is_instance_valid(root.tracking_manager) else {},"visemes":root.network.voice.mouth_pose(root.multiplayer.get_unique_id()),"serial":serial,"location":root.current_location,"head":root.head.global_transform,
+	var result:Dictionary={"user_height":root.tracking_manager.user_height if is_instance_valid(root.tracking_manager) else 1.65,"body":body,"face":root.tracking_manager.face if is_instance_valid(root.tracking_manager) else {},"visemes":root.network.voice.mouth_pose(root.multiplayer.get_unique_id()),"serial":serial,"location":root.current_location,"head":root.head.global_transform,
 		"left":root.bbq.hand_pose(0) if is_instance_valid(root.bbq) and root.bbq.holds(0) else (root.reel_hand_target.global_transform if root.reel_tracker.engaged else root.left.global_transform),
 		"right":root.bbq.hand_pose(1) if is_instance_valid(root.bbq) and root.bbq.holds(1) else (root.right.global_transform),
 		"rod_tier":root.game.tackle.equipped,"reel_angle":fposmod(root.crank.rotation.x,TAU),"rod":root.rod.global_transform,"fish":root.fish_display.global_transform,
@@ -26,27 +26,10 @@ static func capture(root: Node, serial: int) -> Dictionary:
 		"length":size,"caught":root.fish_display.visible,"in_hand":root.catch_in_hand if root.game.state==Fish.State.LANDED else root.game.is_fly_fishing() and root.game.fly.strip_engaged,"xr":root.xr,
 		"left_valid":root.left.get_has_tracking_data(),"right_valid":root.right.get_has_tracking_data(),
 		"curl":root.avatar.left_curl if is_instance_valid(root.avatar) else 0.0}
-	if is_instance_valid(root.get("golf_activity")) and root.golf_activity.active:
-		var g=root.golf_activity
-		result.golf_club=7;result.golf_stowed=root.bbq.visiting or g.guide.held or root.menu_open;result.state=0;result.rig=0;result.bait=0;result.caught=false;result.in_hand=false
-		result.bobber_visible=false;result.bait_visible=false
-		result.rod=g.shaft_visual.global_transform.orthonormalized()
-		result.reel_angle=g.fitting.reach
-		if is_instance_valid(g.physical_head):result.fish=g.physical_head.global_transform.orthonormalized()
-		result.tip=g.physical_head.global_position if is_instance_valid(g.physical_head) else g.club.global_position
-		result.bobber=g.ball_position()
-		if g.support_hand.engaged:
-			var side:String="left" if g.support_hand.hand==0 else "right"
-			result[side]=g.support_hand.global_transform.orthonormalized()
-			result[side+"_valid"]=true
-			for suffix in ["_hand","_elbow","_finger_rotations"]:result.body.erase(side+suffix)
-			result.body[side+"_curls"]=PackedFloat32Array([.8,.8,.8,.8,.8])
-
 	return result
 static func valid(data: Dictionary) -> bool:
-	if data.size()!=35: return false
+	if data.size()!=33: return false
 	if not (data.get("user_height") is float or data.get("user_height") is int) or not is_finite(data.user_height) or data.user_height<.6 or data.user_height>2.3:return false
-	if not data.get("golf_club") is int or data.golf_club not in [-1,7] or not data.get("golf_stowed") is bool:return false
 	if not data.get("body") is Dictionary or not data.get("face") is Dictionary: return false
 	if Poses.validate_body(data.body).size()!=data.body.size() or Poses.validate_face(data.face).size()!=data.face.size(): return false
 	if not Poses.valid_weights(data.get("visemes")): return false
@@ -62,8 +45,8 @@ static func valid(data: Dictionary) -> bool:
 	for key in ["serial","state","bait","species","rod_tier","rig"]:
 		if not data.get(key) is int: return false
 	if data.serial<0 or data.serial>2147483647 or data.state<0 or data.state>6 or data.bait<0 or data.bait>=Fish.BAITS.size() or data.species<0 or data.species>=Fish.SPECIES.size(): return false
-	if not data.get("location") is String or (not Fish.LOCATION_SPECIES.has(data.location) and not preload("res://scripts/minigolf/host_locations.gd").valid(data.location)): return false
-	if data.golf_club<0 and not Fish.rig_supported(data.rig,data.location):return false
+	if not data.get("location") is String or not Fish.LOCATION_SPECIES.has(data.location): return false
+	if not Fish.rig_supported(data.rig,data.location):return false
 	if data.rig==2 and data.bait>=Fish.Lure.BAIT_NAMES.size():return false
 	if data.rig==1 and (not Fish.Feeder.supported(data.location) or data.bait>=4):return false
 	for key in ["length","curl","reel_angle"]:
@@ -72,7 +55,6 @@ static func valid(data: Dictionary) -> bool:
 	if data.length<=0 or data.length>500 or data.curl<0 or data.curl>1: return false
 	for key in ["caught","in_hand","xr","left_valid","right_valid","bobber_visible","bait_visible"]:
 		if not data.get(key) is bool: return false
-	if data.golf_club>=0 and (data.state!=0 or data.rig!=0 or data.caught or data.bobber_visible or data.bait_visible):return false
 	if data.caught and data.state!=Fish.State.LANDED: return false
 	return true
 static func bounded(v: Vector3) -> bool:

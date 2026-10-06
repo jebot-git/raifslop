@@ -42,7 +42,8 @@ func setup(owner_session:Node)->void:
 func config_path()->String:
  var args:=OS.get_cmdline_user_args();var index:=args.find("--eos-config")
  if index>=0 and index+1<args.size():return args[index+1]
- if OS.get_name()=="Android" and FileAccess.file_exists("res://eos.cfg"):return "res://eos.cfg"
+ if FileAccess.file_exists("user://eos.cfg"):return "user://eos.cfg"
+ if FileAccess.file_exists("res://eos.cfg"):return "res://eos.cfg"
  return "user://eos.cfg"
 func message(text:String)->void:
  session.status=text;session.changed.emit()
@@ -61,8 +62,6 @@ func authenticate()->String:
  identity.clear();return result
 func settings_error(settings:Dictionary)->String:
  var error:=Config.validate(settings)
- if error.is_empty() and settings.provider=="device" and not "--eos-device-test" in OS.get_cmdline_user_args():
-  error="Desktop device identity requires --eos-device-test. Quest uses Meta identity."
  if error.is_empty() and backend.initialized:
   for key in ["product_id","sandbox_id","deployment_id","client_id","client_secret","provider","relay"]:
    if settings[key]!=config[key]:error="Restart the game before changing EOS configuration.";break

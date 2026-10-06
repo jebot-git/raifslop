@@ -1,19 +1,16 @@
 extends RefCounted
-## Independently decodable protocol-18 snapshots. No object/Variant deserialization.
+## Independently decodable protocol-22 snapshots. No object/Variant deserialization.
 const State = preload("res://scripts/network/state.gd")
-const Locations = preload("res://scripts/minigolf/host_locations.gd")
-const FORMAT := 1
+const FORMAT := 2
 const MAX_BYTES := 512
 const BODY = ["hips", "chest", "left_foot", "right_foot", "left_knee", "right_knee", "left_elbow", "right_elbow", "left_hand", "right_hand"]
-const FLAGS = ["caught", "in_hand", "xr", "left_valid", "right_valid", "bobber_visible", "bait_visible", "golf_stowed"]
+const FLAGS = ["caught", "in_hand", "xr", "left_valid", "right_valid", "bobber_visible", "bait_visible"]
 static var locations: Array = []
+static var native=preload("res://scripts/native/runtime.gd").create()
 
 static func location_table() -> Array:
 	if locations.is_empty():
 		locations = State.Fish.LOCATION_SPECIES.keys()
-		for course in Locations.Courses.ALL:
-			locations.append(Locations.clubhouse(course))
-			for hole in 18: locations.append(Locations.location(course, hole))
 		locations.sort()
 	return locations
 
@@ -48,6 +45,15 @@ static func read_weights(stream: StreamPeerBuffer) -> PackedFloat32Array:
 	return values
 
 static func encode(data: Dictionary) -> PackedByteArray:
+	if native==null:return encode_reference(data)
+	if not State.valid(data):return PackedByteArray()
+	for key in data.body:
+		if key not in BODY and key not in ["left_curls", "right_curls"]:return PackedByteArray()
+	var normalized:=data.duplicate()
+	if not data.face.is_empty():normalized.face=State.Poses.validate_face(data.face)
+	return native.encode_pose(normalized,location_table())
+
+static func encode_reference(data: Dictionary) -> PackedByteArray:
 	if not State.valid(data): return PackedByteArray()
 	# Capture deliberately omits per-knuckle rotations; never silently drop input.
 	for key in data.body:
@@ -59,7 +65,6 @@ static func encode(data: Dictionary) -> PackedByteArray:
 		if data[FLAGS[i]]: flags |= 1 << i
 	s.put_u8(flags)
 	for key in ["state", "rig", "bait", "species", "rod_tier"]: s.put_u8(data[key])
-	s.put_u8(data.golf_club + 1)
 	# Preserve authoritative reward inputs and exact validation boundaries.
 	for key in ["user_height", "length", "reel_angle"]: s.put_double(data[key])
 	s.put_u8(roundi(data.curl * 255)); weights(s, data.visemes)
@@ -91,8 +96,13 @@ static func encode(data: Dictionary) -> PackedByteArray:
 	return s.data_array
 
 static func decode(bytes: PackedByteArray) -> Dictionary:
-	# Fixed prefix through body mask: 230 bytes; then body, face-mask and face.
-	if bytes.size() < 231 or bytes.size() > MAX_BYTES or bytes[0] != FORMAT: return {}
+	if native==null:return decode_reference(bytes)
+	var data:Dictionary=native.decode_pose(bytes,location_table())
+	return data if State.valid(data) else {}
+
+static func decode_reference(bytes: PackedByteArray) -> Dictionary:
+	# Fixed prefix through body mask: 229 bytes; then body, face-mask and face.
+	if bytes.size() < 230 or bytes.size() > MAX_BYTES or bytes[0] != FORMAT: return {}
 	var s := StreamPeerBuffer.new(); s.data_array = bytes
 	s.get_u8()
 	var data := {"serial":s.get_u32(), "body":{}, "face":{}}
@@ -102,7 +112,6 @@ static func decode(bytes: PackedByteArray) -> Dictionary:
 	var flags := s.get_u8()
 	for i in FLAGS.size(): data[FLAGS[i]] = bool(flags & (1 << i))
 	for key in ["state", "rig", "bait", "species", "rod_tier"]: data[key] = s.get_u8()
-	data.golf_club = s.get_u8() - 1
 	for key in ["user_height", "length", "reel_angle"]: data[key] = s.get_double()
 	data.curl = s.get_u8()/255.0; data.visemes = read_weights(s)
 	for key in State.TRANSFORMS: data[key] = read_transform(s)

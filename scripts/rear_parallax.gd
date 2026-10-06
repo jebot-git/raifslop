@@ -33,7 +33,7 @@ static func create(id:String, origin:Vector3, water:ShaderMaterial)->MeshInstanc
  mat.set_shader_parameter("projection_origin",origin)
  mat.set_shader_parameter("left_shore_extension",id=="fish_hoek_beach")
  mat.set_shader_parameter("rear_harbour_basin",id=="lake_pier")
- for setting in ["panorama","sky_inverse","sky_energy","detail_strength","vibrance","shadow_lift"]:
+ for setting in ["panorama","sky_inverse","sky_energy","detail_strength","vibrance","shadow_lift","panorama_preprocessed"]:
   mat.set_shader_parameter(setting,water.get_shader_parameter(setting))
  mesh.material_override=mat
  mesh.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

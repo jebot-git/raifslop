@@ -1,0 +1,86 @@
+{
+  "algorithm": "bounded-luma-sharpen-and-grade-v1",
+  "script_sha256": "f84a5aa84caea72212c2ad0059e0decc741126cd895134a7c75c41475ade64b2",
+  "textures": {
+    "bell_park_pier_8k.hdr": {
+      "width": 8192,
+      "height": 4096,
+      "raw_sha256": "514ea58df5a53615e42a85e013d8c0751ac7b1636a7de1dbf5c373ff355b9f8f",
+      "processed_sha256": "b5a48eb537918218ce8679ecd8605f7bfed8fdb776b8a0a9650338c3550a48ff",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 114.5
+    },
+    "blouberg_sunrise_2_8k.hdr": {
+      "width": 8192,
+      "height": 4096,
+      "raw_sha256": "f4fa8403f605f3ff456d67812e1613aa590a456e1c3d86433c8f2001f5777c2f",
+      "processed_sha256": "334fa5a39347c99200a827cec75cc52cda0f076a3590fb91b35400b89a2966b6",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 58.0
+    },
+    "cedar_creek_4k.hdr": {
+      "width": 4096,
+      "height": 2048,
+      "raw_sha256": "21764e200571d612d48273c7b38326686d7f9f81bad6c0f348eb20b6876423f1",
+      "processed_sha256": "8610e7c7ad8201a6f6b4b4599d89a30182858b8ea95dc8aac07272c28598e9cc",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 398.0
+    },
+    "fish_hoek_beach_8k.hdr": {
+      "width": 8192,
+      "height": 4096,
+      "raw_sha256": "41413c43c5cced66a1f901092792cfa3b5a3394f1afe9b37c35e42ffd806923d",
+      "processed_sha256": "df0fc8df537ca1266ed249cd7a82e253670aab13233907162ef40787f486932b",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 24.125
+    },
+    "glacier_run_4k.hdr": {
+      "width": 4096,
+      "height": 2048,
+      "raw_sha256": "49b02525462f1e518bc39907277300d38bc611bbbc4703979d7881a9193c882c",
+      "processed_sha256": "5746befc0873180e285a7998527ed5f590423b4794a5899e426c6b59bc43b95a",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 108032.0
+    },
+    "gray_pier_8k.hdr": {
+      "width": 8192,
+      "height": 4096,
+      "raw_sha256": "5dc34d8cf99c69bb944af9cd2c4c96ddbadf56f07911efbe8cceaba671a037fd",
+      "processed_sha256": "1cfc02b6929bfa444649af84e02e97f96449437d9a7f952e7a0978e0f32e058d",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 2.1875
+    },
+    "lake_pier_8k.hdr": {
+      "width": 8192,
+      "height": 4096,
+      "raw_sha256": "5e8ece1a881f9203bb1678f053bfb76b82e46f773aa537cfbbde500e3a8d7bbc",
+      "processed_sha256": "ca19c1497b2dcc19319f8186bb29ad24b3dcf6b3f09a9b843ebcf71b566ccc41",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 364.0
+    },
+    "lakeside_8k.hdr": {
+      "width": 8192,
+      "height": 4096,
+      "raw_sha256": "d32dca73c0b70b73e02a3e6ccc44daf1539477cc2c6e96d0bfe45acd0586b1c6",
+      "processed_sha256": "8858b1efa7f15d25cfa92c3c00b1e31ea419773ae18803105ab676f85924f4c5",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 98816.0
+    },
+    "secluded_beach_8k.hdr": {
+      "width": 8192,
+      "height": 4096,
+      "raw_sha256": "05fa5ea6369992fba1adb446ea2725fbf747681c92923ddb80996a790927b5a4",
+      "processed_sha256": "1a0bce8f7c8031f278b308975b52e03e53418b2e27fd6845b382bd868492da6b",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 100864.0
+    },
+    "simons_town_rocks_8k.hdr": {
+      "width": 8192,
+      "height": 4096,
+      "raw_sha256": "1411b97efc470e36d574ad1664708aac9c3c404bb2e217423b92a502380968ef",
+      "processed_sha256": "1a65ccf0947bb4b396590f781702dce9ece5fd8990ec1afa1853705888a1f4f5",
+      "max_sharpen_gain": 0.05999999865889549,
+      "raw_peak": 155648.0
+    }
+  }
+}

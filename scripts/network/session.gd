@@ -2,7 +2,7 @@ extends Node
 ## ENet host/client lifecycle and 20 Hz replication follow FPSloppa arena.gd.
 ## Fishing remains owner-simulated; the server validates and relays bounded state.
 const SERVER_MAX_PLAYERS := 8 # Eight connected players; an ad-hoc host occupies one slot.
-const VERSION := 21 # Shared-water minigolf and fitted putter poses.
+const VERSION := 22 # Fishing and throwable BBQ props.
 const TransportFactory = preload("res://scripts/network/transport_factory.gd")
 const PoseCodec = preload("res://scripts/network/pose_codec.gd")
 const State = preload("res://scripts/network/state.gd")
@@ -17,13 +17,11 @@ func leaderboard_path()->String:
 func publish_leaderboard()->void:
 	if not active or not multiplayer.is_server():return
 	leaderboard_view=leaderboard.snapshot();leaderboard_changed.emit()
-	if is_instance_valid(golf):golf.publish()
 	var result:int=leaderboard.save()
 	if result!=OK:push_warning("Server leaderboard save failed: "+error_string(result))
 
 var rankings = preload("res://scripts/network/rankings.gd").new()
 var online: Node
-var golf: Node
 var bbq: Node
 var root_game: Node
 var active := false
@@ -70,7 +68,6 @@ func setup(root: Node, server_only: bool = false) -> void:
 	if not dedicated: load_preferences()
 	name = "Network"
 	online=preload("res://scripts/network/eos/runtime.gd").new();add_child(online);online.setup(self)
-	golf=preload("res://scripts/minigolf/network_service.gd").new();add_child(golf);golf.setup(self)
 	add_child(rankings);rankings.setup(self)
 	bbq=preload("res://scripts/bbq/network.gd").new();add_child(bbq);bbq.setup(self)
 	add_child(permissions)
@@ -79,8 +76,8 @@ func setup(root: Node, server_only: bool = false) -> void:
 	multiplayer.peer_connected.connect(_peer_connected)
 	multiplayer.peer_disconnected.connect(_peer_left)
 	multiplayer.connected_to_server.connect(_connected)
-	multiplayer.connection_failed.connect(func(): leave("Connection failed"))
-	multiplayer.server_disconnected.connect(func(): leave("Host disconnected — offline fishing continues"))
+	multiplayer.connection_failed.connect(func(): leave("Lobby admission failed. Check the password and try again." if is_instance_valid(online) and online.auth.api!=null else "Connection failed"))
+	multiplayer.server_disconnected.connect(_server_disconnected)
 
 func load_preferences() -> void:
 	var cfg := ConfigFile.new();cfg.load("user://multiplayer.cfg")
@@ -141,7 +138,6 @@ func leave(reason: String = "Offline",release_online:bool=true) -> void:
 		online.auth.reset()
 		if release_online:online.stop()
 	rankings.reset()
-	if is_instance_valid(golf):golf.reset()
 	if is_instance_valid(bbq):bbq.reset()
 	if active and multiplayer.is_server():leaderboard.save()
 	leaderboard.peers.clear();leaderboard.attempts.clear();leaderboard_view.clear()
@@ -214,7 +210,6 @@ func _roster(data: Dictionary) -> void:
 func _peer_left(id: int) -> void:
 	rankings.limits.erase(id)
 	if is_instance_valid(bbq):bbq.sent.erase(id);bbq.resync_limits.erase(id)
-	if is_instance_valid(golf):golf.disconnected(id)
 	if is_instance_valid(bbq):bbq.model.release_peer(id);bbq.limits.erase(id)
 	leaderboard.disconnect_player(id)
 	state_arrivals.erase(id)
@@ -225,7 +220,7 @@ func _peer_left(id: int) -> void:
 	changed.emit()
 
 func same_location(a: int, b: int) -> bool:
-	return states.has(a) and states.has(b) and preload("res://scripts/minigolf/host_locations.gd").same_world(states[a].location,states[b].location)
+	return states.has(a) and states.has(b) and states[a].location==states[b].location
 
 func _process(delta: float) -> void:
 	clock+=delta
@@ -279,7 +274,7 @@ func _accept(id: int, data: Dictionary, reliable: bool) -> void:
 	guard.tokens=minf(8,guard.tokens+maxf(0,clock-guard.time)*30); guard.time=clock; guards[id]=guard
 	if guard.tokens<1: return
 	guard.tokens-=1
-	if data.golf_club<0:leaderboard.observe(id,data)
+	leaderboard.observe(id,data)
 	_apply(id,data)
 	var packed := PoseCodec.encode(data)
 	for peer in players:
@@ -327,3 +322,10 @@ func _exit_tree() -> void:
 	# Scene teardown must stop the socket worker even without an explicit Leave.
 	if multiplayer.multiplayer_peer is MultiplayerPeerExtension:
 		multiplayer.multiplayer_peer.close()
+
+func _server_disconnected() -> void:
+	# Auth failure and transport loss may arrive in either order. Preserve the
+	# actionable admission message until the player explicitly retries.
+	if "admission failed" in status:return
+	var admitting:bool=not active and is_instance_valid(online) and (online.auth.api!=null or online.admission_failed)
+	leave("Lobby admission failed. Check the password and try again." if admitting else "Host disconnected — offline fishing continues")

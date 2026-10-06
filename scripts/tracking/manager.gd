@@ -169,6 +169,4 @@ func head_tracked() -> bool:
 	return pose!=null and pose.has_tracking_data
 
 func _activity_allows_calibration() -> bool:
-	if is_instance_valid(root_game.golf_activity) and root_game.golf_activity.active:
-		return root_game.golf_activity.allows_calibration()
 	return root_game.game.state==0 and not root_game.casting and not root_game.fish_guide.held

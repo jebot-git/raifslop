@@ -24,7 +24,7 @@ func run()->void:
 		ambience.select_location("lake_pier")
 		await create_timer(2.2).timeout
 		check(ambience.is_processing() and ambience.voices.lake_pier.player.playing and ambience.voices.lake_pier.player.volume_db>-10,"Same-water return becomes audible without manually ticking the mixer %d"%cycle)
-		check(ambience.detail.stream!=null,"Timber detail restored after golf %d"%cycle)
+		check(ambience.detail.stream!=null,"Timber detail restored after restart %d"%cycle)
 	ambience.set_muted(true);ambience.stop();ambience.select_location("lake_pier")
 	await create_timer(.1).timeout
 	check(ambience.muted and ambience.voices.lake_pier.player.volume_db<=-79,"Returning to water preserves intentional mute")

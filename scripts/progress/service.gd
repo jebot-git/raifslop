@@ -15,11 +15,12 @@ func setup(game:Node)->void:
 		var file:=FileAccess.open(path,FileAccess.READ)
 		if file==null or file.get_length()>16384:error="Achievements could not be read.";return
 		var data=JSON.parse_string(file.get_as_text())
-		if not data is Dictionary or data.get("version")!=1 or not data.get("unlocked") is Dictionary or not data.get("visits") is Array or data.visits.size()>Destinations.all().size():
+		if not data is Dictionary or data.get("version")!=1 or not data.get("unlocked") is Dictionary or not data.get("visits") is Array or data.visits.size()>256:
 			error="Saved achievements are invalid.";return
 		var count=data.get("catches")
 		if not (count is int or count is float) or not is_finite(count) or count<0 or count>2147483647 or count!=int(count):error="Saved achievement count is invalid.";return
-		for id in data.unlocked:
+		for id in data.unlocked.keys():
+			if id in ["ubs_first_round","ubs_birdie"]:data.unlocked.erase(id);continue
 			if not Catalog.ALL.has(id) or data.unlocked[id]!=true:error="Saved achievements are invalid.";return
 		for id in data.visits:
 			if not id is String:error="Saved destinations are invalid.";return
@@ -51,13 +52,3 @@ func caught(species:Dictionary,length:float)->void:
 	if catches>=10:unlock("ubs_ten_catches")
 	if length/float(species.length)>=1.12 or int(species.get("rarity",0))>=4:unlock("ubs_exceptional_catch")
 	save()
-func golf(course:String,scores:Array,finished:bool,forfeits:Array=[])->void:
-	if course not in preload("res://scripts/minigolf/catalog.gd").ALL or scores.size()>18:return
-	var changed_before:=unlocked.size()
-	for score in scores:
-		if not score is int or score<1 or score>1000:return
-	for i in scores.size():
-		var score:int=scores[i]
-		if i not in forfeits and score<preload("res://scripts/minigolf/handicap.gd").par(course,i):unlock("ubs_birdie")
-	if finished and scores.size()==18 and forfeits.is_empty():unlock("ubs_first_round")
-	if unlocked.size()!=changed_before:save()

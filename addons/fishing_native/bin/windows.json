@@ -1,0 +1,13 @@
+{
+  "target": "windows",
+  "bindings_revision": "507ed9d840c01a3c5b2a39af8bb4000bfac30bf5",
+  "source_sha256": {
+    "CMakeLists.txt": "bbd75c7a00990c0965265a7335f7d59e8c65573a5da14b2030118b0fd1799ed8",
+    "profile.json": "d31228319f29d34b8901e7bd7175257b39ad459d5038dfb53d12e2d6d23849b2",
+    "src/codec.cpp": "2a1975c84d0b99db137175fd98d3f0d9823f9025c619a8f865fa44ca5a50b39f",
+    "src/native.cpp": "df5ca02ea0d7a8dcd6bfd7c21e677fcd021490528f47e7a0b0e5665ab3f96266",
+    "src/native.h": "7589ddef3a4f11734d1d249403530858fac77bad6262464347e63aeb962bd6fd",
+    "src/zig_glibc_fini.cpp": "99a664c685fbafc34aa55c27f44c9c3cac84656cfb7b9a80b1c979cbb6813026"
+  },
+  "sha256": "81b3905dd28ef40f3b8e31c841b4fa96c69bdf2a895c4efc5b8c85b1d96e3ba4"
+}

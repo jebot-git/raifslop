@@ -29,6 +29,7 @@ static func create(id: String) -> Node3D:
 	if id=="lake_pier":repair_rail_posts(visual)
 	repair_bench_supports(visual,id)
 	preload("res://scripts/retired_shore_details.gd").apply(visual,id)
+	if id=="lakeside":preload("res://scripts/lakeside_rocks.gd").apply(visual)
 	prepare_lighting(visual, id)
 	if preload("res://scripts/locations.gd").find_location(id).get("sand_shore",false):
 		# Cast/landing rays must see the curved sand slope, not only the flat
@@ -266,10 +267,10 @@ static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := 
 	blend.set_shader_parameter("authored_bridge",root.get_meta("location_id","")=="lake_pier")
 	blend.set_shader_parameter("far_projection_fade",root.get_meta("location_id","")!="lake_pier")
 	blend.set_shader_parameter("ground_bounds", bounds)
-	blend.set_shader_parameter("minigolf_ground",root.get_meta("location_id","")!="lake_pier")
+	blend.set_shader_parameter("extended_ground",root.get_meta("location_id","")!="lake_pier")
 	blend.set_shader_parameter("transition_width", transition_width)
 	blend.set_shader_parameter("projection_origin", root.get_meta("spawn",Vector3(0,.02,.65))+Vector3.UP*1.63)
-	for setting in ["panorama", "sky_inverse", "sky_energy", "detail_strength", "vibrance", "shadow_lift"]:
+	for setting in ["panorama", "sky_inverse", "sky_energy", "detail_strength", "vibrance", "shadow_lift", "panorama_preprocessed"]:
 		blend.set_shader_parameter(setting, water.get_shader_parameter(setting))
 	for node in root.find_children("*", "MeshInstance3D", true, false):
 		for index in range(node.mesh.get_surface_count()):
@@ -285,7 +286,7 @@ static func blend_harbour_ground(root: Node3D, water: ShaderMaterial, bounds := 
 				if not source.resource_name.begins_with("FG_concrete"):continue
 			if mat is ShaderMaterial and root.get_meta("location_id","")=="fish_hoek_beach" and source.resource_name.begins_with("FG_sand"):
 				mat.set_shader_parameter("ground_projection",true)
-				for setting in ["minigolf_ground","ground_bounds","transition_width","projection_origin","panorama","sky_inverse","sky_energy","detail_strength","vibrance","shadow_lift"]:
+				for setting in ["extended_ground","ground_bounds","transition_width","projection_origin","panorama","sky_inverse","sky_energy","detail_strength","vibrance","shadow_lift","panorama_preprocessed"]:
 					mat.set_shader_parameter(setting,blend.get_shader_parameter(setting))
 			elif mat: mat.next_pass = blend
 

@@ -1,15 +1,14 @@
 # Ultimate Boomer Simulator
 
 `main` follows the EOS release codebase. `integration/golf-fishing` is archived.
-Waterfront minigolf replaces the full-size golf integration; fishing, BBQ and
-minigolf share each water location.
+Fishing and shared BBQ activities share each water location.
 
-[0.1.19-rc.2 release](https://github.com/jebot-git/raifslop/releases/tag/v0.1.19-rc.2) · Meta RC build 27 · [Migration and validation](docs/MINIGOLF.md).
+[0.1.19-rc.2 release](https://github.com/jebot-git/raifslop/releases/tag/v0.1.19-rc.2) · Meta RC build 27.
 
 [Quest standalone hosting tests and Meta invite assessment](docs/QUEST_MULTIPLAYER_ASSESSMENT.md).
 
 Formerly Real AI Fishing. Existing saves and Android package identity are retained; the game icon is unchanged.
-A Godot 4.7 VR fishing and minigolf release candidate built with Godot MCP and Blender MCP. Freshwater and marine fish, six bait choices per habitat, eight photographed waterside settings plus four rivers, distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
+A Godot 4.7 VR fishing release candidate built with Godot MCP and Blender MCP. Freshwater and marine fish, six bait choices per habitat, eight photographed waterside settings plus four rivers, distinct walkable 3D foregrounds, selectable VRM avatars, a tracked rod and an end-to-end bait → cast → bite → strike → fight → land → release loop.
 
 Open `project.godot` in Godot 4.7.2 and press F6/F5, or launch:
 
@@ -136,7 +135,7 @@ The **Tracking** tab enables FPSloppa-derived body tracking (native XR, Vive rol
 
 ## Field station menu and ambience
 
-Open the menu with **right B**. Five sections—**Activities**, **Player**, **Together**, **Settings**, and **Progress**—share a pine-green, cream and brass field-station theme. Activities contains Waters, Minigolf and BBQ; Settings separates movement, controller alignment, tracking, sound and putter fitting. Together separates online lobbies, direct IP / LAN, and players / voice. Leaving a lobby cancels its connection automatically, and a new host or join request waits for cleanup. FPSloppa-derived selectors and drag scrolling work inside the VR panel; focusing a connection text field opens a controller-operated keyboard.
+Open the menu with **right B**. Five sections—**Activities**, **Player**, **Together**, **Settings**, and **Progress**—share a pine-green, cream and brass field-station theme. Activities contains Waters and BBQ; Settings separates movement, controller alignment, tracking, and sound. Together separates online lobbies, direct IP / LAN, and players / voice. Leaving a lobby cancels its connection automatically, and a new host or join request waits for cleanup. FPSloppa-derived selectors and drag scrolling work inside the VR panel; focusing a connection text field opens a controller-operated keyboard.
 
 Each location has a distinct 128-second water, bird and wind soundscape. Travel crossfades the surroundings over two seconds; occasional timber creaks have a position in the pier or boat scene. **Settings → Sound** controls environment volume and mute independently of voice chat. Preferences persist locally. See [sources, preparation and checks](docs/PRESENTATION.md).
 
@@ -150,7 +149,7 @@ All eight photographed foregrounds use baked sky/bounce lighting, static sun sha
 
 ## Release downloads
 
-This release provides Windows, Linux, Quest standalone and a separate Linux dedicated-server package on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). PC archives include VR and dedicated-server launchers. The minigolf RC includes optical hand controls and has passed synthetic VR, multiplayer and packaging checks; standalone Quest performance and human putter-feel testing remain separate from those automated checks. See [release and build instructions](docs/RELEASE.md).
+This release provides Windows, Linux, Quest standalone and a separate Linux dedicated-server package on the [GitHub releases page](https://github.com/jebot-git/raifslop/releases). PC archives include VR and dedicated-server launchers. The game includes optical hand controls. See [release and build instructions](docs/RELEASE.md).
 
 Pico standalone builds are retired from future releases following a reported startup crash on standard Pico 4 (black screen, then immediate exit). Pico OS 6 support is a future goal only, pending suitable hardware and direct testing; current Pico compatibility is not claimed. Historical release artifacts remain available.
 
@@ -215,10 +214,6 @@ The catalogue now has **40 species**, including huchen and ragged-tooth shark pr
 
 Open **Menu → BBQ** for shared cooking. Grip the tongs, hold trigger near food to clamp it, turn your wrist, and release trigger over the grate or prep table. Take a serving and trigger near your mouth to eat. Trigger the cooler lid to open it, grip a can, then trigger to open and sip near your mouth. [Controls, assets, and validation](docs/BBQ.md).
 
-## Waterfront minigolf
+## Online play
 
-Open **Menu → Activities → Minigolf** at any of the 12 waters to join its original 18-hole course. Golfers share the same world with anglers and BBQ players. Putting uses grip-to-putt, optional ball teleport, bank shots, rolling slopes, water penalties and stroke scoring. Holding grip steadies your stance by locking stick movement. Release grip and center the stick to walk and turn again, with one or two controllers. Small fixed tee signs show each hole name and par. The existing controller-angle/length fitting and handheld guide are retained for minigolf.
-
-See [courses, controls, fitting, scores and validation](docs/MINIGOLF.md). Full-size courses and extra clubs are archived. Development clients and servers now use protocol **21**.
-
-The EOS gameplay transport and lobby controls are retained; ENet hosting remains available. See [EOS gameplay transport](docs/EOS_GAMEPLAY_TRANSPORT.md) for configuration. New minigolf leaderboard/destination definitions need provisioning in the provider portals before cloud publication.
+EOS lobbies and direct IP / LAN hosting are supported. Clients and servers use protocol **22**. See [EOS gameplay transport](docs/EOS_GAMEPLAY_TRANSPORT.md).

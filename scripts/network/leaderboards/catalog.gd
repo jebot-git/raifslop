@@ -1,6 +1,5 @@
 extends RefCounted
-## Shared fishing categories and per-course stats, with retry-safe absolute totals.
-const Courses=preload("res://scripts/minigolf/catalog.gd")
+## Fishing categories, with retry-safe absolute totals.
 const MAX_SCORE=2147483647 # EOS IngestAmount is signed int32; Meta accepts int64.
 const START_TIME=1790330760 # v1 begins 2026-09-25 10:06 UTC; EOS portal requires a start.
 static func boards()->Dictionary:
@@ -10,13 +9,6 @@ static func boards()->Dictionary:
  for key in ["catches","earned","exceptional"]:
   var name:String="ubs_v2_"+key
   result[key]={"stat":name,"board":name,"meta":name,"aggregation":"MAX","scale":1,"counter":true}
- for course in Courses.ALL:
-  var slug:String={"blouberg_sunrise_2":"blouberg","simons_town_rocks":"simons_town"}.get(course,course)
-  var name:String="ubs_v3_minigolf_"+slug+"_best"
-  result["golf/"+course]={"stat":name,"board":name,"meta":name,"aggregation":"MIN","scale":1}
-  for field in ["rounds","forfeits","last"]:
-   var stat:String="ubs_v3_minigolf_%s_%s"%[slug,field]
-   result["golf_%s/%s"%[field,course]]={"stat":stat,"board":stat,"meta":stat,"aggregation":"MAX" if field in ["rounds","forfeits"] else "LATEST","scale":10 if field=="handicap" else 1,"offset":1 if field=="handicap" else 0,"counter":field in ["rounds","forfeits"]}
  return result
 static func valid_score(value:Variant)->bool:
  return (value is int or value is float) and is_finite(float(value)) and value>=1 and value<=MAX_SCORE and value==int(value)

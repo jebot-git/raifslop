@@ -1,4 +1,5 @@
 shader_type spatial;
+uniform bool low_cost_reflections = false;
 // Write depth even when the shallow-fish window enables transparency.
 // Shore panorama passes behind the surface must not paint over the water.
 render_mode unshaded, cull_disabled, depth_draw_always;
@@ -65,9 +66,11 @@ void fragment() {
 	vec3 reflected = reflect(incident, normal);
 	vec3 reflection = environment_color(reflected);
 	// A small angular footprint softens hard HDR detail without screen-space reflections.
+	if (!low_cost_reflections) {
 	float blur = max(water_roughness * .018,min(length(fwidth(reflected))*.75,.04));
 	reflection = (reflection*2.0 + environment_color(normalize(reflected+vec3(blur,0.0,blur)))
 		+ environment_color(normalize(reflected-vec3(blur,0.0,blur)))) * .25;
+	}
 	if(river_flow>0.0){
 		// Local bank proxy: do not reflect the source panorama's nonexistent lake shore.
 		float bank_z=reflected.z<0.0 ? -20.0 : -2.8;

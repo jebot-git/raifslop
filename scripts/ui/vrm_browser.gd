@@ -29,6 +29,10 @@ func _ready() -> void:
 	var cancel := Button.new(); cancel.text = "Cancel"; cancel.custom_minimum_size = Vector2(180,44); footer.add_child(cancel); cancel.pressed.connect(func(): hide(); closed.emit())
 	hide()
 func open() -> void:
+	if OS.has_feature("android"):
+		var error:=DisplayServer.file_dialog_show("Import VRM", "", "", false, DisplayServer.FILE_DIALOG_MODE_OPEN_FILE, PackedStringArray(["*.vrm;VRM avatar;application/octet-stream,model/gltf-binary,model/vrm,application/vrm"]), _android_selected)
+		if error==OK:return
+		show();message.text="Could not open the system file picker. Try again from the headset menu.";return
 	show(); size = Vector2(900,350); position = Vector2(50,20)
 	if directory.is_empty():
 		directory = OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS)
@@ -52,3 +56,7 @@ func _open_path(path: String) -> void:
 	if path.get_extension().to_lower() != "vrm" or not FileAccess.file_exists(path):
 		message.text = "Select an existing .vrm file or folder."; return
 	hide(); closed.emit(); file_selected.emit(path)
+
+func _android_selected(ok:bool, paths:PackedStringArray, _filter:int) -> void:
+	closed.emit()
+	if ok and not paths.is_empty():file_selected.emit(paths[0])

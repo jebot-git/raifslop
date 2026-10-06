@@ -37,31 +37,7 @@
       "unlocked_icon": "assets/ui/achievements/art/ubs_exceptional_catch.png"
     },
     {
-      "description": "Finish an 18-hole minigolf round without forfeiting a hole.",
-      "eos_achievement_id": "ubs_first_round",
-      "id": "ubs_first_round",
-      "locked_icon": "assets/ui/achievements/art/locked.png",
-      "meta_api_name": "ubs_first_round",
-      "name": "Around the course",
-      "secret": false,
-      "type": "SIMPLE",
-      "unlock_method": "client_unlock",
-      "unlocked_icon": "assets/ui/achievements/art/ubs_first_round.png"
-    },
-    {
-      "description": "Score a birdie or better on a completed minigolf hole.",
-      "eos_achievement_id": "ubs_birdie",
-      "id": "ubs_birdie",
-      "locked_icon": "assets/ui/achievements/art/locked.png",
-      "meta_api_name": "ubs_birdie",
-      "name": "Under par",
-      "secret": false,
-      "type": "SIMPLE",
-      "unlock_method": "client_unlock",
-      "unlocked_icon": "assets/ui/achievements/art/ubs_birdie.png"
-    },
-    {
-      "description": "Visit three different waters or courses.",
+      "description": "Visit three different waters.",
       "eos_achievement_id": "ubs_explorer",
       "id": "ubs_explorer",
       "locked_icon": "assets/ui/achievements/art/locked.png",

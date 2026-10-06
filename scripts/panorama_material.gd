@@ -4,6 +4,7 @@ var panorama: Texture2D:
 	set(value):
 		panorama=value
 		set_shader_parameter("panorama",value)
+		set_shader_parameter("panorama_preprocessed",not value.get_meta("reference_panorama",false))
 func _init() -> void:
 	shader=preload("res://shaders/panorama_detail.gdshader")
 	set_shader_parameter("detail_strength",.5)

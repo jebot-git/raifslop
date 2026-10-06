@@ -71,9 +71,9 @@ def main():
                 for line in log:
                     if any(token in line for token in ['CLIENT_METRICS ', 'CLIENT_STAGE ', 'CAST_RESULT ',
                             'CAST_TRACE ', 'ERROR:', 'SCRIPT ERROR', 'XR_SESSION_STATE_',
-                            'Golf analytics capture:', 'VR_TEST_CAPTURE', 'FISHING_EVENT ']):
+                            'VR_TEST_CAPTURE', 'FISHING_EVENT ']):
                         runtime.write(json.dumps({'observed_utc': utc(), 'line': line.rstrip()}) + '\n')
-                for name in ['golf_round.cfg', 'golf_controls.cfg', 'tracking.cfg', 'player.cfg']:
+                for name in ['tracking.cfg', 'player.cfg']:
                     path = args.user_data / name
                     try:
                         content = path.read_bytes()
@@ -85,20 +85,6 @@ def main():
                         (args.output / saved).write_bytes(content)
                         emit('save_changed', {'file': name, 'snapshot': saved,
                                               'mtime_ns': path.stat().st_mtime_ns, 'sha256': digest})
-                    except OSError:
-                        pass
-                for path in (args.user_data / 'golf_analytics').glob('*.jsonl'):
-                    try:
-                        if path.stat().st_mtime < start:
-                            continue
-                        offset = analytics_offsets.get(path, 0)
-                        with path.open('rb') as source:
-                            source.seek(offset)
-                            chunk = source.read()
-                        if chunk:
-                            with (args.output / path.name).open('ab') as dest:
-                                dest.write(chunk)
-                            analytics_offsets[path] = offset + len(chunk)
                     except OSError:
                         pass
                 if time.monotonic() >= next_stats:

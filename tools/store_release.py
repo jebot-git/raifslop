@@ -123,9 +123,9 @@ STEAM_LAUNCH = {
 def steam_checks(folder, target):
     executable = folder / STEAM_LAUNCH['platforms'][target]['executable']
     required = [executable, folder / 'UltimateBoomerSimulator.pck']
-    libraries = (['libgodotopenxrvendors.dll', 'libtwovoip.windows.template_release.x86_64.dll']
+    libraries = (['libgodotopenxrvendors.dll', 'libtwovoip.windows.template_release.x86_64.dll', 'libfishing_native.dll']
                  if target == 'Windows' else
-                 ['libgodotopenxrvendors.so', 'libtwovoip.linux.template_release.x86_64.so'])
+                 ['libgodotopenxrvendors.so', 'libtwovoip.linux.template_release.x86_64.so', 'libfishing_native.so'])
     required.extend(folder / name for name in libraries)
     for path in required:
         if not path.is_file() or path.stat().st_size == 0:

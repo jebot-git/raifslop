@@ -62,15 +62,14 @@ func _process(delta:float)->void:
 		host.calibrated_hands[side].transform=Transform3D.IDENTITY
 		if sample.menu:
 			_cancel(side)
-			if is_instance_valid(host.golf_activity) and host.golf_activity.active:host.golf_activity.toggle_menu(not host.menu_open)
-			else:host._toggle_avatar_menu()
+			host._toggle_avatar_menu()
 		# Offhand pinch can hold the reel or fly line. The rod hand's pinch is
 		# exclusively the trigger, so charging a cast cannot stow the rod.
 		var grip:float=maxf(sample.grasp,float(sample.select)) if side==0 else sample.grasp
 		proxy.set_input("grip",grip);proxy.set_input("grip_click",grip>.65)
 		# Fishing's left grip+trigger releases a landed catch. A single pinch
 		# must only grab it/reel, not accidentally perform both actions at once.
-		var selects:bool=sample.select and (side==1 or host.menu_open or is_instance_valid(host.golf_activity) and host.golf_activity.active and host.golf_activity.pointer_controller()==controllers[side])
+		var selects:bool=sample.select and (side==1 or host.menu_open)
 		proxy.set_input("trigger",float(selects));proxy.set_input("trigger_click",selects)
 func _cancel(side:int)->void:
 	if side==1:
@@ -79,9 +78,6 @@ func _cancel(side:int)->void:
 	host.tracking_was_valid=false;host.reel_tracker.engaged=false;host.game.fly.release_strip(true)
 	host.fight_input.reset()
 	if host.menu_mouse_down:host._menu_click(false,true)
-	if is_instance_valid(host.golf_activity) and host.golf_activity.active:
-		if host.golf_activity.fitting.active:host.golf_activity.cancel_club_fit()
-		host.golf_activity.reset_swing()
 func _release(side:int)->void:
 	_cancel(side)
 	var proxy:XRControllerTracker=proxies[side]

@@ -28,13 +28,11 @@ def main():
     env = dict(os.environ, VR_TEST_OUTPUT=str(run), GODOT_BIN=args.godot)
     results = []
     focused = ['rec4_cast_replay', 'cast_direction', 'cast_tolerance', 'tracked_cast',
-               'minigolf', 'minigolf_address_line', 'minigolf_fit_invariants', 'minigolf_runtime', 'vr_test_capture']
+               'vr_test_capture']
     if args.focus == 'rec5':
         focused += ['rec5_cast_replay']
     commands = [('gameplay', ['python3', 'tools/test_vr_fixes.py'] +
                  (focused if args.focus != 'full' else []))]
-    if args.focus == 'full':
-        commands.append(('network', ['python3', 'tools/test_minigolf_network.py']))
     for name, command in commands:
         with (out / (name + '.log')).open('w') as log:
             process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=subprocess.PIPE,

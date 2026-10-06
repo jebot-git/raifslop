@@ -2,6 +2,8 @@ extends RefCounted
 ## Vertical exclusion around the actual ground/deck/rock footprint, at every depth.
 ## A small spatial grid keeps checks local even for the scanned coastal rocks.
 const CELL := 4.0
+var native=preload("res://scripts/native/runtime.gd").create()
+var face_chunks: Array[AABB]=[]
 var ground_faces: Array[PackedVector3Array] = []
 var minimum_height := -INF
 var triangles: Array[PackedVector2Array] = []
@@ -12,6 +14,14 @@ func rebuild(root: Node3D, height := -INF) -> void:
 	minimum_height = height
 	triangles.clear(); bounds.clear(); cells.clear()
 	_collect(root)
+	# Reference broad phase remains useful on platforms without the extension.
+	face_chunks.clear()
+	for begin in range(0,ground_faces.size(),32):
+		var box:=AABB(ground_faces[begin][0],Vector3.ZERO)
+		for i in range(begin,mini(begin+32,ground_faces.size())):
+			for point in ground_faces[i]:box=box.expand(point)
+		face_chunks.append(box.grow(.00001))
+	if native!=null and not native.set_faces(ground_faces):native=null
 func set_minimum_height(height: float) -> void:
 	if is_equal_approx(height, minimum_height): return
 	minimum_height = height
@@ -51,8 +61,13 @@ func _collect(node: Node) -> void:
 func segment_obstructed(start: Vector3, end: Vector3) -> bool:
 	# Use the same authored triangles before physics has registered a newly
 	# loaded location. This keeps feeding targets out from behind nearby rocks.
-	for face in ground_faces:
-		if Geometry3D.segment_intersects_triangle(start,end,face[0],face[1],face[2]) != null: return true
+	if native!=null:return native.segment_obstructed(start,end)
+	for chunk in face_chunks.size():
+		var box:=face_chunks[chunk]
+		if not box.has_point(start) and not box.has_point(end) and box.intersects_segment(start,end)==null:continue
+		for index in range(chunk*32,mini(chunk*32+32,ground_faces.size())):
+			var face:=ground_faces[index]
+			if Geometry3D.segment_intersects_triangle(start,end,face[0],face[1],face[2])!=null:return true
 	return false
 
 func add_triangle(tri: PackedVector2Array) -> void:

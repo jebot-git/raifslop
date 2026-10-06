@@ -51,7 +51,7 @@ func run()->void:
  if not check(await until(func():return net.active and net.players.has(1)),"Quest accepts protocol handshake and includes itself in roster"):
   await finish();return
  var at:=Sites.arrival(LOCATION)
- pose={"user_height":1.78,"serial":0,"location":LOCATION,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"state":0,"bait":0,"species":0,"rod_tier":0,"rig":0,"length":10.0,"curl":0.0,"reel_angle":0.0,"golf_club":-1,"golf_stowed":false}
+ pose={"user_height":1.78,"serial":0,"location":LOCATION,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"state":0,"bait":0,"species":0,"rod_tier":0,"rig":0,"length":10.0,"curl":0.0,"reel_angle":0.0}
  for key in Schema.TRANSFORMS:pose[key]=Transform3D(Basis.IDENTITY,at+Vector3(0,1.7,0))
  for key in Schema.VECTORS:pose[key]=at
  for key in ["caught","in_hand","xr","bobber_visible","bait_visible"]:pose[key]=false
@@ -78,17 +78,6 @@ func run()->void:
     check(await until(func():return item(0).get("place")=="grill" and item(0).side==expected_side),"Quest resolves a physical half turn on release")
     check(await until(func():return item(0).cook[expected_side]>.01),"Quest advances cooking while rendering VR")
    net.bbq.request("release")
-  net.golf.request("join",{"course":"lakeside","mode":"solo"})
-  check(await until(func():return not net.golf.view.is_empty()),"Quest creates remote solo golf round")
-  net.golf.request("presence",{"present":true})
-  if check(await until(func():return net.golf.can_shoot()),"Quest grants golf turn"):
-   var epoch:int=net.golf.view.epoch
-   net.golf.request("shot",{"epoch":epoch})
-   check(await until(func():return net.golf.view.get("flight",false)),"Quest acknowledges stroke")
-   net.golf.request("settled",{"epoch":epoch,"holed":false})
-   check(await until(func():return net.golf.view.get("epoch",0)>epoch and not net.golf.view.get("flight",true)),"Quest settles stroke and advances epoch")
-  net.golf.request("retire")
-  check(await until(func():return net.golf.view.get("retired",false)),"Quest acknowledges retirement")
   await create_timer(6).timeout
   sender.stop();net.leave();await create_timer(1).timeout
   net.join(args[0],int(args[1]))

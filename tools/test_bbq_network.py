@@ -2,14 +2,14 @@
 import os,subprocess,time,tempfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'test-results/bbq-network';OUT.mkdir(parents=True,exist_ok=True)
+OUT=Path(os.environ.get('BBQ_TEST_OUTPUT',str(ROOT/'test-results/bbq-network')));OUT.mkdir(parents=True,exist_ok=True)
 failed=[]
 with tempfile.TemporaryDirectory(prefix='raif-bbq-net-') as temp:
  for dedicated,port in [(True,28671),(False,28672)]:
   jobs=[]
   def launch(role):
    path=OUT/f'{port}-{role}.log';stream=path.open('w')
-   command=['godot','--headless','--xr-mode','off','--path',str(ROOT),'--script','res://tests/bbq_network.gd','--',role,str(port)]
+   command=[os.environ.get('GODOT_BIN','godot'),'--headless','--xr-mode','off','--path',str(ROOT),'--script','res://tests/bbq_network.gd','--',role,str(port)]
    if role=='server':command+=['--server','--port',str(port)]
    env=dict(os.environ,XDG_DATA_HOME=f'{temp}/{port}-{role}',XDG_CONFIG_HOME=f'{temp}/config')
    jobs.append((role,subprocess.Popen(command + (['--xr-test'] if '--script' in command else []),stdout=stream,stderr=subprocess.STDOUT,env=env),stream,path))

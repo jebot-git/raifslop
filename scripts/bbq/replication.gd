@@ -3,8 +3,9 @@ extends RefCounted
 const Model=preload("res://scripts/bbq/model.gd")
 const Sites=preload("res://scripts/bbq/sites.gd")
 const ANCHOR_SECONDS:=5.0
-static func cook(state:Dictionary,seconds:float)->void:
+static func cook(state:Dictionary,seconds:float,location:String="lakeside")->void:
  for item in state.get("items",[]):
+  if item.place=="thrown":Model.advance_throw(item,seconds,location)
   if item.place=="grill":
    var rate:=1.0 if item.slot%3==1 else .68
    item.cook[item.side]=minf(3.0,item.cook[item.side]+maxf(0,seconds)*rate/Model.COOK_SECONDS)
@@ -32,20 +33,23 @@ static func valid(data:Dictionary)->bool:
  if data.base==0 and data.exists and data.items.size()!=10:return false
  var ids:Array=[]
  for item in data.items:
-  if not item is Dictionary or item.size()>16:return false
+  if not item is Dictionary or item.size()>18:return false
   for key in ["id","owner","hand","slot","side","sips"]:
    if not item.get(key) is int:return false
   if item.id<0 or item.id>=10 or item.id in ids:return false
   ids.append(item.id)
   var kind:String=Model.FOODS[item.id%4] if item.id<6 else ("tongs" if item.id<8 else "drink")
   if item.get("kind")!=kind or item.owner<0 or item.hand not in [0,1] or item.side not in [0,1] or item.slot<0 or item.slot>9 or item.sips<0 or item.sips>3:return false
-  if item.get("place") not in ["pantry","hand","tongs","grill","served","gone"] or not item.get("open") is bool:return false
+  if item.get("place") not in ["pantry","hand","tongs","grill","served","gone","thrown"] or not item.get("open") is bool:return false
   if not item.get("pos") is Vector3 or not item.pos.is_finite():return false
   if not item.get("cook") is Array or item.cook.size()!=2:return false
   for value in item.cook:
    if not (value is float or value is int) or not is_finite(value) or value<0 or value>3:return false
   if not (item.get("reset_at") is float or item.get("reset_at") is int) or not is_finite(item.reset_at) or item.reset_at<0:return false
   if item.has("basis") and (not item.basis is Basis or not item.basis.is_finite()):return false
+  if item.place=="thrown":
+   for field in ["velocity","spin"]:
+    if not item.get(field) is Vector3 or not item[field].is_finite() or item[field].length()>100:return false
   if item.place=="tongs" and not item.has("grip_offset"):return false
   if item.has("grip_offset") and (not item.grip_offset is Transform3D or not item.grip_offset.is_finite()):return false
  return true
@@ -61,7 +65,7 @@ static func apply(previous:Dictionary,data:Dictionary)->Dictionary:
    state={"items":items}
   else:
    if previous.state.is_empty():return {}
-   state=previous.state.duplicate(true);cook(state,data.clock-previous.clock)
+   state=previous.state.duplicate(true);cook(state,data.clock-previous.clock,data.location)
    for item in data.items:state.items[item.id]=item.duplicate(true)
   state.cooler_open=data.cooler_open;state.revision=data.revision;state.idle=data.clock
  return {"location":data.location,"seq":data.seq,"clock":data.clock,"state":state}

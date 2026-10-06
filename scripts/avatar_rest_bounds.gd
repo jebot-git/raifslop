@@ -2,6 +2,7 @@
 extends RefCounted
 ## Measure the skinned rest pose, not the pre-skin vertex coordinates.
 ## Runs once per decoded model; never depends on the current IK/crouch pose.
+static var native=preload("res://scripts/native/runtime.gd").create()
 const CACHE_KEY:="arena_rest_bounds_v1"
 
 static func measure(root: Node3D) -> AABB:
@@ -42,6 +43,12 @@ static func mesh_bounds(node: MeshInstance3D, transforms: Dictionary) -> AABB:
 		var skinned:bool=bones is PackedInt32Array and weights is PackedFloat32Array and not vertices.is_empty()
 		var count:int=bones.size()/vertices.size() if skinned else 0
 		if skinned and (count not in [4,8] or bones.size()!=vertices.size()*count or weights.size()!=bones.size()):return AABB()
+		if native!=null:
+			var result:Dictionary=native.surface_bounds(vertices,bones if skinned else PackedInt32Array(),weights if skinned else PackedFloat32Array(),palette,mesh_transform,sk_transform)
+			if not result.ok:return AABB()
+			if not vertices.is_empty():
+				minimum=minimum.min(result.bounds.position);maximum=maximum.max(result.bounds.end)
+			continue
 		for index in vertices.size():
 			var vertex:=vertices[index]
 			var point:Vector3=mesh_transform*vertex

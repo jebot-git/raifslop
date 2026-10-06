@@ -1,5 +1,5 @@
 extends RefCounted
-## Shared waist frame for fishing and golf tools. Looking never turns tracked hips.
+## Shared waist frame for fishing tools. Looking never turns tracked hips.
 static func pose(head: Node3D, motor: Node3D, tracking: Node) -> Transform3D:
 	var basis := head.global_basis
 	var at := Vector3(head.global_position.x, maxf(motor.global_position.y + .55, head.global_position.y - .70), head.global_position.z)

@@ -26,17 +26,9 @@ func travel()->void:
 	if travelling or not Catalog.all().has(pending) or not is_instance_valid(host):return
 	if host.casting or host.game.state!=0 or host.avatar_loading:return
 	var target:Dictionary=Catalog.all()[pending]
-	var activity:Node=host.golf_activity
-	if is_instance_valid(activity) and activity.active:
-		if target.kind=="course" and activity.course_id==target.id:pending="";changed.emit();return
-		if activity.ball.moving:return
 	travelling=true
 	var accepted:=false
 	if target.kind=="water":accepted=host._select_location(target.id)
-	else:
-		if activity.active:activity.leave()
-		if not activity.active:await activity.enter(target.id)
-		accepted=activity.active and activity.course_id==target.id
 	if accepted:pending=""
 	travelling=false;changed.emit()
 func _process(_delta:float)->void:

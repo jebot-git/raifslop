@@ -9,7 +9,6 @@ const AvatarLibrary = preload("res://scripts/avatar_library.gd")
 const AvatarRig = preload("res://scripts/avatar_rig.gd")
 const AvatarMenu = preload("res://scripts/avatar_menu.gd")
 const Locations = preload("res://scripts/locations.gd")
-var golf_activity: Node
 var tracking_manager: Node
 var hand_actions: Node
 var ambience: Node
@@ -160,8 +159,6 @@ func _ready() -> void:
 		spectator.setup(self)
 	_start_network()
 	bbq=preload("res://scripts/bbq/activity.gd").new();add_child(bbq);bbq.setup(self)
-	golf_activity = preload("res://scripts/minigolf/activity.gd").new()
-	add_child(golf_activity); golf_activity.setup(self)
 	destinations=preload("res://scripts/progress/destinations.gd").new();add_child(destinations);destinations.setup(self)
 	avatar_menu.attach_achievements(progress,destinations)
 	print("Ultimate Boomer Simulator ready | ", "OpenXR" if xr else "XR test fixture", " | panorama + location foreground loaded")
@@ -226,6 +223,7 @@ func _build_environment() -> void:
 	var wm := ShaderMaterial.new()
 	water_material = wm
 	wm.shader = load("res://assets/environment/water.gdshader")
+	wm.set_shader_parameter("low_cost_reflections",OS.has_feature("quest_xr"))
 	var ripple_noise := FastNoiseLite.new()
 	ripple_noise.seed = 731
 	ripple_noise.frequency = .045
@@ -257,6 +255,8 @@ func _build_environment() -> void:
 func _build_rig() -> void:
 	var interface := XRServer.find_interface("OpenXR")
 	xr = interface != null and interface.is_initialized()
+	if xr and OS.has_feature("quest_xr"):
+		preload("res://scripts/quest_rendering.gd").configure(interface, get_viewport())
 	# Log the application API, selected runtime and renderer for support reports.
 	var xr_info := {
 		"api": "OpenXR" if xr else "XR test fixture",
@@ -408,7 +408,6 @@ func _save_user_settings() -> void:
 func _quit_game() -> void:
 	if quitting: return
 	quitting = true
-	if is_instance_valid(golf_activity):golf_activity.cancel_loading()
 	avatar_menu.quit_button.disabled = true
 	set_process(false)
 	motor.set_physics_process(false)
@@ -437,7 +436,6 @@ func _select_bait(index: int) -> void:
 	hud.queue_redraw()
 
 func _left_button(button: String) -> void:
-	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if menu_open and button == "trigger_click" and not right.get_has_tracking_data():
 		_menu_click(true); return
 	if is_instance_valid(bbq) and bbq.holds(0) and not fish_guide.held and not menu_open:
@@ -459,11 +457,9 @@ func _left_button(button: String) -> void:
 		_primary_action()
 
 func _left_released(button: String) -> void:
-	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if menu_open and button == "trigger_click" and not right.get_has_tracking_data(): _menu_click(false)
 
 func _right_pressed(button: String) -> void:
-	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if is_instance_valid(bbq) and bbq.holds(1) and not fish_guide.held and not menu_open and button!="by_button":
 		if button=="ax_button":bbq.use(1,bbq.hovered,true)
 		return
@@ -488,7 +484,6 @@ func _right_pressed(button: String) -> void:
 		_primary_action()
 
 func _right_released(button: String) -> void:
-	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if button=="primary_click":return
 	if rig_radial.opened:return
 	if fish_guide.held: return
@@ -765,12 +760,9 @@ func _update_tracking_warning(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	if xr:
-		var preparing:bool=not casting and game.state in [Session.State.READY,Session.State.LOST] and not menu_open and not rod_holster.stowed and not fish_guide.held and not rig_radial.opened and not (is_instance_valid(golf_activity) and golf_activity.active)
+		var preparing:bool=not casting and game.state in [Session.State.READY,Session.State.LOST] and not menu_open and not rod_holster.stowed and not fish_guide.held and not rig_radial.opened
 		if preparing:cast_preparation.sample(controller_local_pose(1),delta,right.get_has_tracking_data() and tracking_manager.focused)
 		else:cast_preparation.clear()
-	if is_instance_valid(golf_activity) and golf_activity.active:
-		golf_activity.update_player(delta)
-		return
 	if is_instance_valid(rod_visual): rod_visual.equip(game.tackle.equipped,game.is_fly_fishing(),game.is_feeder_fishing(),game.is_lure_fishing())
 	if server_only: return
 	if menu_open or fish_guide.held or rig_radial.opened or (xr and not tracking_was_valid) or game.state!=Session.State.WAITING:
@@ -1218,7 +1210,7 @@ func _build_avatar_menu() -> void:
 	avatar_menu_view = SubViewport.new()
 	avatar_menu_view.size = Vector2i(1000, 720)
 	avatar_menu_view.transparent_bg = true
-	avatar_menu_view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	avatar_menu_view.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	add_child(avatar_menu_view)
 	avatar_menu_view.add_child(avatar_menu)
 	avatar_menu.position = Vector2(50, 30)
@@ -1266,13 +1258,17 @@ func _build_avatar_menu() -> void:
 		if _select_location(id) and menu_open: _toggle_avatar_menu())
 
 func _panorama_texture(entry: Dictionary) -> Texture2D:
+	if OS.has_feature("debug") and "--reference-panorama" in OS.get_cmdline_user_args():
+		var raw_path:String="res://source/panorama_originals/"+entry.panorama.get_file()
+		if FileAccess.file_exists(raw_path):
+			var image:=Image.load_from_file(raw_path)
+			image.generate_mipmaps()
+			var texture:=ImageTexture.create_from_image(image)
+			texture.set_meta("reference_panorama",true)
+			return texture
 	return ResourceLoader.load(entry.panorama, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
 
 func _select_location(id: String, persist := true) -> bool:
-	if is_instance_valid(golf_activity):golf_activity.cancel_loading()
-	if is_instance_valid(golf_activity) and golf_activity.active:
-		golf_activity.leave()
-		if golf_activity.active:return false
 	var diagnostic_started:=Time.get_ticks_usec()
 	# Switching never silently discards a cast, fight, or unreleased catch.
 	if game.state != Session.State.READY or casting:
@@ -1307,7 +1303,7 @@ func _select_location(id: String, persist := true) -> bool:
 	location_sun.light_energy = entry.sun_energy
 	location_sun.light_angular_distance = entry.get("sun_angular_distance",.53)
 	water_material.set_shader_parameter("panorama",texture)
-	for setting in ["detail_strength","vibrance","shadow_lift"]:
+	for setting in ["detail_strength","vibrance","shadow_lift","panorama_preprocessed"]:
 		water_material.set_shader_parameter(setting,panorama_material.get_shader_parameter(setting))
 	water_material.set_shader_parameter("sky_inverse",Basis(Vector3.UP,-deg_to_rad(entry.yaw)))
 	water_material.set_shader_parameter("sky_energy",entry.get("sky_energy",1.0))
@@ -1368,6 +1364,7 @@ func _toggle_avatar_menu() -> void:
 	if avatar_loading: return
 	rig_radial.close()
 	menu_open = not menu_open
+	avatar_menu_view.render_target_update_mode = SubViewport.UPDATE_ALWAYS if menu_open else SubViewport.UPDATE_DISABLED
 	menu_filtered_position = Vector2(-1, -1)
 	if not menu_open: avatar_menu.close_overlays()
 	if not menu_open and menu_mouse_down:
@@ -1442,7 +1439,6 @@ func _import_avatar(path: String) -> void:
 		avatar_loading=false;avatar_menu.status.text="Avatar import is busy. Try again."
 
 func _attach_rod_to_hand(grip: Transform3D, source: Node3D) -> void:
-	if is_instance_valid(golf_activity) and golf_activity.active: return
 	if not xr or source != avatar or rod_holster.stowed: return
 	if is_instance_valid(hand_actions) and hand_actions.active[1]:grip=controller_pose(1)
 	rod.top_level = true
@@ -1472,17 +1468,7 @@ func _update_avatar(delta: float) -> void:
 		avatar.apply_tracking(motor.global_transform, tracking_manager.body if is_instance_valid(tracking_manager) else {}, tracking_manager.face if is_instance_valid(tracking_manager) else {})
 		var right_hand:Node3D=calibrated_hands[1]
 		var left_hand:Node3D=calibrated_hands[0]
-		var support=null
-		if is_instance_valid(golf_activity) and golf_activity.active and golf_activity.support_hand.engaged:
-			support=golf_activity.support_hand
-			if support.hand==0:left_hand=support
-			else:right_hand=support
 		avatar.update_targets(head, left_hand, right_hand, motor.global_position.y, motor.last_motion, delta)
-		if support!=null:
-			# Visual IK only: putting still samples the real striking controller.
-			var side:String="left" if support.hand==0 else "right"
-			for suffix in ["_hand","_elbow","_finger_rotations"]:avatar.xr_pose.body.erase(side+suffix)
-			avatar.xr_pose.body[side+"_curls"]=PackedFloat32Array([.8,.8,.8,.8,.8])
 		avatar.left_curl = left.get_float("grip") * 0.8
 		avatar_menu.update_preview(avatar)
 

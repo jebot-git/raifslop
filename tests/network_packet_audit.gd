@@ -1,7 +1,6 @@
 extends SceneTree
 ## Offline fixtures + loopback RPC serialization. No VR, EOS login or game scene.
 const State = preload("res://scripts/network/state.gd")
-const Courses = preload("res://scripts/minigolf/catalog.gd")
 class Tap extends "res://scripts/network/threaded_peer.gd":
 	var sizes: Array = []
 	func _put_packet_script(bytes: PackedByteArray) -> Error:
@@ -18,8 +17,6 @@ class Wire extends Node:
 	func chunk(_hash: String, _offset: int, _bytes: PackedByteArray) -> void: pass
 	@rpc("authority", "call_remote", "reliable", 0)
 	func bbq(_location: String, _state: Dictionary, _clock: float) -> void: pass
-	@rpc("authority", "call_remote", "reliable", 0)
-	func golf(_state: Dictionary, _ranking: Dictionary) -> void: pass
 	@rpc("authority", "call_remote", "reliable", 0)
 	func board(_ranking: Dictionary) -> void: pass
 	@rpc("authority", "call_remote", "reliable", 0)
@@ -89,11 +86,6 @@ func _run() -> void:
 		await sample("pose_relay", "relay", [2147483000, player()])
 		await sample("pose_hips_feet_face", "relay", [2147483000, player(4, true)])
 		await sample("pose_full_body_face", "relay", [2147483000, player(10, true)])
-	var golf_pose := player(10, true)
-	golf_pose.location = "golf_%s_00" % Courses.ALL[0]; golf_pose.golf_club = 3
-	assert(State.valid(golf_pose))
-	if not framed: await sample("pose_golf_full_body", "relay", [2147483000,golf_pose])
-	await sample("compact_golf_pose", "packed_relay", [2147483000, preload("res://scripts/network/pose_codec.gd").encode(golf_pose)])
 	for count in [0,4,10]:
 		await sample("compact_pose_%d" % count, "packed_relay", [2147483000, preload("res://scripts/network/pose_codec.gd").encode(player(count, true))])
 	var base := player(); var full := player(10,true)
@@ -115,29 +107,10 @@ func _run() -> void:
 	model.apply("lakeside",2,1,"grab",6)
 	var update:Dictionary=replication.build(initial.baseline,"lakeside",model.stations.lakeside,121.0)
 	await sample("bbq_one_item_delta", "delta", [update.data])
-	var game := preload("res://scripts/minigolf/course_session.gd").new()
-	for i in 8: assert(game.command(str(i), "Player %d" % i,"join",{"course":Courses.ALL[0],"mode":"competition"},0))
-	assert(game.command("0","Player 0","start",{},0))
-	var records: Dictionary = {}
-	for i in 50:
-		records[str(i)] = {"name":"Player %02d" % i,"golf":{}}
-		for course in Courses.ALL: records[str(i)].golf[course] = {"rounds":5,"forfeits":1,"best":72,"last":76}
-	var ranking := preload("res://scripts/minigolf/server_records.gd").snapshot(records)
-	await sample("golf_competition_no_records", "golf", [game.view("0"),{}])
-	await sample("golf_competition_50_records_per_course", "golf", [game.view("0"),ranking])
 	var board := preload("res://scripts/network/leaderboard.gd").new()
 	for i in 50:
 		board.connect_player(i + 1,str(i).sha256_text(),"Player %02d" % i)
-		var row: Dictionary = board.records[board.peers[i + 1]]
-		row.golf = records[str(i)].golf.duplicate(true)
-	await sample("fishing_leaderboard_50_with_golf", "board", [board.snapshot()])
-	for row in board.records.values():
-		for course in row.golf:
-			row.golf[course].history = []
-			for i in 20: row.golf[course].history.append({"time":1700000000.0+i,"differential":float(i)})
-	await sample("fishing_leaderboard_50_with_golf_history", "board", [board.snapshot()])
 	await sample("fishing_page_10", "page", [1,{"kind":"fishing","key":"catches","page":0,"total":50,"players":50,"rows":board.category_rows("catches").slice(0,10)}])
-	await sample("golf_page_10", "page", [2,{"kind":"golf","key":Courses.ALL[0],"page":0,"total":50,"players":50,"rows":ranking[Courses.ALL[0]].slice(0,10)}])
 	var enc = preload("res://tests/opus_fixture.gd").encoder()
 	var voice_sizes: Array = []
 	for i in 50: voice_sizes.append(preload("res://tests/opus_fixture.gd").packet(enc,i*960).size())

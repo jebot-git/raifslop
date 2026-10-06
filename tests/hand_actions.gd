@@ -56,6 +56,7 @@ func run()->void:
 	await tick(40);check(g.menu_open,"Holding menu gesture toggles once")
 
 	# Point a real hand ray at a menu button, then pinch/release through UI input.
+	g.avatar_menu.show_page("settings");await tick(8)
 	var button:Button=g.avatar_menu.pages.controls.button
 	var pixel:Vector2=button.get_global_rect().get_center()
 	var target:Vector3=g.origin.to_local(g.avatar_panel.to_global(Vector3((pixel.x/1000-.5)*1.8,(.5-pixel.y/720)*1.296,0)))
@@ -123,22 +124,7 @@ func run()->void:
 	g.tracking_manager.focused=false;await tick()
 	check(not g.hand_actions.active[0] and not g.hand_actions.active[1],"Focus loss releases both hands")
 	g.tracking_manager.focused=true;await neutral()
-	# The replacement putter consumes the same optical controller grip state.
-	g.golf_activity.enter(g.current_location)
-	var golf=g.golf_activity;golf.set_physics_process(false);golf.toggle_menu(false)
-	g.tracking_manager.calibration_pending=false;g.tracking_manager.startup_settle_frames=0
-	golf.fitting.mounted[1]=true
-	await neutral();golf.update_player(.02)
-	check(not golf.swing.armed_before,"An open hand leaves minigolf disarmed")
-	pose(1,false,false,true);await tick(3);golf.update_player(.02)
-	check(golf.swing.armed_before,"Curling the striking hand arms minigolf")
-	var old_head:Vector3=golf.physical_head.global_position
-	positions[1].x+=.08;pose(1,false,false,true);await tick();golf.update_player(.02)
-	check(golf.physical_head.global_position.distance_to(old_head)>.06,"Optical wrist moves the fitted putter")
-	pose(1);await tick();golf.update_player(.02)
-	check(not golf.swing.armed_before,"Opening the hand disarms the putter")
-
-	g.golf_activity.leave();g.queue_free();await process_frame
+	g.queue_free();await process_frame
 	for hand in hands:XRServer.remove_tracker(hand)
 	for device in hardware:XRServer.remove_tracker(device)
 	await create_timer(.2).timeout

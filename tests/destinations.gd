@@ -5,25 +5,16 @@ class Intent extends RefCounted:
 	var lobby:=""
 	func get_destination_api_name()->String:return destination
 	func get_lobby_session_id()->String:return lobby
-class Activity extends Node:
-	var active:=false
-	var member:=false
-	var course_id:=""
-	var ball:Dictionary={"moving":false}
-	func enrolled()->bool:return member
-	func leave()->void:active=false
-	func enter(id:String)->void:active=true;course_id=id
 class Host extends Node:
 	var casting:=false
 	var avatar_loading:=false
 	var game:Dictionary={"state":0}
-	var golf_activity=Activity.new()
 	var selected:=""
 	func _select_location(id:String)->bool:
-		selected=id;golf_activity.leave();return true
+		selected=id;return true
 func _initialize()->void:run.call_deferred()
 func run()->void:
-	var host=Host.new();root.add_child(host);host.add_child(host.golf_activity)
+	var host=Host.new();root.add_child(host)
 	var router=Destinations.new();root.add_child(router);router.setup(host);router.set_process(false)
 	var intent=Intent.new()
 	router.read_intent(intent)
@@ -33,11 +24,8 @@ func run()->void:
 	host.casting=false;await router.travel()
 	assert(host.selected=="meadow_bend" and router.pending.is_empty())
 	intent.destination="course_lake_pier";router.read_intent(intent);await router.travel()
-	assert(host.golf_activity.active and host.golf_activity.course_id=="lake_pier")
-	host.golf_activity.ball.moving=true;intent.destination="water_lakeside";router.read_intent(intent);await router.travel()
-	assert(router.pending=="water_lakeside" and host.golf_activity.active)
-	host.golf_activity.ball.moving=false;await router.travel()
-	assert(host.selected=="lakeside" and not host.golf_activity.active)
+	assert(host.selected=="meadow_bend" and router.pending.is_empty())
+	intent.destination="water_lakeside";router.read_intent(intent);await router.travel()
 	intent.destination="unknown";router.read_intent(intent,true);await process_frame
 	assert(router.pending.is_empty())
 	intent.destination="water_cedar_creek";intent.lobby="invited-lobby";router.read_intent(intent,true);await process_frame

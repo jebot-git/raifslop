@@ -16,24 +16,22 @@ func run()->void:
  for i in 63:
   net.leaderboard.connect_player(i+1,"%064x"%i,"Angler %02d"%i)
   var row:Dictionary=net.leaderboard.records.values()[i];row.catches=100-i
-  var scores:Array=[];scores.resize(18);scores.fill(i+1)
-  Pages.Golf.finish(net.leaderboard.records,net.leaderboard.peers[i+1],"lakeside",scores)
  var names:Array=[]
  for p in 5:
   var data:Dictionary=net.rankings.make_page("fishing","catches",p)
   check(Pages.valid_page(data) and data.rows.size()==10 and data.total==50 and data.players==63,"Bounded fishing page %d"%p)
   for row in data.rows:names.append(row.name)
  check(names.size()==50 and names[0]=="Angler 00" and names[49]=="Angler 49","Pages preserve sorted rank without overlaps")
- var golf:Dictionary=net.rankings.make_page("golf","lakeside",1)
- check(Pages.valid_page(golf) and golf.rows[0].best==198 and not str(golf).contains("history"),"Golf page excludes score history and other courses")
+ var page_data:Dictionary=net.rankings.make_page("fishing","catches",1)
+ check(net.rankings.make_page("golf","lakeside",1).is_empty(),"Removed rankings rejected")
  for bad in [-1,5,999]:check(net.rankings.make_page("fishing","catches",bad).is_empty(),"Reject out-of-range page")
  check(not Pages.valid_query("fishing","lakeside",0) and not Pages.valid_query("golf","catches",0),"Reject wrong category/course")
  net.rankings.serial=3
- net.rankings._receive(2,golf)
+ net.rankings._receive(2,page_data)
  check(net.rankings.view.is_empty(),"Stale response cannot replace newer selection")
- net.rankings._receive(3,golf)
- check(net.rankings.view==golf,"Current response accepted")
- var bad:Dictionary=golf.duplicate(true);bad.rows.append(bad.rows[0])
+ net.rankings._receive(3,page_data)
+ check(net.rankings.view==page_data,"Current response accepted")
+ var bad:Dictionary=page_data.duplicate(true);bad.rows.append(bad.rows[0])
  check(not Pages.valid_page(bad),"Oversized page rejected")
  net.leaderboard.records.clear()
  check(Pages.valid_page(net.rankings.make_page("fishing","earned",0)),"Empty standings remain valid")

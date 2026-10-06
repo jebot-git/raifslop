@@ -32,6 +32,8 @@ func start(settings:Dictionary,eos_backend:Node,meta_provider:Node)->void:
 		var data=JSON.parse_string(file.get_as_text())
 		if not data is Dictionary or data.get("version")!=1:status="Invalid online achievement outbox.";return
 		for key in ["wanted","eos","meta"]:
+			if data.get(key) is Dictionary:
+				for retired in ["ubs_first_round","ubs_birdie"]:data[key].erase(retired)
 			if not valid_ids(data.get(key)):status="Invalid online achievement outbox.";return
 		wanted=data.wanted;eos_done=data.eos;meta_done=data.meta
 	enabled=true;due=0

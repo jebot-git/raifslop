@@ -91,7 +91,7 @@ func ingest(journal: Array) -> bool:
 		elif length > float(entries[id].length):
 			entries[id].length = length
 			changed = true
-	if changed and is_instance_valid(screen): screen.queue_redraw()
+	if changed and is_instance_valid(screen): redraw()
 	return changed
 
 static func discovery_hint(index: int) -> Dictionary:
@@ -134,7 +134,7 @@ func ordered_entries() -> Array:
 func page(direction: int) -> void:
 	if is_instance_valid(photo_camera) and photo_camera.active: return
 	selected = posmod(selected + 1 + direction, Session.SPECIES.size() + 1) - 1
-	if is_instance_valid(screen): screen.queue_redraw()
+	if is_instance_valid(screen): redraw()
 
 func _ready() -> void:
 	device = Node3D.new()
@@ -175,7 +175,7 @@ func _ready() -> void:
 	viewport = SubViewport.new()
 	viewport.size = Vector2i(640, 840)
 	viewport.transparent_bg = false
-	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	add_child(viewport)
 	screen = preload("res://scripts/fish_guide_screen.gd").new()
 	screen.guide = self
@@ -211,7 +211,7 @@ func dock() -> void:
 		photo_camera.view.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	stick_latched = false
 	reset_touch()
-	screen.queue_redraw()
+	redraw()
 
 func dock_grip_position() -> Vector3:
 	return belt_transform * GRIP_ANCHOR
@@ -283,7 +283,7 @@ func can_grab() -> bool:
 
 func update_device() -> void:
 	if held and not can_grab(): dock()
-	if held: screen.queue_redraw()
+	if held: redraw()
 	var g = game_root
 	var mount := preload("res://scripts/tracking/hip_mount.gd").pose(g.head, g.motor, g.tracking_manager)
 	var facing := mount.basis
@@ -297,7 +297,7 @@ func update_device() -> void:
 	if held and not down: dock()
 	if not held and can_grab() and down and not grip_was_down and not g.menu_open and not (is_instance_valid(g.shoulder_radio) and g.shoulder_radio.held) and g.controller_pose(0).origin.distance_to(dock_grip_position()) < 0.22:
 		held = true
-		screen.queue_redraw()
+		redraw()
 	grip_was_down = down
 	if held:
 		# Fixed grip-relative pose: the player can naturally turn the screen over.
@@ -313,3 +313,7 @@ func update_device() -> void:
 		else:stick_latched=false
 	else: global_transform = belt_transform
 	visible = true
+
+func redraw() -> void:
+	if is_instance_valid(screen):screen.queue_redraw()
+	if is_instance_valid(viewport):viewport.render_target_update_mode=SubViewport.UPDATE_ONCE

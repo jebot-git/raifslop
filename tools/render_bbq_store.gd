@@ -11,5 +11,5 @@ func run()->void:
  game.hud.hide()
  await create_timer(.5).timeout;await RenderingServer.frame_post_draw
  var frame:Image=viewport.get_texture().get_image();frame.convert(Image.FORMAT_RGB8)
- var code:=frame.save_png("res://test-results/minigolf-store/bbq-lakeside.png");print("BBQ_STORE ",code)
+ var code:=frame.save_png("res://test-results/bbq-store/bbq-lakeside.png");print("BBQ_STORE ",code)
  game.ambience.stop();game.queue_free();await process_frame;quit(code)

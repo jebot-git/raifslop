@@ -23,7 +23,7 @@ func run():
  check(await wait_for(func():return net.active),"Handshake completes without ranking transfer")
  check(net.leaderboard_view.is_empty() and net.rankings.view.is_empty(),"No unsolicited fishing rankings")
  if role=="writer":
-  var d:Dictionary={"user_height":1.78,"golf_club":-1,"golf_stowed":false,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"serial":0,"location":"fish_hoek_beach","rod_tier":0,"rig":2,"reel_angle":0.0,"state":0,"bait":2,"species":39,"length":Net.State.Fish.SPECIES[39].length*1.14,"caught":false,"in_hand":false,"xr":false,"left_valid":true,"right_valid":true,"bobber_visible":false,"bait_visible":true,"curl":0.0}
+  var d:Dictionary={"user_height":1.78,"body":{},"face":{},"visemes":PackedFloat32Array([0,0,0,0,0]),"serial":0,"location":"fish_hoek_beach","rod_tier":0,"rig":2,"reel_angle":0.0,"state":0,"bait":2,"species":39,"length":Net.State.Fish.SPECIES[39].length*1.14,"caught":false,"in_hand":false,"xr":false,"left_valid":true,"right_valid":true,"bobber_visible":false,"bait_visible":true,"curl":0.0}
   for key in Net.State.TRANSFORMS:d[key]=Transform3D.IDENTITY
   for key in Net.State.VECTORS:d[key]=Vector3.ZERO
   check(Net.State.valid(d),"Wire fixture validates")

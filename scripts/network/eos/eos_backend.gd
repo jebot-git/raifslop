@@ -65,8 +65,8 @@ func _call(method: String, values: Dictionary) -> Dictionary:
 	return await requests.eos(sdk, method, method + "_callback", Options.new(values))
 
 func login(identity: Dictionary, refresh_identity: Callable = Callable()) -> String:
-	if identity.type == 10: # EOS_ECT_DEVICEID_ACCESS_TOKEN, stable across test launches.
-		var device := await _call("connect_interface_create_device_id", {"device_model":"UBS desktop test"})
+	if identity.type == 10: # EOS_ECT_DEVICEID_ACCESS_TOKEN, stable across desktop launches.
+		var device := await _call("connect_interface_create_device_id", {"device_model":"UBS desktop"})
 		if device.get("result_code") not in [0, 24]: return "EOS device identity failed (%d)." % device.get("result_code", -1)
 	var credentials := Options.new({"type":identity.type,"token":identity.get("token")})
 	# EOS requires UserLoginInfo for OculusUseridNonce as well as Device ID.

@@ -73,6 +73,8 @@ def copy_notices(out):
 
 
 def main():
+    from build_fishing_native import require_build
+    require_build('windows')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT / 'builds/WindowsDebug')
     parser.add_argument('--package-only', action='store_true')
@@ -98,7 +100,7 @@ def main():
                                    ['SCRIPT ERROR:', 'Cannot export project', 'Export failed', 'HDR compression failed']):
             raise SystemExit(f'Export failed: {out / "export.log"}')
         for name in ['UltimateBoomerSimulator.exe', 'UltimateBoomerSimulator.pck', 'libgodotopenxrvendors.dll',
-                     'libtwovoip.windows.template_debug.x86_64.dll']:
+                     'libtwovoip.windows.template_debug.x86_64.dll','libfishing_native.dll']:
             if not (out / name).is_file():
                 raise SystemExit(f'Missing debug runtime: {name}')
         (out / 'Desktop.cmd').unlink(missing_ok=True)

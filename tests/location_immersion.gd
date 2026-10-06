@@ -20,7 +20,7 @@ func run():
 	for entry in g.Locations.CATALOG:
 		var id:String=entry.id
 		check(g._select_location(id,false),"Travel "+id)
-		check(g.water_material.get_shader_parameter("boulder_pockets")== (id=="boulder_run"),"Rock wake state resets on travel")
+		check(g.water_material.get_shader_parameter("boulder_pockets")== (id in ["boulder_run","glacier_run"]),"Rock wake state resets on travel")
 		if id in ["meadow_bend","boulder_run"]:
 			var path:String="res://assets/textures/lighting/"+id+"_irradiance.exr"
 			var config:=ConfigFile.new();check(config.load(path+".import")==OK,"River bake import settings available")
@@ -30,10 +30,12 @@ func run():
 			var banks:=0
 			for node in g.foreground.find_children("*","MeshInstance3D",true,false):
 				var mat:Material=node.material_override
-				if mat is ShaderMaterial and mat.shader.resource_path.ends_with("bank.gdshader"):
+				if mat is ShaderMaterial and (mat.shader.resource_path.ends_with("bank.gdshader") or mat.shader.resource_path.ends_with("bank_baked.gdshader")):
 					banks+=1
 					check(mat.get_shader_parameter("has_bake"),"HDR river bank bake loaded")
-					check(mat.get_shader_parameter("irradiance").get_width()==1024,"Full precision atlas available")
+					if mat.shader.resource_path.ends_with("bank_baked.gdshader"):
+						check(mat.get_shader_parameter("baked_emission").get_width()==8192,"Full-length material atlas available")
+					else:check(mat.get_shader_parameter("irradiance").get_width()==1024,"Full precision atlas available")
 					check(node.mesh.surface_get_arrays(0)[Mesh.ARRAY_TANGENT]!=null,"Bank has normal-map tangents")
 			check(banks==4,"Both terrain strips on both banks retained")
 			var stones:MultiMeshInstance3D=g.foreground.get_node("InstancedRiverStones")

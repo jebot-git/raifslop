@@ -15,9 +15,8 @@ const SITES := {
  "glacier_run": [Vector3(3.0,.05,2.0),0.0],
 }
 static func supported(location:String)->bool:
- return SITES.has(location) or preload("res://scripts/minigolf/host_locations.gd").is_clubhouse(location)
+ return SITES.has(location)
 static func pose(location:String) -> Transform3D:
- if preload("res://scripts/minigolf/host_locations.gd").valid(location):return preload("res://scripts/minigolf/host_locations.gd").pose(location)
  var site:Array=SITES.get(location,[Vector3.ZERO,0.0])
  return Transform3D(Basis(Vector3.UP,site[1]),site[0])
 static func arrival(location:String,seat:=0) -> Vector3:

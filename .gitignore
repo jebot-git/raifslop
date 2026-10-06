@@ -17,7 +17,3 @@ source/models/locations/
 
 # Optional, pinned EOSG native bindings installed by tools/eos/setup_lab.py --game.
 addons/epic-online-services-godot/
-
-# Reproducible light-bake intermediates; keep compiled maps and Blender sources.
-source/minigolf/lighting/*-geometry.json
-source/minigolf/lighting/*-uv2.json

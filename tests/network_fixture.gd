@@ -3,7 +3,7 @@ const State = preload("res://scripts/network/state.gd")
 static func player(body_count: int = 0, face: bool = false) -> Dictionary:
 	var data := {"user_height":1.78,"serial":124,"location":"lakeside","body":{},"face":{},
 		"visemes":PackedFloat32Array([.15,.28,.32,.01,.03]),"state":0,"bait":0,"species":0,
-		"rod_tier":0,"rig":0,"length":10.0,"curl":.3,"reel_angle":.712,"golf_club":-1,"golf_stowed":false}
+		"rod_tier":0,"rig":0,"length":10.0,"curl":.3,"reel_angle":.712}
 	var i := 0
 	for key in State.TRANSFORMS:
 		i += 1; data[key] = Transform3D(Basis.from_euler(Vector3(.12*i,.24*i,.07*i)), Vector3(10.125+i*.1,1.75,-25.873+i*.3))

@@ -10,10 +10,6 @@ var left := Node3D.new()
 var right := Node3D.new()
 var rod := Node3D.new()
 var rod_visual: Node3D
-var golf_club:Node3D
-var golf_head:Node3D
-var golf_ball:=MeshInstance3D.new()
-var golf_index:=-1
 var caught := Node3D.new()
 var float_mesh: MeshInstance3D
 var bait_visual: Node3D
@@ -41,7 +37,6 @@ func _ready() -> void:
 	# Visible while a custom VRM is transferring; never creates a local camera.
 	game.box(fallback,Vector3(0,1.05,0),Vector3(.35,.6,.20),game.material(Color("4d7667")))
 	game.box(fallback,Vector3(0,1.55,0),Vector3(.20,.23,.20),game.material(Color("bf9f84")))
-	var ball_mesh:=SphereMesh.new();ball_mesh.radius=.021335;ball_mesh.height=.04267;golf_ball.mesh=ball_mesh;add_child(golf_ball);golf_ball.hide()
 	visible=false
 
 func set_avatar(model: Node3D, hash: String) -> void:
@@ -52,10 +47,8 @@ func set_avatar(model: Node3D, hash: String) -> void:
 	next.first_person=false
 	avatar=next; avatar_hash=hash; fallback.hide()
 	next.right_grip_updated.connect(_attach_rod_to_hand.bind(next))
-	next.hand_attachments_updated.connect(_attach_golf_to_hand.bind(next))
 
 func _attach_rod_to_hand(grip: Transform3D, source: Node3D) -> void:
-	if not target.is_empty() and target.golf_club>=0:return
 	if source != avatar or target.is_empty() or not target.xr or rod_visual.folded: return
 	rod.global_transform=grip*preload("res://scripts/rod_holster.gd").HELD_POSE
 	rendered.tip=rod.to_global(Vector3(0,0,-1.68))
@@ -92,7 +85,7 @@ func _build_fish(index: int, length_cm: float) -> void:
 
 func _process(delta: float) -> void:
 	if target.is_empty(): return
-	visible=preload("res://scripts/minigolf/host_locations.gd").same_world(target.location,session.root_game.current_location)
+	visible=target.location==session.root_game.current_location
 	if not visible: return
 	if target.caught and fish_key!=[target.species,target.length]:
 		fish_key=[target.species,target.length]
@@ -109,22 +102,7 @@ func _process(delta: float) -> void:
 	rod_visual.set_folded(preload("res://scripts/rod_holster.gd").remote_stowed(target))
 	rod_visual.crank.rotation.x=lerp_angle(rod_visual.crank.rotation.x,target.reel_angle,blend)
 	rod.global_transform=rendered.rod; caught.global_transform=rendered.fish
-	rod.visible=target.golf_club<0
-	golf_ball.visible=target.golf_club>=0 and not target.location.ends_with("_clubhouse");golf_ball.global_position=rendered.bobber
-	if golf_index!=target.golf_club:
-		if is_instance_valid(golf_club):golf_club.queue_free();golf_club=null
-		golf_index=target.golf_club
-		if golf_index>=0:
-			var kind:String="putter"
-			golf_club=load("res://assets/minigolf/models/%s.glb"%kind).instantiate();add_child(golf_club)
-			for part in golf_club.get_children():
-				if "finished head" in str(part.name):golf_head=part;break
-	if is_instance_valid(golf_club):
-		preload("res://scripts/minigolf/club_style.gd").apply(golf_club,target.rod_tier)
-		golf_club.global_transform=rendered.rod
-		golf_club.scale.y=clampf(target.reel_angle,.35,1.6)
-		if is_instance_valid(golf_head):golf_head.global_transform=rendered.fish
-		golf_club.visible=not target.golf_stowed
+	rod.visible=true
 	caught.visible=target.caught
 	float_mesh.global_position=rendered.bobber
 	var fly_mode:bool=Fish.Fly.river(target.location) and target.rig==0
@@ -177,8 +155,3 @@ func _draw_line() -> void:
 				line.surface_add_vertex(rendered.tip.lerp(rendered.bobber,t)-Vector3.UP*sin(t*PI)*.15)
 			if bait_visual.visible and target.rig!=1:line.surface_add_vertex(rendered.bait_position)
 		line.surface_end()
-
-func _attach_golf_to_hand(_source:Node3D)->void:
-	# Protocol 20 sends the accepted controller/shaft and independent face poses.
-	# Avatar IK must not override mounted offsets or the calibrated club length.
-	pass

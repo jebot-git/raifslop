@@ -2,6 +2,7 @@ uniform sampler2D panorama : source_color, filter_linear_mipmap, repeat_enable;
 uniform float detail_strength : hint_range(0.0, 0.8) = 0.5;
 uniform float vibrance : hint_range(1.0, 1.1) = 1.025;
 uniform float shadow_lift : hint_range(0.0, 0.04) = 0.015;
+uniform bool panorama_preprocessed = false;
 vec2 panorama_uv(vec3 direction) {
 	vec3 d = normalize(direction);
 	return vec2(fract(atan(d.x, -d.z) / TAU + 1.0), acos(clamp(d.y, -1.0, 1.0)) / PI);
@@ -27,6 +28,7 @@ vec3 panorama_grade(vec3 color) {
 vec3 panorama_sample(vec3 direction, bool sharpen) {
 	vec2 uv = panorama_uv(direction);
 	vec3 center = panorama_texel(uv);
+	if (panorama_preprocessed) return center;
 	if (sharpen && detail_strength > 0.0) {
 		vec2 texel = 1.0 / vec2(textureSize(panorama,0));
 		vec3 surround = (panorama_texel(uv+vec2(texel.x,0.0))+panorama_texel(uv-vec2(texel.x,0.0))

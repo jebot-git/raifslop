@@ -35,13 +35,8 @@ func run()->void:
 	host.avatar_menu._open_import()
 	check(host.avatar_menu.vrm_browser.visible,"Avatar import opens the in-world browser")
 	host.avatar_menu.close_overlays()
-	host.golf_activity.enter(host.current_location)
-	var golf=host.golf_activity;golf.set_physics_process(false);host.xr=true
-	var hole:int=golf.hole;pose=host.head.transform
-	keys();await process_frame
-	check(golf.hole==hole and not golf.ball.moving and not golf.guide.held and host.head.transform==pose,"Desktop test controls do not affect VR play")
-	check(host.avatar_menu.pages.has("minigolf"),"Minigolf uses the shared spatial menu")
-	golf.leave();host.ambience.stop();host.queue_free()
 
+	check(not host.avatar_menu.pages.has("minigolf"),"Removed activity has no menu entry")
+	host.ambience.stop();host.queue_free()
 	await process_frame;await create_timer(.2).timeout
 	print("VR_ONLY_RESULT ",failures);quit(0 if failures.is_empty() else 1)

@@ -1,7 +1,7 @@
 """Reconstruct textured fish from retained side references and reviewed anatomy landmarks.
 Run in Blender. Original roach/tench/bream/zander/perch assets are preserved.
 """
-import bpy, math, json, sys, numpy as np
+import bpy, bmesh, math, json, sys, numpy as np
 from pathlib import Path
 from mathutils import Vector
 from mathutils.geometry import tessellate_polygon
@@ -54,6 +54,7 @@ def build(name,d):
   center=(top+bottom)/2;radius=(bottom-top)/2
   for j in range(N+1):
    a=j/N*math.tau;y=center-radius*math.sin(a)
+   geometry=pos(x,y,width*math.cos(a))
    px=x
    # Keep silhouette samples inside the skin instead of projecting the white backdrop.
    for attempt in range(16):
@@ -64,12 +65,18 @@ def build(name,d):
     row=pixels[H-1-min(H-1,max(0,int(y))),:,:3].min(axis=1)
     colored=np.where((row<.92)&(np.arange(W)>d['eye'][0]))[0]
     if len(colored):px=min(x,float(colored[-1])-2)
-   verts.append(pos(px,y,width*math.cos(a)));coords.append(body_uv.sample(px,y,width*math.cos(a)))
+   verts.append(geometry);coords.append(body_uv.sample(px,y,width*math.cos(a)))
  for i in range(len(dense)-1):
   for j in range(N):
    a=i*(N+1)+j;faces.append((a,a+1,a+N+2,a+N+1))
  faces.extend([tuple(reversed(range(N+1))),tuple((len(dense)-1)*(N+1)+j for j in range(N+1))])
  body=mesh(name+' reconstructed body',verts,faces,mat,coords)
+ # Weld the duplicated radial UV seam geometrically; UVs remain per-loop.
+ bm=bmesh.new();bm.from_mesh(body.data)
+ bmesh.ops.remove_doubles(bm,verts=list(bm.verts),dist=1e-7)
+ bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+ assert all(edge.is_manifold for edge in bm.edges), 'Body must be watertight'
+ bm.to_mesh(body.data);bm.free();body.data.update()
  # Thin fin surfaces follow the photographed contour. Only external fins/tail are kept;
  # body and cheek are fully volumetric, not a billboard.
  mask=(pixels[:,:,:3].min(axis=2)<.94)

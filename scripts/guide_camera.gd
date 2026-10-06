@@ -58,13 +58,13 @@ func toggle() -> void:
 	active = not active
 	status = "Photos saved in " + ProjectSettings.globalize_path(PHOTO_DIR)
 	if not active: view.render_target_update_mode = SubViewport.UPDATE_DISABLED
-	guide.screen.queue_redraw()
+	guide.redraw()
 
 func toggle_selfie() -> void:
 	if not active or busy: return
 	selfie = not selfie
 	update_pose()
-	guide.screen.queue_redraw()
+	guide.redraw()
 
 func update_pose() -> void:
 	var game = guide.game_root
@@ -124,17 +124,17 @@ func _process(delta: float) -> void:
 	refresh_time = 0.1
 	update_pose()
 	view.render_target_update_mode = SubViewport.UPDATE_ONCE
-	guide.screen.queue_redraw()
+	guide.redraw()
 
 func capture() -> void:
 	if not active or not guide.held or busy: return
 	if DisplayServer.get_name() == "headless":
 		status = "Photos need a running graphics renderer."
-		guide.screen.queue_redraw()
+		guide.redraw()
 		return
 	busy = true
 	status = "Taking photo…"
-	guide.screen.queue_redraw()
+	guide.redraw()
 	update_pose()
 	view.size = PHOTO_SIZE
 	# Two draws allow the resized render target to settle before readback.
@@ -149,7 +149,7 @@ func capture() -> void:
 		_finish_save(ERR_CANT_CREATE, "")
 		return
 	var stamp := Time.get_datetime_string_from_system().replace(":", "-")
-	var prefix:="golf" if guide.has_method("camera_controls") else "fishing"
+	var prefix:="fishing"
 	var path := PHOTO_DIR.path_join("%s_%s_%d.png" % [prefix,stamp, Time.get_ticks_usec()])
 	status = "Saving photo…"
 	# PNG compression and disk writes cannot stall the render/network dispatch.
@@ -171,4 +171,4 @@ func _finish_save(error: Error,path: String) -> void:
 		saved.emit(last_path)
 	else:
 		status = "Could not save photo (%s)." % error_string(error)
-	if is_instance_valid(guide):guide.screen.queue_redraw()
+	if is_instance_valid(guide):guide.redraw()

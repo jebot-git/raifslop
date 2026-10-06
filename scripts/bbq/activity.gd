@@ -40,6 +40,9 @@ var opened_cans:Dictionary={}
 var smoke:GPUParticles3D
 var hovered:=-1
 var splash_age:=0.0
+var previous_hands:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
+var hand_velocity:Array[Vector3]=[Vector3.ZERO,Vector3.ZERO]
+var hand_sample_valid:Array[bool]=[false,false]
 
 func setup(root:Node3D) -> void:
  g=root;service=g.network.bbq
@@ -182,15 +185,11 @@ func refresh() -> void:
  if active and not is_instance_valid(station):_build_station()
  if not active and is_instance_valid(station):station.free();station=null;item_nodes.clear();food_materials.clear()
  visit_button.text="Visit shared BBQ" if active else "Start BBQ & visit"
- return_button.text="Return to course" if is_instance_valid(g.golf_activity) and g.golf_activity.active else "Return to fishing spot"
+ return_button.text="Return to fishing spot"
  return_button.disabled=not visiting or transitioning
  status.text="A shared BBQ is running here. Come and go whenever you like." if active else "Start a gathering at this water. Anyone can join."
 
 func visit() -> void:
- if is_instance_valid(g.golf_activity) and g.golf_activity.active:
-  if g.golf_activity.ball.moving:return
-  g.golf_activity.guide.dock();g.golf_activity.swing.reset()
-  if g.network.active:g.golf_activity.service.request("presence",{"present":false})
  if transitioning:return
  if g.game.state!=g.Session.State.READY:
   status.text="Finish your cast and release the catch before visiting.";return
@@ -198,15 +197,12 @@ func visit() -> void:
   return_at=g.motor.global_position;return_safe=g.motor.safe_spawn;return_location=location
   return_yaw=atan2(g.head.global_basis.z.x,g.head.global_basis.z.z)
  visiting=true
- if is_instance_valid(g.golf_activity) and g.golf_activity.active:
-  g.golf_activity.club.hide()
  g.fish_guide.dock();g.shoulder_radio.reset();g.rod_holster.set_stowed(true)
  service.request("start")
  var seat:int=(service.local_id()-1)%8
  _move(Sites.arrival(location,seat))
 
 func return_to_water() -> void:
- if is_instance_valid(g.golf_activity) and g.golf_activity.active and g.network.active:g.golf_activity.service.request("presence",{"present":true})
  if transitioning or not visiting:return
  release_all();visiting=false
  _move(return_at if return_location==location else g.foreground.get_meta("spawn",Vector3(0,.02,.65)),true)
@@ -245,7 +241,7 @@ func nearest(at:Vector3,radius:float,food_only:=false) -> int:
  var result:=-1;var distance:=radius
  if not service.model.stations.has(location):return result
  for item in service.model.stations[location].items:
-  if item.owner!=0 or item.place=="gone" or (item.kind=="drink" and not service.model.stations[location].cooler_open) or (food_only and item.kind not in Model.FOODS):continue
+  if item.owner!=0 or item.place=="gone" or (item.kind=="drink" and item.place=="pantry" and not service.model.stations[location].cooler_open) or (food_only and item.kind not in Model.FOODS):continue
   var d:float=item_nodes[item.id].global_position.distance_to(at)
   if d<distance:distance=d;result=item.id
  return result
@@ -263,17 +259,25 @@ func _process(_delta:float) -> void:
  if not is_instance_valid(g):return
  fade_mesh.visible=g.xr and shade.color.a>.001;fade_material.albedo_color=shade.color
  if location!=g.current_location:select_location()
+ for hand in 2:
+  var controller:XRController3D=g.left if hand==0 else g.right
+  var valid:bool=controller.get_has_tracking_data() and g.tracking_manager.focused
+  var at:Vector3=hand_pose(hand).origin
+  if valid and hand_sample_valid[hand] and _delta>0 and _delta<.1:
+   hand_velocity[hand]=hand_velocity[hand].lerp(((at-previous_hands[hand])/_delta).limit_length(8),.65)
+  else:hand_velocity[hand]=Vector3.ZERO
+  previous_hands[hand]=at;hand_sample_valid[hand]=valid
  if not is_instance_valid(station):return
  var state:Dictionary=service.model.stations.get(location,{})
  if state.is_empty():return
  cooler_lid.rotation.x=move_toward(cooler_lid.rotation.x,-1.75 if state.cooler_open else 0.0,_delta*3.5)
  var cooking:=false
  for item in state.items:
-  var node:Node3D=item_nodes[item.id];node.visible=item.place!="gone" and (item.kind!="drink" or item.owner!=0 or state.cooler_open)
+  var node:Node3D=item_nodes[item.id];node.visible=item.place!="gone" and (item.kind!="drink" or item.place!="pantry" or state.cooler_open)
   if item.owner!=0:
    node.global_transform=hand_pose(item.hand,item.owner)
    if item.place=="tongs":node.global_transform*=item.grip_offset
-   if item.kind=="drink":node.rotate_object_local(Vector3.RIGHT,PI/2)
+   if item.kind=="drink":node.rotate_object_local(Vector3.RIGHT,-PI/2)
   else:node.transform=Model.resting_pose(item)
   if item.kind=="tongs":
    var tool:Node3D=node.get_child(0);tool.held_hand=item.hand if item.owner!=0 else -1
@@ -314,14 +318,14 @@ func _process(_delta:float) -> void:
   var target:=nearest(at,.25 if id in [6,7] else .19,id in [6,7])
   if target>=0:hovered=target
   if grip and not grip_down[hand] and id<0 and target>=0:service.request("grab",target,hand)
-  if not grip and grip_down[hand] and id>=0:service.request("drop",id,hand)
+  if not grip and grip_down[hand] and id>=0:service.request("drop",id,hand,hand_velocity[hand])
   if trigger and not trigger_down[hand]:
    if id>=0:use(hand,target)
    elif controller.global_position.distance_to(station.to_global(Sites.COOLER_HANDLE))<.3:service.request("cooler",-1,hand)
   var carried:int=service.model.clamped(location,service.local_id(),hand)
   if carried<0 or trigger:unclamp_pending[hand]=-1
   if not trigger and id in [6,7] and carried>=0 and unclamp_pending[hand]!=carried:
-   unclamp_pending[hand]=carried;service.request("unclamp",carried,hand)
+   unclamp_pending[hand]=carried;service.request("unclamp",carried,hand,hand_velocity[hand])
   grip_down[hand]=grip;trigger_down[hand]=trigger
  var nearby:bool=g.head.global_position.distance_to(station.global_position)<3.5
  hint.visible=Icons.enabled and nearby;cooler_icon.visible=Icons.enabled and nearby

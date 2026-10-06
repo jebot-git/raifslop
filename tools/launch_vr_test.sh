@@ -30,7 +30,7 @@ manifest = {'utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
             'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
             'working_tree': subprocess.check_output(['git', 'status', '--short'], cwd=root, text=True),
             'capture_limit_seconds': 3600, 'video': False,
-            'verification': 'Pending headset focus, controller tracking and golf capture checks'}
+            'verification': 'Pending headset focus, controller tracking and gameplay capture checks'}
 pathlib.Path(out, 'session.json').write_text(json.dumps(manifest, indent=2) + '\n')
 PY
 cleanup() {

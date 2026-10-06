@@ -13,7 +13,7 @@ func run():
 	check(game.avatar.mouth.binds.slice(0,5).all(func(b):return not b.is_empty()),"Shark has all five vowel expressions")
 	check(not game.avatar.eyes.binds[4].is_empty() and not game.avatar.eyes.binds[5].is_empty(),"Shark has left and right blink bindings")
 	var menu=game.avatar_menu;menu.show();game._layout_avatar_menu()
-	check(menu.pages.has("minigolf") and menu.pages.has("controls") and menu.pages.has("bbq") and menu.pages.has("leaderboard"),"Shared menu includes Controls, BBQ, Minigolf and rankings")
+	check(not menu.pages.has("minigolf") and menu.pages.has("controls") and menu.pages.has("bbq") and menu.pages.has("leaderboard"),"Shared menu includes Controls, BBQ and rankings without Minigolf")
 	for id in menu.pages:
 		menu.show_page(id);await process_frame
 		check(menu.pages.values().filter(func(row):return row.view.visible).size()==1,"Only selected page visible: "+id)

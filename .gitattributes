@@ -14,3 +14,7 @@
 addons/twovoip/** -whitespace
 addons/godotopenxrvendors/** -whitespace
 tools/patches/*.patch -whitespace
+# Preserve upstream native dependency license notices verbatim.
+addons/fishing_native/*LICENSE* -whitespace
+addons/fishing_native/*NOTICE* -whitespace
+addons/fishing_native/*COPYING* -whitespace

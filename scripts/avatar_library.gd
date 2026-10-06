@@ -24,7 +24,7 @@ func initialize() -> void:
 	if migrated.has(selected_path): save_selection(migrated[selected_path])
 
 static func inspect(path: String) -> Dictionary:
-	if path.get_extension().to_lower() != "vrm": return {"error": "Choose a .vrm file."}
+	if not path.begins_with("content://") and path.get_extension().to_lower() != "vrm": return {"error": "Choose a .vrm file."}
 	var file := FileAccess.open(path, FileAccess.READ)
 	if not file: return {"error": "Cannot open this VRM."}
 	var size := file.get_length()
@@ -99,8 +99,13 @@ static func copy_import(path: String,directory: String) -> Dictionary:
 	if digest.is_empty(): return {"error": "Could not read the avatar."}
 	if DirAccess.make_dir_recursive_absolute(directory)!=OK:return {"error":"Cannot create avatar folder: "+directory}
 	var destination := directory.path_join(digest + ".vrm")
-	if path != destination and DirAccess.copy_absolute(path, destination) != OK:
-		return {"error": "Could not copy the avatar into your library."}
+	if path != destination:
+		var source:=FileAccess.open(path,FileAccess.READ)
+		var target:=FileAccess.open(destination,FileAccess.WRITE)
+		if source==null or target==null:return {"error":"Could not copy the avatar into your library."}
+		target.store_buffer(source.get_buffer(MAX_BYTES+1))
+		var result:=target.get_error();target.close()
+		if result!=OK:return {"error":"Could not save the imported avatar."}
 	var copied := inspect(destination)
 	if copied.has("error"):
 		DirAccess.remove_absolute(destination)

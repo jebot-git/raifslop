@@ -6,12 +6,17 @@ ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
 p.add_argument('--target', choices=['all', *TARGETS], default='all')
 p.add_argument('--store-release', action='store_true', help='Require an existing externally provisioned Android signing identity')
-p.add_argument('--eos-config', type=Path, help='Package validated EOS client configuration and Android bootstrap (Quest only)')
+p.add_argument('--offline', action='store_true', help='Explicitly build a LAN-only development client')
+p.add_argument('--eos-config', type=Path, default=Path(os.environ['FISHING_EOS_CONFIG']) if os.environ.get('FISHING_EOS_CONFIG') else None, help='Package validated EOS client configuration for desktop or Quest clients')
 a = p.parse_args()
-if a.eos_config and (a.target != 'Quest' or not a.store_release):
-    p.error('--eos-config requires --target Quest --store-release')
+if a.offline and a.eos_config:p.error("Choose either --offline or --eos-config")
+if a.target != "Server" and not a.offline and a.eos_config is None:
+    p.error("Online clients require --eos-config or FISHING_EOS_CONFIG; use --offline only for LAN-only builds")
+if a.eos_config and not a.eos_config.is_file():p.error("EOS configuration file does not exist")
+if a.eos_config and a.target in ('all', 'Quest') and not a.store_release:
+    p.error('Quest EOS exports require --store-release')
 eos_settings = None
-if a.eos_config:
+if a.eos_config and a.target in ("all", "Quest"):
     from eos.android_export import read_config
     from quest_store_config import check_app_id
     eos_settings = read_config(a.eos_config, check_app_id())
@@ -47,18 +52,22 @@ def digest(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 run([godot,'--headless','--path',str(ROOT),'--xr-mode','off','--editor','--import','--quit'], 'import')
 for target in (TARGETS if a.target=='all' else [a.target]):
+    from build_fishing_native import require_build
+    require_build({'Linux':'linux','Windows':'windows','Quest':'android','Server':'linux'}[target])
     out = build/target
     if out.exists(): shutil.rmtree(out)
     out.mkdir()
     manifest = build/('manifest-'+target+'.json')
     manifest.unlink(missing_ok=True)
     child_env = env.copy()
+    child_env.pop("FISHING_EOS_CONFIG", None)
+    if a.eos_config and target != "Server":child_env["FISHING_EOS_CONFIG"]=str(a.eos_config.resolve())
     if target == 'Server':
         run([sys.executable, str(ROOT/'tools/build_server.py'), '--godot', godot, '--output', str(out)], 'export-Server', child_env)
         artifact = out/'UltimateBoomerSimulatorServer.x86_64'
         manifest.write_text(json.dumps({'target':target, 'commit':revision,
                             'godot':subprocess.check_output([godot,'--version'],text=True).strip(),
-                            'files':{artifact.name:digest(artifact)}},indent=2)+'\n')
+                            'files':{name:digest(out/name) for name in [artifact.name,'libfishing_native.so']}},indent=2)+'\n')
         print(f'BUILT Server: {artifact.stat().st_size} bytes',flush=True)
         continue
     if target in ANDROID_TARGETS:

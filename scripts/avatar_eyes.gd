@@ -6,6 +6,7 @@ var binds: Array=[[],[],[],[],[],[],[],[],[],[],[],[]]
 var morph_weights: Array[float]=[0,0,0,0,0,0,0,0,0,0,0,0]
 var expression_weights:=PackedFloat32Array([0,0,0,0,0])
 var rig
+var morph_channels: Array=[]
 var look:=Vector2.ZERO
 var blink:=Vector2.ZERO
 var eye_bones: Array[int]=[]
@@ -33,6 +34,7 @@ func setup(model: Node) -> void:
 	for name_here in ["LeftEye","RightEye"]:
 		var bone:=sk.find_bone(name_here)
 		if bone>=0: eye_bones.append(bone)
+	rebuild_morph_channels()
 func _process_modification_with_delta(delta: float) -> void:
 	if not rig: return
 	var data: Dictionary=rig.xr_pose.get("face",{}) if not rig.dead else {}
@@ -68,24 +70,31 @@ func _process_modification_with_delta(delta: float) -> void:
 		weights[4]=0;weights[5]=0;weights[6]=maxf(blink.x,blink.y)
 	morph_weights=weights
 	apply_morphs()
+# FPSloppa 80220c9: resolve shared channels once and skip unchanged writes.
+# Keep fishing's expression ordering and use GDScript on every client platform.
+func rebuild_morph_channels() -> void:
+	morph_channels.clear()
+	var by_mesh: Dictionary={}
+	for source in 17:
+		var source_binds: Array=binds[source] if source<12 else rig.mouth.binds[source-12] if rig.mouth else []
+		for bind in source_binds:
+			var mesh: MeshInstance3D=bind[0]
+			if not is_instance_valid(mesh):continue
+			if not by_mesh.has(mesh):by_mesh[mesh]={}
+			if not by_mesh[mesh].has(bind[1]):
+				by_mesh[mesh][bind[1]]=morph_channels.size()
+				morph_channels.append([mesh,bind[1],.999,[],NAN])
+			var channel: Array=morph_channels[by_mesh[mesh][bind[1]]]
+			channel[3].append([source,bind[2]])
+			if source<7:channel[2]=.9
+
 func apply_morphs() -> void:
-	var totals: Dictionary={}
-	var eye_limits: Dictionary={}
-	for i in range(NAMES.size()):
-		for bind in binds[i]:
-			if not is_instance_valid(bind[0]): continue
-			if not totals.has(bind[0]): totals[bind[0]]={}
-			if i<7:
-				if not eye_limits.has(bind[0]):eye_limits[bind[0]]={}
-				eye_limits[bind[0]][bind[1]]=.9
-			totals[bind[0]][bind[1]]=float(totals[bind[0]].get(bind[1],0))+morph_weights[i]*bind[2]
-	# One writer composes expressions, measured eyelids/gaze and speech. This avoids
-	# an expression track overwriting a shared mouth or blink morph every frame.
-	if rig.mouth and not rig.dead:
-		for i in 5:
-			for bind in rig.mouth.binds[i]:
-				if not is_instance_valid(bind[0]):continue
-				if not totals.has(bind[0]):totals[bind[0]]={}
-				totals[bind[0]][bind[1]]=float(totals[bind[0]].get(bind[1],0))+rig.mouth.weights[i]*bind[2]
-	for mesh in totals:
-		for shape in totals[mesh]: mesh.set_blend_shape_value(shape,clampf(totals[mesh][shape],0,eye_limits.get(mesh,{}).get(shape,.999)))
+	for channel in morph_channels:
+		if not is_instance_valid(channel[0]):continue
+		var value:=0.0
+		for source in channel[3]:
+			value+=(morph_weights[source[0]] if source[0]<12 else rig.mouth.weights[source[0]-12] if rig.mouth and not rig.dead else 0.0)*source[1]
+		value=clampf(value,0,channel[2])
+		if is_nan(channel[4]) or absf(value-channel[4])>.00001:
+			channel[0].set_blend_shape_value(channel[1],value)
+			channel[4]=value

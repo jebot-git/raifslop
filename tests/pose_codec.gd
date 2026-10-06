@@ -10,7 +10,6 @@ func _initialize() -> void:
 		for count in [0,4,10]:
 			var input := Fixture.player(count, true)
 			input.location = location
-			if location.begins_with("minigolf_"): input.golf_club = 7
 			input.serial = 2147483647
 			input.head.origin = Vector3(2047.99,-2047.99,.00001)
 			input.length = 111.123456789; input.reel_angle = TAU; input.user_height = .6
@@ -36,9 +35,9 @@ func _initialize() -> void:
 	check(Codec.decode(invalid).is_empty(), "Unknown version rejected")
 	invalid = full.duplicate(); invalid.encode_u16(5,65535)
 	check(Codec.decode(invalid).is_empty(), "Unknown location rejected")
-	invalid = full.duplicate(); invalid.encode_float(44,NAN)
+	invalid = full.duplicate(); invalid.encode_float(43,NAN)
 	check(Codec.decode(invalid).is_empty(), "Nonfinite transform rejected")
-	invalid = full.duplicate(); invalid.encode_u16(228,65535)
+	invalid = full.duplicate(); invalid.encode_u16(227,65535)
 	check(Codec.decode(invalid).is_empty(), "Unknown body bits rejected")
 	check(Codec.decode(Codec.encode(Fixture.player())).body.is_empty(), "Full snapshot explicitly removes stale body trackers")
 	check(Codec.decode(Codec.encode(Fixture.player())).face.is_empty(), "Full snapshot explicitly removes stale face tracking")

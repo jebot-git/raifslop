@@ -1,22 +1,22 @@
 # Releases and build policy
 
-Release **0.1.17** is branded **Ultimate Boomer Simulator** and targets Linux x86_64, Windows x86_64, Quest standalone and a separate Linux dedicated server. The icon and existing save locations are preserved. Historical releases retain their original branding and filenames.
+Release **0.1.19** is branded **Ultimate Boomer Simulator** and targets Linux x86_64, Windows x86_64, Quest standalone and a separate Linux dedicated server. The icon and existing save locations are preserved. Historical releases retain their original branding and filenames.
 
 Download from [GitHub Releases](https://github.com/jebot-git/raifslop/releases).
-See [0.1.17 changes and validation](RELEASE_NOTES_0.1.17.md).
+See [0.1.19 changes and validation](RELEASE_NOTES_0.1.19.md).
 
 - Linux: extract the ZIP and run `VR.sh` with an active OpenXR runtime.
 - Windows: extract the ZIP and run `VR.cmd`; retain the executable, PCK and DLLs. See [Windows OpenXR setup](WINDOWS_OPENXR.md).
-- Quest: sideload the signed APK. Use the same signing certificate for upgrades. The final fixes have automated regression coverage; this package has not been retested on physical hardware. The GitHub sideload key differs from the Meta ALPHA key, so this APK cannot update that installation.
-- Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`. The binary embeds shared server scripts and course data but no visual/audio assets or extensions.
+- Quest: sideload the signed APK. Use the same signing certificate for upgrades. The final fixes have automated regression coverage; this package has not been retested on physical hardware. The store build preserves the established Meta signing identity and requires its matching expansion file.
+- Dedicated Linux server: extract the Server ZIP and run `Server.sh`; optional arguments include `--port 24567`, `--bind 0.0.0.0` and `--leaderboard-path`. The binary embeds shared fishing and BBQ server scripts but no visual/audio assets or extensions.
 
-Multiplayer uses **protocol 16**; update clients and server together. Publishing packages does not upgrade a live server. Eight slots, direct UDP connections and local progression remain unchanged. Accomplishment records are saved by the server. Keep bundled asset credits and notices when sharing.
+Multiplayer uses **protocol 22**; update clients and server together. Publishing packages does not upgrade a live server. Eight slots, direct UDP connections and local progression remain unchanged. Accomplishment records are saved by the server. Keep bundled asset credits and notices when sharing.
 
 ## Rebuilding and publishing
 
 Godot 4.7.2 with matching Linux/Windows/Android export templates, Java 17, the
 Android SDK and Python 3.11+ are required for this release. Commit source first; release tools require a clean
-checkout. `python3 tools/build_release.py` exports all four targets, or use
+checkout. `python3 tools/build_release.py --eos-config /secure/path/eos.cfg --store-release` exports all four targets, or use
 `--target Linux`, `Windows`, `Server` or `Quest`. Set `GODOT_BIN` if needed.
 `python3 tools/package_release.py` verifies commit/hash manifests, builds fresh
 staging directories, writes ZIPs with maximum deflate compression, then verifies
@@ -40,3 +40,11 @@ Simulated Monado/OpenXR and Linux Vulkan checks do not establish physical-headse
 comfort or frame rates. Windows runtime testing is unavailable on this Linux host.
 Earlier Quest 3 standalone and WiVRn headset behavior was tested; this build and other Quest models remain untested on hardware. Pico is retired. Panoramas remain native 8K
 mono photographs with authored stereo foreground geometry.
+
+
+Online client exports require an EOS configuration path (`--eos-config` or
+`FISHING_EOS_CONFIG`). The store runner uses the `FISHING_EOS_CONFIG` repository
+environment variable to locate its externally provisioned file. Missing
+configuration fails the build instead of producing a client that cannot log in.
+Use `--offline` only for an intentional LAN-only development package. Desktop
+exports package Device ID identity; Quest exports retain Meta entitlement.

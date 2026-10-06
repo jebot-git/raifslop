@@ -22,7 +22,7 @@
     "sun_angular_diameter_degrees": 0.53,
     "peak_to_median": 692765.8125,
     "extraction_cap_degrees": 2.0,
-    "diffuse_sky_mean": 0.22128397461061322,
+    "diffuse_sky_mean": 0.22128397461061053,
     "samples": 48,
     "resolution": 1024,
     "energy_units": "relative HDR radiance; not calibrated lux"

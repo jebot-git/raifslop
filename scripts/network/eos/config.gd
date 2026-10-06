@@ -1,14 +1,14 @@
 extends RefCounted
-const PROTOCOL := 21 # Gameplay schema; kept in sync with session.VERSION.
+const PROTOCOL := 22 # Gameplay schema; kept in sync with session.VERSION.
 const MAX_MEMBERS := 8
 
 static func read(path: String) -> Dictionary:
 	var file := ConfigFile.new()
-	if file.load(path) != OK: return {"error":"Configuration missing. Configure EOS in user://eos.cfg or pass --eos-config."}
+	if file.load(path) != OK: return {"error":"Online configuration is missing from this build. Install a configured client or supply --eos-config."}
 	var result: Dictionary = {}
 	for key in ["product_id", "sandbox_id", "deployment_id", "client_id", "client_secret", "relay"]:
 		result[key] = file.get_value("eos", key, "auto" if key == "relay" else "")
-	result.provider = file.get_value("identity", "provider", "meta")
+	result.provider = file.get_value("identity", "provider", "meta" if OS.get_name()=="Android" else "device")
 	result.app_id = file.get_value("meta", "app_id", "")
 	result.destination = file.get_value("meta", "destination", "eos_game")
 	result.leaderboards_enabled = file.get_value("leaderboards", "enabled", false)

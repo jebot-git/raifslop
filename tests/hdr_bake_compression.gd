@@ -13,7 +13,9 @@ func vector(color: Color) -> Vector3:
 
 func _initialize() -> void:
 	for entry in LOCATIONS.CATALOG:
-		if entry.id in ["meadow_bend", "boulder_run"]: continue
+		# River material atlases have a separate bake/validation path. The two
+		# expansion rivers do not have the photographic foreground sky atlases.
+		if LOCATIONS.water_type(entry.id)=="rivers": continue
 		var originals: Array[Image] = []
 		var compressed: Array[Image] = []
 		for kind in ["irradiance", "sky"]:

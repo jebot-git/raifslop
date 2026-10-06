@@ -91,7 +91,6 @@ def audit(path):
                        ['station','cooler','cooler_lid','beer_can','fish_burger','tongs_handle','tongs_jaw','sausage','corn','mushroom']],
                      'ASSET_CREDITS.md','assets/ui/store_logo.png','assets/models/locations/manifest.json',
                      'assets/equipment/tackle_styles.json',
-                     'scripts/minigolf/club_style.gd',
                      'scripts/ui/scroll_router.gd','scripts/ui/vr_option.gd',
                      'assets/models/fish/cutthroat_trout.glb','assets/models/fish/arctic_char.glb',
                      'assets/environment/locations/cedar_creek_4k.hdr',
@@ -136,7 +135,7 @@ def audit(path):
     for source, target in remaps.items():
         if not source.endswith(('.hdr','.exr')): continue
         data = pack.read(target)
-        if mobile or '/textures/lighting/' in source or '/minigolf/lighting/' in source:
+        if mobile or '/textures/lighting/' in source:
             config = (ROOT / (source + '.import')).read_text()
             imported = re.search(r'^path="res://([^"]+)"', config, re.M)[1]
             assert hashlib.sha256(data).digest() == hashlib.sha256((ROOT/imported).read_bytes()).digest(), ('Lossless HDR changed', source)
@@ -145,14 +144,7 @@ def audit(path):
         if source.endswith('_8k.hdr'): panoramas[source] = len(data)
     expected_panoramas = {str(p.relative_to(ROOT)) for p in (ROOT / "assets/environment/locations").glob("*_8k.hdr")}
     assert set(panoramas) == expected_panoramas, panoramas
-    for course in (ROOT/'assets/minigolf/courses').glob('*.json'):
-        required=course.relative_to(ROOT).as_posix()
-        assert required in names and pack.size(required)>0, ('Missing minigolf course', required)
-    for course in (ROOT/'assets/minigolf/courses').glob('*.json'):
-        for suffix in ['.res', '_irradiance.exr', '_ao.png']:
-            source = 'assets/minigolf/lighting/' + course.stem + suffix
-            assert source in names or source in remaps, ('Missing course lightmap', source)
-    assert not any('addons/golfminus/' in name for name in names), 'Archived golf content in release'
+    assert not any('/minigolf/' in name or 'addons/golfminus/' in name for name in names), 'Archived golf content in release'
 
     result = {'artifact':str(path),'entries':len(names),'asset_bytes':sum(sizes.values()),
               'unique_texture_payloads':len(hashes),'texture_aliases':len([v for v in remaps.values() if v in hashes.values()]),

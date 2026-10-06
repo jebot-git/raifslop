@@ -79,7 +79,7 @@ class StoreReleaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             folder = Path(tmp)
             names = ['UltimateBoomerSimulator.x86_64', 'UltimateBoomerSimulator.pck',
-                     'libgodotopenxrvendors.so', 'libtwovoip.linux.template_release.x86_64.so']
+                     'libgodotopenxrvendors.so', 'libtwovoip.linux.template_release.x86_64.so', 'libfishing_native.so']
             for name in names:
                 (folder / name).write_bytes(b'fixture')
             exe = folder / names[0]

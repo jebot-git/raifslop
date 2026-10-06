@@ -66,7 +66,6 @@ func accept(peer:int,command:Dictionary) -> bool:
   return ok
  if not model.stations.has(location) or who.state!=0:return false
  var pose:=Sites.pose(location)
- if who.feet.distance_to(pose.origin)>5:return false
  var hand_name:String="left" if command.hand==0 else "right"
  if not who[hand_name+"_valid"]:return false
  if command.action=="cooler":
@@ -87,7 +86,7 @@ func accept(peer:int,command:Dictionary) -> bool:
    if tip.distance_to(pose*Model.resting_pose(item).origin)>.25:return false
  if command.action in ["eat","sip"] and (command.action=="eat" or item.open):
   if who[hand_name].origin.distance_to(who.head.origin)>.45:return false
- var ok:bool=model.apply(location,peer,command.hand,command.action,command.id,command.at,pose.affine_inverse()*who[hand_name])
+ var ok:bool=model.apply(location,peer,command.hand,command.action,command.id,pose.basis.inverse()*command.at,pose.affine_inverse()*who[hand_name])
  if ok:broadcast()
  return ok
 
@@ -137,14 +136,14 @@ func _render_anchor() -> void:
  model.clock=received.clock+anchor_age
  if not received.state.is_empty():
   var state:Dictionary=received.state.duplicate(true)
-  Replication.cook(state,anchor_age)
+  Replication.cook(state,anchor_age,received.location)
   model.stations[received.location]=state
 
 func _process(delta:float) -> void:
  if session==null:return
  if session.active and not multiplayer.is_server():
   anchor_age+=maxf(0,delta);model.clock+=maxf(0,delta)
-  for state in model.stations.values():Replication.cook(state,delta)
+  for state in model.stations.values():Replication.cook(state,delta,received.location)
   return
  var occupied:Array=[]
  var peers:Array=session.players.keys() if session.active else [1]
@@ -156,7 +155,7 @@ func _process(delta:float) -> void:
   for item in model.stations[location].items:
    if item.owner==0:continue
    var who:=actor(item.owner) if item.owner in peers else {}
-   if who.is_empty() or who.location!=location or who.feet.distance_to(Sites.pose(location).origin)>6 or who.state!=0 or not who.get("left_valid" if item.hand==0 else "right_valid",false):
+   if who.is_empty() or who.location!=location or who.feet.distance_to(Sites.pose(location).origin)>64 or who.state!=0 or not who.get("left_valid" if item.hand==0 else "right_valid",false):
     model.release_peer(item.owner)
  model.tick(delta,occupied)
  elapsed+=delta

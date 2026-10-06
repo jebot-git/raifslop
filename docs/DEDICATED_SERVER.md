@@ -13,15 +13,17 @@ builds/Server/UltimateBoomerSimulatorServer.x86_64 -- --port 24567 --bind 0.0.0.
 output folder. The engine needs its matching Linux release export template.
 The generated project is under `builds/Server/project`; `manifest.json` lists
 every bundled script and the executable's checksum. This server starts in
-headless mode automatically. It uses protocol 11: update clients and server together.
+headless mode automatically. It uses protocol 22: update clients and server together.
 
 The build copies only the transitive `preload` dependencies of the minimal server
 entry point. It shares the client's actual session, state validation, avatar
 transfer and voice relay RPC scripts, preserving their node paths and protocol.
 Rendering, avatar instantiation and voice codecs are loaded only by clients.
 There are no bundled panoramas, meshes, sounds, default avatars, XR plugins,
-VRM renderer or Opus extensions. The build is about 70.2 MiB,
-with about 141 KiB added to the standard engine template. It still contains the
+VRM renderer or Opus extensions. The optional fishing numerical/packet extension
+is bundled separately as `libfishing_native.so`; keep it beside the executable
+when deploying. `--without-native` builds a GDScript-only server. Release packages
+include and checksum the native library. It still contains the
 standard Godot engine's compiled modules; it is not a custom stripped engine build.
 
 Received avatars are validated and cached at runtime for relay. `--asset-root`

@@ -26,7 +26,9 @@ def profile(location):
 
 
 def environment(location, yaw, energy):
-    image = bpy.data.images.load(str(ROOT/'assets/environment/locations'/f'{location}_8k.hdr'), check_existing=False)
+    raw = ROOT/'source/panorama_originals'/f'{location}_8k.hdr'
+    source = raw if raw.exists() else ROOT/'assets/environment/locations'/f'{location}_8k.hdr'
+    image = bpy.data.images.load(str(source), check_existing=False)
     # Retain the solar disk for measurement; downsampling first loses peak energy.
     w, h = image.size
     pixels = np.empty(w*h*4, dtype=np.float32)
@@ -221,7 +223,7 @@ def bake(location):
     for m in foreground.data.materials:
         bs=m.node_tree.nodes.get('Principled BSDF')
         if bs:originals.append((bs,bs.inputs['Metallic'].default_value));bs.inputs['Metallic'].default_value=0
-    kinds=['sky','irradiance']+(['ao'] if location=='lake_pier' else [])
+    kinds=['sky','irradiance']+(['ao'] if location=='lake_pier' or scene.get('natural_shore_rocks') else [])
     for kind in kinds:
         sun.hide_render=kind!='irradiance'
         image=bpy.data.images.new(location+'_'+kind,1024,1024,alpha=False,float_buffer=kind!='ao')

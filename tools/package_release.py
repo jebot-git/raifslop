@@ -64,7 +64,7 @@ for target in TARGETS:
     if record['commit'] != revision or record['target'] != target:
         raise SystemExit('Stale build for ' + target)
     folder = BUILD / target
-    exported = [folder/'UltimateBoomerSimulatorServer.x86_64'] if target == 'Server' else sorted(folder.rglob('*'))
+    exported = [folder/name for name in ['UltimateBoomerSimulatorServer.x86_64','libfishing_native.so']] if target == 'Server' else sorted(folder.rglob('*'))
     actual = {str(p.relative_to(folder)): digest(p) for p in exported if p.is_file()}
     if actual != record['files']:
         raise SystemExit('Export files changed for ' + target)
@@ -97,6 +97,7 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=BUILD) as tmp:
     server = stage / 'Server'
     server.mkdir()
     shutil.copy2(BUILD/'Server/UltimateBoomerSimulatorServer.x86_64', server/'UltimateBoomerSimulatorServer.x86_64')
+    shutil.copy2(BUILD/'Server/libfishing_native.so',server/'libfishing_native.so')
     copy_notices(server)
     launcher = server/'Server.sh'
     launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./UltimateBoomerSimulatorServer.x86_64 ' + LOG_ARGS + '--log-file "$PWD/Server.log" -- "$@"\n')

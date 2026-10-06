@@ -2,6 +2,12 @@
 
 Downloaded 9 September 2026. Keep these credits with distributed builds.
 
+The October 2026 Lakeside shore revision reuses the credited granite boulder scan
+for eight replacement shore rocks. River material atlases are derived from the
+existing credited grass, gravel, normal and lighting assets. Panorama sharpening
+and grading are preprocessed derivatives of the same credited HDR panoramas;
+their unmodified sources remain in `source/panorama_originals/`.
+
 | Asset | Creator / source | License | Changes |
 |---|---|---|---|
 | Lakeside panorama | [Poly Haven — Lakeside](https://polyhaven.com/a/lakeside) | [CC0](https://polyhaven.com/license) | Original 2K HDR used as Godot sky |
@@ -206,7 +212,6 @@ and `PROVENANCE.json`. Used for Quest store entitlement checks; no paid IAP.
 
 ## Golf ambience (24 September 2026)
 
-- `golf_woodland.ogg` and `golf_links.ogg`: separate filtered, offset loops of the retained Thimras CC0 park recording credited above. No water, river or surf samples. Built by `tools/build_golf_ambience.py`; exact source attribution in `source/audio/CREDITS.md` and output hashes in `docs/ambience_assets.json`.
 
 ## Startup logo
 
@@ -216,12 +221,14 @@ existing game icon with Almonte lettering by Raymond Larabie (CC0 1.0). The stor
 media package retains the font source and author-issued license; no font binary
 is required for this raster logo.
 
-## Waterfront minigolf
-
-The retained putter, eight original Blender MCP waterfront props, and procedural deck/turf materials are documented in [minigolf material credits](assets/minigolf/MATERIAL_CREDITS.md). Full-size golf course assets, drivers and irons are removed from the active project.
-
-Minigolf location props and Krita-authored material maps are original project artwork; see [minigolf material credits](assets/minigolf/MATERIAL_CREDITS.md).
 
 ## Interface and course sign fonts
 
 Noto Sans Regular and Noto Serif Regular — Copyright 2022 The Noto Project Authors (https://github.com/notofonts/latin-greek-cyrillic), SIL Open Font License 1.1. Unmodified font files and license are bundled in `assets/ui/fonts/`.
+
+### Fishing native kernels
+
+`addons/fishing_native/` contains project-authored shoreline, skinned-bounds and
+protocol-22 packet kernels. Godot C++ bindings retain their MIT license in
+`GODOT-CPP-LICENSE.md`. Bundled static C++ runtime and toolchain notices are retained
+in the adjacent `*LICENSE*`, `MINGW-COPYING.txt` and `ANDROID-NOTICE.txt` files.

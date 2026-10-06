@@ -70,6 +70,7 @@ func _show_loading() -> void:
 	var xr := XRServer.find_interface("OpenXR")
 	if xr and (xr.is_initialized() or xr.initialize()):
 		get_viewport().use_xr = true
+		preload("res://scripts/quest_rendering.gd").configure(xr,get_viewport())
 	var origin := XROrigin3D.new()
 	add_child(origin)
 	var camera := XRCamera3D.new()

@@ -1,6 +1,6 @@
 # Free Quest and Steam release workflow
 
-Release policy: the integrated fishing, golf and BBQ game is **free to acquire,
+Release policy: the integrated fishing and BBQ game is **free to acquire,
 with no real-money in-app purchases, subscriptions or paid currency** on both
 stores. Earned gameplay progression/tackle purchases remain ordinary gameplay;
 do not describe them as IAP. This document and candidate metadata record that

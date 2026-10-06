@@ -11,6 +11,19 @@ static func box(root:Node3D,at:Vector3,size:Vector3,mat:Material,collision:=true
  var n:=MeshInstance3D.new();var mesh:=BoxMesh.new();mesh.size=size;n.mesh=mesh;n.position=at;n.material_override=mat;root.add_child(n)
  if collision:n.create_trimesh_collision()
 static func bank_material(id:String)->ShaderMaterial:
+ var prefix:String="res://assets/environment/rivers/baked/"+id+"_"
+ var common:String="res://assets/environment/rivers/baked/"+("glacier_run" if id=="glacier_run" else "boulder_run")+"_"
+ if "--reference-bank-shading" in OS.get_cmdline_user_args() or not ResourceLoader.exists(prefix+"emission.png") or not ResourceLoader.exists(common+"albedo.png") or not ResourceLoader.exists(common+"normal_rough.png"):
+  return bank_material_reference(id)
+ var bank:=ShaderMaterial.new();bank.shader=load("res://assets/environment/rivers/bank_baked.gdshader")
+ bank.set_shader_parameter("baked_albedo",load(common+"albedo.png"))
+ bank.set_shader_parameter("baked_emission",load(prefix+"emission.png"))
+ bank.set_shader_parameter("baked_normal_rough",load(common+"normal_rough.png"))
+ bank.set_shader_parameter("gravel_detail",load("res://assets/models/locations/lit/gray_pier_gravelly_sand_Diffuse.jpg"))
+ bank.set_shader_parameter("has_bake",ResourceLoader.exists("res://assets/textures/lighting/"+id+"_irradiance.exr"))
+ bank.set_shader_parameter("snow_cover",1.0 if id=="glacier_run" else 0.0)
+ return bank
+static func bank_material_reference(id:String)->ShaderMaterial:
  var alpine:bool=id=="glacier_run"
  var cedar:bool=id=="cedar_creek"
  var gravel=material("gray_pier_gravelly_sand_Diffuse.jpg",Color("849caa") if alpine else Color("c0b7a1"))
@@ -46,9 +59,7 @@ static func create(id:String)->Node3D:
  terrain(root,false,bank,bank)
  box(root,Vector3(0,-1.8,-11),Vector3(180,1,18),gravel,false)
  terrain(root,true,bank,bank)
- # Invisible bank-edge collision keeps the player on dry ground.
- var body:=StaticBody3D.new();root.add_child(body);body.position=Vector3(0,0,-3.1)
- var shape:=CollisionShape3D.new();var bounds:=BoxShape3D.new();bounds.size=Vector3(180,.6,.15);shape.shape=bounds;body.add_child(shape)
+ add_boundaries(root)
  var rng:=RandomNumberGenerator.new();rng.seed=1223 if cedar else (1447 if alpine else (711 if id=="meadow_bend" else 919))
  var stones:=MultiMesh.new();stones.transform_format=MultiMesh.TRANSFORM_3D;stones.mesh=rock_mesh
  stones.instance_count=30 if id=="meadow_bend" else 65
@@ -105,22 +116,7 @@ static func create(id:String)->Node3D:
  preload("res://scripts/shore_dressing.gd").add_to(root,id)
  return root
 static func ground_height(x:float,z:float,far:bool)->float:
- # Match the authored terrain triangles, including their linear interpolation.
- var x0:float=floor((x+120.0)/4.0)*4.0-120.0
- var fx:float=(x-x0)/4.0
- var edge0:float=sin(x0*.07)*.65+sin(x0*.19)*.2
- var edge1:float=sin((x0+4)*.07)*.65+sin((x0+4)*.19)*.2
- var edge:float=lerpf(edge0,edge1,fx)
- var t:float=clampf((-19.0+edge-z)/45.0 if far else (z+3.6-edge)/38.0,0,1)
- var start:float=0.0 if t<.09 else .09
- var step:float=.09/12.0 if t<.09 else .91/12.0
- var t0:float=start+floor((t-start)/step)*step
- var fz:float=(t-t0)/step
- var a:float=bank_height(x0,t0,far)
- var b:float=bank_height(x0+4,t0,far)
- var c:float=bank_height(x0,t0+step,far)
- var d:float=bank_height(x0+4,t0+step,far)
- return a+(b-a)*fx+(c-a)*fz if fx+fz<=1.0 else d+(c-d)*(1.0-fx)+(b-d)*(1.0-fz)
+ return preload("res://scripts/river_geometry.gd").ground_height(x,z,far)
 static func footprint_height(at:Vector3,radius:float,far:bool)->float:
  var lowest:float=ground_height(at.x,at.z,far)
  for i in 16:
@@ -245,3 +241,27 @@ static func deadwood_transform(mesh:Mesh,at:Vector3,yaw:float,size:float,far:boo
   lift=maxf(lift,ground_height(point.x,point.z,far)-point.y)
  result.origin.y+=lift-.035
  return result
+
+static func edge_point(x:float,t:float,far:bool)->Vector3:
+ var edge:float=sin(x*.07)*.65+sin(x*.19)*.2
+ return Vector3(x,bank_height(x,t,far),(-19-t*45 if far else -3.6+t*38)+edge)
+
+static func boundary_segment(root:Node3D,a:Vector3,b:Vector3)->void:
+ var body:=StaticBody3D.new();body.name="RiverBoundary";body.set_meta("role","barrier");body.collision_layer=1
+ root.add_child(body)
+ var direction:=b-a;direction.y=0
+ body.position=(a+b)*.5+Vector3.UP
+ body.rotation.y=atan2(direction.x,direction.z)
+ var shape:=CollisionShape3D.new();var box:=BoxShape3D.new()
+ box.size=Vector3(.18,absf(a.y-b.y)+4.0,direction.length()+.2);shape.shape=box;body.add_child(shape)
+
+static func add_boundaries(root:Node3D)->void:
+ # Follow both complete terrain strips, including the far bank and all four
+ # corners. No cross-river wall cuts off the ends of the 240 m walking area.
+ for far in [false,true]:
+  for i in 60:
+   var x:float=-120.0+i*4
+   for t in [.055 if not far else .025,1.0]:
+    boundary_segment(root,edge_point(x,t,far),edge_point(x+4,t,far))
+  for x in [-120.0,120.0]:
+   boundary_segment(root,edge_point(x,.055 if not far else .025,far),edge_point(x,1.0,far))

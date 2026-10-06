@@ -44,48 +44,12 @@ func persist()->bool:
  if code==OK:return true
  stop();status="Online leaderboard outbox could not be saved.";changed.emit();return false
 func observe_state(data:Dictionary)->void:
- if not eligible() or not preload("res://scripts/network/state.gd").valid(data) or data.golf_club>=0:return
+ if not eligible() or not preload("res://scripts/network/state.gd").valid(data):return
  var before:Dictionary=collector.records.values()[0].duplicate(true)
  if not collector.observe(1,data):return
  var row:Dictionary=collector.records.values()[0]
  for key in ["heaviest","longest"]:offer(key,Catalog.encode(key,float(row[key])))
  for key in ["catches","earned","exceptional"]:outbox.add(key,int(row[key])-int(before[key]))
- persist()
-func observe_golf(view:Dictionary)->void:
- if not eligible():return
- var key:String="golf/"+str(view.get("course",""))
- var id:String=str(view.get("id",""))
- if not Catalog.boards().has(key) or id.is_empty() or id.length()>128:return
- id=str(view.course)+":"+id
- var progress:Dictionary=outbox.rounds.get(id,{"complete":false,"forfeits":0})
- var forfeits=view.get("forfeit_holes",[])
- if not forfeits is Array or forfeits.size()>18:return
- var unique:Array=[]
- var forfeits_changed:=false
- for hole in forfeits:
-  if not hole is int or hole<0 or hole>=18 or hole in unique:return
-  unique.append(hole)
- if forfeits.size()>progress.forfeits:
-  outbox.add("golf_forfeits/"+view.course,forfeits.size()-progress.forfeits);progress.forfeits=forfeits.size()
-  forfeits_changed=true
- if not outbox.rounds.has(id) and outbox.rounds.size()>=128:outbox.rounds.erase(outbox.rounds.keys()[0])
- outbox.rounds[id]=progress
- if view.get("finished")!=true or view.get("retired",true)!=false or progress.complete:
-  if forfeits_changed:persist()
-  return
- var scores=view.get("scores")
- if not Catalog.boards().has(key) or not scores is Array or scores.size()!=18:return
- var total:=0
- for score in scores:
-  if not score is int or score<1 or score>1000:return # Reject DNF, partial and malformed cards.
-  total+=score
- offer(key,total)
- progress.complete=true
- outbox.add("golf_rounds/"+view.course,1)
- var records:Dictionary={"local":{"golf":outbox.golf}}
- preload("res://scripts/minigolf/server_records.gd").finish(records,"local",view.course,scores,false)
- outbox.golf=records.local.golf
- offer("golf_last/"+view.course,total)
  persist()
 func _process(_delta:float)->void:
  if not eligible() or runtime.busy or busy or Time.get_ticks_msec()<due:return
