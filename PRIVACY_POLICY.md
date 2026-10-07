@@ -1,6 +1,6 @@
 # Ultimate Boomer Simulator — Privacy Policy
 
-Effective date: **24 September 2026**.
+Effective date: **7 October 2026**.
 
 ## Who is responsible
 
@@ -71,12 +71,63 @@ on your device, including avatars and scenery in view. The game does not
 automatically upload these pictures. Device gallery, backup or sharing services
 you use may process them separately.
 
-**Platform access.** Quest store builds use Meta’s Platform SDK to initialize
-platform services and check whether the current account is entitled to run the
-game. The game receives the check’s result; its entitlement code does not request
-your Meta friends list, email address or profile for gameplay. Meta processes
-platform account, device and service information under its own privacy policy.
-A failed entitlement check can prevent the store build from starting.
+### Meta Horizon Platform features and online services
+
+Quest builds use Meta’s Platform SDK for entitlement checks and the following
+account and social features. The game collects or processes platform data to
+provide these features even when it does not keep a separate copy. A failed
+entitlement check can prevent the store build from starting.
+
+**USER_ID — player identity.** The game receives your app-scoped Meta user ID
+and a user-proof nonce (an authentication proof) from Meta. It passes the ID and
+proof to Epic Online Services (EOS) Connect to authenticate you for online play.
+EOS associates that login with an EOS Product User ID used for lobby membership,
+network connections and online progress. The game also uses your Meta user ID
+to check the current account before submitting Meta scores and achievements.
+These identifiers are pseudonymous, not anonymous.
+
+**USER_PROFILE — supporting platform identity.** The game requests the logged-in
+Meta user object for account identification and verification. User Profile access
+supports Meta achievements, leaderboards, destinations and social entry points.
+This permission can make a Horizon username and profile-photo information
+available through Meta’s platform services; the current game integration reads
+the user ID from the returned object and does not extract or store the Meta
+username or profile photo in a separate game profile database. Profile labels
+shown in Meta’s native invitation interface are handled by Meta. Display names
+shown in EOS rankings are supplied separately by EOS.
+
+**FRIENDS — finding people to invite.** Selecting “Invite Meta friends” in an
+online lobby opens Meta’s native invitation panel. Friend relationships and
+profile labels are used in that Meta-managed interface to show eligible people
+and let you choose whom to invite. The game does not retrieve the full friends
+list into its own interface or copy a friends database to our server or EOS.
+
+**INVITES — joining a shared session.** The game supplies Meta with the current
+activity destination, lobby/session identifier, joinable status and a join
+reference. Meta handles recipient selection and delivery of invitations you
+initiate. The game processes incoming invitation join intents to resolve the
+shared EOS lobby so friends can fish, play minigolf or use the BBQ together.
+It does not automatically send invitations or use them for marketing.
+
+**DEEP_LINKING — opening the intended lobby.** The game reads destination names,
+deep-link messages and lobby/session identifiers from Meta launch details and
+join/leave intents. It validates supported destinations and uses the join
+reference to connect to the intended EOS lobby. These are game destinations,
+not your physical location or browsing history. The game publishes this session
+routing information through Meta Group Presence and clears that presence when
+leaving the online session.
+
+**EOS networking and online progress.** Epic Games provides EOS authentication,
+lobbies, peer-to-peer connectivity, statistics, leaderboards and achievements.
+EOS processes player identifiers, authentication information, lobby membership
+and connection information to provide these services. Multiplayer gameplay,
+avatar and voice traffic is exchanged through the configured multiplayer
+transport, which can use EOS connections or relays. Fishing statistics, minigolf
+results and achievement unlocks are sent to EOS; the game also submits supported
+scores and achievements to Meta. Other players can view leaderboard display
+names, ranks and scores. Local account-scoped records hold pending and confirmed
+score and achievement updates so synchronization can be retried. The Meta-to-EOS
+login does not require you to create or sign into a separate Epic Games account.
 
 **Diagnostics and support.** The game and its engine can write local diagnostic
 logs with technical errors and runtime information. If you send us a support
@@ -99,10 +150,19 @@ crash-reporting service for the game. Meta's separate platform processing is
 described in its own policy.
 
 Recipients depend on the feature: the host and other players receive multiplayer
-information; Meta processes platform access information; and support or hosting
-providers may process information for services we operate. We may disclose
+information; Meta processes platform identity, social, session-routing and
+progress information; Epic processes the EOS information described above; and
+support or hosting providers may process information for services we operate. We may disclose
 information we hold when required by applicable law. We do not automatically
 receive every independent server’s records or every player’s local files.
+
+**Epic Online Services.** EOS is operated by Epic Games. Its handling of game
+service data is governed by the applicable EOS service terms and data-protection
+arrangements. Epic describes its separate processing and privacy-request
+channels in the [Epic Games Privacy Policy](https://legal.epicgames.com/epicgames/privacy-policy).
+See also the [EOS privacy and trust statement](https://onlineservices.epicgames.com/services/terms/trust-statement)
+and [EOS service agreements](https://onlineservices.epicgames.com/services/terms/agreements).
+These notices do not replace our responsibility for game data we control.
 
 **Support email.** We use Google's Gmail to receive and respond to support and
 privacy requests, and access those messages from Serbia. Google processes
@@ -143,6 +203,18 @@ settings, avatar files, results, photos and any separately captured recordings
 are different and can persist. Exported photographs and backups can remain after
 uninstallation.
 
+**Online service records.** EOS service data is retained by Epic under the
+applicable EOS service terms, policies and data-protection arrangements. We do
+not set a single fixed expiry for Epic-retained service records. Online scores,
+achievements and account associations can remain after you leave a session or
+uninstall the game; our testing-server retention periods below do not apply to
+EOS or Meta records. The game does not implement a time-based expiry for its
+online progress records. You can request removal of game achievements and
+leaderboard records we can administer through the EOS dashboard, as explained
+below. Meta-retained platform records are subject to Meta’s practices and
+available deletion mechanisms. Local synchronization records remain until
+removed or replaced with the game’s saved data.
+
 **Our support email.** We delete support messages and attachments within
 90 days after resolving the request, or sooner following a valid deletion
 request. This includes copies we download to investigate the request.
@@ -179,15 +251,49 @@ your chosen photo folder, and remove imported/downloaded avatar files and any
 backups separately. Clearing the multiplayer identity creates a new identity;
 it does not erase the old one on servers and may make it harder to locate.
 
-**Anyone may request deletion of data we control by contacting
+**Anyone, in any country or region, may request deletion of data we control by contacting
 [jewzuv@gmail.com](mailto:jewzuv@gmail.com) with the subject “Ultimate Boomer Simulator —
 Data deletion”. We do not charge a fee for deletion.** Include the display name,
-server name/address and approximate
-dates needed to locate the record. Do not include a password or your private
+server name/address or online service (EOS/Meta), approximate dates and, for
+online records, your Meta username or other non-secret account identifier
+needed to locate the record. Do not include a password or your private
 player token. We may request proportionate information to verify the request.
 Contact an independent host directly for its records. We can help identify
 which information is ours, but cannot promise to erase copies controlled by
 other players, independent hosts or platform providers.
+
+**What we can delete directly.** Through the developer email above, we handle
+requests for our testing-server records, our support correspondence and game
+data available to us through the EOS dashboard, including achievements and
+leaderboard records. After proportionate verification, we remove the relevant
+records using the controls available to us and explain the result. We cannot
+directly erase Epic’s internal service logs, backups or account-linking records
+that are not exposed through those controls, or delete your Meta/Epic account.
+A dashboard limitation does not remove any responsibility we have under
+applicable law: where a request concerns game data we control but cannot erase
+directly, we will seek the relevant provider’s assistance and explain what
+remains outstanding.
+
+**Requests concerning Epic or Meta.** For data only Epic can handle, contact
+[privacy@support.epicgames.com](mailto:privacy@support.epicgames.com) using the
+privacy-request instructions in the
+[Epic Games Privacy Policy](https://legal.epicgames.com/epicgames/privacy-policy).
+Identify Ultimate Boomer Simulator and EOS in your request; our Meta-to-EOS
+login can be used without a separate Epic Games account. For Meta-controlled
+platform records, use the privacy tools and contact routes in
+[Meta’s Privacy Policy](https://www.meta.com/legal/privacy-policy/).
+We can help distinguish those records from the game records we can administer.
+Deletion of Epic- or Meta-controlled data is handled under their applicable
+policies and legal obligations; we cannot promise their completion date or
+erasure of every provider-controlled copy.
+
+**Local data and later synchronization.** Removing online records does not
+remove local progress, pending synchronization data, backups or copies kept
+by independent hosts. Close the game while a deletion request is being handled.
+Before returning to online play, remove local saved progress and synchronization
+records using the app-data controls described above, and do not restore an old
+backup if you do not want those records uploaded again. Further online play
+can create new service records.
 
 We respond to deletion requests within 30 days, or sooner where required by
 law. Our response confirms what we deleted, any backup expiry still pending,
@@ -210,8 +316,9 @@ on a request.
 Where applicable data-protection law requires a legal basis, we rely on our
 legitimate interests in providing the game and the features you use: remembering
 progress and settings, responding to tracked movement, enabling optional avatar
-animation and live voice communication, and running shared play and testing-server
-rankings. We also rely on legitimate interests in diagnosing functional problems,
+animation and live voice communication, authenticating online players, handling
+user-initiated invitations and lobby joins, and running shared play, online
+achievements and rankings. We also rely on legitimate interests in diagnosing functional problems,
 protecting our services and responding to support messages. We limit processing
 to those purposes and balance these interests against your rights, including
 your ability to avoid multiplayer, control optional features and request deletion
