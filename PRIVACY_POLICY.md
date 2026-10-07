@@ -4,7 +4,7 @@ Effective date: **7 October 2026**.
 
 ## Who is responsible
 
-**Juzuv Jebot**, an individual based in **Serbia**, operating as **PLdot
+**Milan Minic**, an individual based in **Serbia**, operating as **PLdot
 development team** (“we”, “us”), provides Ultimate Boomer Simulator. Contact
 us about privacy, access or deletion at
 **[jewzuv@gmail.com](mailto:jewzuv@gmail.com)**. This policy covers the game, including
