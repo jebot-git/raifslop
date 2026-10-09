@@ -3,6 +3,8 @@
 Free VR fishing and shared waterside BBQ for Meta Quest, Windows OpenXR and Linux OpenXR.
 Explore twelve lakes, coastal locations and rivers, discover freshwater and marine fish, choose your tackle and cook with friends.
 
+**Now available free on Meta Quest in Early Access — [Get it on Meta Store](https://www.meta.com/experiences/ultimate-boomer-simulator/3428825797290213/).**
+
 [Downloads](https://github.com/jebot-git/raifslop/releases) · [0.1.19 release notes](docs/RELEASE_NOTES_0.1.19.md) · [Player manual](docs/MANUAL.html) · [Windows VR setup](docs/WINDOWS_OPENXR.md)
 
 ## What's new in 0.1.19
@@ -30,7 +32,7 @@ Panoramic HDR scenery surrounds walkable 3D foregrounds. Lakes and coasts use 8K
 
 ## Install and play
 
-- **Quest:** install the signed APK and its matching expansion file. Meta release channels deliver both. For GitHub sideloading, extract the OBB ZIP and follow [expansion installation](docs/QUEST_EXPANSION.md).
+- **Quest:** [install free from Meta Store](https://www.meta.com/experiences/ultimate-boomer-simulator/3428825797290213/). The store handles installation of the game and its expansion content. For GitHub sideloading, install the signed APK, extract its matching OBB ZIP and follow [expansion installation](docs/QUEST_EXPANSION.md).
 - **Windows:** extract the complete ZIP, select an OpenXR runtime and run `VR.cmd`. Keep the executable, PCK and DLLs together.
 - **Linux:** extract the complete ZIP and run `VR.sh` with an active OpenXR runtime.
 - **Dedicated server:** extract the server ZIP and run `Server.sh`. [Hosting and server records](docs/DEDICATED_SERVER.md).
